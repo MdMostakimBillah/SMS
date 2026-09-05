@@ -23,6 +23,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImage } from '@/lib/compressImage'
+import { usePermission } from '@/hooks/usePermission'
 
 type Op = 'salary' | 'phone' | 'photo' | 'department' | 'designation' | 'inTime' | 'outTime'
 
@@ -74,6 +75,7 @@ export default function TeacherBulkUpdatePage() {
       designations: s.designations,
     }))
   )
+  const { canEdit } = usePermission()
 
   const departmentMap = useMemo(() => new Map(departments.map(d => [d.id, d])), [departments])
 
@@ -304,15 +306,17 @@ export default function TeacherBulkUpdatePage() {
                   </option>
                 ))}
               </select>
-              <button
-                onClick={applyBatch}
-                disabled={!batchVal || selected.length === 0}
-                className={`flex items-center gap-[0.3125rem] py-[0.5rem] px-[0.875rem] rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap ${!batchVal || selected.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                style={{ background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color } as React.CSSProperties}
-              >
-                <Zap size={13} />
-                {isBn ? `${selected.length} জনে লাগান` : `Apply to ${selected.length}`}
-              </button>
+              {canEdit('teachers.edit.edit') && (
+                <button
+                  onClick={applyBatch}
+                  disabled={!batchVal || selected.length === 0}
+                  className={`flex items-center gap-[0.3125rem] py-[0.5rem] px-[0.875rem] rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap ${!batchVal || selected.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                  style={{ background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color } as React.CSSProperties}
+                >
+                  <Zap size={13} />
+                  {isBn ? `${selected.length} জনে লাগান` : `Apply to ${selected.length}`}
+                </button>
+              )}
             </div>
           ) : op === 'designation' ? (
             <div className="flex gap-[0.5rem] items-center flex-wrap">
@@ -329,15 +333,17 @@ export default function TeacherBulkUpdatePage() {
                   </option>
                 ))}
               </select>
-              <button
-                onClick={applyBatch}
-                disabled={!batchVal || selected.length === 0}
-                className={`flex items-center gap-[0.3125rem] py-[0.5rem] px-[0.875rem] rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap ${!batchVal || selected.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                style={{ background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color } as React.CSSProperties}
-              >
-                <Zap size={13} />
-                {isBn ? `${selected.length} জনে লাগান` : `Apply to ${selected.length}`}
-              </button>
+              {canEdit('teachers.edit.edit') && (
+                <button
+                  onClick={applyBatch}
+                  disabled={!batchVal || selected.length === 0}
+                  className={`flex items-center gap-[0.3125rem] py-[0.5rem] px-[0.875rem] rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap ${!batchVal || selected.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                  style={{ background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color } as React.CSSProperties}
+                >
+                  <Zap size={13} />
+                  {isBn ? `${selected.length} জনে লাগান` : `Apply to ${selected.length}`}
+                </button>
+              )}
             </div>
           ) : (
             <div className="flex gap-[0.5rem] items-center flex-wrap">
@@ -364,15 +370,17 @@ export default function TeacherBulkUpdatePage() {
                   className={`${inpCls} flex-1 text-[var(--text-primary)]`}
                 />
               )}
-              <button
-                onClick={applyBatch}
-                disabled={!batchVal || selected.length === 0}
-                className={`flex items-center gap-[0.3125rem] py-[0.5rem] px-[0.875rem] rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap ${!batchVal || selected.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                style={{ background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color } as React.CSSProperties}
-              >
-                <Zap size={13} />
-                {isBn ? `${selected.length} জনে লাগান` : `Apply to ${selected.length}`}
-              </button>
+              {canEdit('teachers.edit.edit') && (
+                <button
+                  onClick={applyBatch}
+                  disabled={!batchVal || selected.length === 0}
+                  className={`flex items-center gap-[0.3125rem] py-[0.5rem] px-[0.875rem] rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap ${!batchVal || selected.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                  style={{ background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color } as React.CSSProperties}
+                >
+                  <Zap size={13} />
+                  {isBn ? `${selected.length} জনে লাগান` : `Apply to ${selected.length}`}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -565,26 +573,28 @@ export default function TeacherBulkUpdatePage() {
           >
             {isBn ? 'পরিষ্কার করুন' : 'Clear All'}
           </button>
-          <button
-            onClick={applyChanges}
-            disabled={readyCount === 0}
-            className={`flex items-center gap-[0.4375rem] py-[0.625rem] px-[1.375rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-[inherit] ${readyCount === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-            style={
-              {
-                background: readyCount === 0 ? 'var(--border-2)' : opInfo.color,
-                boxShadow: readyCount > 0 ? `0 4px 14px ${opInfo.color}50` : 'none',
-              } as React.CSSProperties
-            }
-          >
-            {applied ? <Check size={15} /> : <Save size={15} />}
-            {applied
-              ? isBn
-                ? '✓ সফলভাবে আপডেট হয়েছে!'
-                : '✓ Updated Successfully!'
-              : isBn
-                ? `${readyCount} টি পরিবর্তন সেভ করুন`
-                : `Save ${readyCount} Changes`}
-          </button>
+          {canEdit('teachers.edit.edit') && (
+            <button
+              onClick={applyChanges}
+              disabled={readyCount === 0}
+              className={`flex items-center gap-[0.4375rem] py-[0.625rem] px-[1.375rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-[inherit] ${readyCount === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+              style={
+                {
+                  background: readyCount === 0 ? 'var(--border-2)' : opInfo.color,
+                  boxShadow: readyCount > 0 ? `0 4px 14px ${opInfo.color}50` : 'none',
+                } as React.CSSProperties
+              }
+            >
+              {applied ? <Check size={15} /> : <Save size={15} />}
+              {applied
+                ? isBn
+                  ? '✓ সফলভাবে আপডেট হয়েছে!'
+                  : '✓ Updated Successfully!'
+                : isBn
+                  ? `${readyCount} টি পরিবর্তন সেভ করুন`
+                  : `Save ${readyCount} Changes`}
+            </button>
+          )}
         </div>
       </div>
     </div>

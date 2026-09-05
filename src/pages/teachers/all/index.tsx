@@ -38,6 +38,7 @@ import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { BLOOD_GROUPS } from '@/lib/constants'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 
@@ -65,6 +66,7 @@ export default function AllTeachersPage() {
   const [perPage, setPerPage] = useState(20)
   const [page, setPage] = useState(1)
   const { isMobile } = useWindowSize()
+  const { canView, canCreate, canEdit, canDelete } = usePermission()
   const [viewT, setViewT] = useState<Teacher | null>(null)
   const [delConfirm, setDelConfirm] = useState<string | null>(null)
   const [showPDF, setShowPDF] = useState(false)
@@ -435,16 +437,18 @@ ${photoHtml}
               >
                 {isBn ? 'বন্ধ' : 'Close'}
               </button>
-              <button
-                onClick={() => {
-                  navigate(nav(`/teachers/edit/${viewT.id}`))
-                  setViewT(null)
-                }}
-                className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer"
-              >
-                <Edit2 size={13} />
-                {isBn ? 'এডিট' : 'Edit'}
-              </button>
+              {canEdit('teachers.edit.edit') && (
+                <button
+                  onClick={() => {
+                    navigate(nav(`/teachers/edit/${viewT.id}`))
+                    setViewT(null)
+                  }}
+                  className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer"
+                >
+                  <Edit2 size={13} />
+                  {isBn ? 'এডিট' : 'Edit'}
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -470,12 +474,14 @@ ${photoHtml}
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button
-                onClick={() => handleDelete(delConfirm)}
-                className="px-3.5 py-2 rounded-lg bg-[var(--red)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer"
-              >
-                {isBn ? 'মুছে ফেলুন' : 'Delete'}
-              </button>
+              {canDelete('teachers.delete.delete') && (
+                <button
+                  onClick={() => handleDelete(delConfirm)}
+                  className="px-3.5 py-2 rounded-lg bg-[var(--red)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer"
+                >
+                  {isBn ? 'মুছে ফেলুন' : 'Delete'}
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -514,13 +520,15 @@ ${photoHtml}
               ))}
             </div>
           </div>
-          <button
-            onClick={() => navigate(nav('/teachers/add'))}
-            className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--teal-light)] border border-[var(--teal)] text-[var(--teal)] text-[0.8125rem] cursor-pointer font-medium"
-          >
-            <UserPlus size={14} />
-            {isBn ? 'নতুন যোগ করুন' : 'Add Teacher'}
-          </button>
+          {canCreate('teachers.create.create') && (
+            <button
+              onClick={() => navigate(nav('/teachers/add'))}
+              className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--teal-light)] border border-[var(--teal)] text-[var(--teal)] text-[0.8125rem] cursor-pointer font-medium"
+            >
+              <UserPlus size={14} />
+              {isBn ? 'নতুন যোগ করুন' : 'Add Teacher'}
+            </button>
+          )}
         </div>
 
         <div className="sticky top-0 z-50 pt-0.5 pb-1 bg-transparent">
@@ -651,14 +659,16 @@ ${photoHtml}
               )}
             </div>
             <div style={{ position: 'relative', display: 'flex', gap: '0.375rem' }}>
-              <button
-                onClick={() => setShowActionMenu(!showActionMenu)}
-                className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs cursor-pointer font-medium"
-              >
-                <MoreVertical size={13} />
-                {isBn ? 'অ্যাকশন' : 'Action'}
-                <ChevronDown size={12} />
-              </button>
+              {canView('teachers.read.view') && (
+                <button
+                  onClick={() => setShowActionMenu(!showActionMenu)}
+                  className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs cursor-pointer font-medium"
+                >
+                  <MoreVertical size={13} />
+                  {isBn ? 'অ্যাকশন' : 'Action'}
+                  <ChevronDown size={12} />
+                </button>
+              )}
               {showActionMenu && (
                 <div
                   ref={actionMenuRef}
@@ -833,20 +843,24 @@ ${photoHtml}
                     <td className="p-2">{statusBadge(t.status)}</td>
                     <td className="p-2">
                       <div className="flex gap-[0.1875rem]">
-                        <button
-                          onClick={() => setViewT(t)}
-                          title="View"
-                          className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
-                        >
-                          <Eye size={12} />
-                        </button>
-                        <button
-                          onClick={() => navigate(nav(`/teachers/edit/${t.id}`))}
-                          title="Edit"
-                          className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--amber-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--amber)]"
-                        >
-                          <Edit2 size={12} />
-                        </button>
+                        {canView('teachers.read.view') && (
+                          <button
+                            onClick={() => setViewT(t)}
+                            title="View"
+                            className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--brand-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--brand)]"
+                          >
+                            <Eye size={12} />
+                          </button>
+                        )}
+                        {canEdit('teachers.edit.edit') && (
+                          <button
+                            onClick={() => navigate(nav(`/teachers/edit/${t.id}`))}
+                            title="Edit"
+                            className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--amber-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

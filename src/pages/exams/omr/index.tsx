@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { useExamStore, type OMRTemplate } from '@/store/examStore'
+import { usePermission } from '@/hooks/usePermission'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { generateOMRHtml, generateOMRSheet, generateOMRSheetMultiCopy, type OMRConfig, type PaperSize } from '@/pages/exams/omrTemplate'
@@ -42,6 +43,7 @@ export default function OMRSheetPage() {
   const nav = useNavigate()
   const { language: lang } = useAppStore()
   const isBn = lang === 'bn'
+  const { canCreate, canRead, canUpdate, canDelete } = usePermission()
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const examConfigs = useExamStore((s) => s.examConfigs)
@@ -1059,20 +1061,22 @@ export default function OMRSheetPage() {
         </div>
         <div className="px-4 pb-4 space-y-3 pt-3">
           <div className="flex gap-2">
-            <button onClick={() => {
-              if (activeTemplateId) {
-                updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: 'Admin' })
-                logger.info(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
-              } else {
-                setShowSaveDialog(true)
-              }
-            }}
-              className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center justify-center gap-1.5">
-              <Save size={13} />
-              {activeTemplateId
-                ? (isBn ? 'টেমপ্লেট আপডেট' : 'Update Template')
-                : (isBn ? 'টেমপ্লেট সংরক্ষণ' : 'Save Template')}
-            </button>
+            {(canCreate('exams.create.create') || canUpdate('exams.edit.edit')) && (
+              <button onClick={() => {
+                if (activeTemplateId) {
+                  updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: 'Admin' })
+                  logger.info(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
+                } else {
+                  setShowSaveDialog(true)
+                }
+              }}
+                className="flex-1 px-3 py-2 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md transition-all flex items-center justify-center gap-1.5">
+                <Save size={13} />
+                {activeTemplateId
+                  ? (isBn ? 'টেমপ্লেট আপডেট' : 'Update Template')
+                  : (isBn ? 'টেমপ্লেট সংরক্ষণ' : 'Save Template')}
+              </button>
+            )}
             {activeTemplateId && (
               <button onClick={() => { setActiveTemplateId(null); setTemplateName(''); setShowSaveDialog(false) }}
                 className="px-3 py-2 rounded-xl border border-[var(--border)] text-[0.6875rem] font-semibold cursor-pointer hover:bg-[var(--bg-secondary)]">
@@ -1132,18 +1136,24 @@ export default function OMRSheetPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => { const n = prompt(isBn ? 'নতুন নাম:' : 'New name:', tpl.name); if (n) duplicateOMRTemplate(tpl.id, n) }}
-                      className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition-colors" title={isBn ? 'ডুপ্লিকেট' : 'Duplicate'}>
-                      <Copy size={11} className="text-[var(--text-muted)]" />
-                    </button>
-                    <button onClick={() => archiveOMRTemplate(tpl.id)}
-                      className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition-colors" title={isBn ? 'আর্কাইভ' : 'Archive'}>
-                      <Archive size={11} className="text-[var(--text-muted)]" />
-                    </button>
-                    <button onClick={() => setShowDeleteConfirm(tpl.id)}
-                      className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition-colors" title={isBn ? 'মুছুন' : 'Delete'}>
-                      <Trash2 size={11} className="text-[var(--red)]" />
-                    </button>
+                    {canCreate('exams.create.create') && (
+                      <button onClick={() => { const n = prompt(isBn ? 'নতুন নাম:' : 'New name:', tpl.name); if (n) duplicateOMRTemplate(tpl.id, n) }}
+                        className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition-colors" title={isBn ? 'ডুপ্লিকেট' : 'Duplicate'}>
+                        <Copy size={11} className="text-[var(--text-muted)]" />
+                      </button>
+                    )}
+                    {canUpdate('exams.edit.edit') && (
+                      <button onClick={() => archiveOMRTemplate(tpl.id)}
+                        className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition-colors" title={isBn ? 'আর্কাইভ' : 'Archive'}>
+                        <Archive size={11} className="text-[var(--text-muted)]" />
+                      </button>
+                    )}
+                    {canDelete('exams.delete.delete') && (
+                      <button onClick={() => setShowDeleteConfirm(tpl.id)}
+                        className="p-1.5 rounded-lg hover:bg-[var(--bg-primary)] transition-colors" title={isBn ? 'মুছুন' : 'Delete'}>
+                        <Trash2 size={11} className="text-[var(--red)]" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1219,14 +1229,18 @@ export default function OMRSheetPage() {
               className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all flex items-center gap-1.5">
               <RefreshCw size={13} /> <span className="hidden sm:inline">{isBn ? 'রিসেট' : 'Reset'}</span>
             </button>
-            <button onClick={handlePrint}
-              className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all flex items-center gap-1.5">
-              <Printer size={13} /> <span className="hidden sm:inline">{isBn ? 'প্রিন্ট' : 'Print'}</span>
-            </button>
-            <button onClick={handleDownloadClick}
-              className="px-4 py-1.5 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center gap-1.5">
-              <Download size={13} /> <span className="hidden sm:inline">{isBn ? 'PDF ডাউনলোড' : 'Download PDF'}</span>
-            </button>
+            {canRead('exams.read.view') && (
+              <button onClick={handlePrint}
+                className="px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer hover:text-[var(--text-primary)] hover:border-[var(--brand)]/30 transition-all flex items-center gap-1.5">
+                <Printer size={13} /> <span className="hidden sm:inline">{isBn ? 'প্রিন্ট' : 'Print'}</span>
+              </button>
+            )}
+            {canRead('exams.read.view') && (
+              <button onClick={handleDownloadClick}
+                className="px-4 py-1.5 rounded-xl bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer hover:shadow-md hover:brightness-110 transition-all flex items-center gap-1.5">
+                <Download size={13} /> <span className="hidden sm:inline">{isBn ? 'PDF ডাউনলোড' : 'Download PDF'}</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

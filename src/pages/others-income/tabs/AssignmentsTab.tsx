@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Edit, Trash2, Plus, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Eye } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useOthersIncomeStore, type OthersIncomeAssignment } from '@/store/othersIncomeStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -21,6 +22,7 @@ interface Props {
 
 export const AssignmentsTab = ({ searchQuery }: Props) => {
   const bn = useBn()
+  const { canCreate, canEdit, canDelete, canExport } = usePermission()
   const { categories, assignments, deleteAssignment, toggleAssignmentActive } = useOthersIncomeStore()
   const students = useSessionStudents()
 
@@ -219,23 +221,29 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
                 <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
-                  <button onClick={handleExportExcel} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
-                    <FileSpreadsheet size={14} className="text-[var(--green)]" />
-                    {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                  </button>
-                  <div className="h-px bg-[var(--border)] mx-2" />
-                  <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
-                    <FileText size={14} className="text-[var(--red)]" />
-                    {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                  </button>
+                  {canExport('finance.others_income') && (
+                    <button onClick={handleExportExcel} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                    </button>
+                  )}
+                  {canExport('finance.others_income') && <div className="h-px bg-[var(--border)] mx-2" />}
+                  {canExport('finance.others_income') && (
+                    <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                      <FileText size={14} className="text-[var(--red)]" />
+                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                    </button>
+                  )}
                 </div>
               </>
             )}
           </div>
-          <button onClick={() => { setEditItem(null); setShowModal(true) }}
-            className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-[var(--brand)] text-white text-[11px] font-medium border-none cursor-pointer hover:opacity-90 transition-opacity">
-            <Plus size={13} /> {bn ? 'বরাদ্দ করুন' : 'Assign'}
-          </button>
+          {canCreate('finance.others_income') && (
+            <button onClick={() => { setEditItem(null); setShowModal(true) }}
+              className="h-8 px-3 flex items-center gap-1.5 rounded-lg bg-[var(--brand)] text-white text-[11px] font-medium border-none cursor-pointer hover:opacity-90 transition-opacity">
+              <Plus size={13} /> {bn ? 'বরাদ্দ করুন' : 'Assign'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -306,15 +314,21 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
                   </td>
                   <td className="py-2.5 px-3 text-center">
                     <div className="flex items-center gap-1 justify-center">
-                      <button onClick={() => { setEditItem(assignments.find((x) => x.id === a.id) || null); setShowModal(true) }} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
-                        <Edit size={13} />
-                      </button>
-                      <button onClick={() => toggleAssignmentActive(a.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors" title={a.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}>
-                        <Eye size={13} />
-                      </button>
-                      <button onClick={() => setDeleteId(a.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
-                        <Trash2 size={13} />
-                      </button>
+                      {canEdit('finance.others_income') && (
+                        <button onClick={() => { setEditItem(assignments.find((x) => x.id === a.id) || null); setShowModal(true) }} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
+                          <Edit size={13} />
+                        </button>
+                      )}
+                      {canEdit('finance.others_income') && (
+                        <button onClick={() => toggleAssignmentActive(a.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors" title={a.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}>
+                          <Eye size={13} />
+                        </button>
+                      )}
+                      {canDelete('finance.others_income') && (
+                        <button onClick={() => setDeleteId(a.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

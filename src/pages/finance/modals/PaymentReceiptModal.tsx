@@ -1,5 +1,6 @@
 import { X, Printer, CheckCircle, Calendar, CreditCard, Hash } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { modalOverlayCls, modalStyleCls } from '@/pages/hr/utils'
 import { createPortal } from 'react-dom'
 
@@ -22,6 +23,7 @@ interface Props {
 
 export function PaymentReceiptModal({ data, onClose }: Props) {
   const bn = useBn()
+  const { canPrint } = usePermission()
 
   const fmt = (n: number) => `৳${n.toLocaleString()}`
   const methodLabel = (m: string) => m === 'cash' ? (bn ? 'নগদ' : 'Cash') : m === 'bank' ? (bn ? 'ব্যাংক' : 'Bank') : m === 'mobile' ? (bn ? 'মোবাইল' : 'Mobile') : (bn ? 'অন্যান্য' : 'Other')
@@ -36,9 +38,11 @@ export function PaymentReceiptModal({ data, onClose }: Props) {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">{bn ? 'পেমেন্ট রসিদ' : 'Payment Receipt'}</h3>
           <div className="flex items-center gap-1">
-            <button onClick={handlePrint} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer hover:text-[var(--brand)]">
-              <Printer size={14} />
-            </button>
+            {canPrint('finance.fees.collect') && (
+              <button onClick={handlePrint} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer hover:text-[var(--brand)]">
+                <Printer size={14} />
+              </button>
+            )}
             <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer">
               <X size={14} />
             </button>

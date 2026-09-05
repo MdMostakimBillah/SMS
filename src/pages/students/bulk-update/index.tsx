@@ -28,6 +28,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { logger } from '@/lib/logger'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImage } from '@/lib/compressImage'
+import { usePermission } from '@/hooks/usePermission'
 
 type Op = 'photo' | 'roll' | 'class' | 'section' | 'bloodGroup' | 'religion' | 'academicYear'
 
@@ -98,6 +99,7 @@ export default function BulkUpdatePage() {
   const classes = useClassStore((s) => s.classes)
   const institution = useClassStore((s) => s.institution)
   const isBn = useBn()
+  const { canEdit } = usePermission()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
@@ -571,36 +573,40 @@ export default function BulkUpdatePage() {
                         : String((s as any)[op] || '—')}
                     </td>
                     <td className="px-2 py-[0.375rem]" style={{ background: selected.includes(s.id) ? `${opInfo.bg}33` : 'transparent' }}>
-                      {op === 'photo' ? (
-                        <label
-                          className="flex items-center gap-[0.3125rem] px-[0.625rem] py-[0.375rem] rounded-[0.4375rem] border text-[0.6875rem] cursor-pointer font-medium w-fit"
-                          style={{
-                            background: photoMap[s.id] ? 'var(--green-light)' : opInfo.bg,
-                            borderColor: photoMap[s.id] ? 'var(--green)' : opInfo.color,
-                            color: photoMap[s.id] ? 'var(--green)' : opInfo.color,
-                          }}
-                        >
-                          {photoMap[s.id] ? <CheckCircle size={12} /> : <Upload size={12} />}
-                          {photoMap[s.id] ? (isBn ? 'আপলোড হয়েছে ✓' : 'Uploaded ✓') : isBn ? 'ছবি বেছে নিন' : 'Choose Photo'}
-                          <input
-                            ref={(el) => {
-                              fileRefs.current[s.id] = el
+                      {canEdit('students.bulk-update') ? (
+                        op === 'photo' ? (
+                          <label
+                            className="flex items-center gap-[0.3125rem] px-[0.625rem] py-[0.375rem] rounded-[0.4375rem] border text-[0.6875rem] cursor-pointer font-medium w-fit"
+                            style={{
+                              background: photoMap[s.id] ? 'var(--green-light)' : opInfo.bg,
+                              borderColor: photoMap[s.id] ? 'var(--green)' : opInfo.color,
+                              color: photoMap[s.id] ? 'var(--green)' : opInfo.color,
                             }}
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0]
-                              if (f) handlePhotoUpload(s.id, f)
-                            }}
-                            className="hidden"
+                          >
+                            {photoMap[s.id] ? <CheckCircle size={12} /> : <Upload size={12} />}
+                            {photoMap[s.id] ? (isBn ? 'আপলোড হয়েছে ✓' : 'Uploaded ✓') : isBn ? 'ছবি বেছে নিন' : 'Choose Photo'}
+                            <input
+                              ref={(el) => {
+                                fileRefs.current[s.id] = el
+                              }}
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0]
+                                if (f) handlePhotoUpload(s.id, f)
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        ) : (
+                          <EditCell
+                            value={rowEdits[s.id] !== undefined ? rowEdits[s.id] : (s as any)[op] || ''}
+                            onChange={(v) => updateRowEdit(s.id, v)}
+                            opts={STATIC_OPTS[op]}
                           />
-                        </label>
+                        )
                       ) : (
-                        <EditCell
-                          value={rowEdits[s.id] !== undefined ? rowEdits[s.id] : (s as any)[op] || ''}
-                          onChange={(v) => updateRowEdit(s.id, v)}
-                          opts={STATIC_OPTS[op]}
-                        />
+                        <span className="text-[0.6875rem] text-[var(--text-muted)]">—</span>
                       )}
                     </td>
                   </tr>
@@ -627,25 +633,27 @@ export default function BulkUpdatePage() {
           >
             {isBn ? 'পরিষ্কার করুন' : 'Clear All'}
           </button>
-          <button
-            onClick={applyChanges}
-            disabled={readyCount === 0}
-            className="flex items-center gap-[0.4375rem] px-[1.375rem] py-[0.625rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-[inherit] disabled:cursor-not-allowed"
-            style={{
-              background: readyCount === 0 ? 'var(--border-2)' : opInfo.color,
-              cursor: readyCount === 0 ? 'not-allowed' : 'pointer',
-              boxShadow: readyCount > 0 ? `0 4px 14px ${opInfo.color}50` : 'none',
-            }}
-          >
-            {applied ? <Check size={15} /> : <Save size={15} />}
-            {applied
-              ? isBn
-                ? '✓ সফলভাবে আপডেট হয়েছে!'
-                : '✓ Updated Successfully!'
-              : isBn
-                ? `${readyCount} টি পরিবর্তন সেভ করুন`
-                : `Save ${readyCount} Changes`}
-          </button>
+          {canEdit('students.bulk-update') && (
+            <button
+              onClick={applyChanges}
+              disabled={readyCount === 0}
+              className="flex items-center gap-[0.4375rem] px-[1.375rem] py-[0.625rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-[inherit] disabled:cursor-not-allowed"
+              style={{
+                background: readyCount === 0 ? 'var(--border-2)' : opInfo.color,
+                cursor: readyCount === 0 ? 'not-allowed' : 'pointer',
+                boxShadow: readyCount > 0 ? `0 4px 14px ${opInfo.color}50` : 'none',
+              }}
+            >
+              {applied ? <Check size={15} /> : <Save size={15} />}
+              {applied
+                ? isBn
+                  ? '✓ সফলভাবে আপডেট হয়েছে!'
+                  : '✓ Updated Successfully!'
+                : isBn
+                  ? `${readyCount} টি পরিবর্তন সেভ করুন`
+                  : `Save ${readyCount} Changes`}
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Plus, Search, Edit, Trash2, Eye, BookOpen, MoreVertical, ChevronDown, FileSpreadsheet, FileText, LayoutGrid, List } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useLibraryStore } from '@/store/libraryStore'
 import { toBnNum } from '@/lib/i18n'
 import { XLSX } from '@/lib/excelExport'
@@ -41,6 +42,7 @@ const pdfColumns: PDFColumnDef[] = [
 
 export function BooksTab({ searchQuery }: Props) {
   const bn = useBn()
+  const { canCreate, canEdit, canDelete, canExport } = usePermission()
   const books = useLibraryStore((s) => s.books)
   const categories = useLibraryStore((s) => s.categories)
   const copies = useLibraryStore((s) => s.copies)
@@ -295,30 +297,36 @@ export function BooksTab({ searchQuery }: Props) {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
                 <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
-                  <button
-                    onClick={() => { exportExcel(); setShowActionMenu(false) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
-                  >
-                    <FileSpreadsheet size={14} className="text-[var(--green)]" />
-                    {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                  </button>
-                  <div className="h-px bg-[var(--border)] mx-2" />
-                  <button
-                    onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
-                  >
-                    <FileText size={14} className="text-[var(--red)]" />
-                    {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                  </button>
+                  {canExport('library.books') && (
+                    <button
+                      onClick={() => { exportExcel(); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
+                    >
+                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                    </button>
+                  )}
+                  {canExport('library.books') && <div className="h-px bg-[var(--border)] mx-2" />}
+                  {canExport('library.books') && (
+                    <button
+                      onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
+                    >
+                      <FileText size={14} className="text-[var(--red)]" />
+                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                    </button>
+                  )}
                 </div>
               </>
             )}
           </div>
         )}
-        <button onClick={handleAdd} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
-          <Plus size={13} />
-          {bn ? 'বই যোগ করুন' : 'Add Book'}
-        </button>
+        {canCreate('library.books') && (
+          <button onClick={handleAdd} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
+            <Plus size={13} />
+            {bn ? 'বই যোগ করুন' : 'Add Book'}
+          </button>
+        )}
       </div>
 
       {showFilters && (
@@ -404,15 +412,19 @@ export function BooksTab({ searchQuery }: Props) {
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       <div className="flex items-center gap-1 justify-center">
-                        <button onClick={() => handleEdit(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
-                          <Edit size={13} />
-                        </button>
+                        {canEdit('library.books') && (
+                          <button onClick={() => handleEdit(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors">
+                            <Edit size={13} />
+                          </button>
+                        )}
                         <button onClick={() => toggleBookActive(b.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--amber)] transition-colors">
                           <Eye size={13} />
                         </button>
-                        <button onClick={() => setDeleteTarget(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
-                          <Trash2 size={13} />
-                        </button>
+                        {canDelete('library.books') && (
+                          <button onClick={() => setDeleteTarget(b)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -469,15 +481,19 @@ export function BooksTab({ searchQuery }: Props) {
                               </div>
                               <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                                 <div className="flex gap-2">
-                                  <button onClick={() => handleEdit(b)} className="p-2 rounded-full bg-white text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors">
-                                    <Edit size={14} />
-                                  </button>
+                                  {canEdit('library.books') && (
+                                    <button onClick={() => handleEdit(b)} className="p-2 rounded-full bg-white text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors">
+                                      <Edit size={14} />
+                                    </button>
+                                  )}
                                   <button onClick={() => toggleBookActive(b.id)} className="p-2 rounded-full bg-white text-[var(--amber)] hover:bg-[var(--amber)] hover:text-white transition-colors">
                                     <Eye size={14} />
                                   </button>
-                                  <button onClick={() => setDeleteTarget(b)} className="p-2 rounded-full bg-white text-red-500 hover:bg-red-500 hover:text-white transition-colors">
-                                    <Trash2 size={14} />
-                                  </button>
+                                  {canDelete('library.books') && (
+                                    <button onClick={() => setDeleteTarget(b)} className="p-2 rounded-full bg-white text-red-500 hover:bg-red-500 hover:text-white transition-colors">
+                                      <Trash2 size={14} />
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>

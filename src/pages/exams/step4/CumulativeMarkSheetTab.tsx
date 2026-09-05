@@ -5,6 +5,7 @@ import { useExamStore } from '@/store/examStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { getBrandColor, downloadHTML } from '@/lib/pdf'
+import { usePermission } from '@/hooks/usePermission'
 import { CumulativeMarksheetPDFOptionsModal } from './CumulativeMarksheetPDFOptionsModal'
 import type { TabulationStudent } from './MarksheetTab'
 import { getGradeLetter, getGradeColor, getGpa } from '@/lib/grades'
@@ -42,6 +43,7 @@ export const CumulativeMarkSheetTab = React.memo(function CumulativeMarkSheetTab
   currentExamData, currentExamId, currentExamName, currentExamSession,
   className, sectionName, institutionName, institutionAddress, isBn = false,
 }: CumulativeMarkSheetProps) {
+  const { canPrint } = usePermission()
   const brand = getBrandColor()
   const institution = useClassStore((s) => s.institution)
   const allExamConfigs = useExamStore((s) => s.examConfigs)
@@ -149,9 +151,11 @@ export const CumulativeMarkSheetTab = React.memo(function CumulativeMarkSheetTab
         <button onClick={() => setShowSettings(!showSettings)} className="h-8 px-3 rounded-lg text-xs font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all inline-flex items-center gap-1.5" style={{ background: 'var(--bg-secondary)' }}>
           <Settings size={13} />{isBn ? 'ওজন সেটিং' : 'Weight Settings'}
         </button>
-        <button onClick={() => setShowPdfModal(true)} className="h-8 px-4 rounded-lg text-xs font-medium text-white transition-all inline-flex items-center gap-1.5" style={{ background: brand }}>
-          <Download size={13} />Download PDF
-        </button>
+        {canPrint('exams.results.view') && (
+          <button onClick={() => setShowPdfModal(true)} className="h-8 px-4 rounded-lg text-xs font-medium text-white transition-all inline-flex items-center gap-1.5" style={{ background: brand }}>
+            <Download size={13} />Download PDF
+          </button>
+        )}
       </div>
 
       {showSettings && (

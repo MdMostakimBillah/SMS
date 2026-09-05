@@ -38,6 +38,7 @@ import { useBn } from '@/hooks/useBn'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { usePermission } from '@/hooks/usePermission'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -63,6 +64,7 @@ export default function Step4Results() {
   const students = useSessionStudents()
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
+  const { canCreate, canRead, canUpdate, canEdit } = usePermission()
 
   const allExamConfigs = useExamStore((s) => s.examConfigs)
   const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])
@@ -641,14 +643,16 @@ export default function Step4Results() {
                       <ArrowUpDown size={12} />
                       {sortMode === 'rank' ? (isBn ? 'র‍্যাঙ্ক' : 'Rank') : (isBn ? 'রোল' : 'Roll')}
                     </button>
-                    <button
-                      onClick={() => setShowPdfModal(true)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[0.625rem] font-medium cursor-pointer border transition-all bg-[var(--brand)] text-white border-[var(--brand)] hover:opacity-90"
-                      title={isBn ? 'ডাউনলোড' : 'Download'}
-                    >
-                      <Download size={12} />
-                      {isBn ? 'ডাউনলোড' : 'Download'}
-                    </button>
+                    {canRead('exams.read.view') && (
+                      <button
+                        onClick={() => setShowPdfModal(true)}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[0.625rem] font-medium cursor-pointer border transition-all bg-[var(--brand)] text-white border-[var(--brand)] hover:opacity-90"
+                        title={isBn ? 'ডাউনলোড' : 'Download'}
+                      >
+                        <Download size={12} />
+                        {isBn ? 'ডাউনলোড' : 'Download'}
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="overflow-x-auto mt-3">
@@ -825,17 +829,21 @@ export default function Step4Results() {
                     {isBn ? 'ম্যানুয়াল' : 'Manual'}
                   </button>
                 </div>
-                <button
-                  onClick={() => { setShowTypeManager(true); setShowAddTypeForm(true) }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
-                >
-                  <Settings size={13} />
-                  {isBn ? 'ধরন' : 'Types'}
-                </button>
-                <button onClick={() => setShowExtraForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:opacity-90 transition-all">
-                  <Plus size={13} />
-                  {isBn ? 'নতুন' : 'Add'}
-                </button>
+                {canEdit('exams.marks.manage') && (
+                  <button
+                    onClick={() => { setShowTypeManager(true); setShowAddTypeForm(true) }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+                  >
+                    <Settings size={13} />
+                    {isBn ? 'ধরন' : 'Types'}
+                  </button>
+                )}
+                {canCreate('exams.marks.manage') && (
+                  <button onClick={() => setShowExtraForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:opacity-90 transition-all">
+                    <Plus size={13} />
+                    {isBn ? 'নতুন' : 'Add'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -870,9 +878,11 @@ export default function Step4Results() {
                   <input value={extraBulkNote} onChange={(e) => setExtraBulkNote(e.target.value)} placeholder={isBn ? 'নোট' : 'Note'} className={`${inputCls} text-[0.6875rem] py-1`} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={handleExtraBulkApply} disabled={!extraBulkType} className={`${btnPrimary} text-[0.625rem] ${!extraBulkType ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    <Save size={11} />{isBn ? 'প্রয়োগ' : 'Apply'}
-                  </button>
+                  {canUpdate('exams.marks.manage') && (
+                    <button onClick={handleExtraBulkApply} disabled={!extraBulkType} className={`${btnPrimary} text-[0.625rem] ${!extraBulkType ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <Save size={11} />{isBn ? 'প্রয়োগ' : 'Apply'}
+                    </button>
+                  )}
                   <button onClick={() => { setExtraSelectedStudents(new Set()); setExtraSelectAll(false) }} className="text-[0.625rem] text-[var(--text-muted)] cursor-pointer bg-transparent border-none hover:text-[var(--text-primary)]">
                     {isBn ? 'বাতিল' : 'Cancel'}
                   </button>
@@ -974,7 +984,7 @@ export default function Step4Results() {
                                   }}
                                   className="w-14 text-center text-[0.6875rem] font-bold py-0.5 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
                                 />
-                              ) : (
+                              ) : canCreate('exams.marks.manage') ? (
                                 <button
                                   onClick={() => {
                                     if (!selectedExamId) return
@@ -993,7 +1003,7 @@ export default function Step4Results() {
                                 >
                                   +{maxPct}%
                                 </button>
-                              )}
+                              ) : null}
                             </td>
                           )
                         })}

@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback } from 'react'
 import React from 'react'
 import { DollarSign, TrendingUp, AlertTriangle, Users, BarChart3, Gift, Filter, FileText } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useFeeStore } from '@/store/feeStore'
 import { inputCls } from '@/lib/styles'
@@ -24,6 +25,7 @@ interface ClassRow {
 
 export const ReportsTab = React.memo(function ReportsTab() {
   const bn = useBn()
+  const { canPrint } = usePermission()
   const students = useSessionStudents()
   const { structures, getCollectionSummary, getClassWiseSummary } = useFeeStore()
 
@@ -223,7 +225,7 @@ export const ReportsTab = React.memo(function ReportsTab() {
           </button>
         )}
         <div className="flex-1" />
-        {sortedSummary.length > 0 && (
+        {sortedSummary.length > 0 && canPrint('finance.fees.reports.print') && (
           <button onClick={() => setShowPdfModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--red)] hover:text-[var(--red)] cursor-pointer transition-all">
             <FileText size={13} />
             {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}

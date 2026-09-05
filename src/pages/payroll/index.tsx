@@ -31,7 +31,7 @@ type SortKey = 'name' | 'salary' | 'department' | 'designation'
 
 export default function PayrollPage() {
   const isBn = useBn()
-  usePermission()
+  const { canPrint, canExport } = usePermission()
   const { isMobile } = useWindowSize()
   const { teachers, departments } = useTeacherStore(
     useShallow((s) => ({
@@ -308,24 +308,28 @@ export default function PayrollPage() {
         </div>
         {monthSelected && (
           <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrintAll}
-              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-            >
-              <Printer size={13} />
-              {isBn ? 'সব প্রিন্ট' : 'Print All'}
-            </button>
-            <button
-              onClick={() => {
-                setPdfMode('batch')
-                setPdfEmployee(null)
-                setShowPdfModal(true)
-              }}
-              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3.5 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs font-medium cursor-pointer font-[inherit]"
-            >
-              <FileText size={13} />
-              PDF
-            </button>
+            {canPrint('payroll.overview') && (
+              <button
+                onClick={handlePrintAll}
+                className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+              >
+                <Printer size={13} />
+                {isBn ? 'সব প্রিন্ট' : 'Print All'}
+              </button>
+            )}
+            {canExport('payroll.overview') && (
+              <button
+                onClick={() => {
+                  setPdfMode('batch')
+                  setPdfEmployee(null)
+                  setShowPdfModal(true)
+                }}
+                className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3.5 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs font-medium cursor-pointer font-[inherit]"
+              >
+                <FileText size={13} />
+                PDF
+              </button>
+            )}
           </div>
         )}
       </div>

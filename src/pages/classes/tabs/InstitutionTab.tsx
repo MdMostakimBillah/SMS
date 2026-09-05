@@ -15,6 +15,7 @@ import {
   Move,
   Image,
 } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import ColorSettings from '@/components/shared/ColorSettings'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
@@ -221,6 +222,7 @@ export default React.memo(function InstitutionTab({
   handleSaveInstitution,
   isBn,
 }: InstitutionTabProps) {
+  const { canEdit } = usePermission()
   const inputClass =
     'w-full py-[0.5625rem] px-[0.6875rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none'
   const labelClass = 'text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem] block'
@@ -234,16 +236,18 @@ export default React.memo(function InstitutionTab({
           {isBn ? 'প্রতিষ্ঠানের তথ্য' : 'Institution Information'}
         </div>
         {!editingInst ? (
-          <button
-            onClick={() => {
-              setInstForm(() => ({ ...institution }))
-              setEditingInst(true)
-            }}
-            className="flex items-center gap-[0.3125rem] py-[0.375rem] px-3 rounded-[0.4375rem] bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs cursor-pointer font-[inherit]"
-          >
-            <Edit2 size={13} />
-            {isBn ? 'এডিট' : 'Edit'}
-          </button>
+          canEdit('classes.institution') && (
+            <button
+              onClick={() => {
+                setInstForm(() => ({ ...institution }))
+                setEditingInst(true)
+              }}
+              className="flex items-center gap-[0.3125rem] py-[0.375rem] px-3 rounded-[0.4375rem] bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-xs cursor-pointer font-[inherit]"
+            >
+              <Edit2 size={13} />
+              {isBn ? 'এডিট' : 'Edit'}
+            </button>
+          )
         ) : (
           <div className="flex gap-[0.375rem]">
             <button
@@ -257,13 +261,15 @@ export default React.memo(function InstitutionTab({
             >
               {isBn ? 'বাতিল' : 'Cancel'}
             </button>
-            <button
-              onClick={handleSaveInstitution}
-              className="flex items-center gap-[0.3125rem] py-[0.375rem] px-3 rounded-[0.4375rem] bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-            >
-              {saved ? <Check size={13} /> : <Save size={13} />}
-              {saved ? (isBn ? 'সেভ হয়েছে' : 'Saved') : isBn ? 'সেভ' : 'Save'}
-            </button>
+            {canEdit('classes.institution') && (
+              <button
+                onClick={handleSaveInstitution}
+                className="flex items-center gap-[0.3125rem] py-[0.375rem] px-3 rounded-[0.4375rem] bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+              >
+                {saved ? <Check size={13} /> : <Save size={13} />}
+                {saved ? (isBn ? 'সেভ হয়েছে' : 'Saved') : isBn ? 'সেভ' : 'Save'}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -628,19 +634,21 @@ export default React.memo(function InstitutionTab({
                     className="flex-1 py-[0.5625rem] px-[0.6875rem] rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)]"
                     placeholder={isBn ? 'নতুন সেশন যোগ করুন (Enter চাপুন)' : 'Add new session (press Enter)'}
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const val = newSessionInput.trim()
-                      if (val && !instForm.sessions.includes(val)) {
-                        setInstForm((p: any) => ({ ...p, sessions: [...p.sessions, val].sort(), currentSession: val }))
-                        setNewSessionInput('')
-                      }
-                    }}
-                    className="py-[0.5625rem] px-3 rounded-lg bg-[var(--brand)] border-none text-white text-[0.75rem] font-medium cursor-pointer font-[inherit] shrink-0"
-                  >
-                    <Plus size={14} />
-                  </button>
+                  {canEdit('classes.institution') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const val = newSessionInput.trim()
+                        if (val && !instForm.sessions.includes(val)) {
+                          setInstForm((p: any) => ({ ...p, sessions: [...p.sessions, val].sort(), currentSession: val }))
+                          setNewSessionInput('')
+                        }
+                      }}
+                      className="py-[0.5625rem] px-3 rounded-lg bg-[var(--brand)] border-none text-white text-[0.75rem] font-medium cursor-pointer font-[inherit] shrink-0"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {instForm.sessions.map((s: string) => (

@@ -8,6 +8,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { TeacherStatus } from '@/pages/teachers/types'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
+import { usePermission } from '@/hooks/usePermission'
 
 // ─── FormField (outside parent component — fixes input focus loss) ───────────
 interface FieldProps {
@@ -96,6 +97,7 @@ export default function EditTeacherPage() {
       updateTeacher: s.updateTeacher,
     }))
   )
+  const { canEdit } = usePermission()
   const fileRef = useRef<HTMLInputElement>(null)
   const signatureRef = useRef<HTMLInputElement>(null)
 
@@ -692,13 +694,15 @@ export default function EditTeacherPage() {
         >
           {isBn ? 'বাতিল' : 'Cancel'}
         </button>
-        <button
-          type="submit"
-          className="flex items-center gap-[0.4375rem] px-6 py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
-        >
-          <Save size={14} />
-          {isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}
-        </button>
+        {canEdit('teachers.edit.edit') && (
+          <button
+            type="submit"
+            className="flex items-center gap-[0.4375rem] px-6 py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+          >
+            <Save size={14} />
+            {isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}
+          </button>
+        )}
       </div>
     </form>
   )

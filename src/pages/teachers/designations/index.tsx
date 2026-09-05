@@ -8,6 +8,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
+import { usePermission } from '@/hooks/usePermission'
 import type { Designation } from '@/pages/teachers/types'
 
 export default function DesignationsPage() {
@@ -23,6 +24,7 @@ export default function DesignationsPage() {
       deleteDesignation: s.deleteDesignation,
     }))
   )
+  const { canConfigure } = usePermission()
 
   const { popFromChain, getChain } = useNavChain()
   useNavChainClearOnMount()
@@ -113,12 +115,14 @@ export default function DesignationsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button
-                onClick={editD ? handleEdit : handleAdd}
-                className="px-3.5 py-2 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
-              >
-                {editD ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
-              </button>
+              {canConfigure('teachers.designations.configure') && (
+                <button
+                  onClick={editD ? handleEdit : handleAdd}
+                  className="px-3.5 py-2 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
+                >
+                  {editD ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -145,15 +149,17 @@ export default function DesignationsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button
-                onClick={() => {
-                  deleteDesignation(delConfirm)
-                  setDelConfirm(null)
-                }}
-                className="px-3.5 py-2 rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
-              >
-                {isBn ? 'মুছে ফেলুন' : 'Delete'}
-              </button>
+              {canConfigure('teachers.designations.configure') && (
+                <button
+                  onClick={() => {
+                    deleteDesignation(delConfirm)
+                    setDelConfirm(null)
+                  }}
+                  className="px-3.5 py-2 rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
+                >
+                  {isBn ? 'মুছে ফেলুন' : 'Delete'}
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -208,17 +214,19 @@ export default function DesignationsPage() {
             {isBn ? `মোট ${designations.length} টি পদবি` : `${designations.length} designations`}
           </p>
         </div>
-        <button
-          onClick={() => {
-            setShowAdd(true)
-            setNewName('')
-            setNewNameBn('')
-          }}
-          className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--purple-light)] border border-[var(--purple)] text-[var(--purple)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
-        >
-          <Plus size={14} />
-          {isBn ? 'নতুন যোগ করুন' : 'Add Designation'}
-        </button>
+        {canConfigure('teachers.designations.configure') && (
+          <button
+            onClick={() => {
+              setShowAdd(true)
+              setNewName('')
+              setNewNameBn('')
+            }}
+            className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--purple-light)] border border-[var(--purple)] text-[var(--purple)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
+          >
+            <Plus size={14} />
+            {isBn ? 'নতুন যোগ করুন' : 'Add Designation'}
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -277,20 +285,24 @@ export default function DesignationsPage() {
                     </td>
                     <td className="px-3 py-[0.625rem] text-center">
                       <div className="flex gap-1 justify-center">
-                        <button
-                          onClick={() => startEdit(d)}
-                          title={isBn ? 'এডিট' : 'Edit'}
-                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                        <button
-                          onClick={() => setDelConfirm(d.id)}
-                          title={isBn ? 'মুছুন' : 'Delete'}
-                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        {canConfigure('teachers.designations.configure') && (
+                          <button
+                            onClick={() => startEdit(d)}
+                            title={isBn ? 'এডিট' : 'Edit'}
+                            className="w-7 h-7 rounded-[0.4375rem] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        )}
+                        {canConfigure('teachers.designations.configure') && (
+                          <button
+                            onClick={() => setDelConfirm(d.id)}
+                            title={isBn ? 'মুছুন' : 'Delete'}
+                            className="w-7 h-7 rounded-[0.4375rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

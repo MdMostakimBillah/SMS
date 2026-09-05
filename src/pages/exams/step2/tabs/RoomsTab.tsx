@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Plus, Edit2, Trash2, X } from 'lucide-react'
 import type { ExamRoom } from '@/store/examStore'
 import { btnPrimary, inputCls } from '@/lib/styles'
+import { usePermission } from '@/hooks/usePermission'
 
 interface Props {
   isBn: boolean
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default React.memo(function RoomsTab({ isBn, rooms, roomCapacityMap, addRoom, updateRoom, deleteRoom }: Props) {
+  const { canCreate, canUpdate, canDelete } = usePermission()
   const [showRoomForm, setShowRoomForm] = useState(false)
   const [editRoom, setEditRoom] = useState<ExamRoom | null>(null)
   const [roomForm, setRoomForm] = useState({ roomNo: '', roomName: '', capacity: '40', building: 'Main', floor: '1st' })
@@ -36,17 +38,19 @@ export default React.memo(function RoomsTab({ isBn, rooms, roomCapacityMap, addR
         <span className="text-[0.75rem] text-[var(--text-secondary)]">
           {rooms.length} {isBn ? 'টি কক্ষ' : 'rooms'}
         </span>
-        <button
-          onClick={() => {
-            setShowRoomForm(true)
-            setEditRoom(null)
-            setRoomForm({ roomNo: '', roomName: '', capacity: '40', building: 'Main', floor: '1st' })
-          }}
-          className={btnPrimary}
-        >
-          <Plus size={14} />
-          {isBn ? 'নতুন কক্ষ' : 'New Room'}
-        </button>
+        {canCreate('exams.create.create') && (
+          <button
+            onClick={() => {
+              setShowRoomForm(true)
+              setEditRoom(null)
+              setRoomForm({ roomNo: '', roomName: '', capacity: '40', building: 'Main', floor: '1st' })
+            }}
+            className={btnPrimary}
+          >
+            <Plus size={14} />
+            {isBn ? 'নতুন কক্ষ' : 'New Room'}
+          </button>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-3">
         {rooms.map((room) => {
@@ -61,22 +65,26 @@ export default React.memo(function RoomsTab({ isBn, rooms, roomCapacityMap, addR
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <button
-                    onClick={() => {
-                      setEditRoom(room)
-                      setRoomForm({ roomNo: room.roomNo, roomName: room.roomName, capacity: String(room.capacity), building: room.building, floor: room.floor })
-                      setShowRoomForm(true)
-                    }}
-                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                  >
-                    <Edit2 size={11} />
-                  </button>
-                  <button
-                    onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteRoom(room.id) }}
-                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                  >
-                    <Trash2 size={11} />
-                  </button>
+                  {canUpdate('exams.edit.edit') && (
+                    <button
+                      onClick={() => {
+                        setEditRoom(room)
+                        setRoomForm({ roomNo: room.roomNo, roomName: room.roomName, capacity: String(room.capacity), building: room.building, floor: room.floor })
+                        setShowRoomForm(true)
+                      }}
+                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                    >
+                      <Edit2 size={11} />
+                    </button>
+                  )}
+                  {canDelete('exams.delete.delete') && (
+                    <button
+                      onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteRoom(room.id) }}
+                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="flex flex-col gap-1">

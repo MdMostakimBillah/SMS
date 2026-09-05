@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import React from 'react'
 import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Filter } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
@@ -42,6 +43,7 @@ function stripCatPrefix(note: string): string {
 
 export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const bn = useBn()
+  const { canDelete, canExport } = usePermission()
   const students = useSessionStudents()
   const { institution } = useClassStore()
   const { payments, structures, deletePayment } = useFeeStore()
@@ -565,15 +567,19 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
                   <div className="absolute right-0 top-full mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-[100] overflow-hidden">
-                    <button onClick={() => { setShowActionMenu(false); exportExcel() }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
-                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
-                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                    </button>
+                    {canExport('finance.fees.payments') && (
+                      <button onClick={() => { setShowActionMenu(false); exportExcel() }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                        <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                        {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                      </button>
+                    )}
                     <div className="h-px bg-[var(--border)] mx-2" />
-                    <button onClick={() => { setShowActionMenu(false); setShowPdfModal(true) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
-                      <FileText size={14} className="text-[var(--red)]" />
-                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                    </button>
+                    {canExport('finance.fees.payments') && (
+                      <button onClick={() => { setShowActionMenu(false); setShowPdfModal(true) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                        <FileText size={14} className="text-[var(--red)]" />
+                        {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -635,9 +641,11 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
                         <button onClick={() => generateReceipt(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'রসিদ দেখুন' : 'View Receipt'}>
                           <Eye size={12} />
                         </button>
-                        <button onClick={() => handleDeleteBatch(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)]/20 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                          <Trash2 size={12} />
-                        </button>
+                        {canDelete('finance.fees.payments') && (
+                          <button onClick={() => handleDeleteBatch(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)]/20 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

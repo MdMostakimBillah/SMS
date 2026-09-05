@@ -62,7 +62,7 @@ export default function SyllabusPage() {
   const isBn = useBn()
   const navigate = useNavigate()
   const nav = useNavPath()
-  usePermission()
+  const { canCreate, canEdit, canDelete, canDownload } = usePermission()
   const classes = useClassStore((s) => s.classes)
   const currentSession = useClassStore((s) => s.institution.currentSession)
   const subjects = useTeacherStore((s) => s.subjects)
@@ -515,7 +515,7 @@ export default function SyllabusPage() {
             </p>
           </div>
         </div>
-        {view === 'detail' && selectedSyllabus && (
+        {view === 'detail' && selectedSyllabus && canDownload('syllabus') && (
           <button onClick={openPDFModal} className={btnPri}>
             <Download size={14} />
             {isBn ? 'PDF' : 'PDF'}
@@ -789,10 +789,12 @@ export default function SyllabusPage() {
               <div className="text-[0.6875rem] text-[var(--text-muted)]">
                 {isBn ? `মোট ${selectedSyllabus.chapters.length}টি অধ্যায়` : `${selectedSyllabus.chapters.length} chapters`}
               </div>
-              <button onClick={openAddChapter} className={btnPri}>
-                <Plus size={14} />
-                {isBn ? 'অধ্যায় যোগ' : 'Add Chapter'}
-              </button>
+              {canCreate('syllabus') && (
+                <button onClick={openAddChapter} className={btnPri}>
+                  <Plus size={14} />
+                  {isBn ? 'অধ্যায় যোগ' : 'Add Chapter'}
+                </button>
+              )}
             </div>
 
             {/* Chapters */}
@@ -800,10 +802,12 @@ export default function SyllabusPage() {
               <div className="text-center py-12">
                 <Layers size={36} className="mx-auto text-[var(--text-muted)] mb-3 opacity-40" />
                 <p className="text-[0.75rem] text-[var(--text-muted)]">{isBn ? 'কোনো অধ্যায় নেই' : 'No chapters yet'}</p>
-                <button onClick={openAddChapter} className={`${btnPri} mt-3 mx-auto`}>
-                  <Plus size={14} />
-                  {isBn ? 'প্রথম অধ্যায় যোগ' : 'Add First Chapter'}
-                </button>
+                {canCreate('syllabus') && (
+                  <button onClick={openAddChapter} className={`${btnPri} mt-3 mx-auto`}>
+                    <Plus size={14} />
+                    {isBn ? 'প্রথম অধ্যায় যোগ' : 'Add First Chapter'}
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -833,18 +837,22 @@ export default function SyllabusPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              onClick={() => openEditChapter(ch)}
-                              className="w-8 h-8 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)] transition-colors"
-                            >
-                              <Edit2 size={13} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteChapter(ch.id)}
-                              className="w-8 h-8 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] hover:border-[var(--red)] transition-colors"
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                            {canEdit('syllabus') && (
+                              <button
+                                onClick={() => openEditChapter(ch)}
+                                className="w-8 h-8 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)] transition-colors"
+                              >
+                                <Edit2 size={13} />
+                              </button>
+                            )}
+                            {canDelete('syllabus') && (
+                              <button
+                                onClick={() => handleDeleteChapter(ch.id)}
+                                className="w-8 h-8 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] hover:border-[var(--red)] transition-colors"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -896,31 +904,37 @@ export default function SyllabusPage() {
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <button
-                                        onClick={() => openEditTopic(ch.id, t)}
-                                        className="w-7 h-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)]"
-                                      >
-                                        <Edit2 size={11} />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteTopic(ch.id, t.id)}
-                                        className="w-7 h-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] hover:border-[var(--red)]"
-                                      >
-                                        <Trash2 size={11} />
-                                      </button>
+                                      {canEdit('syllabus') && (
+                                        <button
+                                          onClick={() => openEditTopic(ch.id, t)}
+                                          className="w-7 h-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)]"
+                                        >
+                                          <Edit2 size={11} />
+                                        </button>
+                                      )}
+                                      {canDelete('syllabus') && (
+                                        <button
+                                          onClick={() => handleDeleteTopic(ch.id, t.id)}
+                                          className="w-7 h-7 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)] hover:border-[var(--red)]"
+                                        >
+                                          <Trash2 size={11} />
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             )}
                             <div className="px-4 py-3 border-t border-[var(--border)]">
-                              <button
-                                onClick={() => openAddTopic(ch.id)}
-                                className="flex items-center gap-1.5 text-[0.6875rem] px-3 py-1.5 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm transition-all"
-                              >
-                                <Plus size={12} />
-                                {isBn ? 'টপিক যোগ' : 'Add Topic'}
-                              </button>
+                              {canCreate('syllabus') && (
+                                <button
+                                  onClick={() => openAddTopic(ch.id)}
+                                  className="flex items-center gap-1.5 text-[0.6875rem] px-3 py-1.5 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm transition-all"
+                                >
+                                  <Plus size={12} />
+                                  {isBn ? 'টপিক যোগ' : 'Add Topic'}
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}

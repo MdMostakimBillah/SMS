@@ -12,6 +12,7 @@ import type { Teacher } from '@/pages/teachers/types'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { sectionCls, sectionTitleCls, inputCls } from '@/pages/hr/utils'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 interface BonusRecord {
   id: string
@@ -102,6 +103,8 @@ export const HRSalarySetupTab = React.memo(function HRSalarySetupTab({
   setShowPDFModal,
   upsertManyMonthlySalaryConfigs,
 }: HRSalarySetupTabProps) {
+  const { canEdit, canExport } = usePermission()
+
   return (
     <div className={sectionCls(isMobile)}>
       <div className="flex justify-between items-center mb-[0.875rem] flex-wrap gap-2">
@@ -116,38 +119,42 @@ export const HRSalarySetupTab = React.memo(function HRSalarySetupTab({
             onChange={(e) => setSalarySetupMonth(e.target.value)}
             className={`${inputCls} w-auto max-w-[10rem] py-[0.375rem] px-[0.625rem] text-xs`}
           />
-          <button
-            onClick={() => {
-              const configs: MonthlySalaryConfig[] = activeTeachers.map((t) => {
-                const existing = monthlySalaryConfigs.find((c) => c.teacherId === t.id && c.month === salarySetupMonth)
-                const local = salaryConfigs[t.id]
-                return {
-                  id: existing?.id || `MSC-${Date.now()}-${t.id}`,
-                  month: salarySetupMonth,
-                  teacherId: t.id,
-                  bonus: local?.bonus ?? existing?.bonus ?? 0,
-                  festivalBonus: local?.festivalBonus ?? existing?.festivalBonus ?? 0,
-                  applyDeductionRule: local?.applyDeductionRule ?? existing?.applyDeductionRule ?? false,
-                  fundContributionPercent: local?.fundContributionPercent ?? existing?.fundContributionPercent ?? 0,
-                  createdAt: new Date().toISOString(),
-                }
-              })
-              upsertManyMonthlySalaryConfigs(configs)
-              setSalarySaved(true)
-              setTimeout(() => setSalarySaved(false), 2500)
-            }}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-4 rounded-lg bg-[var(--teal)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <Save size={14} />
-            {isBn ? 'সংরক্ষণ' : 'Save'}
-          </button>
-          <button
-            onClick={() => setShowPDFModal('salary')}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-4 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <Download size={14} />
-            PDF
-          </button>
+          {canEdit('hr.salary-setup') && (
+            <button
+              onClick={() => {
+                const configs: MonthlySalaryConfig[] = activeTeachers.map((t) => {
+                  const existing = monthlySalaryConfigs.find((c) => c.teacherId === t.id && c.month === salarySetupMonth)
+                  const local = salaryConfigs[t.id]
+                  return {
+                    id: existing?.id || `MSC-${Date.now()}-${t.id}`,
+                    month: salarySetupMonth,
+                    teacherId: t.id,
+                    bonus: local?.bonus ?? existing?.bonus ?? 0,
+                    festivalBonus: local?.festivalBonus ?? existing?.festivalBonus ?? 0,
+                    applyDeductionRule: local?.applyDeductionRule ?? existing?.applyDeductionRule ?? false,
+                    fundContributionPercent: local?.fundContributionPercent ?? existing?.fundContributionPercent ?? 0,
+                    createdAt: new Date().toISOString(),
+                  }
+                })
+                upsertManyMonthlySalaryConfigs(configs)
+                setSalarySaved(true)
+                setTimeout(() => setSalarySaved(false), 2500)
+              }}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-4 rounded-lg bg-[var(--teal)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <Save size={14} />
+              {isBn ? 'সংরক্ষণ' : 'Save'}
+            </button>
+          )}
+          {canExport('hr.salary-setup') && (
+            <button
+              onClick={() => setShowPDFModal('salary')}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-4 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <Download size={14} />
+              PDF
+            </button>
+          )}
         </div>
       </div>
 

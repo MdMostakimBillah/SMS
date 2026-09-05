@@ -23,6 +23,7 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { usePermission } from '@/hooks/usePermission'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions } from '@/store/classStore'
 import { useExamStore } from '@/store/examStore'
@@ -53,6 +54,7 @@ export default function Step1Planning() {
   const sessions = useClassStore((s) => s.institution.sessions)
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
+  const { canCreate, canRead, canUpdate, canDelete, canConfigure } = usePermission()
 
   const allExamConfigs = useExamStore((s) => s.examConfigs)
   const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])
@@ -406,25 +408,29 @@ export default function Step1Planning() {
           >
             {completionPct}% {isBn ? 'সম্পন্ন' : 'Done'}
           </div>
-          <button
-            onClick={handleDownloadReport}
-            className="flex items-center gap-1 py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)] text-xs font-medium cursor-pointer font-[inherit] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
-          >
-            <Download size={14} />
-            {isBn ? 'রিপোর্ট' : 'Report'}
-          </button>
-          <button
-            onClick={() => {
-              setActiveSubTab('exams')
-              setShowExamForm(true)
-              setEditExam(null)
-              setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: currentSession, startDate: '', endDate: '' })
-            }}
-            className={btnPrimary}
-          >
-            <Plus size={14} />
-            {isBn ? 'নতুন পরীক্ষা' : 'New Exam'}
-          </button>
+          {canRead('exams.read.view') && (
+            <button
+              onClick={handleDownloadReport}
+              className="flex items-center gap-1 py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)] text-xs font-medium cursor-pointer font-[inherit] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+            >
+              <Download size={14} />
+              {isBn ? 'রিপোর্ট' : 'Report'}
+            </button>
+          )}
+          {canCreate('exams.create.create') && (
+            <button
+              onClick={() => {
+                setActiveSubTab('exams')
+                setShowExamForm(true)
+                setEditExam(null)
+                setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: currentSession, startDate: '', endDate: '' })
+              }}
+              className={btnPrimary}
+            >
+              <Plus size={14} />
+              {isBn ? 'নতুন পরীক্ষা' : 'New Exam'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -610,48 +616,56 @@ export default function Step1Planning() {
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => toggleExamActive(exam.id)}
-                        className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer ${exam.isActive ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
-                      >
-                        <CheckCircle size={13} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditExam(exam)
-                          setExamForm({
-                            name: exam.name,
-                            nameBn: exam.nameBn,
-                            type: exam.type,
-                            customType: '',
-                            session: exam.session,
-                            startDate: exam.startDate,
-                            endDate: exam.endDate,
-                          })
-                          setShowExamForm(true)
-                        }}
-                        className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                      >
-                        <Edit2 size={12} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCopyExamPlanFromId(exam.id)
-                          setCopyExamPlanToId('')
-                          setShowCopyExamPlanModal(true)
-                        }}
-                        className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                      >
-                        <Copy size={12} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(isBn ? 'এই পরীক্ষা মুছে ফেলবেন?' : 'Delete this exam?')) deleteExamConfig(exam.id)
-                        }}
-                        className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      {canConfigure('exams.settings.configure') && (
+                        <button
+                          onClick={() => toggleExamActive(exam.id)}
+                          className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer ${exam.isActive ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
+                        >
+                          <CheckCircle size={13} />
+                        </button>
+                      )}
+                      {canUpdate('exams.edit.edit') && (
+                        <button
+                          onClick={() => {
+                            setEditExam(exam)
+                            setExamForm({
+                              name: exam.name,
+                              nameBn: exam.nameBn,
+                              type: exam.type,
+                              customType: '',
+                              session: exam.session,
+                              startDate: exam.startDate,
+                              endDate: exam.endDate,
+                            })
+                            setShowExamForm(true)
+                          }}
+                          className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                      )}
+                      {canCreate('exams.create.create') && (
+                        <button
+                          onClick={() => {
+                            setCopyExamPlanFromId(exam.id)
+                            setCopyExamPlanToId('')
+                            setShowCopyExamPlanModal(true)
+                          }}
+                          className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                        >
+                          <Copy size={12} />
+                        </button>
+                      )}
+                      {canDelete('exams.delete.delete') && (
+                        <button
+                          onClick={() => {
+                            if (confirm(isBn ? 'এই পরীক্ষা মুছে ফেলবেন?' : 'Delete this exam?')) deleteExamConfig(exam.id)
+                          }}
+                          className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -661,16 +675,18 @@ export default function Step1Planning() {
               <div className={`${sectionCls} flex flex-col items-center text-center py-10`}>
                 <ClipboardList size={32} className="mb-2 opacity-20 text-[var(--text-muted)]" />
                 <p className="text-[0.8125rem] text-[var(--text-muted)]">{isBn ? 'এখনো কোনো পরীক্ষা তৈরি হয়নি' : 'No exams created yet'}</p>
-                <button
-                  onClick={() => {
-                    setShowExamForm(true)
-              setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: currentSession, startDate: '', endDate: '' })
-                  }}
-                  className={`${btnPrimary} mt-3 text-[0.6875rem]`}
-                >
-                  <Plus size={13} />
-                  {isBn ? 'প্রথম পরীক্ষা তৈরি' : 'Create First Exam'}
-                </button>
+                {canCreate('exams.create.create') && (
+                  <button
+                    onClick={() => {
+                      setShowExamForm(true)
+                      setExamForm({ name: '', nameBn: '', type: 'semester-1', customType: '', session: currentSession, startDate: '', endDate: '' })
+                    }}
+                    className={`${btnPrimary} mt-3 text-[0.6875rem]`}
+                  >
+                    <Plus size={13} />
+                    {isBn ? 'প্রথম পরীক্ষা তৈরি' : 'Create First Exam'}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -705,7 +721,7 @@ export default function Step1Planning() {
                     </div>
                     {distClassId && distConfigs.length > 0 && (
                       <div className="flex items-center gap-2">
-                        {subjectsWithConfig.length > 0 && (
+                        {subjectsWithConfig.length > 0 && canCreate('exams.create.create') && (
                           <button
                             onClick={() => {
                               setCopySourceSubjectId(subjectsWithConfig[0]?.id || '')
@@ -718,13 +734,15 @@ export default function Step1Planning() {
                             {isBn ? 'বিষয়ে কপি' : 'Copy to Subjects'}
                           </button>
                         )}
-                        <button
-                          onClick={() => setShowCopyAllConfirm(true)}
-                          className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)] text-[0.6875rem] font-medium cursor-pointer"
-                        >
-                          <Copy size={12} />
-                          {isBn ? 'শ্রেণিতে কপি' : 'Copy to Class'}
-                        </button>
+                        {canCreate('exams.create.create') && (
+                          <button
+                            onClick={() => setShowCopyAllConfirm(true)}
+                            className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)] text-[0.6875rem] font-medium cursor-pointer"
+                          >
+                            <Copy size={12} />
+                            {isBn ? 'শ্রেণিতে কপি' : 'Copy to Class'}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -867,27 +885,29 @@ export default function Step1Planning() {
                                   )}
                                 </div>
                                 <div className="flex items-center justify-center gap-1">
-                                  <button
-                                    onClick={() => {
-                                      setEditDistConfig(
-                                        config || {
-                                          id: '',
-                                          examId: activeExam!.id,
-                                          classId: distClassId,
-                                          subjectId: subject.id,
-                                          fullMarks: 0,
-                                          passMarks: 0,
-                                          subExams: [],
-                                        }
-                                      )
-                                      setShowSubExamForm(true)
-                                    }}
-                                    className="w-6 h-6 rounded bg-[var(--brand)] flex items-center justify-center cursor-pointer text-white border-none hover:shadow-sm"
-                                    title={isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}
-                                  >
-                                    <Plus size={10} />
-                                  </button>
-                                  {config && (
+                                  {canUpdate('exams.marks.manage') && (
+                                    <button
+                                      onClick={() => {
+                                        setEditDistConfig(
+                                          config || {
+                                            id: '',
+                                            examId: activeExam!.id,
+                                            classId: distClassId,
+                                            subjectId: subject.id,
+                                            fullMarks: 0,
+                                            passMarks: 0,
+                                            subExams: [],
+                                          }
+                                        )
+                                        setShowSubExamForm(true)
+                                      }}
+                                      className="w-6 h-6 rounded bg-[var(--brand)] flex items-center justify-center cursor-pointer text-white border-none hover:shadow-sm"
+                                      title={isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}
+                                    >
+                                      <Plus size={10} />
+                                    </button>
+                                  )}
+                                  {config && canDelete('exams.delete.delete') && (
                                     <button
                                       onClick={() => {
                                         if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteSubjectMarkConfig(config.id)
@@ -905,23 +925,27 @@ export default function Step1Planning() {
                                 <div className="flex items-center gap-2 pb-2 -mt-1">
                                   <div className="w-6" />
                                   <div className="flex items-center gap-1.5 flex-1">
-                                    <button
-                                      onClick={() => {
-                                        setEditDistConfig(config)
-                                        setShowSubExamForm(true)
-                                      }}
-                                      className="inline-flex items-center gap-1 text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--brand)] text-white border-none cursor-pointer font-medium hover:shadow-sm"
-                                    >
-                                      <Plus size={9} />
-                                      {isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}
-                                    </button>
-                                    <button
-                                      onClick={() => handleQuickSetupSubExams(config)}
-                                      className="inline-flex items-center gap-1 text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--teal-light)] text-[var(--teal)] border border-[var(--teal)] cursor-pointer font-medium hover:shadow-sm"
-                                    >
-                                      <Zap size={9} />
-                                      {isBn ? 'দ্রুত সেটআপ (CQ+MCQ+Oral)' : 'Quick Setup (CQ+MCQ+Oral)'}
-                                    </button>
+                                    {canUpdate('exams.marks.manage') && (
+                                      <button
+                                        onClick={() => {
+                                          setEditDistConfig(config)
+                                          setShowSubExamForm(true)
+                                        }}
+                                        className="inline-flex items-center gap-1 text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--brand)] text-white border-none cursor-pointer font-medium hover:shadow-sm"
+                                      >
+                                        <Plus size={9} />
+                                        {isBn ? 'সাব-এক্সাম যোগ' : 'Add Sub-Exam'}
+                                      </button>
+                                    )}
+                                    {canUpdate('exams.marks.manage') && (
+                                      <button
+                                        onClick={() => handleQuickSetupSubExams(config)}
+                                        className="inline-flex items-center gap-1 text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--teal-light)] text-[var(--teal)] border border-[var(--teal)] cursor-pointer font-medium hover:shadow-sm"
+                                      >
+                                        <Zap size={9} />
+                                        {isBn ? 'দ্রুত সেটআপ (CQ+MCQ+Oral)' : 'Quick Setup (CQ+MCQ+Oral)'}
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -1069,10 +1093,12 @@ export default function Step1Planning() {
               <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {isBn ? `মোট ${gradeScales.length}টি স্কেল` : `${gradeScales.length} scales`}
               </span>
-              <button onClick={() => setShowGradeForm(true)} className={btnPrimary}>
-                <Plus size={14} />
-                {isBn ? 'নতুন স্কেল' : 'New Scale'}
-              </button>
+              {canCreate('exams.create.create') && (
+                <button onClick={() => setShowGradeForm(true)} className={btnPrimary}>
+                  <Plus size={14} />
+                  {isBn ? 'নতুন স্কেল' : 'New Scale'}
+                </button>
+              )}
             </div>
             {gradeScales.map((scale) => (
               <div key={scale.id} className={`${sectionCls} ${scale.isActive ? 'ring-2 ring-[var(--green)] shadow-md' : ''}`}>
@@ -1087,7 +1113,7 @@ export default function Step1Planning() {
                     )}
                   </div>
                   <div className="flex gap-1">
-                    {!scale.isActive && (
+                    {!scale.isActive && canConfigure('exams.settings.configure') && (
                       <button
                         onClick={() => toggleGradeScaleActive(scale.id)}
                         className="text-[0.5625rem] px-2 py-1 rounded-md bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)] cursor-pointer font-medium hover:shadow-sm"
@@ -1095,27 +1121,31 @@ export default function Step1Planning() {
                         {isBn ? 'সক্রিয় করুন' : 'Set Active'}
                       </button>
                     )}
-                    <button
-                      onClick={() => {
-                        setEditGradeScaleId(scale.id)
-                        setGradeForm({ name: scale.name, nameBn: scale.nameBn })
-                        setGradeRows(
-                          scale.grades.map((g) => ({ grade: g.grade, minPct: String(g.minPct), gpa: String(g.gpa), color: g.color }))
-                        )
-                        setShowGradeForm(true)
-                      }}
-                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                    >
-                      <Edit2 size={11} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteGradeScale(scale.id)
-                      }}
-                      className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                    >
-                      <Trash2 size={11} />
-                    </button>
+                    {canUpdate('exams.edit.edit') && (
+                      <button
+                        onClick={() => {
+                          setEditGradeScaleId(scale.id)
+                          setGradeForm({ name: scale.name, nameBn: scale.nameBn })
+                          setGradeRows(
+                            scale.grades.map((g) => ({ grade: g.grade, minPct: String(g.minPct), gpa: String(g.gpa), color: g.color }))
+                          )
+                          setShowGradeForm(true)
+                        }}
+                        className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                      >
+                        <Edit2 size={11} />
+                      </button>
+                    )}
+                    {canDelete('exams.delete.delete') && (
+                      <button
+                        onClick={() => {
+                          if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteGradeScale(scale.id)
+                        }}
+                        className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-7 gap-1">

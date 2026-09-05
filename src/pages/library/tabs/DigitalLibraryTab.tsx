@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { BookOpen, Eye, Trash2, Plus, Download, Users, BarChart3, Monitor } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useLibraryStore } from '@/store/libraryStore'
 import { toBnNum } from '@/lib/i18n'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -24,6 +25,7 @@ const bookColors = [
 
 export function DigitalLibraryTab({ searchQuery }: Props) {
   const bn = useBn()
+  const { canCreate, canDelete, canDownload } = usePermission()
   const digitalBooks = useLibraryStore((s) => s.digitalBooks)
   const books = useLibraryStore((s) => s.books)
   const readingSessions = useLibraryStore((s) => s.readingSessions)
@@ -85,10 +87,12 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
         <div className="text-[0.8125rem] text-[var(--text-secondary)]">
           {bn ? `${toBnNum(enriched.length)} টি ডিজিটাল বই` : `${enriched.length} digital books`}
         </div>
-        <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90 transition-opacity">
-          <Plus size={15} />
-          {bn ? 'ডিজিটাল বই' : 'Digital Book'}
-        </button>
+        {canCreate('library.digital') && (
+          <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90 transition-opacity">
+            <Plus size={15} />
+            {bn ? 'ডিজিটাল বই' : 'Digital Book'}
+          </button>
+        )}
       </div>
 
       {/* Stat Cards */}
@@ -135,7 +139,7 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
                       >
                         <Eye size={14} />
                       </button>
-                      {db.fileUrl && (
+                      {db.fileUrl && canDownload('library.digital') && (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleDownload(db.fileUrl, db.title) }}
                           className="p-2 rounded-full bg-white text-[var(--green)] hover:bg-[var(--green)] hover:text-white transition-colors"
@@ -234,14 +238,16 @@ export function DigitalLibraryTab({ searchQuery }: Props) {
                         <button onClick={() => setShowReader(db.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors" title={bn ? 'পড়ুন' : 'Read'}>
                           <Eye size={13} />
                         </button>
-                        {db.fileUrl && (
+                        {db.fileUrl && canDownload('library.digital') && (
                           <button onClick={() => handleDownload(db.fileUrl, db.title)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--green)] transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
                             <Download size={13} />
                           </button>
                         )}
-                        <button onClick={() => setDeleteTarget(db.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
-                          <Trash2 size={13} />
-                        </button>
+                        {canDelete('library.digital') && (
+                          <button onClick={() => setDeleteTarget(db.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

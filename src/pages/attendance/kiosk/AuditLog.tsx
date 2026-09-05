@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Clock, Download, Trash2 } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import { getAuditLog, clearAuditLog, exportAuditLog, type AuditEvent } from '@/lib/faceAudit'
 
 interface AuditLogProps {
@@ -16,6 +17,7 @@ const EVENT_LABELS: Record<string, { en: string; bn: string }> = {
 }
 
 export default function AuditLog({ isBn }: AuditLogProps) {
+  const { canDelete, canExport } = usePermission()
   const [open, setOpen] = useState(false)
   const [log, setLog] = useState<AuditEvent[]>([])
   const [cleared, setCleared] = useState(false)
@@ -78,20 +80,24 @@ export default function AuditLog({ isBn }: AuditLogProps) {
             >
               {isBn ? 'রিফ্রেশ' : 'Refresh'}
             </button>
-            <button
-              onClick={handleExport}
-              className="px-3 py-1.5 rounded-lg text-[0.625rem] font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-primary)] transition-colors flex items-center gap-1"
-            >
-              <Download size={10} />
-              {isBn ? 'রপ্তানি' : 'Export'}
-            </button>
-            <button
-              onClick={handleClear}
-              className="px-3 py-1.5 rounded-lg text-[0.625rem] font-semibold bg-[var(--red-light)] text-[var(--red)] border border-transparent cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all flex items-center gap-1"
-            >
-              <Trash2 size={10} />
-              {isBn ? 'পরিষ্কার' : 'Clear'}
-            </button>
+            {canExport('attendance.device') && (
+              <button
+                onClick={handleExport}
+                className="px-3 py-1.5 rounded-lg text-[0.625rem] font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-primary)] transition-colors flex items-center gap-1"
+              >
+                <Download size={10} />
+                {isBn ? 'রপ্তানি' : 'Export'}
+              </button>
+            )}
+            {canDelete('attendance.device') && (
+              <button
+                onClick={handleClear}
+                className="px-3 py-1.5 rounded-lg text-[0.625rem] font-semibold bg-[var(--red-light)] text-[var(--red)] border border-transparent cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all flex items-center gap-1"
+              >
+                <Trash2 size={10} />
+                {isBn ? 'পরিষ্কার' : 'Clear'}
+              </button>
+            )}
           </div>
 
           {cleared && (

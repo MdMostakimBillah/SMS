@@ -1,4 +1,5 @@
 import { CheckCircle, Smartphone, ScanFace, Wifi, X, XCircle } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import KioskMode from '../KioskMode'
 import { PersonSearchInput } from '../PersonSearchInput'
 import { MobileDevicesList } from './MobileDevicesList'
@@ -45,6 +46,7 @@ export function MobileTab({
   setAuthMode, showWifiSettings, setShowWifiSettings, institutionWifi, setInstitutionWifi,
   institutionGatewayValue, setInstitutionGateway, saveWifiSettings, wifiChecking, runNetworkCheck,
 }: MobileTabProps) {
+  const { canCreate } = usePermission()
   return (
     <>
       {/* Network + Mode combined bar */}
@@ -142,9 +144,11 @@ export function MobileTab({
                 </div>
               </div>
               <PersonSearchInput value={mobileRegStaff} onChange={(id) => setMobileRegStaff(id)} isBn={isBn} people={allPeople.filter((p) => p.type === 'staff' && !mobileDevices.find((d) => d.staffId === p.id))} />
+              {canCreate('attendance.device.create') && (
               <button onClick={handleRegisterDevice} disabled={!mobileRegStaff || mobileRegPending} className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileRegPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileRegStaff ? 'bg-[var(--teal)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
                 {mobileRegPending ? (isBn ? 'নিবন্ধন হচ্ছে...' : 'Registering...') : isBn ? 'নিবন্ধন করুন' : 'Register Now'}
               </button>
+              )}
             </div>
             <div className="border border-[var(--border)] rounded-xl p-4 bg-[var(--bg-primary)]">
               <div className="flex items-center gap-2 mb-3">
@@ -155,9 +159,11 @@ export function MobileTab({
                 </div>
               </div>
               <PersonSearchInput value={mobileAuthStaff} onChange={(id) => setMobileAuthStaff(id)} isBn={isBn} people={mobileDevices.map((d) => ({ id: d.staffId, name: d.staffName, type: 'staff' as const, photo: '' }))} />
+              {canCreate('attendance.device.create') && (
               <button onClick={handleMobileAuth} disabled={!mobileAuthStaff || mobileAuthPending || wifiChecking} className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileAuthPending || wifiChecking ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileAuthStaff ? 'bg-[var(--green)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
                 {wifiChecking ? (isBn ? 'ওয়াইফাই যাচাই...' : 'Checking WiFi...') : mobileAuthPending ? (isBn ? 'প্রমাণীকরণ...' : 'Authenticating...') : (isBn ? 'বায়োমেট্রিক চেক' : 'Biometric Check')}
               </button>
+              )}
             </div>
           </div>
 

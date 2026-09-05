@@ -20,6 +20,7 @@ import {
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import { shortDate, dayName, isFriday } from '../helpers'
+import { usePermission } from '@/hooks/usePermission'
 
 interface EmployeeTabProps {
   isBn: boolean
@@ -83,6 +84,7 @@ export const EmployeeTab = React.memo(function EmployeeTab({
   getStatus,
   getDeptName,
 }: EmployeeTabProps) {
+  const { canExport } = usePermission()
   const sel =
     'px-[0.5625rem] py-[0.4375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer outline-none'
 
@@ -222,6 +224,7 @@ export const EmployeeTab = React.memo(function EmployeeTab({
                 overflow: 'hidden',
               }}
             >
+              {canExport('attendance.range.export') && (
               <button
                 onClick={() => {
                   exportEmployeeExcel()
@@ -247,7 +250,9 @@ export const EmployeeTab = React.memo(function EmployeeTab({
                 <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
                 {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
               </button>
+              )}
               <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+              {canExport('attendance.range.export') && (
               <button
                 onClick={() => {
                   setShowEmployeePDF(true)
@@ -276,6 +281,7 @@ export const EmployeeTab = React.memo(function EmployeeTab({
                 {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
                 {selectedEmployees.length > 0 && ` (${selectedEmployees.length})`}
               </button>
+              )}
             </div>
           )}
         </div>

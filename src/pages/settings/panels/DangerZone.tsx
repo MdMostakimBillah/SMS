@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { AlertTriangle, Trash2 } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 
 interface Props {
   isBn: boolean
@@ -10,6 +11,7 @@ interface Props {
 export function DangerZonePanel({ isBn, onBack }: Props) {
   const [confirmText, setConfirmText] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const { canManage } = usePermission()
 
   const handleDelete = () => {
     localStorage.clear()
@@ -47,6 +49,7 @@ export function DangerZonePanel({ isBn, onBack }: Props) {
               />
             </div>
 
+            {canManage('settings.danger.manage') && (
             <button
               disabled={confirmText !== 'DELETE'}
               onClick={() => setShowModal(true)}
@@ -55,6 +58,7 @@ export function DangerZonePanel({ isBn, onBack }: Props) {
               <Trash2 size={14} />
               {isBn ? 'অ্যাকাউন্ট মুছুন' : 'Delete Account'}
             </button>
+            )}
           </div>
         </div>
       </div>

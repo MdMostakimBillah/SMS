@@ -33,7 +33,7 @@ const PRIORITY_ICONS: Record<NoticePriority, typeof AlertTriangle> = {
 
 export default function NoticeBoardPage() {
   const bn = useBn()
-  usePermission()
+  const { canCreate, canEdit, canDelete } = usePermission()
   const { isMobile } = useWindowSize()
   const notices = useNoticeStore((s) => s.notices)
   const addNotice = useNoticeStore((s) => s.addNotice)
@@ -98,14 +98,16 @@ export default function NoticeBoardPage() {
             {pinnedCount > 0 && ` · ${bn ? `${pinnedCount}টি পিন করা` : `${pinnedCount} pinned`}`}
           </p>
         </div>
-        <button
-          onClick={() => { setEditItem(null); setShowModal(true) }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-colors"
-          style={{ background: 'var(--brand)' }}
-        >
-          <Plus size={16} />
-          {bn ? 'নোটিশ তৈরি' : 'Create Notice'}
-        </button>
+        {canCreate('notice') && (
+          <button
+            onClick={() => { setEditItem(null); setShowModal(true) }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-colors"
+            style={{ background: 'var(--brand)' }}
+          >
+            <Plus size={16} />
+            {bn ? 'নোটিশ তৈরি' : 'Create Notice'}
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -171,27 +173,33 @@ export default function NoticeBoardPage() {
                         {bn ? notice.authorBn : notice.author}
                       </span>
                       <div className="flex items-center gap-1 ml-auto">
-                        <button
-                          onClick={() => togglePin(notice.id)}
-                          className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
-                          title={notice.pinned ? (bn ? 'পিন সরান' : 'Unpin') : (bn ? 'পিন করুন' : 'Pin')}
-                        >
-                          {notice.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-                        </button>
-                        <button
-                          onClick={() => { setEditItem(notice); setShowModal(true) }}
-                          className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
-                          title={bn ? 'সম্পাদনা' : 'Edit'}
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(notice.id)}
-                          className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--red)] transition-colors"
-                          title={bn ? 'মুছুন' : 'Delete'}
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {canEdit('notice') && (
+                          <button
+                            onClick={() => togglePin(notice.id)}
+                            className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
+                            title={notice.pinned ? (bn ? 'পিন সরান' : 'Unpin') : (bn ? 'পিন করুন' : 'Pin')}
+                          >
+                            {notice.pinned ? <PinOff size={14} /> : <Pin size={14} />}
+                          </button>
+                        )}
+                        {canEdit('notice') && (
+                          <button
+                            onClick={() => { setEditItem(notice); setShowModal(true) }}
+                            className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
+                            title={bn ? 'সম্পাদনা' : 'Edit'}
+                          >
+                            <Edit3 size={14} />
+                          </button>
+                        )}
+                        {canDelete('notice') && (
+                          <button
+                            onClick={() => setDeleteTarget(notice.id)}
+                            className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--red)] transition-colors"
+                            title={bn ? 'মুছুন' : 'Delete'}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

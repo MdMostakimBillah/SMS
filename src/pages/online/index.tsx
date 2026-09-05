@@ -19,7 +19,7 @@ const selectCls = inputCls + ' cursor-pointer appearance-none pr-7 bg-no-repeat 
 
 export default function OnlineClassesPage() {
   const isBn = useBn()
-  const { canRead } = usePermission()
+  const { canRead, canCreate } = usePermission()
   const { isMobile } = useWindowSize()
   const { classes: allClasses } = useClassStore()
   const { subjects } = useTeacherStore()
@@ -88,10 +88,12 @@ export default function OnlineClassesPage() {
               : isBn ? 'লাইভ ক্লাস শেয়ার করুন' : 'Share live class links'}
           </p>
         </div>
-        <button onClick={() => { setEditItem(null); setShowCreate(true) }} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.8125rem] font-medium bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all">
-          <Plus size={15} />
-          {isBn ? 'নতুন ক্লাস' : 'New Class'}
-        </button>
+        {canCreate('online.live') && (
+          <button onClick={() => { setEditItem(null); setShowCreate(true) }} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.8125rem] font-medium bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all">
+            <Plus size={15} />
+            {isBn ? 'নতুন ক্লাস' : 'New Class'}
+          </button>
+        )}
       </div>
 
       {/* Tabs */}

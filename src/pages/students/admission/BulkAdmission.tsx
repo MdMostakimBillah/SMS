@@ -5,6 +5,7 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from './types'
 import { logger } from '@/lib/logger'
+import { usePermission } from '@/hooks/usePermission'
 
 interface Row {
   id: string
@@ -70,6 +71,7 @@ export default function BulkAdmission() {
   const existing = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
   const isBn = useBn()
+  const { canCreate, canImport } = usePermission()
 
   const currentSession = institution.currentSession
   const sessions = institution.sessions
@@ -270,28 +272,34 @@ export default function BulkAdmission() {
       </div>
 
       <div className="flex justify-between items-center flex-wrap gap-2.5">
-        <button
-          onClick={addRow}
-          type="button"
-          className="flex items-center gap-1.5 px-4 py-[0.5625rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-dashed border-[var(--brand)] text-[var(--brand)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
-        >
-          <Plus size={14} />
-          {isBn ? 'সারি যোগ করুন' : 'Add Row'}
-        </button>
-        <div className="flex gap-2">
-          <label className="flex items-center gap-1.5 px-3.5 py-[0.5625rem] rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-medium">
-            <Upload size={14} />
-            {isBn ? 'CSV আপলোড' : 'CSV Upload'}
-            <input type="file" accept=".csv" className="hidden" />
-          </label>
+        {canCreate('students.admission') && (
           <button
-            onClick={handleSubmit}
+            onClick={addRow}
             type="button"
-            className="flex items-center gap-1.5 px-5 py-[0.5625rem] rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+            className="flex items-center gap-1.5 px-4 py-[0.5625rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-dashed border-[var(--brand)] text-[var(--brand)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
           >
-            <Check size={14} />
-            {isBn ? `${rows.length} জনকে ভর্তি করুন` : `Admit ${rows.length} Students`}
+            <Plus size={14} />
+            {isBn ? 'সারি যোগ করুন' : 'Add Row'}
           </button>
+        )}
+        <div className="flex gap-2">
+          {canImport('students.admission') && (
+            <label className="flex items-center gap-1.5 px-3.5 py-[0.5625rem] rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-medium">
+              <Upload size={14} />
+              {isBn ? 'CSV আপলোড' : 'CSV Upload'}
+              <input type="file" accept=".csv" className="hidden" />
+            </label>
+          )}
+          {canCreate('students.admission') && (
+            <button
+              onClick={handleSubmit}
+              type="button"
+              className="flex items-center gap-1.5 px-5 py-[0.5625rem] rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+            >
+              <Check size={14} />
+              {isBn ? `${rows.length} জনকে ভর্তি করুন` : `Admit ${rows.length} Students`}
+            </button>
+          )}
         </div>
       </div>
     </div>

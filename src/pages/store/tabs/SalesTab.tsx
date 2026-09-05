@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useStoreStore } from '@/store/storeStore'
 import { toBnNum } from '@/lib/i18n'
 import { ShoppingBag, Receipt, Filter, X, Trash2, CheckSquare, Square, MoreVertical, ChevronDown, FileSpreadsheet, FileText, Search } from 'lucide-react'
@@ -17,6 +18,7 @@ interface Props {
 
 export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const bn = useBn()
+  const { canDelete, canExport } = usePermission()
   const sales = useStoreStore((s) => s.sales)
   const categories = useStoreStore((s) => s.categories)
   const products = useStoreStore((s) => s.products)
@@ -340,7 +342,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
             {bn ? 'ফিল্টার' : 'Filters'}
             {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />}
           </button>
-          {selected.size > 0 && (
+          {selected.size > 0 && canDelete('store.sales') && (
             <button onClick={deleteSelected}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.8125rem] font-medium bg-transparent text-red-500 border border-red-500/30 hover:bg-red-500/10 transition-colors cursor-pointer">
               <Trash2 size={14} />
@@ -361,17 +363,21 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                 <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
                 <div ref={actionMenuRef}
                   className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
-                  <button onClick={() => { exportExcel(); setShowActionMenu(false) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
-                    <FileSpreadsheet size={14} className="text-[var(--green)]" />
-                    {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                  </button>
-                  <div className="h-px bg-[var(--border)] mx-2" />
-                  <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
-                    <FileText size={14} className="text-[var(--red)]" />
-                    {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                  </button>
+                  {canExport('store.sales') && (
+                    <button onClick={() => { exportExcel(); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                    </button>
+                  )}
+                  {canExport('store.sales') && <div className="h-px bg-[var(--border)] mx-2" />}
+                  {canExport('store.sales') && (
+                    <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                      <FileText size={14} className="text-[var(--red)]" />
+                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -483,10 +489,12 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                           <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">৳{bn ? toBnNum(r.subtotal) : r.subtotal.toLocaleString()}</span>
                         </td>
                         <td className="py-2.5 px-3 text-center">
-                          <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(r.saleId) }}
-                            className="p-1 rounded text-[var(--text-muted)] cursor-pointer hover:text-red-500 hover:bg-red-500/10 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                            <Trash2 size={14} />
-                          </button>
+                          {canDelete('store.sales') && (
+                            <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(r.saleId) }}
+                              className="p-1 rounded text-[var(--text-muted)] cursor-pointer hover:text-red-500 hover:bg-red-500/10 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )
@@ -535,10 +543,12 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                           <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">৳{bn ? toBnNum(s.total) : s.total.toLocaleString()}</span>
                         </td>
                         <td className="py-2.5 px-3 text-center">
-                          <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(s.id) }}
-                            className="p-1 rounded text-[var(--text-muted)] cursor-pointer hover:text-red-500 hover:bg-red-500/10 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                            <Trash2 size={14} />
-                          </button>
+                          {canDelete('store.sales') && (
+                            <button onClick={() => { if (confirm(bn ? 'এই বিক্রয় মুছে ফেলতে চান?' : 'Delete this sale?')) deleteSale(s.id) }}
+                              className="p-1 rounded text-[var(--text-muted)] cursor-pointer hover:text-red-500 hover:bg-red-500/10 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     )

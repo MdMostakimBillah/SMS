@@ -7,6 +7,7 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 interface RollCellProps {
   value: string
@@ -35,6 +36,7 @@ export default function ClassPromotionPage() {
   const allStudents = useAdmissionStore((s) => s.students)
   const { classes, institution, sessionClasses } = useClassStore()
   const isBn = useBn()
+  const { canCreate } = usePermission()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
@@ -169,19 +171,21 @@ export default function ClassPromotionPage() {
             {isBn ? `${fSession} থেকে পরবর্তী সেশনে ছাত্রদের প্রমোট করুন` : `Promote students from ${fSession} to next session`}
           </p>
         </div>
-        <button
-          onClick={promote}
-          className={`flex items-center gap-[0.375rem] py-[0.5625rem] px-[1.125rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_12px_rgba(99,102,241,0.3)] ${promoted ? 'bg-[var(--green)]' : 'bg-[var(--brand)]'}`}
-        >
-          {promoted ? <Check size={14} /> : <ArrowUpCircle size={14} />}
-          {promoted
-            ? isBn
-              ? `✓ ${promotedCount} জন প্রমোট হয়েছে!`
-              : `✓ ${promotedCount} Promoted!`
-            : isBn
-              ? `${selected.length} জন প্রমোট করুন`
-              : `Promote ${selected.length}`}
-        </button>
+        {canCreate('students.promotion') && (
+          <button
+            onClick={promote}
+            className={`flex items-center gap-[0.375rem] py-[0.5625rem] px-[1.125rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_12px_rgba(99,102,241,0.3)] ${promoted ? 'bg-[var(--green)]' : 'bg-[var(--brand)]'}`}
+          >
+            {promoted ? <Check size={14} /> : <ArrowUpCircle size={14} />}
+            {promoted
+              ? isBn
+                ? `✓ ${promotedCount} জন প্রমোট হয়েছে!`
+                : `✓ ${promotedCount} Promoted!`
+              : isBn
+                ? `${selected.length} জন প্রমোট করুন`
+                : `Promote ${selected.length}`}
+          </button>
+        )}
       </div>
 
       <div className={`grid gap-[1rem] items-start ${isMobile ? 'grid-cols-1' : 'grid-cols-[300px_1fr]'}`}>

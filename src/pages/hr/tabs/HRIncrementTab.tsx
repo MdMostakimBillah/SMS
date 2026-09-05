@@ -6,6 +6,7 @@ import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
 import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 interface HRIncrementTabProps {
   isBn: boolean
@@ -58,6 +59,7 @@ export const HRIncrementTab = React.memo(function HRIncrementTab({
   getTeacherName,
   sectionCls: sectionClsProp,
 }: HRIncrementTabProps) {
+  const { canCreate, canEdit, canDelete, canPrint } = usePermission()
   const resolvedSectionCls = (sectionClsProp || sectionCls)(isMobile)
 
   return (
@@ -68,20 +70,24 @@ export const HRIncrementTab = React.memo(function HRIncrementTab({
           {isBn ? 'বেতন বৃদ্ধি' : 'Increments'}
         </div>
         <div className="flex gap-1.5">
-          <button
-            onClick={() => setShowPDFModal('increment')}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <FileText size={13} />
-            PDF
-          </button>
-          <button
-            onClick={() => setModalType('increment')}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--green)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <Plus size={14} />
-            {isBn ? 'যোগ' : 'Add'}
-          </button>
+          {canPrint('hr.increment') && (
+            <button
+              onClick={() => setShowPDFModal('increment')}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <FileText size={13} />
+              PDF
+            </button>
+          )}
+          {canCreate('hr.increment') && (
+            <button
+              onClick={() => setModalType('increment')}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--green)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <Plus size={14} />
+              {isBn ? 'যোগ' : 'Add'}
+            </button>
+          )}
         </div>
       </div>
       <DateRangeFilter
@@ -165,26 +171,30 @@ export const HRIncrementTab = React.memo(function HRIncrementTab({
                   <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-secondary)]">{inc.reason}</td>
                   <td className="py-2 px-2 text-center">
                     <div className="flex gap-1 justify-center">
-                      <button
-                        onClick={() => {
-                          setIncForm({
-                            teacherId: inc.teacherId,
-                            type: inc.type,
-                            percentage: String(inc.percentage),
-                            reason: inc.reason,
-                          })
-                          setModalType('increment')
-                        }}
-                        className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[0.625rem] font-[inherit]"
-                      >
-                        <Edit2 size={11} />
-                      </button>
-                      <button
-                        onClick={() => deleteIncrement(inc.id)}
-                        className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[0.625rem] font-[inherit]"
-                      >
-                        <Trash2 size={11} />
-                      </button>
+                      {canEdit('hr.increment') && (
+                        <button
+                          onClick={() => {
+                            setIncForm({
+                              teacherId: inc.teacherId,
+                              type: inc.type,
+                              percentage: String(inc.percentage),
+                              reason: inc.reason,
+                            })
+                            setModalType('increment')
+                          }}
+                          className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[0.625rem] font-[inherit]"
+                        >
+                          <Edit2 size={11} />
+                        </button>
+                      )}
+                      {canDelete('hr.increment') && (
+                        <button
+                          onClick={() => deleteIncrement(inc.id)}
+                          className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[0.625rem] font-[inherit]"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

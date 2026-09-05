@@ -14,6 +14,7 @@ import {
 import { sectionCls, sectionTitleCls, inputCls } from '@/pages/hr/utils'
 import type { BonForm } from '@/pages/hr/types'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 interface HRBonusTabProps {
   isBn: boolean
@@ -62,6 +63,8 @@ export const HRBonusTab = React.memo(function HRBonusTab({
   setShowPDFModal,
   getTeacherName,
 }: HRBonusTabProps) {
+  const { canCreate, canEdit, canDelete, canPrint } = usePermission()
+
   return (
     <div className={sectionCls(isMobile)}>
       <div className="flex justify-between items-center mb-[0.875rem]">
@@ -70,20 +73,24 @@ export const HRBonusTab = React.memo(function HRBonusTab({
           {isBn ? 'বোনাস' : 'Bonuses'}
         </div>
         <div className="flex gap-1.5">
-          <button
-            onClick={() => setShowPDFModal('bonus')}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <FileText size={13} />
-            PDF
-          </button>
-          <button
-            onClick={() => setModalType('bonus')}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--amber)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <Plus size={14} />
-            {isBn ? 'যোগ' : 'Add'}
-          </button>
+          {canPrint('hr.bonus') && (
+            <button
+              onClick={() => setShowPDFModal('bonus')}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <FileText size={13} />
+              PDF
+            </button>
+          )}
+          {canCreate('hr.bonus') && (
+            <button
+              onClick={() => setModalType('bonus')}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--amber)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <Plus size={14} />
+              {isBn ? 'যোগ' : 'Add'}
+            </button>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -210,27 +217,31 @@ export const HRBonusTab = React.memo(function HRBonusTab({
                 <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-secondary)]">{bon.reason}</td>
                 <td className="py-2 px-2 text-center">
                   <div className="flex gap-1 justify-center">
-                    <button
-                      onClick={() => {
-                        setBonForm({
-                          teacherId: bon.teacherId,
-                          type: bon.type,
-                          amount: String(bon.amount),
-                          reason: bon.reason,
-                          month: bon.month,
-                        })
-                        setModalType('bonus')
-                      }}
-                      className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[0.625rem] font-[inherit]"
-                    >
-                      <Edit2 size={11} />
-                    </button>
-                    <button
-                      onClick={() => deleteBonus(bon.id)}
-                      className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[0.625rem] font-[inherit]"
-                    >
-                      <Trash2 size={11} />
-                    </button>
+                    {canEdit('hr.bonus') && (
+                      <button
+                        onClick={() => {
+                          setBonForm({
+                            teacherId: bon.teacherId,
+                            type: bon.type,
+                            amount: String(bon.amount),
+                            reason: bon.reason,
+                            month: bon.month,
+                          })
+                          setModalType('bonus')
+                        }}
+                        className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[0.625rem] font-[inherit]"
+                      >
+                        <Edit2 size={11} />
+                      </button>
+                    )}
+                    {canDelete('hr.bonus') && (
+                      <button
+                        onClick={() => deleteBonus(bon.id)}
+                        className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[0.625rem] font-[inherit]"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

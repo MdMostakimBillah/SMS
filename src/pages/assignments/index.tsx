@@ -77,7 +77,7 @@ function PageSkeleton() {
 
 export default function AssignmentPage() {
   const isBn = useBn()
-  usePermission()
+  const { canCreate, canEdit, canDelete } = usePermission()
   const { isMobile } = useWindowSize()
   const classes = useClassStore((s) => s.classes)
   const teachers = useTeacherStore((s) => s.teachers)
@@ -379,12 +379,14 @@ export default function AssignmentPage() {
               {isBn ? 'তারিখ ক্লিক করে অ্যাসাইনমেন্ট তৈরি করুন' : 'Click a date to create assignment'}
             </p>
           </div>
-          <button
-            onClick={() => setShowTypeSelect(true)}
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
-          >
-            <Plus size={18} />
-          </button>
+          {canCreate('assignments') && (
+            <button
+              onClick={() => setShowTypeSelect(true)}
+              className="flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
+            >
+              <Plus size={18} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -477,12 +479,16 @@ export default function AssignmentPage() {
                       <button onClick={() => setDetailItem(item)} className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] transition-colors border-none bg-transparent cursor-pointer">
                         <Eye size={14} style={{ color: 'var(--text-muted)' }} />
                       </button>
-                      <button onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] transition-colors border-none bg-transparent cursor-pointer">
-                        <Edit2 size={14} style={{ color: 'var(--text-muted)' }} />
-                      </button>
-                      <button onClick={() => setDeleteTarget(item)} className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] transition-colors border-none bg-transparent cursor-pointer">
-                        <Trash2 size={14} style={{ color: 'var(--text-muted)' }} />
-                      </button>
+                      {canEdit('assignments') && (
+                        <button onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] transition-colors border-none bg-transparent cursor-pointer">
+                          <Edit2 size={14} style={{ color: 'var(--text-muted)' }} />
+                        </button>
+                      )}
+                      {canDelete('assignments') && (
+                        <button onClick={() => setDeleteTarget(item)} className="p-1.5 rounded-md hover:bg-[var(--bg-primary)] transition-colors border-none bg-transparent cursor-pointer">
+                          <Trash2 size={14} style={{ color: 'var(--text-muted)' }} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 )

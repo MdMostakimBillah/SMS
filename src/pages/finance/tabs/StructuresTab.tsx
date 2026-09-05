@@ -3,6 +3,7 @@ import React from 'react'
 import { Trash2, Edit2, ToggleLeft, ToggleRight, Copy, Search, Plus, Repeat, Zap, DollarSign } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { toBnNum } from '@/lib/i18n'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -18,6 +19,7 @@ interface Props {
 
 export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkAssign }: Props) {
   const bn = useBn()
+  const { canCreate, canEdit, canDelete } = usePermission()
   const { classes, institution } = useClassStore()
   const { structures, addStructure, deleteStructure, toggleStructureActive } = useFeeStore()
   const [searchParams] = useSearchParams()
@@ -140,10 +142,12 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={onBulkAssign} className={`${btnSecondary} text-xs`}>
-            <Copy size={12} /> {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
-          </button>
-          {selectedIds.size > 0 && (
+          {canEdit('finance.fees.structures') && (
+            <button onClick={onBulkAssign} className={`${btnSecondary} text-xs`}>
+              <Copy size={12} /> {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
+            </button>
+          )}
+          {selectedIds.size > 0 && canDelete('finance.fees.structures') && (
             <button
               onClick={handleBulkDelete}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--red)] text-white border-0 cursor-pointer hover:bg-[var(--red)]/80 transition-colors"
@@ -236,9 +240,11 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
             </div>
           </div>
           <div className="flex items-center justify-end">
-            <button onClick={handleQuickAdd} disabled={!canQuickAdd} className={`${btnPrimary} h-8 text-xs disabled:opacity-50`}>
-              {saved ? (bn ? 'যোগ হয়েছে!' : 'Added!') : (bn ? 'যোগ করুন' : 'Add')}
-            </button>
+            {canCreate('finance.fees.structures') && (
+              <button onClick={handleQuickAdd} disabled={!canQuickAdd} className={`${btnPrimary} h-8 text-xs disabled:opacity-50`}>
+                {saved ? (bn ? 'যোগ হয়েছে!' : 'Added!') : (bn ? 'যোগ করুন' : 'Add')}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -327,27 +333,33 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
                   </td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => toggleStructureActive(s.id)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors"
-                        title={s.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}
-                      >
-                        {s.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
-                      </button>
-                      <button
-                        onClick={() => onEdit(s)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--amber)] hover:bg-[var(--amber-light)] transition-colors"
-                        title={bn ? 'সম্পাদনা' : 'Edit'}
-                      >
-                        <Edit2 size={13} />
-                      </button>
-                      <button
-                        onClick={() => { if (confirm(bn ? 'আপনি কি নিশ্চিত?' : 'Are you sure?')) deleteStructure(s.id) }}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--red)] hover:bg-[var(--red-light)] transition-colors"
-                        title={bn ? 'মুছুন' : 'Delete'}
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {canEdit('finance.fees.structures') && (
+                        <button
+                          onClick={() => toggleStructureActive(s.id)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors"
+                          title={s.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}
+                        >
+                          {s.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
+                        </button>
+                      )}
+                      {canEdit('finance.fees.structures') && (
+                        <button
+                          onClick={() => onEdit(s)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--amber)] hover:bg-[var(--amber-light)] transition-colors"
+                          title={bn ? 'সম্পাদনা' : 'Edit'}
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                      )}
+                      {canDelete('finance.fees.structures') && (
+                        <button
+                          onClick={() => { if (confirm(bn ? 'আপনি কি নিশ্চিত?' : 'Are you sure?')) deleteStructure(s.id) }}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--red)] hover:bg-[var(--red-light)] transition-colors"
+                          title={bn ? 'মুছুন' : 'Delete'}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

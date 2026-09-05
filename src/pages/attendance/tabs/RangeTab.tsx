@@ -16,6 +16,7 @@ import {
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import { shortDate, dayName, isFriday } from '../helpers'
+import { usePermission } from '@/hooks/usePermission'
 
 interface RangeTabProps {
   isBn: boolean
@@ -61,6 +62,7 @@ export const RangeTab = React.memo(function RangeTab({
   getDeptName,
   getStatus,
 }: RangeTabProps) {
+  const { canExport } = usePermission()
   return (
     <>
       {/* Stats cards */}
@@ -107,6 +109,7 @@ export const RangeTab = React.memo(function RangeTab({
           )}
         </div>
         <div className="flex gap-1.5">
+          {canExport('attendance.range.export') && (
           <button
             onClick={exportEmployeeExcel}
             className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] cursor-pointer font-medium"
@@ -114,6 +117,8 @@ export const RangeTab = React.memo(function RangeTab({
             <FileSpreadsheet size={13} />
             Excel
           </button>
+          )}
+          {canExport('attendance.range.export') && (
           <button
             onClick={() => setShowEmployeePDF(true)}
             disabled={selectedEmployees.length === 0}
@@ -126,6 +131,7 @@ export const RangeTab = React.memo(function RangeTab({
             <FileText size={13} />
             PDF {selectedEmployees.length > 0 && `(${selectedEmployees.length})`}
           </button>
+          )}
         </div>
       </div>
 

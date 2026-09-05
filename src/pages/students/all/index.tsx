@@ -39,6 +39,7 @@ import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { BLOOD_GROUPS } from '@/lib/constants'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 
@@ -52,6 +53,7 @@ export default function AllStudentsPage() {
   const { classes, institution } = useClassStore()
   const currentSession = institution.currentSession
   const isBn = useBn()
+  const { canEdit, canExport } = usePermission()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
@@ -368,16 +370,18 @@ export default function AllStudentsPage() {
               >
                 {isBn ? 'বন্ধ' : 'Close'}
               </button>
-              <button
-                onClick={() => {
-                  navigate(nav('/students/update'), { state: { studentId: viewSt.id } })
-                  setViewSt(null)
-                }}
-                className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer"
-              >
-                <Edit2 size={13} />
-                {isBn ? 'এডিট' : 'Edit'}
-              </button>
+              {canEdit('students.all') && (
+                <button
+                  onClick={() => {
+                    navigate(nav('/students/update'), { state: { studentId: viewSt.id } })
+                    setViewSt(null)
+                  }}
+                  className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer"
+                >
+                  <Edit2 size={13} />
+                  {isBn ? 'এডিট' : 'Edit'}
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -400,13 +404,15 @@ export default function AllStudentsPage() {
               {isBn ? 'সকল ছাত্র' : 'All Students'}
             </h1>
             <div className="flex gap-2 shrink-0">
-              <button
-                onClick={() => navigate(nav('/students/update'))}
-                className="flex items-center gap-[0.3125rem] px-3 py-2 rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-medium"
-              >
-                <Edit2 size={14} />
-                {!isMobile && (isBn ? 'আপডেট' : 'Update')}
-              </button>
+              {canEdit('students.all') && (
+                <button
+                  onClick={() => navigate(nav('/students/update'))}
+                  className="flex items-center gap-[0.3125rem] px-3 py-2 rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-medium"
+                >
+                  <Edit2 size={14} />
+                  {!isMobile && (isBn ? 'আপডেট' : 'Update')}
+                </button>
+              )}
               <button
                 onClick={() => navigate(nav('/students/bulk-update'))}
                 className="flex items-center gap-[0.3125rem] px-3 py-2 rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-medium"
@@ -627,57 +633,61 @@ export default function AllStudentsPage() {
                     overflow: 'hidden',
                   }}
                 >
-                  <button
-                    onClick={() => {
-                      exportExcel()
-                      setShowActionMenu(false)
-                    }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.625rem 0.875rem',
-                      border: 'none',
-                      background: 'transparent',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.8125rem',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
-                    {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                  </button>
+                  {canExport('students.all') && (
+                    <button
+                      onClick={() => {
+                        exportExcel()
+                        setShowActionMenu(false)
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.625rem 0.875rem',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8125rem',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        textAlign: 'left',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                      {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                    </button>
+                  )}
                   <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
-                  <button
-                    onClick={() => {
-                      setShowPDF(true)
-                      setShowActionMenu(false)
-                    }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.625rem 0.875rem',
-                      border: 'none',
-                      background: 'transparent',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.8125rem',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      textAlign: 'left',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <FileText size={14} style={{ color: 'var(--red)' }} />
-                    {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                  </button>
+                  {canExport('students.all') && (
+                    <button
+                      onClick={() => {
+                        setShowPDF(true)
+                        setShowActionMenu(false)
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.625rem 0.875rem',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8125rem',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit',
+                        textAlign: 'left',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <FileText size={14} style={{ color: 'var(--red)' }} />
+                      {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -809,17 +819,19 @@ export default function AllStudentsPage() {
                         >
                           <Edit2 size={12} />
                         </button>
-                        <button
-                          onClick={() => s.active === false ? setReactivateTarget(s) : setInactiveTarget(s)}
-                          title={s.active === false ? 'Reactivate' : 'Inactive'}
-                          className={`w-[1.625rem] h-[1.625rem] rounded-[0.375rem] border-0 cursor-pointer flex items-center justify-center ${
-                            s.active === false
-                              ? 'bg-[var(--green-light)] text-[var(--green)]'
-                              : 'bg-[var(--red-light)] text-[var(--red)]'
-                          }`}
-                        >
-                          {s.active === false ? <UserCheck size={12} /> : <UserX size={12} />}
-                        </button>
+                        {canEdit('students.all') && (
+                          <button
+                            onClick={() => s.active === false ? setReactivateTarget(s) : setInactiveTarget(s)}
+                            title={s.active === false ? 'Reactivate' : 'Inactive'}
+                            className={`w-[1.625rem] h-[1.625rem] rounded-[0.375rem] border-0 cursor-pointer flex items-center justify-center ${
+                              s.active === false
+                                ? 'bg-[var(--green-light)] text-[var(--green)]'
+                                : 'bg-[var(--red-light)] text-[var(--red)]'
+                            }`}
+                          >
+                            {s.active === false ? <UserCheck size={12} /> : <UserX size={12} />}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

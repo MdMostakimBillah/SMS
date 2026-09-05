@@ -21,6 +21,7 @@ import {
 import { sectionCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { openPrintWindow } from '@/lib/pdf'
 import { XLSX } from '@/lib/excelExport'
+import { usePermission } from '@/hooks/usePermission'
 import { generateInvigilatorGuardListPDF } from '../pdfTemplates/invigilatorPdfTemplate'
 import type { InvigilatorGridData, InvigilatorGridDay, InvigilatorGridRow, InvigilatorPDFOptions } from '../pdfTemplates/invigilatorPdfTemplate'
 import { InvigilatorPDFOptionsModal } from '@/components/shared/InvigilatorPDFOptionsModal'
@@ -70,6 +71,7 @@ export default React.memo(function InvigilatorsTab({
   removeInvigilator,
   examDayCount,
 }: Props) {
+  const { canCreate, canRead, canDelete } = usePermission()
   const [invigAssignType, setInvigAssignType] = useState<'room' | 'class'>('room')
   const [showInvigForm, setShowInvigForm] = useState(false)
   const [invigForm, setInvigForm] = useState({ roomId: '', teacherId: '', date: '', shift: 'morning' as 'morning' | 'afternoon', classSection: '' })
@@ -272,7 +274,7 @@ export default React.memo(function InvigilatorsTab({
                 {isBn ? 'শ্রেণি/সেকশন ভিত্তিক' : 'Class / Section Wise'}
               </button>
               <div className="flex-1" />
-              {filteredInvigilators.length > 0 && (
+              {filteredInvigilators.length > 0 && canRead('exams.read.view') && (
                 <div style={{ position: 'relative' }} ref={invigActionMenuRef}>
                   <button
                     onClick={() => setShowInvigActionMenu(!showInvigActionMenu)}
@@ -354,16 +356,18 @@ export default React.memo(function InvigilatorsTab({
                   )}
                 </div>
               )}
-              <button
-                onClick={() => {
-                  setShowInvigForm(true)
-                  setInvigForm({ roomId: '', teacherId: '', date: '', shift: 'morning', classSection: '' })
-                }}
-                className={btnPrimary}
-              >
-                <Plus size={14} />
-                {isBn ? 'নতুন নিয়োগ' : 'New Assignment'}
-              </button>
+              {canCreate('exams.create.create') && (
+                <button
+                  onClick={() => {
+                    setShowInvigForm(true)
+                    setInvigForm({ roomId: '', teacherId: '', date: '', shift: 'morning', classSection: '' })
+                  }}
+                  className={btnPrimary}
+                >
+                  <Plus size={14} />
+                  {isBn ? 'নতুন নিয়োগ' : 'New Assignment'}
+                </button>
+              )}
             </div>
             {(hasRoomAssign || hasClassAssign) && (
               <div className="text-[0.5625rem] text-[var(--text-muted)] mt-1.5">
@@ -497,15 +501,17 @@ export default React.memo(function InvigilatorsTab({
                                     {studentCount > 0 && assignedList.length > 0 && (
                                       <div className="text-[0.5rem] text-[var(--text-muted)]">{studentCount} {isBn ? 'জন ছাত্র' : 'students'}</div>
                                     )}
-                                    <button
-                                      onClick={() => {
-                                        setInvigForm((p) => ({ ...p, date: dateStr }))
-                                        setShowInvigForm(true)
-                                      }}
-                                      className="w-full h-7 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
-                                    >
-                                      +
-                                    </button>
+                                    {canCreate('exams.create.create') && (
+                                      <button
+                                        onClick={() => {
+                                          setInvigForm((p) => ({ ...p, date: dateStr }))
+                                          setShowInvigForm(true)
+                                        }}
+                                        className="w-full h-7 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
+                                      >
+                                        +
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </td>
@@ -576,9 +582,9 @@ export default React.memo(function InvigilatorsTab({
                                         return (
                                           <div
                                             key={inv.id}
-                                            className="rounded-lg p-1.5 bg-[var(--brand-light)] border border-[var(--brand)]/20 cursor-pointer hover:shadow-sm transition-all"
+                                            className={`rounded-lg p-1.5 bg-[var(--brand-light)] border border-[var(--brand)]/20 ${canDelete('exams.delete.delete') ? 'cursor-pointer hover:shadow-sm transition-all' : ''}`}
                                             onClick={() => {
-                                              if (confirm(isBn ? 'এই নিয়োগ মুছে ফেলবেন?' : 'Remove this assignment?')) removeInvigilator(inv.id)
+                                              if (canDelete('exams.delete.delete') && confirm(isBn ? 'এই নিয়োগ মুছে ফেলবেন?' : 'Remove this assignment?')) removeInvigilator(inv.id)
                                             }}
                                           >
                                             <div className="text-[0.5625rem] font-semibold text-[var(--brand)] truncate">{teacher?.nameEn || inv.teacherId}</div>
@@ -590,15 +596,17 @@ export default React.memo(function InvigilatorsTab({
                                           {isBn ? subject.nameBn : subject.name}
                                         </div>
                                       )}
-                                      <button
-                                        onClick={() => {
-                                          setInvigForm((p) => ({ ...p, date: dateStr, classSection: cs.label }))
-                                          setShowInvigForm(true)
-                                        }}
-                                        className="w-full h-7 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
-                                      >
-                                        +
-                                      </button>
+                                      {canCreate('exams.create.create') && (
+                                        <button
+                                          onClick={() => {
+                                            setInvigForm((p) => ({ ...p, date: dateStr, classSection: cs.label }))
+                                            setShowInvigForm(true)
+                                          }}
+                                          className="w-full h-7 rounded-lg border border-dashed border-[var(--border)] text-[0.5rem] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center"
+                                        >
+                                          +
+                                        </button>
+                                      )}
                                     </div>
                                   )}
                                 </td>

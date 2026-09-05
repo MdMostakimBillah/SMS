@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { Search, BookOpen, User, Calendar, AlertCircle, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLibraryStore } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -24,6 +25,7 @@ function capitalize(s: string) { return s.charAt(0).toUpperCase() + s.slice(1) }
 
 export function IssueTab(_props: Props) {
   const bn = useBn()
+  const { canCreate } = usePermission()
   const { user } = useAuth()
   const books = useLibraryStore((s) => s.books)
   const copies = useLibraryStore((s) => s.copies)
@@ -388,9 +390,11 @@ export function IssueTab(_props: Props) {
             </div>
           </div>
 
-          <button onClick={() => setShowConfirm(true)} className="w-full py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-medium hover:opacity-90 transition-opacity">
-            {bn ? 'বই ইস্যু করুন' : 'Issue Book'}
-          </button>
+          {canCreate('library.issue') && (
+            <button onClick={() => setShowConfirm(true)} className="w-full py-2.5 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-medium hover:opacity-90 transition-opacity">
+              {bn ? 'বই ইস্যু করুন' : 'Issue Book'}
+            </button>
+          )}
         </div>
       )}
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { RefreshCw, Settings, Trash2, Wifi, WifiOff, X } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import type { DeviceEntry } from '../types'
 
 interface DeviceManagementTabProps {
@@ -10,6 +11,7 @@ interface DeviceManagementTabProps {
 }
 
 export function DeviceManagementTab({ isBn, devices, setDevices }: DeviceManagementTabProps) {
+  const { canDelete } = usePermission()
   const [syncingDevice, setSyncingDevice] = useState<string | null>(null)
   const [showDeviceSettings, setShowDeviceSettings] = useState<string | null>(null)
   const [deviceSettings, setDeviceSettings] = useState({
@@ -95,17 +97,19 @@ export function DeviceManagementTab({ isBn, devices, setDevices }: DeviceManagem
                       >
                         <Settings size={11} />
                       </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(isBn ? `"${d.name}" মুছে ফেলতে চান?` : `Delete "${d.name}"?`)) {
-                            setDevices((prev) => prev.filter((dev) => dev.id !== d.id))
-                          }
-                        }}
-                        title={isBn ? 'মুছুন' : 'Delete'}
-                        className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--red-light)] hover:border-[var(--red)] hover:text-[var(--red)] transition-all"
-                      >
-                        <Trash2 size={11} />
-                      </button>
+                      {canDelete('attendance.device') && (
+                        <button
+                          onClick={() => {
+                            if (confirm(isBn ? `"${d.name}" মুছে ফেলতে চান?` : `Delete "${d.name}"?`)) {
+                              setDevices((prev) => prev.filter((dev) => dev.id !== d.id))
+                            }
+                          }}
+                          title={isBn ? 'মুছুন' : 'Delete'}
+                          className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--red-light)] hover:border-[var(--red)] hover:text-[var(--red)] transition-all"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setDevices((prev) => prev.map((dev) => dev.id === d.id ? { ...dev, status: dev.status === 'online' ? 'offline' : 'online' } : dev))}
                         title={d.status === 'online' ? (isBn ? 'অফলাইন করুন' : 'Go Offline') : (isBn ? 'অনলাইন করুন' : 'Go Online')}

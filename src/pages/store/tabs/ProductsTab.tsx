@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useStoreStore, type StoreProduct } from '@/store/storeStore'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
 import { toBnNum } from '@/lib/i18n'
@@ -13,6 +14,7 @@ interface Props {
 
 export const ProductsTab = ({ isMobile, searchQuery }: Props) => {
   const bn = useBn()
+  const { canCreate, canEdit, canDelete } = usePermission()
   const classes = useClassStore((s) => s.classes)
   const categories = useStoreStore((s) => s.categories)
   const products = useStoreStore((s) => s.products)
@@ -67,9 +69,11 @@ export const ProductsTab = ({ isMobile, searchQuery }: Props) => {
             <option key={c.id} value={c.id}>{bn ? c.nameBn : c.name}</option>
           ))}
         </select>
-        <button onClick={() => { setEditItem(null); setShowModal(true) }} className={`${btnPrimary} text-[0.8125rem] ml-auto`}>
-          + {bn ? 'পণ্য' : 'Product'}
-        </button>
+        {canCreate('store.products.create') && (
+          <button onClick={() => { setEditItem(null); setShowModal(true) }} className={`${btnPrimary} text-[0.8125rem] ml-auto`}>
+            + {bn ? 'পণ্য' : 'Product'}
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -101,16 +105,22 @@ export const ProductsTab = ({ isMobile, searchQuery }: Props) => {
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => { setEditItem(p); setShowModal(true) }} className="text-[0.75rem] text-[var(--brand)] cursor-pointer hover:underline">{bn ? 'সম্পাদনা' : 'Edit'}</button>
-                  <button onClick={() => toggleProductActive(p.id)} className="text-[0.75rem] text-[var(--text-secondary)] cursor-pointer hover:underline">{p.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}</button>
-                  {adjustId === p.id ? (
-                    <div className="flex items-center gap-1 ml-auto">
-                      <input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="w-14 py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-tertiary)] text-[0.75rem] outline-none" placeholder="+N" />
-                      <button onClick={() => handleAdjust(p.id)} className="text-[0.75rem] text-green-500 cursor-pointer">{bn ? 'যোগ' : 'Add'}</button>
-                      <button onClick={() => { setAdjustId(null); setAdjustQty('') }} className="text-[0.75rem] text-[var(--text-secondary)] cursor-pointer">{bn ? 'বাতিল' : 'Cancel'}</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => { setAdjustId(p.id); setAdjustQty('') }} className="text-[0.75rem] text-green-500 cursor-pointer hover:underline ml-auto">+ {bn ? 'স্টক' : 'Stock'}</button>
+                  {canEdit('store.products.edit') && (
+                    <button onClick={() => { setEditItem(p); setShowModal(true) }} className="text-[0.75rem] text-[var(--brand)] cursor-pointer hover:underline">{bn ? 'সম্পাদনা' : 'Edit'}</button>
+                  )}
+                  {canEdit('store.products.edit') && (
+                    <button onClick={() => toggleProductActive(p.id)} className="text-[0.75rem] text-[var(--text-secondary)] cursor-pointer hover:underline">{p.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}</button>
+                  )}
+                  {canEdit('store.products.edit') && (
+                    adjustId === p.id ? (
+                      <div className="flex items-center gap-1 ml-auto">
+                        <input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="w-14 py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-tertiary)] text-[0.75rem] outline-none" placeholder="+N" />
+                        <button onClick={() => handleAdjust(p.id)} className="text-[0.75rem] text-green-500 cursor-pointer">{bn ? 'যোগ' : 'Add'}</button>
+                        <button onClick={() => { setAdjustId(null); setAdjustQty('') }} className="text-[0.75rem] text-[var(--text-secondary)] cursor-pointer">{bn ? 'বাতিল' : 'Cancel'}</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setAdjustId(p.id); setAdjustQty('') }} className="text-[0.75rem] text-green-500 cursor-pointer hover:underline ml-auto">+ {bn ? 'স্টক' : 'Stock'}</button>
+                    )
                   )}
                 </div>
               </div>
@@ -152,17 +162,23 @@ export const ProductsTab = ({ isMobile, searchQuery }: Props) => {
                     </td>
                     <td className="py-2.5 px-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {adjustId === p.id ? (
-                          <div className="flex items-center gap-1">
-                            <input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="w-14 py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-tertiary)] text-[0.75rem] outline-none" />
-                            <button onClick={() => handleAdjust(p.id)} className="text-[0.75rem] text-green-500 cursor-pointer">{bn ? 'যোগ' : 'Add'}</button>
-                            <button onClick={() => { setAdjustId(null); setAdjustQty('') }} className="text-[0.75rem] text-[var(--text-secondary)] cursor-pointer">{bn ? 'বাতিল' : 'Cancel'}</button>
-                          </div>
-                        ) : (
-                          <button onClick={() => { setAdjustId(p.id); setAdjustQty('') }} className="text-[0.75rem] text-green-500 cursor-pointer hover:underline">+ {bn ? 'স্টক' : 'Stock'}</button>
+                        {canEdit('store.products.edit') && (
+                          adjustId === p.id ? (
+                            <div className="flex items-center gap-1">
+                              <input type="number" value={adjustQty} onChange={(e) => setAdjustQty(e.target.value)} className="w-14 py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-tertiary)] text-[0.75rem] outline-none" />
+                              <button onClick={() => handleAdjust(p.id)} className="text-[0.75rem] text-green-500 cursor-pointer">{bn ? 'যোগ' : 'Add'}</button>
+                              <button onClick={() => { setAdjustId(null); setAdjustQty('') }} className="text-[0.75rem] text-[var(--text-secondary)] cursor-pointer">{bn ? 'বাতিল' : 'Cancel'}</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => { setAdjustId(p.id); setAdjustQty('') }} className="text-[0.75rem] text-green-500 cursor-pointer hover:underline">+ {bn ? 'স্টক' : 'Stock'}</button>
+                          )
                         )}
-                        <button onClick={() => { setEditItem(p); setShowModal(true) }} className="text-[0.75rem] text-[var(--brand)] cursor-pointer hover:underline">{bn ? 'সম্পাদনা' : 'Edit'}</button>
-                        <button onClick={() => deleteProduct(p.id)} className="text-[0.75rem] text-red-500 cursor-pointer hover:underline">{bn ? 'মুছুন' : 'Delete'}</button>
+                        {canEdit('store.products.edit') && (
+                          <button onClick={() => { setEditItem(p); setShowModal(true) }} className="text-[0.75rem] text-[var(--brand)] cursor-pointer hover:underline">{bn ? 'সম্পাদনা' : 'Edit'}</button>
+                        )}
+                        {canDelete('store.products.delete') && (
+                          <button onClick={() => deleteProduct(p.id)} className="text-[0.75rem] text-red-500 cursor-pointer hover:underline">{bn ? 'মুছুন' : 'Delete'}</button>
+                        )}
                       </div>
                     </td>
                   </tr>

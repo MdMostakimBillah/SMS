@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { LayoutGrid, Download, X } from 'lucide-react'
 import { useExamStore } from '@/store/examStore'
 import { sectionCls, sectionTitleCls, selectCls, btnPrimary } from '@/lib/styles'
+import { usePermission } from '@/hooks/usePermission'
 
 interface Props {
   isBn: boolean
@@ -33,6 +34,7 @@ export default React.memo(function SeatsTab({
   const [seatSectionId, setSeatSectionId] = useState('')
   const [assignRoomStudentId, setAssignRoomStudentId] = useState('')
   const [assignRoomId, setAssignRoomId] = useState('')
+  const { canCreate, canRead } = usePermission()
   const routines = useExamStore((s) => s.routines)
 
   const sectionStudents = useMemo(() => {
@@ -185,11 +187,13 @@ export default React.memo(function SeatsTab({
             </select>
           </div>
           <div className="flex items-end gap-2">
-            <button onClick={handleAutoSeat} disabled={!seatClassId || !seatSectionId || !selectedExamId} className={`${btnPrimary} text-[0.6875rem] ${!seatClassId || !seatSectionId || !selectedExamId ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              <LayoutGrid size={13} />
-              {isBn ? 'অটো বরাদ্দ' : 'Auto Assign'}
-            </button>
-            {seatClassId && seatSectionId && seatPlans.some((sp) => sp.classId === seatClassId && sp.sectionId === seatSectionId) && (
+            {canCreate('exams.create.create') && (
+              <button onClick={handleAutoSeat} disabled={!seatClassId || !seatSectionId || !selectedExamId} className={`${btnPrimary} text-[0.6875rem] ${!seatClassId || !seatSectionId || !selectedExamId ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <LayoutGrid size={13} />
+                {isBn ? 'অটো বরাদ্দ' : 'Auto Assign'}
+              </button>
+            )}
+            {seatClassId && seatSectionId && seatPlans.some((sp) => sp.classId === seatClassId && sp.sectionId === seatSectionId) && canRead('exams.read.view') && (
               <button onClick={downloadSeatPlanPDF} className="px-3 py-2 rounded-lg bg-[var(--teal-light)] border border-[var(--teal)]/20 text-[var(--teal)] text-[0.6875rem] font-medium cursor-pointer hover:shadow-sm flex items-center gap-1.5">
                 <Download size={13} />
                 {isBn ? 'আসন পরিকল্পনা ডাউনলোড' : 'Download Seat Plan'}
@@ -291,9 +295,11 @@ export default React.memo(function SeatsTab({
               <button onClick={() => setAssignRoomStudentId('')} className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer">
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button onClick={() => handleAssignSingleSeat(assignRoomStudentId)} disabled={!assignRoomId} className={`${btnPrimary} text-[0.75rem] ${!assignRoomId ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                {isBn ? 'বরাদ্দ করুন' : 'Assign'}
-              </button>
+              {canCreate('exams.create.create') && (
+                <button onClick={() => handleAssignSingleSeat(assignRoomStudentId)} disabled={!assignRoomId} className={`${btnPrimary} text-[0.75rem] ${!assignRoomId ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  {isBn ? 'বরাদ্দ করুন' : 'Assign'}
+                </button>
+              )}
             </div>
           </div>
         </div>,

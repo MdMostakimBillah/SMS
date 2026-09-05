@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Bus, Pencil, Trash2, Plus, Phone, Route } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useTransportStore, type TransportVehicle } from '@/store/transportStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { VehicleModal } from '../modals/VehicleModal'
@@ -12,6 +13,7 @@ interface Props {
 
 export const VehiclesTab = ({ searchQuery }: Props) => {
   const bn = useBn()
+  const { canCreate, canEdit, canDelete } = usePermission()
   const vehicles = useTransportStore((s) => s.vehicles)
   const routes = useTransportStore((s) => s.routes)
   const assignments = useTransportStore((s) => s.assignments)
@@ -67,13 +69,15 @@ export const VehiclesTab = ({ searchQuery }: Props) => {
         <div className="text-[0.8125rem] text-[var(--text-secondary)]">
           {bn ? `${filtered.length} টি যানবাহন` : `${filtered.length} vehicles`}
         </div>
-        <button
-          onClick={() => { setEditItem(null); setShowModal(true) }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90"
-        >
-          <Plus size={15} />
-          {bn ? 'যানবাহন' : 'Vehicle'}
-        </button>
+        {canCreate('transport.vehicles') && (
+          <button
+            onClick={() => { setEditItem(null); setShowModal(true) }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90"
+          >
+            <Plus size={15} />
+            {bn ? 'যানবাহন' : 'Vehicle'}
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -143,18 +147,22 @@ export const VehiclesTab = ({ searchQuery }: Props) => {
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-end gap-1.5">
-                      <button
-                        onClick={() => { setEditItem(v); setShowModal(true) }}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] cursor-pointer transition-colors"
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(v.id)}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 cursor-pointer transition-colors"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {canEdit('transport.vehicles') && (
+                        <button
+                          onClick={() => { setEditItem(v); setShowModal(true) }}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] cursor-pointer transition-colors"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      )}
+                      {canDelete('transport.vehicles') && (
+                        <button
+                          onClick={() => setDeleteId(v.id)}
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 cursor-pointer transition-colors"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

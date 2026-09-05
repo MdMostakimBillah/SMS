@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { Copy, CheckCircle, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 
 interface Props {
   isBn: boolean
@@ -26,6 +27,7 @@ export function ApiKeysPanel({ isBn, onBack }: Props) {
   const [newKeyName, setNewKeyName] = useState('')
   const [visibleKeys, setVisibleKeys] = useState<string[]>([])
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const { canManage } = usePermission()
 
   const handleCreate = () => {
     if (!newKeyName.trim()) return
@@ -80,12 +82,14 @@ export function ApiKeysPanel({ isBn, onBack }: Props) {
                     {isBn ? 'তৈরি' : 'Created'}: {apiKey.created} • {isBn ? 'শেষ ব্যবহার' : 'Last used'}: {apiKey.lastUsed}
                   </div>
                 </div>
+                {canManage('settings.apikeys.manage') && (
                 <button
                   onClick={() => handleDelete(apiKey.id)}
                   className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors"
                 >
                   <Trash2 size={14} />
                 </button>
+                )}
               </div>
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
                 <code className="flex-1 text-[0.75rem] font-mono text-[var(--text-primary)] truncate">
@@ -137,7 +141,7 @@ export function ApiKeysPanel({ isBn, onBack }: Props) {
               </button>
             </div>
           </div>
-        ) : (
+        ) : canManage('settings.apikeys.manage') && (
           <button
             onClick={() => setShowNewKey(true)}
             className="w-full h-10 rounded-xl border border-dashed border-[var(--border)] text-[var(--text-muted)] text-[0.8125rem] font-medium cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors flex items-center justify-center gap-2 bg-transparent"

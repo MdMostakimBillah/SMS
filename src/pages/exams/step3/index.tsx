@@ -5,6 +5,7 @@ import { useBn } from '@/hooks/useBn'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { usePermission } from '@/hooks/usePermission'
 
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } from '@/store/classStore'
@@ -34,6 +35,7 @@ export default function Step3Evaluation() {
   const students = useSessionStudents()
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
+  const { canEdit, canPublish } = usePermission()
 
   const allExamConfigs = useExamStore((s) => s.examConfigs)
   const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])
@@ -537,34 +539,36 @@ export default function Step3Evaluation() {
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          {isEditing ? (
-                            <>
+                        {canEdit('exams.results.edit') && (
+                          <div className="flex items-center gap-1.5">
+                            {isEditing ? (
+                              <>
+                                <button
+                                  onClick={() => handleSaveStruct(config)}
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:opacity-90 transition-all"
+                                >
+                                  <Save size={12} />
+                                  {isBn ? 'সেভ' : 'Save'}
+                                </button>
+                                <button
+                                  onClick={handleCancelEditStruct}
+                                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--text-muted)] transition-all"
+                                >
+                                  <X size={12} />
+                                  {isBn ? 'বাতিল' : 'Cancel'}
+                                </button>
+                              </>
+                            ) : (
                               <button
-                                onClick={() => handleSaveStruct(config)}
-                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[0.6875rem] font-medium cursor-pointer border-none hover:opacity-90 transition-all"
+                                onClick={() => handleStartEditStruct(config)}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
                               >
-                                <Save size={12} />
-                                {isBn ? 'সেভ' : 'Save'}
+                                <Pencil size={12} />
+                                {isBn ? 'সম্পাদনা' : 'Edit'}
                               </button>
-                              <button
-                                onClick={handleCancelEditStruct}
-                                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--text-muted)] transition-all"
-                              >
-                                <X size={12} />
-                                {isBn ? 'বাতিল' : 'Cancel'}
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => handleStartEditStruct(config)}
-                              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.6875rem] font-medium cursor-pointer border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
-                            >
-                              <Pencil size={12} />
-                              {isBn ? 'সম্পাদনা' : 'Edit'}
-                            </button>
-                          )}
-                        </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Sub-exams */}
@@ -1168,32 +1172,34 @@ export default function Step3Evaluation() {
                             </span>
                           </div>
                         </div>
-                        <button
-                          onClick={() => {
-                            if (row.isLocked) {
-                              unlockMarks(selectedExamId, publishClassData!.name, publishSectionId || '', row.subjectId)
-                            } else {
-                              lockMarks(selectedExamId, publishClassData!.name, publishSectionId || '', row.subjectId)
-                            }
-                          }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border-none transition-all ${
-                            row.isLocked
-                              ? 'bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)]/15'
-                              : 'bg-[var(--green-light)] text-[var(--green)] hover:bg-[var(--green)]/15'
-                          }`}
-                        >
-                          {row.isLocked ? (
-                            <>
-                              <Unlock size={12} />
-                              {isBn ? 'আনলক' : 'Unlock'}
-                            </>
-                          ) : (
-                            <>
-                              <Lock size={12} />
-                              {isBn ? 'লক' : 'Lock'}
-                            </>
-                          )}
-                        </button>
+                        {canPublish('exams.results.publish') && (
+                          <button
+                            onClick={() => {
+                              if (row.isLocked) {
+                                unlockMarks(selectedExamId, publishClassData!.name, publishSectionId || '', row.subjectId)
+                              } else {
+                                lockMarks(selectedExamId, publishClassData!.name, publishSectionId || '', row.subjectId)
+                              }
+                            }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.6875rem] font-medium cursor-pointer border-none transition-all ${
+                              row.isLocked
+                                ? 'bg-[var(--red-light)] text-[var(--red)] hover:bg-[var(--red)]/15'
+                                : 'bg-[var(--green-light)] text-[var(--green)] hover:bg-[var(--green)]/15'
+                            }`}
+                          >
+                            {row.isLocked ? (
+                              <>
+                                <Unlock size={12} />
+                                {isBn ? 'আনলক' : 'Unlock'}
+                              </>
+                            ) : (
+                              <>
+                                <Lock size={12} />
+                                {isBn ? 'লক' : 'Lock'}
+                              </>
+                            )}
+                          </button>
+                        )}
                       </div>
                     )
                   })
@@ -1202,7 +1208,7 @@ export default function Step3Evaluation() {
             </div>
 
             {/* Publish Result */}
-            {selectedExam && (
+            {selectedExam && canPublish('exams.results.publish') && (
               <div className={sectionCls}>
                 <div className={sectionTitleCls}>
                   <CheckCircle size={15} className="text-[var(--brand)]" />
@@ -1218,7 +1224,7 @@ export default function Step3Evaluation() {
                     return (
                       <button
                         key={c}
-                        onClick={() => toggleClassPublished(selectedExamId, c)}
+                        onClick={() => canPublish('exams.results.publish') && toggleClassPublished(selectedExamId, c)}
                         className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
                           isClassPublished
                             ? 'border-[var(--green)]/30 bg-[var(--green-light)]/30'

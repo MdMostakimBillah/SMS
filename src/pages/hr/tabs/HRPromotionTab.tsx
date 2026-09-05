@@ -5,6 +5,7 @@ import { DateRangeFilter } from '@/components/shared/DateRangeFilter'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
 import type { ProForm } from '@/pages/hr/types'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 interface HRPromotionTabProps {
   isBn: boolean
@@ -53,6 +54,8 @@ export const HRPromotionTab = React.memo(function HRPromotionTab({
   setShowPDFModal,
   getTeacherName,
 }: HRPromotionTabProps) {
+  const { canCreate, canEdit, canDelete, canPrint } = usePermission()
+
   return (
     <div className={sectionCls(false)}>
       <div className="flex justify-between items-center mb-[0.875rem]">
@@ -61,20 +64,24 @@ export const HRPromotionTab = React.memo(function HRPromotionTab({
           {isBn ? 'পদোন্নতি' : 'Promotions'}
         </div>
         <div className="flex gap-1.5">
-          <button
-            onClick={() => setShowPDFModal('promotion')}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <FileText size={13} />
-            PDF
-          </button>
-          <button
-            onClick={() => setModalType('promotion')}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--purple)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <Plus size={14} />
-            {isBn ? 'যোগ' : 'Add'}
-          </button>
+          {canPrint('hr.promotion') && (
+            <button
+              onClick={() => setShowPDFModal('promotion')}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <FileText size={13} />
+              PDF
+            </button>
+          )}
+          {canCreate('hr.promotion') && (
+            <button
+              onClick={() => setModalType('promotion')}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--purple)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <Plus size={14} />
+              {isBn ? 'যোগ' : 'Add'}
+            </button>
+          )}
         </div>
       </div>
       <div className="mb-3 p-3 bg-[var(--bg-secondary)] rounded-lg">
@@ -156,26 +163,30 @@ export const HRPromotionTab = React.memo(function HRPromotionTab({
                     <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-secondary)]">{p.reason}</td>
                     <td className="py-2 px-2 text-center">
                       <div className="flex gap-1 justify-center">
-                        <button
-                          onClick={() => {
-                            setProForm({
-                              teacherId: p.teacherId,
-                              fromDesignation: p.fromDesignation,
-                              toDesignation: p.toDesignation,
-                              reason: p.reason,
-                            })
-                            setModalType('promotion')
-                          }}
-                          className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[0.625rem] font-[inherit]"
-                        >
-                          <Edit2 size={11} />
-                        </button>
-                        <button
-                          onClick={() => deletePromotion(p.id)}
-                          className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[0.625rem] font-[inherit]"
-                        >
-                          <Trash2 size={11} />
-                        </button>
+                        {canEdit('hr.promotion') && (
+                          <button
+                            onClick={() => {
+                              setProForm({
+                                teacherId: p.teacherId,
+                                fromDesignation: p.fromDesignation,
+                                toDesignation: p.toDesignation,
+                                reason: p.reason,
+                              })
+                              setModalType('promotion')
+                            }}
+                            className="py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer text-[0.625rem] font-[inherit]"
+                          >
+                            <Edit2 size={11} />
+                          </button>
+                        )}
+                        {canDelete('hr.promotion') && (
+                          <button
+                            onClick={() => deletePromotion(p.id)}
+                            className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[0.625rem] font-[inherit]"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

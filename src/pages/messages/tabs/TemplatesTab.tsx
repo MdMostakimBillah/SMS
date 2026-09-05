@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { FileText, Save, RotateCcw, ChevronDown, ChevronRight, Plus, Trash2, Tag, Sparkles } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useMessageTemplateStore, type MessageTemplate, type TemplateTrigger } from '@/store/messageTemplateStore'
 
 const TRIGGER_VARIABLES: Record<TemplateTrigger, { var: string; label: string; labelBn: string }[]> = {
@@ -57,6 +58,7 @@ function getTriggerConfig(trigger: TemplateTrigger) {
 
 export function TemplatesTab() {
   const bn = useBn()
+  const { canCreate, canEdit, canDelete } = usePermission()
   const templates = useMessageTemplateStore((s) => s.templates)
   const categories = useMessageTemplateStore((s) => s.categories)
   const updateTemplate = useMessageTemplateStore((s) => s.updateTemplate)
@@ -189,15 +191,17 @@ export function TemplatesTab() {
             <Tag size={13} />
             {bn ? 'ক্যাটাগরি' : 'Categories'}
           </button>
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium text-white transition-colors"
-            style={{ background: 'var(--brand)' }}
-          >
-            <Plus size={13} />
-            {bn ? 'নতুন টেমপ্লেট' : 'New Template'}
-          </button>
+          {canCreate('messages.templates') && (
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium text-white transition-colors"
+              style={{ background: 'var(--brand)' }}
+            >
+              <Plus size={13} />
+              {bn ? 'নতুন টেমপ্লেট' : 'New Template'}
+            </button>
+          )}
         </div>
       </div>
       <p className="text-[0.75rem] text-[var(--text-muted)] mb-4">{bn ? 'ফি আদায়, পরীক্ষা, বকেয় এবং সাধারণ বার্তার জন্য টেমপ্লেট সেট করুন। কাস্টম টেমপ্লেট তৈরি করতে "নতুন টেমপ্লেট" বোতামটি চাপুন।' : 'Set templates for fee collection, examination, due reminders, and general messages. Click "New Template" to create custom templates.'}</p>
@@ -248,7 +252,7 @@ export function TemplatesTab() {
                       {changed && <span className="w-1.5 h-1.5 rounded-full bg-[var(--orange)]" />}
                     </div>
                     <div className="flex items-center gap-1">
-                      {!tpl.isDefault && (
+                      {!tpl.isDefault && canDelete('messages.templates') && (
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handleDelete(tpl) }}
@@ -347,15 +351,17 @@ export function TemplatesTab() {
                       </div>
 
                       <div className="flex items-center gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => handleSave(tpl)}
-                          disabled={!changed}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium transition-all ${justSaved ? 'bg-[var(--green)]/10 text-[var(--green)]' : changed ? 'bg-[var(--brand)] text-white hover:opacity-90' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed'}`}
-                        >
-                          <Save size={13} />
-                          {justSaved ? (bn ? 'সংরক্ষিত!' : 'Saved!') : (bn ? 'সংরক্ষণ' : 'Save')}
-                        </button>
+                        {canEdit('messages.templates') && (
+                          <button
+                            type="button"
+                            onClick={() => handleSave(tpl)}
+                            disabled={!changed}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium transition-all ${justSaved ? 'bg-[var(--green)]/10 text-[var(--green)]' : changed ? 'bg-[var(--brand)] text-white hover:opacity-90' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed'}`}
+                          >
+                            <Save size={13} />
+                            {justSaved ? (bn ? 'সংরক্ষিত!' : 'Saved!') : (bn ? 'সংরক্ষণ' : 'Save')}
+                          </button>
+                        )}
                         {changed && (
                           <button
                             type="button"
@@ -441,7 +447,7 @@ export function TemplatesTab() {
 
               <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
                 <button onClick={() => { setCreateForm({ name: '', nameBn: '', trigger: 'manual', category: 'General', subject: '', body: '' }); setShowCreateModal(false) }} className="px-4 py-2 rounded-lg text-[0.8125rem] font-medium bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors">{bn ? 'বাতিল' : 'Cancel'}</button>
-                <button onClick={handleCreateTemplate} disabled={!createForm.name.trim()} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--brand)' }}>
+                <button onClick={handleCreateTemplate} disabled={!createForm.name.trim() || !canCreate('messages.templates')} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--brand)' }}>
                   <Save size={13} />
                   {bn ? 'টেমপ্লেট তৈরি করুন' : 'Create Template'}
                 </button>

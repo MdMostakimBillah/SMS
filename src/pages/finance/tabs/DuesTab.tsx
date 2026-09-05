@@ -3,6 +3,7 @@ import React from 'react'
 import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown, CircleCheck, FileSpreadsheet, FileText, MoreVertical } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
@@ -62,6 +63,7 @@ interface DueMatrixRow {
 
 export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const bn = useBn()
+  const { canExport, canPrint, canCreate } = usePermission()
   const students = useSessionStudents()
   const { classes } = useClassStore()
   const { structures, payments, generateWaivers } = useFeeStore()
@@ -785,21 +787,27 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     ref={actionMenuRef}
                     className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-[100] overflow-hidden"
                   >
-                    <button
-                      onClick={() => { exportExcel(); setShowActionMenu(false) }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
-                    >
-                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
-                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                    </button>
-                    <div className="h-px bg-[var(--border)] mx-2" />
-                    <button
-                      onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
-                    >
-                      <FileText size={14} className="text-[var(--red)]" />
-                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                    </button>
+                    {canExport('finance.fees.dues.export') && (
+                      <button
+                        onClick={() => { exportExcel(); setShowActionMenu(false) }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
+                      >
+                        <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                        {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                      </button>
+                    )}
+                    {canExport('finance.fees.dues.export') && canPrint('finance.fees.dues.print') && (
+                      <div className="h-px bg-[var(--border)] mx-2" />
+                    )}
+                    {canPrint('finance.fees.dues.print') && (
+                      <button
+                        onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
+                      >
+                        <FileText size={14} className="text-[var(--red)]" />
+                        {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -912,7 +920,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                           <td key={m} className="text-center px-2 py-3" style={{ minWidth: '90px' }}>
                             {cell.paidAmount > 0 && <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>}
                             {cell.paidAmount > 0 && cell.amount > 0 && <span className="text-[var(--text-muted)] text-[10px]"> / </span>}
-                            {cell.amount > 0 && (
+                            {cell.amount > 0 && canCreate('finance.fees.collect.create') && (
                               <button
                                 onClick={() => { const due = buildCollectDue(row, m); if (due) onCollect(due) }}
                                 className="font-bold text-[12px] text-[var(--amber)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-0 p-0 transition-colors"
@@ -920,6 +928,9 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                               >
                                 {fmt(cell.amount)}
                               </button>
+                            )}
+                            {cell.amount > 0 && !canCreate('finance.fees.collect.create') && (
+                              <span className="font-bold text-[12px] text-[var(--amber)]">{fmt(cell.amount)}</span>
                             )}
                             {cell.paidAmount === 0 && cell.amount === 0 && (
                               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)]">
@@ -946,7 +957,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)]">
                               <CircleCheck size={14} className="text-[var(--green)]" />
                             </span>
-                          ) : (
+                          ) : canCreate('finance.fees.collect.create') ? (
                             <button
                               onClick={() => { const due = buildCollectDue(row, m); if (due) onCollect(due) }}
                               className="font-bold text-[12px] text-[var(--amber)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-0 p-0 transition-colors"
@@ -954,6 +965,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                             >
                               {fmt(cell.amount)}
                             </button>
+                          ) : (
+                            <span className="font-bold text-[12px] text-[var(--amber)]">{fmt(cell.amount)}</span>
                           )}
                         </td>
                       )

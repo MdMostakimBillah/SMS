@@ -12,6 +12,7 @@ import {
 import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { printRawHTML } from '@/lib/pdf'
 import { logger } from '@/lib/logger'
+import { usePermission } from '@/hooks/usePermission'
 import { generateAttendanceSheetHTML } from '../pdfTemplates/attendanceSheet'
 
 type Student = {
@@ -197,6 +198,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
   sectionsMap,
   addAttendance,
 }: AttendanceTabProps) {
+  const { canUpdate, canRead } = usePermission()
   const [attClassId, setAttClassId] = useState('')
   const [attSectionId, setAttSectionId] = useState('')
   const [attDate, setAttDate] = useState('')
@@ -266,20 +268,22 @@ export const AttendanceTab = React.memo(function AttendanceTab({
           </div>
         </div>
         <div className="flex gap-2 mt-3">
-          <button
-            onClick={() => {
-              if (!attClassId || !attSectionId || !attDate) {
-                alert(isBn ? 'শ্রেণি, সেকশন এবং তারিখ নির্বাচন করুন' : 'Select class, section and date')
-                return
-              }
-              setShowQRScanner(true)
-            }}
-            disabled={!attClassId || !attSectionId || !attDate}
-            className={`${btnPrimary} ${!attClassId || !attSectionId || !attDate ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <QrCode size={14} />
-            {isBn ? 'QR স্ক্যান শুরু' : 'Start QR Scan'}
-          </button>
+          {canUpdate('exams.attendance.view') && (
+            <button
+              onClick={() => {
+                if (!attClassId || !attSectionId || !attDate) {
+                  alert(isBn ? 'শ্রেণি, সেকশন এবং তারিখ নির্বাচন করুন' : 'Select class, section and date')
+                  return
+                }
+                setShowQRScanner(true)
+              }}
+              disabled={!attClassId || !attSectionId || !attDate}
+              className={`${btnPrimary} ${!attClassId || !attSectionId || !attDate ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <QrCode size={14} />
+              {isBn ? 'QR স্ক্যান শুরু' : 'Start QR Scan'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -372,26 +376,28 @@ export const AttendanceTab = React.memo(function AttendanceTab({
                     {attDate} · {attShift === 'morning' ? (isBn ? 'সকাল' : 'Morning') : (isBn ? 'বিকাল' : 'Afternoon')}
                   </span>
                 </div>
-                <button
-                  onClick={() => {
-                    const presentList = sorted.filter((s) => presentIds.has(s.id))
-                    const absentList = sorted.filter((s) => !presentIds.has(s.id))
-                    const html = generateAttendanceSheetHTML({
-                      classId: attClassId,
-                      sectionId: attSectionId,
-                      date: attDate,
-                      shift: attShift,
-                      present: presentList,
-                      absent: absentList,
-                      totalStudents: total,
-                    })
-                    printRawHTML(html, 500)
-                  }}
-                  className="flex items-center gap-1 text-[0.625rem] text-[var(--brand)] hover:text-[var(--brand-dark)] cursor-pointer"
-                >
-                  <Download size={12} />
-                  PDF
-                </button>
+                {canRead('exams.read.view') && (
+                  <button
+                    onClick={() => {
+                      const presentList = sorted.filter((s) => presentIds.has(s.id))
+                      const absentList = sorted.filter((s) => !presentIds.has(s.id))
+                      const html = generateAttendanceSheetHTML({
+                        classId: attClassId,
+                        sectionId: attSectionId,
+                        date: attDate,
+                        shift: attShift,
+                        present: presentList,
+                        absent: absentList,
+                        totalStudents: total,
+                      })
+                      printRawHTML(html, 500)
+                    }}
+                    className="flex items-center gap-1 text-[0.625rem] text-[var(--brand)] hover:text-[var(--brand-dark)] cursor-pointer"
+                  >
+                    <Download size={12} />
+                    PDF
+                  </button>
+                )}
               </div>
 
               {/* Progress */}

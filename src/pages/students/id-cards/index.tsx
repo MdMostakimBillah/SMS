@@ -12,6 +12,7 @@ import { getPDFBranding } from '@/lib/pdfBranding'
 import { printRawHTML } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 const TEMPLATES = [
   { id: 'classic', name: 'Classic', nameBn: 'ক্লাসিক', primary: '#6366f1', secondary: '#eef2ff', accent: '#4f46e5', radius: 12 },
@@ -187,6 +188,7 @@ export default function IDCardsPage() {
   const allStudents = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
   const isBn = useBn()
+  const { canPrint } = usePermission()
 
   const currentSession = institution.currentSession
   const sessions = institution.sessions
@@ -332,14 +334,16 @@ export default function IDCardsPage() {
             {isBn ? `${displayList.length} জন ছাত্রের আইডি কার্ড তৈরি করুন` : `Generate ID cards for ${displayList.length} students`}
           </p>
         </div>
-        <button
-          onClick={printCards}
-          disabled={displayList.length === 0}
-          className={`flex items-center gap-1.5 py-[0.5625rem] px-[1.125rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-['Inter',sans-serif] ${displayList.length === 0 ? 'bg-[var(--border-2)] cursor-not-allowed' : 'bg-[var(--brand)] cursor-pointer shadow-[0_4px_12px_rgba(99,102,241,0.3)]'}`}
-        >
-          <Printer size={14} />
-          {isBn ? 'প্রিন্ট করুন' : 'Print'}
-        </button>
+        {canPrint('students.id-cards') && (
+          <button
+            onClick={printCards}
+            disabled={displayList.length === 0}
+            className={`flex items-center gap-1.5 py-[0.5625rem] px-[1.125rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-['Inter',sans-serif] ${displayList.length === 0 ? 'bg-[var(--border-2)] cursor-not-allowed' : 'bg-[var(--brand)] cursor-pointer shadow-[0_4px_12px_rgba(99,102,241,0.3)]'}`}
+          >
+            <Printer size={14} />
+            {isBn ? 'প্রিন্ট করুন' : 'Print'}
+          </button>
+        )}
       </div>
 
       <div className={`grid gap-4 items-start ${isMobile ? 'grid-cols-1' : 'grid-cols-[280px_1fr]'}`}>

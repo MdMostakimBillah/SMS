@@ -1,4 +1,5 @@
 import { Trash2, Save, Copy, BookOpen, X } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import { TeacherPreviewCard } from './TeacherPreviewCard'
@@ -44,6 +45,7 @@ export function SectionCard({
   setTempSelectedSubjects,
   setShowSubjectModal,
 }: SectionCardProps) {
+  const { canDelete } = usePermission()
   const teacher = sec.classTeacherId ? getTeacher(sec.classTeacherId) : undefined
 
   return (
@@ -150,22 +152,24 @@ export function SectionCard({
           >
             <Copy size={11} />
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              deleteSection(cls.id, sec.id)
-            }}
-            style={{
-              padding: '0.25rem',
-              borderRadius: '0.3125rem',
-              background: 'var(--red-light)',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--red)',
-            }}
-          >
-            <Trash2 size={11} />
-          </button>
+          {canDelete('classes.classes') && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                deleteSection(cls.id, sec.id)
+              }}
+              style={{
+                padding: '0.25rem',
+                borderRadius: '0.3125rem',
+                background: 'var(--red-light)',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--red)',
+              }}
+            >
+              <Trash2 size={11} />
+            </button>
+          )}
         </div>
       </div>
 

@@ -16,7 +16,7 @@ const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; 
 
 export default function NotificationsPage() {
   const bn = useBn()
-  usePermission()
+  const { canDelete, canEdit } = usePermission()
   const { isMobile } = useWindowSize()
   const navigate = useNavigate()
   const notifications = useNotificationStore((s) => s.notifications)
@@ -74,7 +74,7 @@ export default function NotificationsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          {unreadCount > 0 && (
+          {unreadCount > 0 && canEdit('notifications') && (
             <button
               onClick={() => markAllRead()}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"
@@ -83,7 +83,7 @@ export default function NotificationsPage() {
               {bn ? 'সব পড়া হয়েছে' : 'Mark All Read'}
             </button>
           )}
-          {notifications.length > 0 && (
+          {notifications.length > 0 && canDelete('notifications') && (
             <button
               onClick={() => setShowClearConfirm(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white"
@@ -149,12 +149,14 @@ export default function NotificationsPage() {
                   </p>
                   <span className="text-[0.625rem] text-[var(--text-muted)] mt-1 block">{timeAgo}</span>
                 </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setDeleteTarget(n.id) }}
-                  className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] shrink-0"
-                >
-                  <Trash2 size={14} />
-                </button>
+                {canDelete('notifications') && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(n.id) }}
+                    className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] shrink-0"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
             )
           })}

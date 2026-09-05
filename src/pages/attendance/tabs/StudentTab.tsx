@@ -18,6 +18,7 @@ import {
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import { shortDate, dayName, isFriday } from '../helpers'
+import { usePermission } from '@/hooks/usePermission'
 
 interface StudentTabProps {
   isBn: boolean
@@ -87,6 +88,7 @@ export const StudentTab = React.memo(function StudentTab({
   weeklyHolidayBadge,
   getStatus,
 }: StudentTabProps) {
+  const { canExport } = usePermission()
   const sel =
     'px-[0.5625rem] py-[0.4375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer outline-none'
 
@@ -219,6 +221,7 @@ export const StudentTab = React.memo(function StudentTab({
                 overflow: 'hidden',
               }}
             >
+              {canExport('attendance.range.export') && (
               <button
                 onClick={() => {
                   exportStudentExcel()
@@ -244,7 +247,9 @@ export const StudentTab = React.memo(function StudentTab({
                 <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
                 {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
               </button>
+              )}
               <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+              {canExport('attendance.range.export') && (
               <button
                 onClick={() => {
                   setShowStudentPDF(true)
@@ -273,6 +278,7 @@ export const StudentTab = React.memo(function StudentTab({
                 {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
                 {selectedStudents.length > 0 && ` (${selectedStudents.length})`}
               </button>
+              )}
             </div>
           )}
         </div>

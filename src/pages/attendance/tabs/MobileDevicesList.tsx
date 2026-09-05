@@ -1,4 +1,5 @@
 import { CheckCircle, Clock, Search } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import type { MobileDevice } from '../types'
 
 interface MobileDevicesListProps {
@@ -11,6 +12,7 @@ interface MobileDevicesListProps {
 }
 
 export function MobileDevicesList({ isBn, date, mobileDevices, mobileSearch, setMobileSearch, removeMobileDevice }: MobileDevicesListProps) {
+  const { canDelete } = usePermission()
   return (
     <div className="border border-[var(--border)] rounded-xl bg-[var(--bg-primary)] overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
@@ -70,12 +72,14 @@ export function MobileDevicesList({ isBn, date, mobileDevices, mobileSearch, set
                     {d.lastAuth ? new Date(d.lastAuth).toLocaleString() : <span className="text-[var(--amber)]">{isBn ? 'নতুন' : 'New'}</span>}
                   </td>
                   <td className="p-2.5 text-center">
+                    {canDelete('attendance.device.delete') && (
                     <button
                       onClick={() => removeMobileDevice(d.id)}
                       className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
                     >
                       {isBn ? 'মুছুন' : 'Remove'}
                     </button>
+                    )}
                   </td>
                 </tr>
               ))}

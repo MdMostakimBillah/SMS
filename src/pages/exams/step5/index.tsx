@@ -5,6 +5,7 @@ import { useBn } from '@/hooks/useBn'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { usePermission } from '@/hooks/usePermission'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
@@ -20,6 +21,7 @@ export default function Step5Marksheet() {
   const students = useSessionStudents()
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
+  const { canCreate, canUpdate, canDelete, canPublish } = usePermission()
 
   const allExamConfigs = useExamStore((s) => s.examConfigs)
   const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])
@@ -253,10 +255,12 @@ export default function Step5Marksheet() {
               <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {sessionMarksheetConfigs.length} {isBn ? 'টি মার্কশিট' : 'marksheets'}
               </span>
-              <button onClick={() => setShowMarksheetForm(true)} className={btnPrimary}>
-                <Plus size={14} />
-                {isBn ? 'নতুন মার্কশিট' : 'New Marksheet'}
-              </button>
+              {canCreate('exams.results.edit') && (
+                <button onClick={() => setShowMarksheetForm(true)} className={btnPrimary}>
+                  <Plus size={14} />
+                  {isBn ? 'নতুন মার্কশিট' : 'New Marksheet'}
+                </button>
+              )}
             </div>
             <div className="space-y-3">
               {sessionMarksheetConfigs.map((ms) => {
@@ -287,20 +291,24 @@ export default function Step5Marksheet() {
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <button
-                          onClick={() => toggleMarksheetPublished(ms.id)}
-                          className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer ${ms.isPublished ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
-                        >
-                          {ms.isPublished ? <CheckCircle size={12} /> : <Eye size={12} />}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteMarksheetConfig(ms.id)
-                          }}
-                          className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        {canUpdate('exams.results.edit') && (
+                          <button
+                            onClick={() => toggleMarksheetPublished(ms.id)}
+                            className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer ${ms.isPublished ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
+                          >
+                            {ms.isPublished ? <CheckCircle size={12} /> : <Eye size={12} />}
+                          </button>
+                        )}
+                        {canDelete('exams.delete.delete') && (
+                          <button
+                            onClick={() => {
+                              if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteMarksheetConfig(ms.id)
+                            }}
+                            className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -323,24 +331,26 @@ export default function Step5Marksheet() {
               <span className="text-[0.75rem] text-[var(--text-secondary)]">
                 {sessionCumulativeSheets.length} {isBn ? 'টি কিউমুলেটিভ' : 'cumulative sheets'}
               </span>
-              <button
-                onClick={() => {
-                  if (!selectedExamId) return
-                  addCumulativeSheet({
-                    name: 'Cumulative Marksheet',
-                    nameBn: 'কিউমুলেটিভ মার্কশিট',
-                    examIds: [selectedExamId],
-                    sessionId: '2025-26',
-                    classId: 'Class-1',
-                    isPublished: false,
-                  })
-                }}
-                className={btnPrimary}
-                disabled={!selectedExamId}
-              >
-                <Plus size={14} />
-                {isBn ? 'নতুন কিউমুলেটিভ' : 'New Cumulative'}
-              </button>
+              {canCreate('exams.results.edit') && (
+                <button
+                  onClick={() => {
+                    if (!selectedExamId) return
+                    addCumulativeSheet({
+                      name: 'Cumulative Marksheet',
+                      nameBn: 'কিউমুলেটিভ মার্কশিট',
+                      examIds: [selectedExamId],
+                      sessionId: '2025-26',
+                      classId: 'Class-1',
+                      isPublished: false,
+                    })
+                  }}
+                  className={btnPrimary}
+                  disabled={!selectedExamId}
+                >
+                  <Plus size={14} />
+                  {isBn ? 'নতুন কিউমুলেটিভ' : 'New Cumulative'}
+                </button>
+              )}
             </div>
             <div className="space-y-3">
               {sessionCumulativeSheets.map((cs) => (
@@ -364,20 +374,24 @@ export default function Step5Marksheet() {
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <button
-                        onClick={() => toggleCumulativePublished(cs.id)}
-                        className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer ${cs.isPublished ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
-                      >
-                        {cs.isPublished ? <CheckCircle size={12} /> : <Eye size={12} />}
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteCumulativeSheet(cs.id)
-                        }}
-                        className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      {canUpdate('exams.results.edit') && (
+                        <button
+                          onClick={() => toggleCumulativePublished(cs.id)}
+                          className={`w-7 h-7 rounded-md border flex items-center justify-center cursor-pointer ${cs.isPublished ? 'border-[var(--green)] bg-[var(--green-light)] text-[var(--green)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}
+                        >
+                          {cs.isPublished ? <CheckCircle size={12} /> : <Eye size={12} />}
+                        </button>
+                      )}
+                      {canDelete('exams.delete.delete') && (
+                        <button
+                          onClick={() => {
+                            if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteCumulativeSheet(cs.id)
+                          }}
+                          className="w-7 h-7 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -484,7 +498,7 @@ export default function Step5Marksheet() {
             )}
 
             {/* Promote Button */}
-            {promoStats.eligible > 0 && promoStats.promoted === 0 && (
+            {promoStats.eligible > 0 && promoStats.promoted === 0 && canPublish('exams.results.publish') && (
               <div className="mb-3">
                 <button onClick={() => setShowPromoConfirm(true)} className={`${btnPrimary}`}>
                   <GraduationCap size={14} />

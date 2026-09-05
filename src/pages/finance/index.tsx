@@ -179,7 +179,7 @@ export default function FeeManagementPage() {
   const { structures, payments, addStructure, updateStructure, addPayment, bulkAddStructures } = useFeeStore()
   const students = useSessionStudents()
   const { feeCardsOrder, setFeeCardsOrder, trackVisit } = useAppStore()
-  const { canRead } = usePermission()
+  const { canRead, canCreate } = usePermission()
   const [searchParams, setSearchParams] = useSearchParams()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -242,7 +242,7 @@ export default function FeeManagementPage() {
   const orderedOptions = orderedCardIds.map((id) => {
     const opt = STATIC_OPTIONS.find((o) => o.id === id)!
     return { ...opt, ...getStatForOpt(opt) }
-  }).filter(Boolean).filter((opt) => canRead('finance', opt.id))
+  }).filter(Boolean).filter((opt) => canRead(`finance.fees.${opt.id}`))
 
   const statsData = [
     {
@@ -366,7 +366,7 @@ export default function FeeManagementPage() {
               </h1>
             </div>
           </div>
-          {activeView === 'structures' && (
+          {activeView === 'structures' && canCreate('finance.fees.structures') && (
             <button onClick={() => setShowBatchCreate(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
               <Plus size={13} />
               {bn ? 'ফি যোগ করুন' : 'Add Fee'}

@@ -70,7 +70,7 @@ function ExamSkeleton() {
 export default function ExamDashboard() {
   const navigate = useNavigate()
   const nav = useNavPath()
-  const { canRead } = usePermission()
+  const { canCreate, canRead } = usePermission()
   const { isMobile, isTablet } = useWindowSize()
   const students = useSessionStudents()
   const subjects = useTeacherStore((s) => s.subjects)
@@ -458,9 +458,11 @@ export default function ExamDashboard() {
             {isBn ? 'পরীক্ষার পুরো প্রক্রিয়া পরিচালনা করুন' : 'Manage the complete examination lifecycle'}
           </p>
         </div>
-        <button className="btn-minimal" onClick={navPlanning}>
-          <Plus size={14} /> {isBn ? 'নতুন পরীক্ষা' : 'New Exam'}
-        </button>
+        {canCreate('exams.create.create') && (
+          <button className="btn-minimal" onClick={navPlanning}>
+            <Plus size={14} /> {isBn ? 'নতুন পরীক্ষা' : 'New Exam'}
+          </button>
+        )}
       </div>
 
       {/* Active Exam Alert */}

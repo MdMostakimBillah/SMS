@@ -3,6 +3,7 @@ import { SettingsPanel } from '../components/SettingsPanel'
 import { Users, Plus, Trash2, Check, X, Shield, Eye, EyeOff, Copy, ChevronDown, ChevronRight, Search } from 'lucide-react'
 import { usePermissionStore } from '@/store/permissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { usePermission } from '@/hooks/usePermission'
 import { PERMISSION_PAGES, type TabPermissionConfig } from '@/lib/permissionConfig'
 
 interface Props {
@@ -15,6 +16,7 @@ type PermAction = 'create' | 'read' | 'update' | 'delete'
 export function StaffPermissionsPanel({ isBn, onBack }: Props) {
   const bn = isBn
   const teachers = useTeacherStore((s) => s.teachers)
+  const { canManage } = usePermission()
   const {
     roles,
     staffPermissions,
@@ -181,12 +183,14 @@ export function StaffPermissionsPanel({ isBn, onBack }: Props) {
                     >
                       {copiedId === member.id ? <Check size={14} className="text-[var(--green)]" /> : <Copy size={14} />}
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(member.id) }}
-                      className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] cursor-pointer bg-transparent border-none"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {canManage('settings.roles') && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(member.id) }}
+                        className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] cursor-pointer bg-transparent border-none"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
                 {showPassword[member.id] && (
@@ -234,31 +238,33 @@ export function StaffPermissionsPanel({ isBn, onBack }: Props) {
                 {bn ? 'ডিফল্ট পাসওয়ার্ড: 123456' : 'Default password: 123456'}
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setShowAdd(false); setNewTeacherId(''); setNewRoleId('') }}
-                className="flex-1 h-9 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-medium border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors"
-              >
-                {bn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button
-                onClick={handleAdd}
-                disabled={!newTeacherId || !newRoleId}
-                className="flex-1 h-9 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium border-none cursor-pointer disabled:opacity-50 hover:opacity-90 transition-opacity"
-              >
-                {bn ? 'যোগ করুন' : 'Add'}
-              </button>
-            </div>
+            {canManage('settings.roles') && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowAdd(false); setNewTeacherId(''); setNewRoleId('') }}
+                  className="flex-1 h-9 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-medium border border-[var(--border)] cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors"
+                >
+                  {bn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleAdd}
+                  disabled={!newTeacherId || !newRoleId}
+                  className="flex-1 h-9 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium border-none cursor-pointer disabled:opacity-50 hover:opacity-90 transition-opacity"
+                >
+                  {bn ? 'যোগ করুন' : 'Add'}
+                </button>
+              </div>
+            )}
           </div>
-        ) : (
-          <button
-            onClick={() => setShowAdd(true)}
-            className="w-full h-10 rounded-xl border border-dashed border-[var(--border)] text-[var(--text-muted)] text-[0.8125rem] font-medium cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors flex items-center justify-center gap-2 bg-transparent"
-          >
-            <Plus size={16} />
-            {bn ? 'নতুন শিক্ষক/স্টাফ যোগ করুন' : 'Add New Teacher/Staff'}
-          </button>
-        )}
+        ) : canManage('settings.roles') ? (
+            <button
+              onClick={() => setShowAdd(true)}
+              className="w-full h-10 rounded-xl border border-dashed border-[var(--border)] text-[var(--text-muted)] text-[0.8125rem] font-medium cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors flex items-center justify-center gap-2 bg-transparent"
+            >
+              <Plus size={16} />
+              {bn ? 'নতুন শিক্ষক/স্টাফ যোগ করুন' : 'Add New Teacher/Staff'}
+            </button>
+        ) : null}
 
         {/* Permission Preview */}
         {selectedMember && selectedRole && (

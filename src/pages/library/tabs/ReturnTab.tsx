@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { RotateCcw, BookOpen, Clock, AlertCircle, Trash2, Edit, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -40,6 +41,7 @@ function CountdownTimer({ dueDate }: { dueDate: string }) {
 
 export function ReturnTab({ searchQuery }: Props) {
   const bn = useBn()
+  const { canEdit, canDelete } = usePermission()
   const { user } = useAuth()
   const borrowings = useLibraryStore((s) => s.borrowings)
   const books = useLibraryStore((s) => s.books)
@@ -163,21 +165,27 @@ export function ReturnTab({ searchQuery }: Props) {
                 )}
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button onClick={() => { setSelectedBorrowing(b.id); setShowReturnModal(true) }}
-                  className="p-1.5 rounded-lg bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20 transition-colors"
-                  title={bn ? 'ফেরত নিন' : 'Return'}>
-                  <RotateCcw size={13} />
-                </button>
-                <button onClick={() => { setEditId(b.id); setEditDueDate(b.dueDate) }}
-                  className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors"
-                  title={bn ? 'সম্পাদনা' : 'Edit'}>
-                  <Edit size={13} />
-                </button>
-                <button onClick={() => setDeleteId(b.id)}
-                  className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-500 transition-colors"
-                  title={bn ? 'মুছুন' : 'Delete'}>
-                  <Trash2 size={13} />
-                </button>
+                {canEdit('library.return') && (
+                  <button onClick={() => { setSelectedBorrowing(b.id); setShowReturnModal(true) }}
+                    className="p-1.5 rounded-lg bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20 transition-colors"
+                    title={bn ? 'ফেরত নিন' : 'Return'}>
+                    <RotateCcw size={13} />
+                  </button>
+                )}
+                {canEdit('library.return') && (
+                  <button onClick={() => { setEditId(b.id); setEditDueDate(b.dueDate) }}
+                    className="p-1.5 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors"
+                    title={bn ? 'সম্পাদনা' : 'Edit'}>
+                    <Edit size={13} />
+                  </button>
+                )}
+                {canDelete('library.return') && (
+                  <button onClick={() => setDeleteId(b.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-[var(--text-secondary)] hover:text-red-500 transition-colors"
+                    title={bn ? 'মুছুন' : 'Delete'}>
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
             </div>
           ))}

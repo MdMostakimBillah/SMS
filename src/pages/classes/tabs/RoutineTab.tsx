@@ -2,6 +2,7 @@ import React, { useState, useMemo, Fragment, useEffect, useRef, useCallback } fr
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useNavPath } from '@/hooks/useNavPath'
+import { usePermission } from '@/hooks/usePermission'
 import {
   ArrowRight,
   Clock,
@@ -54,6 +55,7 @@ export default React.memo(function RoutineTab({
 }: RoutineTabProps) {
   const navigate = useNavigate()
   const nav = useNavPath()
+  const { canEdit, canDelete, canPrint } = usePermission()
   const [selectedClass, setSelectedClass] = useState(classes[0]?.id || '')
   const [selectedSection, setSelectedSection] = useState('')
   const [editSlot, setEditSlot] = useState<{ day: number; period: number } | null>(null)
@@ -497,6 +499,7 @@ export default React.memo(function RoutineTab({
                 overflow: 'hidden',
               }}
             >
+              {canPrint('classes.routine') && (
               <button
                 onClick={() => {
                   exportExcel()
@@ -522,7 +525,9 @@ export default React.memo(function RoutineTab({
                 <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
                 {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
               </button>
+              )}
               <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+              {canPrint('classes.routine') && (
               <button
                 onClick={() => {
                   setShowPDF(true)
@@ -548,6 +553,7 @@ export default React.memo(function RoutineTab({
                 <FileText size={14} style={{ color: 'var(--red)' }} />
                 {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
               </button>
+              )}
             </div>
           )}
         </div>
@@ -789,6 +795,7 @@ export default React.memo(function RoutineTab({
           )}
 
           <div style={{ marginTop: '0.875rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            {canDelete('classes.routine') && (
             <button
               onClick={() => {
                 clearRoutineSlot(selectedClass, editSlot.day, editSlot.period, effectiveSection)
@@ -808,6 +815,8 @@ export default React.memo(function RoutineTab({
             >
               {isBn ? 'মুছুন' : 'Clear'}
             </button>
+            )}
+            {canEdit('classes.routine') && (
             <button
               onClick={handleSaveSlot}
               disabled={!slotForm.subjectId}
@@ -829,6 +838,7 @@ export default React.memo(function RoutineTab({
               <Save size={13} />
               {isBn ? 'সেভ করুন' : 'Save'}
             </button>
+            )}
           </div>
         </div>
       )}
@@ -976,6 +986,7 @@ export default React.memo(function RoutineTab({
 
   return (
                           <td key={d.index} style={{ padding: '0.25rem', textAlign: 'center', verticalAlign: 'top' }}>
+                            {canEdit('classes.routine') && (
                             <button
                               onClick={() => {
                                 setEditSlot({ day: d.index, period: p })
@@ -1015,6 +1026,7 @@ export default React.memo(function RoutineTab({
                                 <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>+</span>
                               )}
                             </button>
+                            )}
                           </td>
                         )
                       })}

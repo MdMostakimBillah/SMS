@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Calendar, Flag, Users } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useTodoStore, type TodoTask } from '@/store/todoStore'
 import { inputCls, selectCls, btnPrimary } from '@/lib/styles'
@@ -12,6 +13,7 @@ interface Props {
 
 export function CreateTaskModal({ onClose }: Props) {
   const isBn = useBn()
+  const { canCreate } = usePermission()
   const teachers = useTeacherStore((s) => s.teachers)
   const addTodo = useTodoStore((s) => s.addTodo)
 
@@ -264,6 +266,7 @@ export function CreateTaskModal({ onClose }: Props) {
           >
             {isBn ? 'বাতিল' : 'Cancel'}
           </button>
+          {canCreate('dashboard.tasks.create') && (
           <button
             className={btnPrimary}
             onClick={handleSave}
@@ -272,6 +275,7 @@ export function CreateTaskModal({ onClose }: Props) {
           >
             {isBn ? 'সংরক্ষণ' : 'Save Task'}
           </button>
+          )}
         </div>
       </div>
     </div>,

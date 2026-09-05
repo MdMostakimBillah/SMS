@@ -4,6 +4,7 @@ import { StatusBadge } from './StatusBadge'
 import { Pagination } from './Pagination'
 import type { StudentAdmission } from '../types'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 const actBtn = (bg: string, color: string): React.CSSProperties => ({
   width: '1.625rem', height: '1.625rem', borderRadius: '0.375rem',
@@ -35,6 +36,7 @@ export function AdmissionTable({
   setViewingStudent, setEditingStudent, setApprovingStudent, setRejectingStudent,
   isBn,
 }: AdmissionTableProps) {
+  const { canEdit, canApprove, canReject } = usePermission()
   return (
     <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '0.875rem', overflow: 'hidden' }}>
       <div style={{ overflowX: 'auto' }}>
@@ -223,29 +225,35 @@ export function AdmissionTable({
                       >
                         <Eye size={12} />
                       </button>
-                      <button
-                        onClick={() => setEditingStudent(s)}
-                        title={isBn ? 'এডিট' : 'Edit'}
-                        style={actBtn('var(--amber-light)', 'var(--amber)')}
-                      >
-                        <Edit2 size={12} />
-                      </button>
+                      {canEdit('students.admission') && (
+                        <button
+                          onClick={() => setEditingStudent(s)}
+                          title={isBn ? 'এডিট' : 'Edit'}
+                          style={actBtn('var(--amber-light)', 'var(--amber)')}
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                      )}
                       {s.status === 'pending' && (
                         <>
-                          <button
-                            onClick={() => setApprovingStudent(s)}
-                            title={isBn ? 'অনুমোদন' : 'Approve'}
-                            style={actBtn('var(--green-light)', 'var(--green)')}
-                          >
-                            <Check size={12} />
-                          </button>
-                          <button
-                            onClick={() => setRejectingStudent(s)}
-                            title={isBn ? 'প্রত্যাখ্যান' : 'Reject'}
-                            style={actBtn('var(--red-light)', 'var(--red)')}
-                          >
-                            <XCircle size={12} />
-                          </button>
+                          {canApprove('students.admission') && (
+                            <button
+                              onClick={() => setApprovingStudent(s)}
+                              title={isBn ? 'অনুমোদন' : 'Approve'}
+                              style={actBtn('var(--green-light)', 'var(--green)')}
+                            >
+                              <Check size={12} />
+                            </button>
+                          )}
+                          {canReject('students.admission') && (
+                            <button
+                              onClick={() => setRejectingStudent(s)}
+                              title={isBn ? 'প্রত্যাখ্যান' : 'Reject'}
+                              style={actBtn('var(--red-light)', 'var(--red)')}
+                            >
+                              <XCircle size={12} />
+                            </button>
+                          )}
                         </>
                       )}
                     </div>

@@ -3,6 +3,7 @@ import React from 'react'
 import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2, Download, CircleCheck, ShoppingBag, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
@@ -207,6 +208,7 @@ const fieldInputCls = 'w-full border border-[var(--border)] rounded-lg px-3 py-2
 
 export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect, initialStudentId, initialFeeStructureId, onClearCollectFromDue }: Props) {
   const bn = useBn()
+  const { canCreate, canDelete, canPrint } = usePermission()
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
   const { structures, payments, generateWaivers, addPayment, deletePayment } = useFeeStore()
@@ -1150,10 +1152,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   <span className="text-[13px] font-bold text-[var(--text-primary)]">{receiptData.receiptNo}</span>
                   <span className="text-[11px] text-[var(--text-muted)]">· {receiptData.date}</span>
                 </div>
-                <button onClick={handleDownloadReceipt}
-                  className="h-7 px-3 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity">
-                  <Download size={12} />{bn ? 'রসিদ ডাউনলোড' : 'Download Receipt'}
-                </button>
+                {canPrint('finance.fees.collect') && (
+                  <button onClick={handleDownloadReceipt}
+                    className="h-7 px-3 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity">
+                    <Download size={12} />{bn ? 'রসিদ ডাউনলোড' : 'Download Receipt'}
+                  </button>
+                )}
               </div>
               <div className="p-4" style={{ fontSize: '10px' }}>
                 {/* Two-column receipt */}
@@ -1288,10 +1292,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               </div>
             )}
             <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
-              <button onClick={() => setShowOneTimeModal(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[var(--brand)] text-white text-[12px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
-                <Plus size={13} />{bn ? 'এককালীন ফি' : 'One-time fee'}
-              </button>
+              {canCreate('finance.fees.collect') && (
+                <button onClick={() => setShowOneTimeModal(true)}
+                  className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[var(--brand)] text-white text-[12px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
+                  <Plus size={13} />{bn ? 'এককালীন ফি' : 'One-time fee'}
+                </button>
+              )}
               {selectedStudent && classProducts.length > 0 && (
                 <button onClick={() => setShowShopModal(true)}
                   className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[var(--teal)] text-white text-[12px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
@@ -1602,9 +1608,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                               <button onClick={() => generateBatchReceipt(batch)} className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border-0 hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
                                 <Receipt size={13} />
                               </button>
-                              <button onClick={() => handleDeletePayment(batch.batchId)} className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                                <Trash2 size={13} />
-                              </button>
+                              {canDelete('finance.fees.collect') && (
+                                <button onClick={() => handleDeletePayment(batch.batchId)} className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

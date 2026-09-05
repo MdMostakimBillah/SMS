@@ -17,6 +17,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import type { StatusFilter } from '../helpers'
 
@@ -80,6 +81,7 @@ export const TodayTab = React.memo(function TodayTab({
   statusFilters,
   statusBadge,
 }: TodayTabProps) {
+  const { canCreate } = usePermission()
   const filterTabsRef = useRef<HTMLDivElement>(null)
   const filterTabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const [sliderStyle, setSliderStyle] = useState({ left: '0px', width: '0px', background: 'var(--brand)' })
@@ -139,13 +141,15 @@ export const TodayTab = React.memo(function TodayTab({
             className="px-2.5 py-[0.375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-xs outline-none"
           />
           <div className="flex-1" />
-          <button
-            onClick={() => setShowMarkAll(true)}
-            className="flex items-center gap-[0.3125rem] px-3.5 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
-          >
-            <CheckCircle size={13} />
-            {isBn ? 'সবাইকে উপস্থিত করুন' : 'Mark All Present'}
-          </button>
+          {canCreate('attendance.today') && (
+            <button
+              onClick={() => setShowMarkAll(true)}
+              className="flex items-center gap-[0.3125rem] px-3.5 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
+            >
+              <CheckCircle size={13} />
+              {isBn ? 'সবাইকে উপস্থিত করুন' : 'Mark All Present'}
+            </button>
+          )}
         </div>
         {/* Status filter buttons */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">

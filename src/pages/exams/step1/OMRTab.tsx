@@ -6,6 +6,7 @@ import { generateOMRSheetMultiCopy, type OMRConfig } from '@/pages/exams/omrTemp
 import { printRawHTML } from '@/lib/pdf'
 import { sectionCls, inputCls, btnPrimary } from '@/lib/styles'
 import type { Subject } from '@/pages/teachers/types'
+import { usePermission } from '@/hooks/usePermission'
 
 const OMR_COLORS = [
   { value: '#d81b60', label: 'Pink' },
@@ -32,6 +33,7 @@ interface OMRTabProps {
 export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classes = [], institution }: OMRTabProps) {
   const upsertOMRConfig = useExamStore((s) => s.upsertOMRConfig)
   const deleteOMRConfig = useExamStore((s) => s.deleteOMRConfig)
+  const { canCreate, canRead, canUpdate, canDelete } = usePermission()
 
   const [showOMRForm, setShowOMRForm] = useState(false)
   const [editOMR, setEditOMR] = useState<OMRExamConfig | null>(null)
@@ -93,25 +95,27 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classe
         <span className="text-[0.75rem] text-[var(--text-secondary)]">
           {isBn ? `মোট ${omrConfigs.length}টি OMR কনফিগ` : `${omrConfigs.length} OMR configs`}
         </span>
-        <button
-          onClick={() => {
-            setShowOMRForm(true)
-            setEditOMR(null)
-            setOMRForm({
-              examId: '',
-              subjectId: '',
-              totalQuestions: '50',
-              correctMark: '2',
-              negativeMark: '0.5',
-              optionCount: '4',
-              sheetFormat: 'A',
-            })
-          }}
-          className={btnPrimary}
-        >
-          <Plus size={14} />
-          {isBn ? 'নতুন OMR' : 'New OMR'}
-        </button>
+        {canCreate('exams.create.create') && (
+          <button
+            onClick={() => {
+              setShowOMRForm(true)
+              setEditOMR(null)
+              setOMRForm({
+                examId: '',
+                subjectId: '',
+                totalQuestions: '50',
+                correctMark: '2',
+                negativeMark: '0.5',
+                optionCount: '4',
+                sheetFormat: 'A',
+              })
+            }}
+            className={btnPrimary}
+          >
+            <Plus size={14} />
+            {isBn ? 'নতুন OMR' : 'New OMR'}
+          </button>
+        )}
       </div>
       {omrConfigs.map((config) => {
         const subject = subjects.find((s) => s.id === config.subjectId)
@@ -142,51 +146,57 @@ export default function OMRTab({ isBn, examConfigs, subjects, omrConfigs, classe
                 </div>
               </div>
               <div className="flex gap-1 shrink-0">
-                <button
-                  onClick={() => {
-                    setOmrDownloadConfig(config)
-                    setOmrOpts({
-                      totalQuestions: config.totalQuestions,
-                      optionCount: config.optionCount,
-                      showRollNo: true,
-                      showRegistrationNo: true,
-                      showSetCode: true,
-                      showSubjectCode: true,
-                      sheetFormat: config.sheetFormat,
-                    })
-                    setShowOMRDownload(true)
-                  }}
-                  className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--green)] hover:bg-[var(--green-light)]"
-                  title={isBn ? 'OMR শিট ডাউনলোড' : 'Download OMR Sheet'}
-                >
-                  <ScanLine size={11} />
-                </button>
-                <button
-                  onClick={() => {
-                    setEditOMR(config)
-                    setOMRForm({
-                      examId: config.examId,
-                      subjectId: config.subjectId,
-                      totalQuestions: String(config.totalQuestions),
-                      correctMark: String(config.correctMark),
-                      negativeMark: String(config.negativeMark),
-                      optionCount: String(config.optionCount),
-                      sheetFormat: config.sheetFormat,
-                    })
-                    setShowOMRForm(true)
-                  }}
-                  className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
-                >
-                  <Edit2 size={11} />
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteOMRConfig(config.id)
-                  }}
-                  className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                >
-                  <Trash2 size={11} />
-                </button>
+                {canRead('exams.read.view') && (
+                  <button
+                    onClick={() => {
+                      setOmrDownloadConfig(config)
+                      setOmrOpts({
+                        totalQuestions: config.totalQuestions,
+                        optionCount: config.optionCount,
+                        showRollNo: true,
+                        showRegistrationNo: true,
+                        showSetCode: true,
+                        showSubjectCode: true,
+                        sheetFormat: config.sheetFormat,
+                      })
+                      setShowOMRDownload(true)
+                    }}
+                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--green)] hover:bg-[var(--green-light)]"
+                    title={isBn ? 'OMR শিট ডাউনলোড' : 'Download OMR Sheet'}
+                  >
+                    <ScanLine size={11} />
+                  </button>
+                )}
+                {canUpdate('exams.edit.edit') && (
+                  <button
+                    onClick={() => {
+                      setEditOMR(config)
+                      setOMRForm({
+                        examId: config.examId,
+                        subjectId: config.subjectId,
+                        totalQuestions: String(config.totalQuestions),
+                        correctMark: String(config.correctMark),
+                        negativeMark: String(config.negativeMark),
+                        optionCount: String(config.optionCount),
+                        sheetFormat: config.sheetFormat,
+                      })
+                      setShowOMRForm(true)
+                    }}
+                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--brand)]"
+                  >
+                    <Edit2 size={11} />
+                  </button>
+                )}
+                {canDelete('exams.delete.delete') && (
+                  <button
+                    onClick={() => {
+                      if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteOMRConfig(config.id)
+                    }}
+                    className="w-6 h-6 rounded border border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                )}
               </div>
             </div>
           </div>

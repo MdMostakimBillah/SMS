@@ -3,6 +3,7 @@ import React from 'react'
 import { Search, Trash2, Plus, Gift, ChevronDown, ChevronRight, Tag, Edit2, Check, X, Award, Heart, Briefcase, Users, Percent, HandCoins, MoreVertical, FileSpreadsheet, FileText } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useFeeStore } from '@/store/feeStore'
@@ -56,6 +57,7 @@ function getCategoryIcon(name: string, nameBn: string): LucideIcon {
 
 export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStudentWaiver }: Props) {
   const bn = useBn()
+  const { canCreate, canEdit, canDelete } = usePermission()
   const students = useSessionStudents()
   const { waiverCategories, waiverEntries, structures, studentWaivers, deleteWaiverCategory, deleteWaiverEntry, deleteStudentWaiver, updateWaiverCategory, updateWaiverEntry, updateStudentWaiver } = useFeeStore()
   const { institution, classes } = useClassStore()
@@ -461,9 +463,11 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
               <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট ছাড়' : 'Total Waived'}</div>
             </div>
           </div>
-        <button onClick={() => subTab === 'students' ? onAddStudentWaiver() : onAddWaiver('category')} className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer">
-          <Plus size={13} /> {subTab === 'students' ? (bn ? 'শিক্ষার্থী যোগ করুন' : 'Add Student') : (bn ? 'ক্যাটাগরি যোগ করুন' : 'Add Category')}
-        </button>
+        {canCreate('finance.fees.waivers') && (
+          <button onClick={() => subTab === 'students' ? onAddStudentWaiver() : onAddWaiver('category')} className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer">
+            <Plus size={13} /> {subTab === 'students' ? (bn ? 'শিক্ষার্থী যোগ করুন' : 'Add Student') : (bn ? 'ক্যাটাগরি যোগ করুন' : 'Add Category')}
+          </button>
+        )}
         </div>
       </div>
 
@@ -552,19 +556,23 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                         </div>
                       ) : (
                         <div className="flex items-center gap-1">
-                          <button onClick={() => startEditCat(cat)} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer" title={bn ? 'সম্পাদনা' : 'Edit'}>
-                            <Edit2 size={11} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm(bn ? `ক্যাটাগরি মুছে ফেলতে চান? ${cat.entryCount} জন শিক্ষার্থীর ছাড় মুছে যাবে।` : `Delete this category? ${cat.entryCount} student waivers will be removed.`)) {
-                                deleteWaiverCategory(cat.id)
-                              }
-                            }}
-                            className="w-6 h-6 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer"
-                          >
-                            <Trash2 size={11} />
-                          </button>
+                          {canEdit('finance.fees.waivers') && (
+                            <button onClick={() => startEditCat(cat)} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer" title={bn ? 'সম্পাদনা' : 'Edit'}>
+                              <Edit2 size={11} />
+                            </button>
+                          )}
+                          {canDelete('finance.fees.waivers') && (
+                            <button
+                              onClick={() => {
+                                if (confirm(bn ? `ক্যাটাগরি মুছে ফেলতে চান? ${cat.entryCount} জন শিক্ষার্থীর ছাড় মুছে যাবে।` : `Delete this category? ${cat.entryCount} student waivers will be removed.`)) {
+                                  deleteWaiverCategory(cat.id)
+                                }
+                              }}
+                              className="w-6 h-6 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -721,9 +729,11 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                             <td className="px-3 py-2 text-right font-semibold text-[var(--purple)]">{fmt(group.totalWaived)}</td>
                             <td className="px-3 py-2">
                               <div className="flex items-center justify-end">
-                              <button onClick={(e) => { e.stopPropagation(); if (confirm(bn ? 'এই শিক্ষার্থীর সব ছাড় মুছে ফেলতে চান?' : 'Delete all waivers for this student?')) { group.entries.forEach((en) => { if (en.source === 'legacy') deleteWaiverEntry(en.originalId) }); const swForStudent = studentWaivers.filter((w) => w.studentId === group.studentId); swForStudent.forEach((w) => deleteStudentWaiver(w.id)) } }} className="w-7 h-7 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)] hover:text-white transition-colors">
-                                <Trash2 size={13} />
-                              </button>
+                              {canDelete('finance.fees.waivers') && (
+                                <button onClick={(e) => { e.stopPropagation(); if (confirm(bn ? 'এই শিক্ষার্থীর সব ছাড় মুছে ফেলতে চান?' : 'Delete all waivers for this student?')) { group.entries.forEach((en) => { if (en.source === 'legacy') deleteWaiverEntry(en.originalId) }); const swForStudent = studentWaivers.filter((w) => w.studentId === group.studentId); swForStudent.forEach((w) => deleteStudentWaiver(w.id)) } }} className="w-7 h-7 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)] hover:text-white transition-colors">
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
                               </div>
                             </td>
                           </tr>
@@ -794,9 +804,11 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                                           </div>
                                         )}
                                         <span className="text-[0.7rem] font-semibold text-[var(--purple)]">{fmt(totalForEntry)}</span>
-                                        <button onClick={(e) => { e.stopPropagation(); startEditEntry(entry) }} className="w-5 h-5 rounded flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] border-0 cursor-pointer transition-colors">
-                                          <Edit2 size={10} />
-                                        </button>
+                                        {canEdit('finance.fees.waivers') && (
+                                          <button onClick={(e) => { e.stopPropagation(); startEditEntry(entry) }} className="w-5 h-5 rounded flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] border-0 cursor-pointer transition-colors">
+                                            <Edit2 size={10} />
+                                          </button>
+                                        )}
                                       </div>
                                     )
                                   })}

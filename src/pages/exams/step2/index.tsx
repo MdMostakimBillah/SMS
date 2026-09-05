@@ -14,6 +14,7 @@ import { useBn } from '@/hooks/useBn'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { usePermission } from '@/hooks/usePermission'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -38,6 +39,7 @@ export default function Step2Schedule() {
   const students = useSessionStudents()
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
+  const { canRead } = usePermission()
 
   const currentSession = useClassStore((s) => s.institution.currentSession)
 
@@ -240,13 +242,15 @@ export default function Step2Schedule() {
             </p>
           </div>
         </div>
-        <button
-          onClick={handleDownloadReport}
-          className="flex items-center gap-1.5 py-2 px-3 rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] font-medium cursor-pointer font-[inherit] hover:bg-[var(--green)]/15 transition-all shrink-0"
-        >
-          <Download size={14} />
-          {isBn ? 'রিপোর্ট' : 'Report'}
-        </button>
+        {canRead('exams.read.view') && (
+          <button
+            onClick={handleDownloadReport}
+            className="flex items-center gap-1.5 py-2 px-3 rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.75rem] font-medium cursor-pointer font-[inherit] hover:bg-[var(--green)]/15 transition-all shrink-0"
+          >
+            <Download size={14} />
+            {isBn ? 'রিপোর্ট' : 'Report'}
+          </button>
+        )}
       </div>
 
       {/* Exam Selector */}

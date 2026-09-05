@@ -9,6 +9,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
+import { usePermission } from '@/hooks/usePermission'
 import type { Department } from '@/pages/teachers/types'
 
 export default function DepartmentsPage() {
@@ -26,6 +27,7 @@ export default function DepartmentsPage() {
     }))
   )
   const { isMobile } = useWindowSize()
+  const { canConfigure } = usePermission()
 
   const { popFromChain, getChain } = useNavChain()
   useNavChainClearOnMount()
@@ -144,12 +146,14 @@ export default function DepartmentsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button
-                onClick={editD ? handleEdit : handleAdd}
-                className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
-              >
-                {editD ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
-              </button>
+              {canConfigure('teachers.departments.configure') && (
+                <button
+                  onClick={editD ? handleEdit : handleAdd}
+                  className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
+                >
+                  {editD ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -175,15 +179,17 @@ export default function DepartmentsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button
-                onClick={() => {
-                  deleteDepartment(delConfirm)
-                  setDelConfirm(null)
-                }}
-                className="py-2 px-[0.875rem] rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
-              >
-                {isBn ? 'মুছে ফেলুন' : 'Delete'}
-              </button>
+              {canConfigure('teachers.departments.configure') && (
+                <button
+                  onClick={() => {
+                    deleteDepartment(delConfirm)
+                    setDelConfirm(null)
+                  }}
+                  className="py-2 px-[0.875rem] rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
+                >
+                  {isBn ? 'মুছে ফেলুন' : 'Delete'}
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -237,18 +243,20 @@ export default function DepartmentsPage() {
             {isBn ? `মোট ${departments.length} টি বিভাগ` : `${departments.length} departments`}
           </p>
         </div>
-        <button
-          onClick={() => {
-            setShowAdd(true)
-            setNewName('')
-            setNewNameBn('')
-            setNewHead('')
-          }}
-          className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
-        >
-          <Plus size={14} />
-          {isBn ? 'নতুন যোগ করুন' : 'Add Department'}
-        </button>
+        {canConfigure('teachers.departments.configure') && (
+          <button
+            onClick={() => {
+              setShowAdd(true)
+              setNewName('')
+              setNewNameBn('')
+              setNewHead('')
+            }}
+            className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
+          >
+            <Plus size={14} />
+            {isBn ? 'নতুন যোগ করুন' : 'Add Department'}
+          </button>
+        )}
       </div>
 
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
@@ -322,20 +330,24 @@ export default function DepartmentsPage() {
                     </td>
                     <td className="py-[0.625rem] px-3 text-center">
                       <div className="flex gap-1 justify-center">
-                        <button
-                          onClick={() => startEdit(d)}
-                          title={isBn ? 'এডিট' : 'Edit'}
-                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                        <button
-                          onClick={() => setDelConfirm(d.id)}
-                          title={isBn ? 'মুছুন' : 'Delete'}
-                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        {canConfigure('teachers.departments.configure') && (
+                          <button
+                            onClick={() => startEdit(d)}
+                            title={isBn ? 'এডিট' : 'Edit'}
+                            className="w-7 h-7 rounded-[0.4375rem] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        )}
+                        {canConfigure('teachers.departments.configure') && (
+                          <button
+                            onClick={() => setDelConfirm(d.id)}
+                            title={isBn ? 'মুছুন' : 'Delete'}
+                            className="w-7 h-7 rounded-[0.4375rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

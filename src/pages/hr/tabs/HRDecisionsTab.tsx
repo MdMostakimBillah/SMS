@@ -2,6 +2,7 @@ import React from 'react'
 import { Zap, CheckCircle2, XCircle, ThumbsUp, AlertCircle, Award, Gift, TrendingUp, Percent } from 'lucide-react'
 import CircularChart from '@/components/ui/CircularChart'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
+import { usePermission } from '@/hooks/usePermission'
 
 interface HRDecisionsTabProps {
   isBn: boolean
@@ -32,6 +33,8 @@ export const HRDecisionsTab = React.memo(function HRDecisionsTab({
   getInitials,
   getTeacherDept,
 }: HRDecisionsTabProps) {
+  const { canCreate, canApprove, canReject } = usePermission()
+
   return (
     <>
       <div className={sectionCls(isMobile)}>
@@ -45,13 +48,15 @@ export const HRDecisionsTab = React.memo(function HRDecisionsTab({
               {isBn ? 'উপস্থিতি, হোমওয়ার্ক, রিপোর্ট ও ফলাফলের ভিত্তিতে' : 'Based on attendance, homework, reports & performance'}
             </div>
           </div>
-          <button
-            onClick={handleGenerateRecommendations}
-            className="flex items-center gap-[0.3125rem] py-2 px-4 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <Zap size={14} />
-            {isBn ? 'সুপারিশ তৈরি করুন' : 'Generate'}
-          </button>
+          {canCreate('hr.decisions') && (
+            <button
+              onClick={handleGenerateRecommendations}
+              className="flex items-center gap-[0.3125rem] py-2 px-4 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <Zap size={14} />
+              {isBn ? 'সুপারিশ তৈরি করুন' : 'Generate'}
+            </button>
+          )}
         </div>
         {showGenerateRecs && (
           <div className="mt-[0.625rem] py-2 px-3 rounded-lg bg-[var(--green-light)] text-[var(--green)] text-xs font-medium">
@@ -167,20 +172,24 @@ export const HRDecisionsTab = React.memo(function HRDecisionsTab({
                         <div className="text-xs text-[var(--text-secondary)] mt-[0.125rem]">{rec.reason}</div>
                       </div>
                       <div className="flex gap-1.5">
-                        <button
-                          onClick={() => handleApproveRecommendation(rec)}
-                          className="py-[0.375rem] px-3 rounded-lg bg-[var(--green)] border-none text-white text-xs font-medium cursor-pointer font-[inherit] flex items-center gap-1"
-                        >
-                          <CheckCircle2 size={13} />
-                          {isBn ? 'অনুমোদন' : 'Approve'}
-                        </button>
-                        <button
-                          onClick={() => updateRecommendation(rec.id, 'rejected')}
-                          className="py-[0.375rem] px-3 rounded-lg bg-transparent border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit] flex items-center gap-1"
-                        >
-                          <XCircle size={13} />
-                          {isBn ? 'বাতিল' : 'Reject'}
-                        </button>
+                        {canApprove('hr.decisions') && (
+                          <button
+                            onClick={() => handleApproveRecommendation(rec)}
+                            className="py-[0.375rem] px-3 rounded-lg bg-[var(--green)] border-none text-white text-xs font-medium cursor-pointer font-[inherit] flex items-center gap-1"
+                          >
+                            <CheckCircle2 size={13} />
+                            {isBn ? 'অনুমোদন' : 'Approve'}
+                          </button>
+                        )}
+                        {canReject('hr.decisions') && (
+                          <button
+                            onClick={() => updateRecommendation(rec.id, 'rejected')}
+                            className="py-[0.375rem] px-3 rounded-lg bg-transparent border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit] flex items-center gap-1"
+                          >
+                            <XCircle size={13} />
+                            {isBn ? 'বাতিল' : 'Reject'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

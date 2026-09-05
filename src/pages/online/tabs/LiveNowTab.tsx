@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Play, Edit2, Trash2 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useOnlineStore, getThumbnail, platformColors, platformLabels, type OnlineClass } from '@/store/onlineStore'
@@ -17,6 +18,7 @@ interface Props {
 
 export function LiveNowTab({ filterClassId, filterSectionId, filterSubjectId, search, onPlay, onEdit, onDelete }: Props) {
   const isBn = useBn()
+  const { canEdit, canDelete } = usePermission()
   const { classes } = useClassStore()
   const { teachers, subjects } = useTeacherStore()
   const allClasses = useOnlineStore((s) => s.classes)
@@ -96,12 +98,16 @@ export function LiveNowTab({ filterClassId, filterSectionId, filterSubjectId, se
                 <button onClick={() => onPlay(item)} className="w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors cursor-pointer">
                   <Play size={12} />
                 </button>
-                <button onClick={() => onEdit(item)} className="w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors cursor-pointer">
-                  <Edit2 size={12} />
-                </button>
-                <button onClick={() => onDelete(item.id)} className="w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red-light)] transition-colors cursor-pointer">
-                  <Trash2 size={12} />
-                </button>
+                {canEdit('online.live') && (
+                  <button onClick={() => onEdit(item)} className="w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors cursor-pointer">
+                    <Edit2 size={12} />
+                  </button>
+                )}
+                {canDelete('online.live') && (
+                  <button onClick={() => onDelete(item.id)} className="w-6 h-6 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red-light)] transition-colors cursor-pointer">
+                    <Trash2 size={12} />
+                  </button>
+                )}
               </div>
             </div>
           </div>

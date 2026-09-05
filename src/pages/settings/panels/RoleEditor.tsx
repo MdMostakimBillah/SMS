@@ -3,6 +3,7 @@ import { SettingsPanel } from '../components/SettingsPanel'
 import { Save, Search, Check, ChevronDown, ChevronRight, Sparkles, Users, Plus, Trash2, UserPlus, X, Lock, Copy } from 'lucide-react'
 import { usePermissionStore, type PermissionAction } from '@/store/permissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { usePermission } from '@/hooks/usePermission'
 import { PERMISSION_TREE, getPermissionNode, ROLE_TEMPLATES, type PermissionNode, type ActionSet, createActionSet } from '@/lib/permissionConfig'
 import type { PermissionEntry } from '@/store/permissionStore'
 
@@ -17,6 +18,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
   const bn = isBn
   const { roles, addRole, updateRole, setRolePerm, setRolePermAll, applyPreset, staffPermissions, addStaff, removeStaff, setStaffPassword } = usePermissionStore()
   const { teachers, departments } = useTeacherStore()
+  const { canManage } = usePermission()
   const role = roleId ? roles.find((r) => r.id === roleId) : null
   const isCreate = !roleId
 
@@ -460,20 +462,22 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
                 </span>
               )}
             </div>
-            <button
-              onClick={() => { setShowAddStaff(!showAddStaff); setStaffSearch(''); setDeptFilter('') }}
-              disabled={!activeRoleId}
-              className={`h-7 px-2.5 rounded-lg text-[0.6875rem] font-medium border-none cursor-pointer transition-colors flex items-center gap-1 ${
-                !activeRoleId
-                  ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] cursor-not-allowed opacity-50'
-                  : showAddStaff
-                  ? 'bg-[var(--red)]/10 text-[var(--red)] hover:bg-[var(--red)]/20'
-                  : 'bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20'
-              }`}
-            >
-              {showAddStaff ? <X size={12} /> : <UserPlus size={12} />}
-              {showAddStaff ? (bn ? 'বন্ধ করুন' : 'Close') : (bn ? 'শিক্ষক যোগ করুন' : 'Add Teachers')}
-            </button>
+            {canManage('settings.roles') && (
+              <button
+                onClick={() => { setShowAddStaff(!showAddStaff); setStaffSearch(''); setDeptFilter('') }}
+                disabled={!activeRoleId}
+                className={`h-7 px-2.5 rounded-lg text-[0.6875rem] font-medium border-none cursor-pointer transition-colors flex items-center gap-1 ${
+                  !activeRoleId
+                    ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] cursor-not-allowed opacity-50'
+                    : showAddStaff
+                    ? 'bg-[var(--red)]/10 text-[var(--red)] hover:bg-[var(--red)]/20'
+                    : 'bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)]/20'
+                }`}
+              >
+                {showAddStaff ? <X size={12} /> : <UserPlus size={12} />}
+                {showAddStaff ? (bn ? 'বন্ধ করুন' : 'Close') : (bn ? 'শিক্ষক যোগ করুন' : 'Add Teachers')}
+              </button>
+            )}
           </div>
 
           {/* Add Staff Panel */}
@@ -585,13 +589,15 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
             >
               {bn ? 'বাতিল' : 'Cancel'}
             </button>
-            <button
-              onClick={handleSave}
-              className="h-9 px-5 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium border-none cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1.5"
-            >
-              {saved ? <Check size={14} /> : <Save size={14} />}
-              {saved ? (bn ? 'সংরক্ষিত!' : 'Saved!') : (bn ? 'সংরক্ষণ করুন' : 'Save')}
-            </button>
+            {canManage('settings.roles') && (
+              <button
+                onClick={handleSave}
+                className="h-9 px-5 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium border-none cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1.5"
+              >
+                {saved ? <Check size={14} /> : <Save size={14} />}
+                {saved ? (bn ? 'সংরক্ষিত!' : 'Saved!') : (bn ? 'সংরক্ষণ করুন' : 'Save')}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -606,6 +612,7 @@ function StaffMemberCard({ member, teacher, bn, onRemove, onPasswordChange }: {
   onRemove: () => void
   onPasswordChange: (pw: string) => void
 }) {
+  const { canManage } = usePermission()
   const [editing, setEditing] = useState(false)
   const [pw, setPw] = useState(member.defaultPassword)
   const [copied, setCopied] = useState(false)
@@ -687,13 +694,15 @@ function StaffMemberCard({ member, teacher, bn, onRemove, onPasswordChange }: {
           >
             {copied ? <Check size={13} className="text-[var(--green)]" /> : <Copy size={13} />}
           </button>
-          <button
-            onClick={onRemove}
-            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors"
-            title={bn ? 'সরান' : 'Remove'}
-          >
-            <Trash2 size={13} />
-          </button>
+          {canManage('settings.roles') && (
+            <button
+              onClick={onRemove}
+              className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors"
+              title={bn ? 'সরান' : 'Remove'}
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
         </div>
       </div>
     </div>

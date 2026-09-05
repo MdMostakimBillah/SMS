@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Users, UserPlus, Pencil, Trash2, Bus, MapPin, FileText, FileSpreadsheet, MoreVertical, ChevronDown, Filter, X, CalendarDays } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useTransportStore, type TransportAssignment, MONTH_NAMES, MONTH_NAMES_BN } from '@/store/transportStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
@@ -20,6 +21,7 @@ interface Props {
 
 export const StudentsTab = ({ searchQuery }: Props) => {
   const bn = useBn()
+  const { canCreate, canEdit, canDelete, canExport } = usePermission()
   const { vehicles, routes, assignments, deleteAssignment } = useTransportStore()
   const students = useSessionStudents()
   const currentSession = useClassStore((s) => s.institution.currentSession) || '2025-26'
@@ -209,29 +211,35 @@ export const StudentsTab = ({ searchQuery }: Props) => {
                   <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
                   <div ref={actionMenuRef}
                     className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
-                    <button onClick={() => { exportExcel(); setShowActionMenu(false) }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
-                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
-                      {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                    </button>
+                    {canExport('transport.students') && (
+                      <button onClick={() => { exportExcel(); setShowActionMenu(false) }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                        <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                        {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                      </button>
+                    )}
                     <div className="h-px bg-[var(--border)] mx-2" />
-                    <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
-                      <FileText size={14} className="text-[var(--red)]" />
-                      {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                    </button>
+                    {canExport('transport.students') && (
+                      <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                        <FileText size={14} className="text-[var(--red)]" />
+                        {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
             </div>
           )}
-          <button
-            onClick={() => { setEditItem(null); setShowModal(true) }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90"
-          >
-            <UserPlus size={15} />
-            {bn ? 'ছাত্র যোগ' : 'Assign'}
-          </button>
+          {canCreate('transport.students') && (
+            <button
+              onClick={() => { setEditItem(null); setShowModal(true) }}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90"
+            >
+              <UserPlus size={15} />
+              {bn ? 'ছাত্র যোগ' : 'Assign'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -357,20 +365,24 @@ export const StudentsTab = ({ searchQuery }: Props) => {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center justify-center gap-1.5">
+                    <div className="flex items-center justify-center gap-1.5">
+                      {canEdit('transport.students') && (
                         <button
                           onClick={() => { setEditItem(a); setShowModal(true) }}
                           className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] cursor-pointer transition-colors"
                         >
                           <Pencil size={13} />
                         </button>
+                      )}
+                      {canDelete('transport.students') && (
                         <button
                           onClick={() => setDeleteId(a.id)}
                           className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 cursor-pointer transition-colors"
                         >
                           <Trash2 size={13} />
                         </button>
-                      </div>
+                      )}
+                    </div>
                     </td>
                   </tr>
                 ))}

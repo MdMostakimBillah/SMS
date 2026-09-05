@@ -34,6 +34,7 @@ import {
 import { sectionCls, sectionTitleCls, inputCls, selectCls, btnPrimary } from '@/lib/styles'
 import { openPrintWindow } from '@/lib/pdf'
 import { XLSX } from '@/lib/excelExport'
+import { usePermission } from '@/hooks/usePermission'
 import { generateExamRoutineGridPDF } from '../pdfTemplates/examRoutinePdfTemplate'
 import type { ExamRoutineGridData, ExamRoutineGridCell, ExamRoutinePDFOptions } from '../pdfTemplates/examRoutinePdfTemplate'
 import { ExamRoutinePDFOptionsModal } from '@/components/shared/ExamRoutinePDFOptionsModal'
@@ -92,6 +93,7 @@ export default React.memo(function RoutineTab({
   addRoutine,
   deleteRoutine,
 }: Props) {
+  const { canCreate, canRead, canDelete } = usePermission()
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [showDayDetail, setShowDayDetail] = useState(false)
   const [showRoutineForm, setShowRoutineForm] = useState(false)
@@ -364,7 +366,7 @@ export default React.memo(function RoutineTab({
             {isBn ? 'আজ' : 'Today'}
           </button>
         </div>
-        {filteredRoutines.length > 0 && (
+        {filteredRoutines.length > 0 && canRead('exams.read.view') && (
           <div style={{ position: 'relative' }} ref={examRoutineActionMenuRef}>
             <button
               onClick={() => setShowExamRoutineActionMenu(!showExamRoutineActionMenu)}
@@ -497,16 +499,18 @@ export default React.memo(function RoutineTab({
                 {format(selectedDate, 'EEEE, MMMM d, yyyy')}
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setRoutineForm({ classId: '', sectionId: '', subjectId: '', date: format(selectedDate!, 'yyyy-MM-dd'), startTime: '', endTime: '', roomNo: '' })
-                    setShowRoutineForm(true)
-                  }}
-                  className="flex items-center gap-1 py-1 px-2.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none"
-                >
-                  <Plus size={12} />
-                  {isBn ? 'যোগ করুন' : 'Add'}
-                </button>
+                {canCreate('exams.create.create') && (
+                  <button
+                    onClick={() => {
+                      setRoutineForm({ classId: '', sectionId: '', subjectId: '', date: format(selectedDate!, 'yyyy-MM-dd'), startTime: '', endTime: '', roomNo: '' })
+                      setShowRoutineForm(true)
+                    }}
+                    className="flex items-center gap-1 py-1 px-2.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none"
+                  >
+                    <Plus size={12} />
+                    {isBn ? 'যোগ করুন' : 'Add'}
+                  </button>
+                )}
                 <button onClick={() => setShowDayDetail(false)} className="w-6 h-6 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                   <X size={14} />
                 </button>
@@ -538,12 +542,14 @@ export default React.memo(function RoutineTab({
                         </div>
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <button
-                          onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteRoutine(routine.id) }}
-                          className="w-6 h-6 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
-                        >
-                          <Trash2 size={11} />
-                        </button>
+                        {canDelete('exams.delete.delete') && (
+                          <button
+                            onClick={() => { if (confirm(isBn ? 'মুছে ফেলবেন?' : 'Delete?')) deleteRoutine(routine.id) }}
+                            className="w-6 h-6 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--red)]"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   )

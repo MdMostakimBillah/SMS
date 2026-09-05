@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Download, Upload, Lock } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import { exportFaces, importFaces, downloadBlob, mergeFaces } from '@/lib/faceExport'
 import { logAuditEvent } from '@/lib/faceAudit'
 import type { RegisteredFace } from '@/hooks/useFaceApi'
@@ -11,6 +12,7 @@ interface ExportImportProps {
 }
 
 export default function ExportImport({ isBn, faces, onImport }: ExportImportProps) {
+  const { canExport, canImport } = usePermission()
   const [exportPassword, setExportPassword] = useState('')
   const [importPassword, setImportPassword] = useState('')
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -74,16 +76,18 @@ export default function ExportImport({ isBn, faces, onImport }: ExportImportProp
               className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
             />
           </div>
-          <button
-            onClick={handleExport}
-            disabled={!exportPassword || status === 'exporting'}
-            className="w-full py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <Download size={12} />
-            {status === 'exporting'
-              ? isBn ? 'এক্সপোর্ট হচ্ছে...' : 'Exporting...'
-              : isBn ? `এক্সপোর্ট (${faces.length})` : `Export (${faces.length})`}
-          </button>
+          {canExport('attendance.device') && (
+            <button
+              onClick={handleExport}
+              disabled={!exportPassword || status === 'exporting'}
+              className="w-full py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <Download size={12} />
+              {status === 'exporting'
+                ? isBn ? 'এক্সপোর্ট হচ্ছে...' : 'Exporting...'
+                : isBn ? `এক্সপোর্ট (${faces.length})` : `Export (${faces.length})`}
+            </button>
+          )}
         </div>
       </div>
 
@@ -114,16 +118,18 @@ export default function ExportImport({ isBn, faces, onImport }: ExportImportProp
               className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
             />
           </div>
-          <button
-            onClick={handleImport}
-            disabled={!importFile || !importPassword || status === 'importing'}
-            className="w-full py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--green)] text-white border-none cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <Upload size={12} />
-            {status === 'importing'
-              ? isBn ? 'ইমপোর্ট হচ্ছে...' : 'Importing...'
-              : isBn ? 'ইমপোর্ট' : 'Import'}
-          </button>
+          {canImport('attendance.device') && (
+            <button
+              onClick={handleImport}
+              disabled={!importFile || !importPassword || status === 'importing'}
+              className="w-full py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--green)] text-white border-none cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <Upload size={12} />
+              {status === 'importing'
+                ? isBn ? 'ইমপোর্ট হচ্ছে...' : 'Importing...'
+                : isBn ? 'ইমপোর্ট' : 'Import'}
+            </button>
+          )}
         </div>
         {status === 'error' && (
           <div className="mt-2 text-[0.6875rem] text-[var(--red)]">{errorMsg}</div>

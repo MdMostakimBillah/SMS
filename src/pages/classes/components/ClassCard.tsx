@@ -1,5 +1,6 @@
 import React from 'react'
 import { Clock, Trash2, Save, Plus, ChevronDown, ChevronUp, Pencil, X } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import { inputClass } from '../constants'
@@ -82,6 +83,7 @@ export const ClassCard = React.memo(function ClassCard({
   setTempSelectedSubjects,
   setShowSubjectModal,
 }: ClassCardProps) {
+  const { canCreate, canEdit, canDelete } = usePermission()
   const totalSeats = cls.sections.reduce((s, sec) => s + sec.seatQuantity, 0)
 
   return (
@@ -146,7 +148,7 @@ export const ClassCard = React.memo(function ClassCard({
           ) : (
             <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               {isBn ? cls.nameBn : cls.name}
-              {!bulkMode && (
+              {!bulkMode && canEdit('classes.classes') && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditingClassName(cls.id); setClassNameForm({ name: cls.name, nameBn: cls.nameBn }) }}
                   style={{ padding: '2px', borderRadius: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}
@@ -168,18 +170,22 @@ export const ClassCard = React.memo(function ClassCard({
         </div>
         {!bulkMode && (
           <>
-            <button
-              onClick={(e) => { e.stopPropagation(); setEditingClassTime(cls.id); setClassTimeForm({ startTime: cls.startTime, endTime: cls.endTime }) }}
-              style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.625rem', color: 'var(--text-secondary)', fontFamily: 'inherit' }}
-            >
-              <Clock size={11} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); if (confirm(isBn ? 'এই শ্রেণি মুছে ফেলতে চান?' : 'Delete this class?')) deleteClass(cls.id) }}
-              style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--red-light)', border: '1px solid var(--red)', cursor: 'pointer', fontSize: '0.625rem', color: 'var(--red)', fontFamily: 'inherit' }}
-            >
-              <Trash2 size={11} />
-            </button>
+            {canEdit('classes.classes') && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setEditingClassTime(cls.id); setClassTimeForm({ startTime: cls.startTime, endTime: cls.endTime }) }}
+                style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.625rem', color: 'var(--text-secondary)', fontFamily: 'inherit' }}
+              >
+                <Clock size={11} />
+              </button>
+            )}
+            {canDelete('classes.classes') && (
+              <button
+                onClick={(e) => { e.stopPropagation(); if (confirm(isBn ? 'এই শ্রেণি মুছে ফেলতে চান?' : 'Delete this class?')) deleteClass(cls.id) }}
+                style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--red-light)', border: '1px solid var(--red)', cursor: 'pointer', fontSize: '0.625rem', color: 'var(--red)', fontFamily: 'inherit' }}
+              >
+                <Trash2 size={11} />
+              </button>
+            )}
           </>
         )}
         {!bulkMode && (
@@ -207,13 +213,15 @@ export const ClassCard = React.memo(function ClassCard({
             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem' }}>
               {isBn ? 'সেকশন সমূহ' : 'Sections'}
             </div>
-            <button
-              onClick={() => handleAddSection(cls.id)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '5px 10px', borderRadius: '0.375rem', background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)', fontSize: '0.6875rem', cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              <Plus size={12} />
-              {isBn ? 'সেকশন যোগ' : 'Add Section'}
-            </button>
+            {canCreate('classes.classes') && (
+              <button
+                onClick={() => handleAddSection(cls.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '5px 10px', borderRadius: '0.375rem', background: 'var(--teal-light)', border: '1px solid var(--teal)', color: 'var(--teal)', fontSize: '0.6875rem', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                <Plus size={12} />
+                {isBn ? 'সেকশন যোগ' : 'Add Section'}
+              </button>
+            )}
           </div>
 
           {cls.sections.length === 0 ? (

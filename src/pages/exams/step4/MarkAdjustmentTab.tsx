@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { ClipboardCheck, Save, Trash2, Settings, X, Award, BookOpen, Users } from 'lucide-react'
 import { sectionCls, sectionTitleCls, inputCls, btnPrimary } from '@/lib/styles'
+import { usePermission } from '@/hooks/usePermission'
 import type { MarkAdjustment, ExtraMarkEntry, ExtraMarkType } from '@/store/examStore'
 
 interface Student {
@@ -59,6 +60,7 @@ export const MarkAdjustmentTab = React.memo(function MarkAdjustmentTab({
   isBn,
   tabulationData,
 }: Props) {
+  const { canEdit, canDelete } = usePermission()
   // Calculate number of active extra mark types
   const activeExtraTypes = extraMarkTypes.filter((t) => t.isActive).length
 
@@ -228,17 +230,21 @@ export const MarkAdjustmentTab = React.memo(function MarkAdjustmentTab({
             <Settings size={12} />
             {isBn ? 'সেটিংস' : 'Settings'}
           </button>
-          <button
-            onClick={handleClearAll}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[0.625rem] font-medium cursor-pointer border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-red-500 hover:border-red-500 transition-all"
-          >
-            <Trash2 size={12} />
-            {isBn ? 'মুছুন' : 'Clear'}
-          </button>
-          <button onClick={handleSave} className={`${btnPrimary} text-[0.625rem]`}>
-            <Save size={12} />
-            {saved ? (isBn ? 'সংরক্ষিত!' : 'Saved!') : (isBn ? 'সংরক্ষণ' : 'Save')}
-          </button>
+          {canDelete('exams.delete.delete') && (
+            <button
+              onClick={handleClearAll}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[0.625rem] font-medium cursor-pointer border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-red-500 hover:border-red-500 transition-all"
+            >
+              <Trash2 size={12} />
+              {isBn ? 'মুছুন' : 'Clear'}
+            </button>
+          )}
+          {canEdit('exams.results.edit') && (
+            <button onClick={handleSave} className={`${btnPrimary} text-[0.625rem]`}>
+              <Save size={12} />
+              {saved ? (isBn ? 'সংরক্ষিত!' : 'Saved!') : (isBn ? 'সংরক্ষণ' : 'Save')}
+            </button>
+          )}
         </div>
       </div>
 

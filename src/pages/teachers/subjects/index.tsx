@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
+import { usePermission } from '@/hooks/usePermission'
 import type { Subject } from '@/pages/teachers/types'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
@@ -27,6 +28,7 @@ export default function SubjectsPage() {
       deleteSubject: s.deleteSubject,
     }))
   )
+  const { canConfigure } = usePermission()
 
   const { pushToChain, popFromChain, getChain, setRedirectTimestamp } = useNavChain()
   useNavChainClearOnMount()
@@ -163,12 +165,14 @@ export default function SubjectsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button
-                onClick={editS ? handleEdit : handleAdd}
-                className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
-              >
-                {editS ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
-              </button>
+              {canConfigure('teachers.subjects.configure') && (
+                <button
+                  onClick={editS ? handleEdit : handleAdd}
+                  className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
+                >
+                  {editS ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -195,15 +199,17 @@ export default function SubjectsPage() {
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              <button
-                onClick={() => {
-                  deleteSubject(delConfirm)
-                  setDelConfirm(null)
-                }}
-                className="py-2 px-[0.875rem] rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
-              >
-                {isBn ? 'মুছে ফেলুন' : 'Delete'}
-              </button>
+              {canConfigure('teachers.subjects.configure') && (
+                <button
+                  onClick={() => {
+                    deleteSubject(delConfirm)
+                    setDelConfirm(null)
+                  }}
+                  className="py-2 px-[0.875rem] rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
+                >
+                  {isBn ? 'মুছে ফেলুন' : 'Delete'}
+                </button>
+              )}
             </div>
           </div>
         </div>,
@@ -258,19 +264,21 @@ export default function SubjectsPage() {
             {isBn ? `মোট ${filtered.length} টি বিষয়` : `${filtered.length} subjects`}
           </p>
         </div>
-        <button
-          onClick={() => {
-            setShowAdd(true)
-            setNewName('')
-            setNewNameBn('')
-            setNewDeptIds([])
-          }}
-          className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
-        >
-          <Plus size={14} />
-          {isBn ? 'নতুন যোগ করুন' : 'Add Subject'}
-        </button>
-        {departments.length === 0 && (
+        {canConfigure('teachers.subjects.configure') && (
+          <button
+            onClick={() => {
+              setShowAdd(true)
+              setNewName('')
+              setNewNameBn('')
+              setNewDeptIds([])
+            }}
+            className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
+          >
+            <Plus size={14} />
+            {isBn ? 'নতুন যোগ করুন' : 'Add Subject'}
+          </button>
+        )}
+        {departments.length === 0 && canConfigure('teachers.departments.configure') && (
           <button
             onClick={() => {
               pushToChain({ path: nav('/teachers/subjects'), label: isBn ? 'বিষয়' : 'Subjects' })
@@ -344,18 +352,20 @@ export default function SubjectsPage() {
                         <p className="text-[0.75rem] text-[var(--text-secondary)] mb-2">
                           {isBn ? 'প্রথমে বিভাগ তৈরি করুন' : 'Create departments first'}
                         </p>
-                        <button
-                          onClick={() => {
-                            const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
-                            chain.push({ path: nav('/teachers/subjects'), label: isBn ? 'বিষয়' : 'Subjects' })
-                            localStorage.setItem('edutech_navChain', JSON.stringify(chain))
-                            sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
-                            navigate(nav('/teachers/departments'))
-                          }}
-                          className="py-2 px-4 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none"
-                        >
-                          {isBn ? 'বিভাগ তৈরি করুন →' : 'Create Departments →'}
-                        </button>
+                        {canConfigure('teachers.departments.configure') && (
+                          <button
+                            onClick={() => {
+                              const chain = JSON.parse(localStorage.getItem('edutech_navChain') || '[]')
+                              chain.push({ path: nav('/teachers/subjects'), label: isBn ? 'বিষয়' : 'Subjects' })
+                              localStorage.setItem('edutech_navChain', JSON.stringify(chain))
+                              sessionStorage.setItem('edutech_lastRedirect', String(Date.now()))
+                              navigate(nav('/teachers/departments'))
+                            }}
+                            className="py-2 px-4 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer border-none"
+                          >
+                            {isBn ? 'বিভাগ তৈরি করুন →' : 'Create Departments →'}
+                          </button>
+                        )}
                       </div>
                     )}
                   </td>
@@ -392,20 +402,24 @@ export default function SubjectsPage() {
                     </td>
                     <td className="py-3 px-3 text-center">
                       <div className="flex gap-1 justify-center">
-                        <button
-                          onClick={() => startEdit(s)}
-                          title={isBn ? 'এডিট' : 'Edit'}
-                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                        <button
-                          onClick={() => setDelConfirm(s.id)}
-                          title={isBn ? 'মুছুন' : 'Delete'}
-                          className="w-7 h-7 rounded-[0.4375rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        {canConfigure('teachers.subjects.configure') && (
+                          <button
+                            onClick={() => startEdit(s)}
+                            title={isBn ? 'এডিট' : 'Edit'}
+                            className="w-7 h-7 rounded-[0.4375rem] bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                          >
+                            <Edit2 size={12} />
+                          </button>
+                        )}
+                        {canConfigure('teachers.subjects.configure') && (
+                          <button
+                            onClick={() => setDelConfirm(s.id)}
+                            title={isBn ? 'মুছুন' : 'Delete'}
+                            className="w-7 h-7 rounded-[0.4375rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

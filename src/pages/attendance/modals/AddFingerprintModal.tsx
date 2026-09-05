@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import { Fingerprint } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import { PersonSearchInput } from '../PersonSearchInput'
 import type { Person } from '../types'
 
@@ -13,6 +14,7 @@ interface AddFingerprintModalProps {
 }
 
 export function AddFingerprintModal({ isBn, allPeople, newFP, setNewFP, onAdd, onClose }: AddFingerprintModalProps) {
+  const { canCreate } = usePermission()
   return createPortal(
     <div className="modal-overlay">
       <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
@@ -41,9 +43,11 @@ export function AddFingerprintModal({ isBn, allPeople, newFP, setNewFP, onAdd, o
           <button onClick={onClose} className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer">
             {isBn ? 'বাতিল' : 'Cancel'}
           </button>
-          <button onClick={onAdd} className="px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.75rem] font-semibold cursor-pointer">
-            {isBn ? 'এনরোল শুরু করুন' : 'Start Enrollment'}
-          </button>
+          {canCreate('attendance.device') && (
+            <button onClick={onAdd} className="px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.75rem] font-semibold cursor-pointer">
+              {isBn ? 'এনরোল শুরু করুন' : 'Start Enrollment'}
+            </button>
+          )}
         </div>
       </div>
     </div>,

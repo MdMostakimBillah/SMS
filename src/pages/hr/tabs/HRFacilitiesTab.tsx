@@ -5,6 +5,7 @@ import { PaginationControls } from '@/components/shared/PaginationControls'
 import type { FacForm } from '@/pages/hr/types'
 import type { Facility } from '@/store/hrStore'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 interface HRFacilitiesTabProps {
   isBn: boolean
@@ -86,6 +87,7 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
   setShowPDFModal,
   inputCls,
 }: HRFacilitiesTabProps) {
+  const { canCreate, canEdit, canDelete, canPrint } = usePermission()
   const facCls = sectionCls(isMobile)
 
   return (
@@ -97,17 +99,19 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
             <Briefcase size={15} className="text-[var(--purple)]" />
             {isBn ? 'সুবিধার ধরন' : 'Facility Types'}
           </div>
-          <button
-            onClick={() => {
-              setFacForm({ name: '', nameBn: '', defaultAmount: '', type: 'monthly' })
-              setEditFac(null)
-              setFacModalType('add-facility')
-            }}
-            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--purple-light)] border border-[var(--purple)] text-[var(--purple)] text-xs font-medium cursor-pointer font-[inherit]"
-          >
-            <Plus size={14} />
-            {isBn ? 'নতুন সুবিধা' : 'Add Facility'}
-          </button>
+          {canCreate('hr.facilities') && (
+            <button
+              onClick={() => {
+                setFacForm({ name: '', nameBn: '', defaultAmount: '', type: 'monthly' })
+                setEditFac(null)
+                setFacModalType('add-facility')
+              }}
+              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--purple-light)] border border-[var(--purple)] text-[var(--purple)] text-xs font-medium cursor-pointer font-[inherit]"
+            >
+              <Plus size={14} />
+              {isBn ? 'নতুন সুবিধা' : 'Add Facility'}
+            </button>
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -177,24 +181,28 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
                     </td>
                     <td className="py-[0.625rem] px-2 text-center">
                       <div className="flex gap-1 justify-center">
-                        <button
-                          onClick={() => {
-                            setFacForm({ name: f.name, nameBn: f.nameBn, defaultAmount: String(f.defaultAmount), type: f.type })
-                            setEditFac(f)
-                            setFacModalType('edit-facility')
-                          }}
-                          title={isBn ? 'এডিট' : 'Edit'}
-                          className="w-[1.625rem] h-[1.625rem] rounded-md bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
-                        >
-                          <Edit2 size={11} />
-                        </button>
-                        <button
-                          onClick={() => setFacDeleteConfirm(f.id)}
-                          title={isBn ? 'মুছুন' : 'Delete'}
-                          className="w-[1.625rem] h-[1.625rem] rounded-md bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
-                        >
-                          <Trash2 size={11} />
-                        </button>
+                        {canEdit('hr.facilities') && (
+                          <button
+                            onClick={() => {
+                              setFacForm({ name: f.name, nameBn: f.nameBn, defaultAmount: String(f.defaultAmount), type: f.type })
+                              setEditFac(f)
+                              setFacModalType('edit-facility')
+                            }}
+                            title={isBn ? 'এডিট' : 'Edit'}
+                            className="w-[1.625rem] h-[1.625rem] rounded-md bg-[var(--amber-light)] border-none cursor-pointer flex items-center justify-center text-[var(--amber)]"
+                          >
+                            <Edit2 size={11} />
+                          </button>
+                        )}
+                        {canDelete('hr.facilities') && (
+                          <button
+                            onClick={() => setFacDeleteConfirm(f.id)}
+                            title={isBn ? 'মুছুন' : 'Delete'}
+                            className="w-[1.625rem] h-[1.625rem] rounded-md bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -275,13 +283,15 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
                   {isBn ? 'সুবিধা চেক করুন এবং পরিমাণ সেট করুন' : 'Check facilities and set amounts'}
                 </div>
               </div>
-              <button
-                onClick={handleSaveStaffFacilities}
-                className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-              >
-                <Save size={13} />
-                {isBn ? 'সংরক্ষণ' : 'Save'}
-              </button>
+              {canEdit('hr.facilities') && (
+                <button
+                  onClick={handleSaveStaffFacilities}
+                  className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+                >
+                  <Save size={13} />
+                  {isBn ? 'সংরক্ষণ' : 'Save'}
+                </button>
+              )}
             </div>
 
             <div className={`grid gap-2 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
@@ -369,13 +379,15 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
               }}
               className={`${inputCls} w-full sm:w-[8.125rem] py-[0.3125rem] px-2 text-[0.6875rem]`}
             />
-            <button
-              onClick={() => setShowPDFModal('assignment')}
-              className="flex items-center gap-[0.3125rem] py-[0.375rem] px-[0.625rem] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] font-medium cursor-pointer font-[inherit]"
-            >
-              <FileText size={12} />
-              PDF {selectedAssign.length > 0 ? `(${selectedAssign.length})` : `(${filteredAssignments.length})`}
-            </button>
+            {canPrint('hr.facilities') && (
+              <button
+                onClick={() => setShowPDFModal('assignment')}
+                className="flex items-center gap-[0.3125rem] py-[0.375rem] px-[0.625rem] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] font-medium cursor-pointer font-[inherit]"
+              >
+                <FileText size={12} />
+                PDF {selectedAssign.length > 0 ? `(${selectedAssign.length})` : `(${filteredAssignments.length})`}
+              </button>
+            )}
           </div>
         </div>
 
@@ -447,13 +459,15 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
                       <td className="p-2 text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? fac?.nameBn || fac?.name : fac?.name}</td>
                       <td className="p-2 text-[0.6875rem] font-semibold text-[var(--green)] text-right">৳{tf.amount.toLocaleString()}</td>
                       <td className="p-2 text-center">
-                        <button
-                          onClick={() => setAssignDeleteConfirm(tf.id)}
-                          title={isBn ? 'মুছুন' : 'Delete'}
-                          className="w-[1.375rem] h-[1.375rem] rounded-[0.3125rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
-                        >
-                          <Trash2 size={10} />
-                        </button>
+                        {canDelete('hr.facilities') && (
+                          <button
+                            onClick={() => setAssignDeleteConfirm(tf.id)}
+                            title={isBn ? 'মুছুন' : 'Delete'}
+                            className="w-[1.375rem] h-[1.375rem] rounded-[0.3125rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          >
+                            <Trash2 size={10} />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   )

@@ -14,6 +14,7 @@ import QRCode from 'qrcode'
 import { RELIGION_OPTIONS, DISTRICT_OPTIONS } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
 import { compressImage } from '@/lib/compressImage'
+import { usePermission } from '@/hooks/usePermission'
 
 type FormData = Omit<StudentAdmission, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'approvedAt'>
 
@@ -84,6 +85,7 @@ function SummaryRow({ labelBn, labelEn, value, isBn }: { labelBn: string; labelE
 export default function GeneralAdmission() {
   const { isMobile } = useWindowSize()
   const { addStudent, getNextId } = useAdmissionStore()
+  const { canCreate, canPrint } = usePermission()
   const students = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
   const isBn = useBn()
@@ -224,9 +226,11 @@ export default function GeneralAdmission() {
         <span>{isBn ? 'আবেদনটি Pending অবস্থায় আছে। Manage থেকে Approve করুন।' : 'Pending approval. Go to Manage tab to approve.'}</span>
       </div>
       <div className="flex gap-2 justify-center flex-wrap">
-        <button onClick={downloadPDF} className="flex items-center gap-[0.375rem] py-[0.625rem] px-[1.125rem] rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit]">
-          <Download size={14} /> {isBn ? 'আবেদনপত্র PDF' : 'Download Application PDF'}
-        </button>
+        {canPrint('students.admission') && (
+          <button onClick={downloadPDF} className="flex items-center gap-[0.375rem] py-[0.625rem] px-[1.125rem] rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit]">
+            <Download size={14} /> {isBn ? 'আবেদনপত্র PDF' : 'Download Application PDF'}
+          </button>
+        )}
         <button onClick={() => { setDone(false); setForm(initForm(currentSession)); setShowReview(false); setActiveTab('personal') }} className="py-[0.625rem] px-[1.125rem] rounded-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]">
           {isBn ? 'নতুন আবেদন' : 'New Application'}
         </button>
@@ -341,9 +345,11 @@ export default function GeneralAdmission() {
             {isBn ? 'রিসেট' : 'Reset'}
           </button>
         </div>
-        <button type="button" onClick={handleSubmit} className="flex items-center gap-[0.4375rem] py-[0.625rem] px-6 rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_14px_rgba(99,102,241,0.35)]">
-          <Send size={14} />{isBn ? 'আবেদন জমা দিন' : 'Submit Application'}
-        </button>
+        {canCreate('students.admission') && (
+          <button type="button" onClick={handleSubmit} className="flex items-center gap-[0.4375rem] py-[0.625rem] px-6 rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_14px_rgba(99,102,241,0.35)]">
+            <Send size={14} />{isBn ? 'আবেদন জমা দিন' : 'Submit Application'}
+          </button>
+        )}
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { Download, MessageSquare, X, CheckSquare, Square, Search, Send } from 'l
 import QRCode from 'qrcode'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { getBrandColor } from '@/lib/pdf'
+import { usePermission } from '@/hooks/usePermission'
 import { MarksheetPDFOptionsModal } from './MarksheetPDFOptionsModal'
 import { downloadHTML } from '@/lib/pdf'
 import { useClassStore } from '@/store/classStore'
@@ -90,6 +91,7 @@ export const MarksheetTab = React.memo(function MarksheetTab({
   institutionAddress,
   isBn = false,
 }: MarksheetTabProps) {
+  const { canPrint } = usePermission()
   const { students: allStudents } = useAdmissionStore()
   const brand = getBrandColor()
   const institution = useClassStore((s) => s.institution)
@@ -255,9 +257,11 @@ export const MarksheetTab = React.memo(function MarksheetTab({
         <button onClick={() => setShowSmsModal(true)} className="h-8 px-4 rounded-lg text-xs font-medium text-white transition-all inline-flex items-center gap-1.5" style={{ background: 'var(--green)' }}>
           <MessageSquare size={13} />{isBn ? 'SMS পাঠান' : 'Send SMS'}
         </button>
-        <button onClick={() => setShowPdfModal(true)} className="h-8 px-4 rounded-lg text-xs font-medium text-white transition-all inline-flex items-center gap-1.5" style={{ background: brand }}>
-          <Download size={13} />Download PDF
-        </button>
+        {canPrint('exams.results.view') && (
+          <button onClick={() => setShowPdfModal(true)} className="h-8 px-4 rounded-lg text-xs font-medium text-white transition-all inline-flex items-center gap-1.5" style={{ background: brand }}>
+            <Download size={13} />Download PDF
+          </button>
+        )}
       </div>
 
       {/* Student Marksheets */}

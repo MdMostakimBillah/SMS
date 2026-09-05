@@ -46,7 +46,7 @@ function StatCards({ stats, bn }: { stats: { totalIncome: number; totalExpenses:
 
 export default function AccountingReportPage() {
   const bn = useBn()
-  const { canRead } = usePermission()
+  const { canRead, canExport } = usePermission()
   const feePayments = useFeeStore((s) => s.payments)
   const feeStructures = useFeeStore((s) => s.structures)
   const otherCategories = useOthersIncomeStore((s) => s.categories)
@@ -466,13 +466,17 @@ export default function AccountingReportPage() {
           {showActionMenu && (<>
             <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
             <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
-              <button onClick={handleExportExcel} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
-                <FileSpreadsheet size={14} className="text-[var(--green)]" />{bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-              </button>
+              {canExport(`accounting.${activeTab}`) && (
+                <button onClick={handleExportExcel} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                  <FileSpreadsheet size={14} className="text-[var(--green)]" />{bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                </button>
+              )}
               <div className="h-px bg-[var(--border)] mx-2" />
-              <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
-                <FileText size={14} className="text-[var(--red)]" />{bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-              </button>
+              {canExport(`accounting.${activeTab}`) && (
+                <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                  <FileText size={14} className="text-[var(--red)]" />{bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                </button>
+              )}
             </div>
           </>)}
         </div>

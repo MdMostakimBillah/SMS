@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { usePermission } from '@/hooks/usePermission'
 
 interface HRFundTabProps {
   isBn: boolean
@@ -62,6 +63,8 @@ export const HRFundTab = React.memo(function HRFundTab({
   fundBalance,
   monthlySalaryConfigs,
 }: HRFundTabProps) {
+  const { canCreate, canPrint } = usePermission()
+
   return (
     <>
       {/* Institution Fund */}
@@ -72,20 +75,24 @@ export const HRFundTab = React.memo(function HRFundTab({
             {isBn ? 'প্রতিষ্ঠান তহবিল' : 'Institution Fund'}
           </div>
           <div className="flex gap-1.5">
-            <button
-              onClick={() => setShowPDFModal('fund')}
-              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
-            >
-              <FileText size={13} />
-              PDF
-            </button>
-            <button
-              onClick={() => setModalType('fund')}
-              className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
-            >
-              <Plus size={14} />
-              {isBn ? 'লেনদেন' : 'Transaction'}
-            </button>
+            {canPrint('hr.fund') && (
+              <button
+                onClick={() => setShowPDFModal('fund')}
+                className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs font-medium cursor-pointer font-[inherit]"
+              >
+                <FileText size={13} />
+                PDF
+              </button>
+            )}
+            {canCreate('hr.fund') && (
+              <button
+                onClick={() => setModalType('fund')}
+                className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
+              >
+                <Plus size={14} />
+                {isBn ? 'লেনদেন' : 'Transaction'}
+              </button>
+            )}
           </div>
         </div>
 

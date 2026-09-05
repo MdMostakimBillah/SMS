@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Tag, Pencil, Trash2, Plus } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useStoreStore, type StoreCategory } from '@/store/storeStore'
 import { CategoryModal } from '../modals/CategoryModal'
 
@@ -10,6 +11,7 @@ interface Props {
 
 export const CategoriesTab = ({ searchQuery }: Props) => {
   const bn = useBn()
+  const { canCreate, canEdit, canDelete } = usePermission()
   const categories = useStoreStore((s) => s.categories)
   const products = useStoreStore((s) => s.products)
   const deleteCategory = useStoreStore((s) => s.deleteCategory)
@@ -36,10 +38,12 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
         <div className="text-[0.8125rem] text-[var(--text-secondary)]">
           {bn ? `${filtered.length} টি ক্যাটাগরি` : `${filtered.length} categories`}
         </div>
-        <button onClick={() => { setEditItem(null); setShowModal(true) }} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90">
-          <Plus size={15} />
-          {bn ? 'ক্যাটাগরি' : 'Category'}
-        </button>
+        {canCreate('store.categories') && (
+          <button onClick={() => { setEditItem(null); setShowModal(true) }} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90">
+            <Plus size={15} />
+            {bn ? 'ক্যাটাগরি' : 'Category'}
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -92,18 +96,22 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => { setEditItem(c); setShowModal(true) }}
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] cursor-pointer transition-colors"
-                        >
-                          <Pencil size={13} />
-                        </button>
-                        <button
-                          onClick={() => deleteCategory(c.id)}
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 cursor-pointer transition-colors"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        {canEdit('store.categories') && (
+                          <button
+                            onClick={() => { setEditItem(c); setShowModal(true) }}
+                            className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] cursor-pointer transition-colors"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        )}
+                        {canDelete('store.categories') && (
+                          <button
+                            onClick={() => deleteCategory(c.id)}
+                            className="w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-500 cursor-pointer transition-colors"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

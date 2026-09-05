@@ -1,4 +1,5 @@
 import { Plus, Clock, BookOpen, ListChecks } from 'lucide-react'
+import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo } from '@/store/classStore'
 
 interface TopBarProps {
@@ -26,6 +27,7 @@ export function TopBar({
   setSelectedClasses,
   isBn,
 }: TopBarProps) {
+  const { canCreate, canEdit } = usePermission()
   return (
     <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
       <div className="text-[0.75rem] text-[var(--text-muted)]">
@@ -38,7 +40,7 @@ export function TopBar({
         )}
       </div>
       <div className="flex gap-[0.375rem] flex-wrap">
-        {bulkMode && selectedClasses.length > 0 && (
+        {bulkMode && selectedClasses.length > 0 && canEdit('classes.classes') && (
           <>
             <button
               onClick={() => setShowBulkTime(true)}
@@ -73,13 +75,15 @@ export function TopBar({
           <ListChecks size={11} />
           {bulkMode ? (isBn ? 'বন্ধ' : 'Done') : isBn ? 'বাল্ক' : 'Bulk'}
         </button>
-        <button
-          onClick={() => setShowAddClass(true)}
-          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5rem] bg-[var(--brand)] border-none text-white text-[0.75rem] font-medium cursor-pointer font-[inherit]"
-        >
-          <Plus size={14} />
-          {isBn ? 'নতুন শ্রেণি' : 'Add Class'}
-        </button>
+        {canCreate('classes.classes') && (
+          <button
+            onClick={() => setShowAddClass(true)}
+            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5rem] bg-[var(--brand)] border-none text-white text-[0.75rem] font-medium cursor-pointer font-[inherit]"
+          >
+            <Plus size={14} />
+            {isBn ? 'নতুন শ্রেণি' : 'Add Class'}
+          </button>
+        )}
       </div>
     </div>
   )

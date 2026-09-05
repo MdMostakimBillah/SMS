@@ -116,6 +116,7 @@ function RestockModal({ product, bn, onSaved, onClose }: RestockModalProps) {
 }
 
 function ProductCard({ product, bn, onRestock, onEdit, onDelete }: { product: StoreProduct; bn: boolean; onRestock: (p: StoreProduct) => void; onEdit: (p: StoreProduct) => void; onDelete: (id: string) => void }) {
+  const { canEdit, canDelete } = usePermission()
   const us = getUnitStyle(product.unit)
   const lowStock = product.stock <= product.minStock
   const [open, setOpen] = useState(false)
@@ -157,12 +158,16 @@ function ProductCard({ product, bn, onRestock, onEdit, onDelete }: { product: St
           <button onClick={() => onRestock(product)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--brand)]/8 text-[var(--brand)] cursor-pointer hover:bg-[var(--brand)]/15 transition-colors" title={bn ? 'স্টক যোগ' : 'Restock'}>
             <Plus size={14} />
           </button>
-          <button onClick={() => onEdit(product)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] transition-colors" title={bn ? 'সম্পাদনা' : 'Edit'}>
-            <Pencil size={13} />
-          </button>
-          <button onClick={() => onDelete(product.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] cursor-pointer hover:bg-red-500/10 hover:text-red-500 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-            <Trash2 size={13} />
-          </button>
+          {canEdit('store.products') && (
+            <button onClick={() => onEdit(product)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-secondary)] hover:text-[var(--brand)] transition-colors" title={bn ? 'সম্পাদনা' : 'Edit'}>
+              <Pencil size={13} />
+            </button>
+          )}
+          {canDelete('store.products') && (
+            <button onClick={() => onDelete(product.id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-secondary)] cursor-pointer hover:bg-red-500/10 hover:text-red-500 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+              <Trash2 size={13} />
+            </button>
+          )}
         </div>
 
         {/* Chevron */}
@@ -250,7 +255,7 @@ function StatCards({ stats, bn }: { stats: { totalProducts: number; lowStock: nu
 
 export default function StorePage() {
   const bn = useBn()
-  const { canRead } = usePermission()
+  const { canRead, canCreate } = usePermission()
   const products = useStoreStore((s) => s.products)
   const sales = useStoreStore((s) => s.sales)
   const deleteProduct = useStoreStore((s) => s.deleteProduct)
@@ -375,10 +380,12 @@ export default function StorePage() {
                 placeholder={bn ? 'খুঁজুন...' : 'Search...'}
               />
             </div>
-            <button onClick={() => setShowProductModal(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90 whitespace-nowrap">
-              <Plus size={15} />
-              {bn ? 'পণ্য যোগ করুন' : 'Add Product'}
-            </button>
+            {canCreate('store.products') && (
+              <button onClick={() => setShowProductModal(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--brand)] text-white text-[0.8125rem] font-medium cursor-pointer hover:opacity-90 whitespace-nowrap">
+                <Plus size={15} />
+                {bn ? 'পণ্য যোগ করুন' : 'Add Product'}
+              </button>
+            )}
           </div>
 
           {filteredProducts.length > 0 ? (

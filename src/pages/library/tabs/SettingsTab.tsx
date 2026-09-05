@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useLibraryStore } from '@/store/libraryStore'
 
 export function SettingsTab() {
   const bn = useBn()
+  const { canEdit } = usePermission()
   const settings = useLibraryStore((s) => s.settings)
   const updateSettings = useLibraryStore((s) => s.updateSettings)
 
@@ -27,10 +29,14 @@ export function SettingsTab() {
               <p className="text-[0.875rem] font-medium text-[var(--text-primary)]">{bn ? 'সর্বোচ্চ বই' : 'Max Books per Student'}</p>
               <p className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">{bn ? 'একজন ছাত্র একসাথে সর্বোচ্চ কতটি বই ধার করতে পারবে' : 'Maximum books a student can borrow at once'}</p>
             </div>
+            {canEdit('library.settings.edit') ? (
             <select value={local.maxBooksPerStudent} onChange={(e) => handleUpdate({ maxBooksPerStudent: Number(e.target.value) })}
               className="py-1 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)]">
               {[1,2,3,4,5,6,7,8,9,10].map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
+            ) : (
+            <span className="py-1 px-2 text-[0.8125rem] text-[var(--text-primary)]">{local.maxBooksPerStudent}</span>
+            )}
           </div>
 
           {/* Duration */}
@@ -40,11 +46,17 @@ export function SettingsTab() {
               <p className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">{bn ? 'বই ফেরত দেওয়ার সময়সীমা' : 'Days allowed to return borrowed books'}</p>
             </div>
             <div className="flex items-center gap-1.5">
+              {canEdit('library.settings.edit') ? (
+              <>
               <select value={local.borrowingDurationDays} onChange={(e) => handleUpdate({ borrowingDurationDays: Number(e.target.value) })}
                 className="py-1 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)]">
                 {[7,14,21,30,45,60,90].map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
               <span className="text-[0.75rem] text-[var(--text-secondary)]">{bn ? 'দিন' : 'days'}</span>
+              </>
+              ) : (
+              <span className="text-[0.8125rem] text-[var(--text-primary)]">{local.borrowingDurationDays} {bn ? 'দিন' : 'days'}</span>
+              )}
             </div>
           </div>
 
@@ -54,10 +66,16 @@ export function SettingsTab() {
               <p className="text-[0.875rem] font-medium text-[var(--text-primary)]">{bn ? 'পুনর্নবীকরণ অনুমতি' : 'Allow Renewal'}</p>
               <p className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">{bn ? 'বই ফেরত না দিয়ে পুনর্নবীকরণ করতে দেওয়া হবে' : 'Allow students to renew borrowed books'}</p>
             </div>
+            {canEdit('library.settings.edit') ? (
             <button onClick={() => handleUpdate({ allowRenewal: !local.allowRenewal })}
               className={`relative w-10 h-[22px] rounded-full transition-colors ${local.allowRenewal ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'}`}>
               <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow transition-transform ${local.allowRenewal ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
             </button>
+            ) : (
+            <span className={`text-[0.8125rem] font-medium ${local.allowRenewal ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>
+              {local.allowRenewal ? (bn ? 'সক্রিয়' : 'Enabled') : (bn ? 'নিষ্ক্রিয়' : 'Disabled')}
+            </span>
+            )}
           </div>
 
           {/* Renewal Limit */}
@@ -68,11 +86,17 @@ export function SettingsTab() {
                 <p className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">{bn ? 'একটি বই কতবার পুনর্নবীকরণ করা যাবে' : 'How many times a book can be renewed'}</p>
               </div>
               <div className="flex items-center gap-1.5">
+                {canEdit('library.settings.edit') ? (
+                <>
                 <select value={local.renewalLimit} onChange={(e) => handleUpdate({ renewalLimit: Number(e.target.value) })}
                   className="py-1 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)]">
                   {[0,1,2,3,4,5].map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
                 <span className="text-[0.75rem] text-[var(--text-secondary)]">{bn ? 'বার' : 'times'}</span>
+                </>
+                ) : (
+                <span className="text-[0.8125rem] text-[var(--text-primary)]">{local.renewalLimit} {bn ? 'বার' : 'times'}</span>
+                )}
               </div>
             </div>
           )}
@@ -91,10 +115,14 @@ export function SettingsTab() {
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[0.8125rem] text-[var(--text-secondary)]">৳</span>
+              {canEdit('library.settings.edit') ? (
               <select value={local.finePerDay} onChange={(e) => handleUpdate({ finePerDay: Number(e.target.value) })}
                 className="py-1 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)]">
                 {[0,1,2,5,10,15,20,25,50].map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
+              ) : (
+              <span className="text-[0.8125rem] text-[var(--text-primary)]">{local.finePerDay}</span>
+              )}
             </div>
           </div>
 
@@ -106,10 +134,14 @@ export function SettingsTab() {
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[0.8125rem] text-[var(--text-secondary)]">৳</span>
+              {canEdit('library.settings.edit') ? (
               <select value={local.lostBookFee} onChange={(e) => handleUpdate({ lostBookFee: Number(e.target.value) })}
                 className="py-1 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)]">
                 {[0,100,200,300,500,750,1000,1500,2000].map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
+              ) : (
+              <span className="text-[0.8125rem] text-[var(--text-primary)]">{local.lostBookFee}</span>
+              )}
             </div>
           </div>
 
@@ -121,10 +153,14 @@ export function SettingsTab() {
             </div>
             <div className="flex items-center gap-1">
               <span className="text-[0.8125rem] text-[var(--text-secondary)]">৳</span>
+              {canEdit('library.settings.edit') ? (
               <select value={local.damagedBookFee} onChange={(e) => handleUpdate({ damagedBookFee: Number(e.target.value) })}
                 className="py-1 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)]">
                 {[0,50,100,150,200,300,500].map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
+              ) : (
+              <span className="text-[0.8125rem] text-[var(--text-primary)]">{local.damagedBookFee}</span>
+              )}
             </div>
           </div>
         </div>
@@ -140,10 +176,16 @@ export function SettingsTab() {
               <p className="text-[0.875rem] font-medium text-[var(--text-primary)]">{bn ? 'ডিজিটাল অ্যাক্সেস' : 'Enable Digital Access'}</p>
               <p className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">{bn ? 'ছাত্রদের ই-বই পড়তে দেওয়া হবে' : 'Allow students to read e-books'}</p>
             </div>
+            {canEdit('library.settings.edit') ? (
             <button onClick={() => handleUpdate({ digitalAccessEnabled: !local.digitalAccessEnabled })}
               className={`relative w-10 h-[22px] rounded-full transition-colors ${local.digitalAccessEnabled ? 'bg-[var(--brand)]' : 'bg-[var(--border)]'}`}>
               <div className={`absolute top-[3px] w-4 h-4 rounded-full bg-white shadow transition-transform ${local.digitalAccessEnabled ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
             </button>
+            ) : (
+            <span className={`text-[0.8125rem] font-medium ${local.digitalAccessEnabled ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>
+              {local.digitalAccessEnabled ? (bn ? 'সক্রিয়' : 'Enabled') : (bn ? 'নিষ্ক্রিয়' : 'Disabled')}
+            </span>
+            )}
           </div>
 
           {/* Max Readers */}
@@ -153,10 +195,14 @@ export function SettingsTab() {
                 <p className="text-[0.875rem] font-medium text-[var(--text-primary)]">{bn ? 'সর্বোচ্চ পাঠক' : 'Max Concurrent Readers'}</p>
                 <p className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5">{bn ? 'একই সময়ে সর্বোচ্চ কতজন ছাত্র ডিজিটাল বই পড়তে পারবে' : 'Maximum students reading simultaneously'}</p>
               </div>
+              {canEdit('library.settings.edit') ? (
               <select value={local.maxDigitalReaders} onChange={(e) => handleUpdate({ maxDigitalReaders: Number(e.target.value) })}
                 className="py-1 px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)]">
                 {[10,25,50,100,150,200,300,500].map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
+              ) : (
+              <span className="text-[0.8125rem] text-[var(--text-primary)]">{local.maxDigitalReaders}</span>
+              )}
             </div>
           )}
         </div>

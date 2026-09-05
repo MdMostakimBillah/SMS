@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import React from 'react'
 import { Search, DollarSign, Users, Filter, FileText } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
@@ -16,6 +17,7 @@ type FilterStatus = 'all' | 'paid' | 'due'
 
 export const InactiveDuesTab = React.memo(function InactiveDuesTab() {
   const bn = useBn()
+  const { canPrint } = usePermission()
   const students = useSessionStudents()
   const { classes } = useClassStore()
   const { structures, payments, waiverEntries, calculateDues } = useFeeStore()
@@ -214,7 +216,7 @@ export const InactiveDuesTab = React.memo(function InactiveDuesTab() {
           </button>
         )}
         <div className="flex-1" />
-        {filteredDues.length > 0 && (
+        {filteredDues.length > 0 && canPrint('finance.fees.dues.print') && (
           <button onClick={() => setShowPdfModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--red)] hover:text-[var(--red)] cursor-pointer transition-all">
             <FileText size={13} />
             {bn ? 'পিডিএফ' : 'PDF'}

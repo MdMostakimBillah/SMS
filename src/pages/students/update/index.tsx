@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { ArrowLeft, Camera, CheckCircle, GraduationCap, Save, Search, ShieldCheck, User, UserSearch, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -63,6 +64,7 @@ export default function UpdateStudentPage() {
   const students = useSessionStudents()
   const { classes } = useClassStore()
   const isBn = useBn()
+  const { canEdit } = usePermission()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
@@ -274,6 +276,7 @@ export default function UpdateStudentPage() {
                 >
                   {isBn ? 'রিসেট' : 'Reset'}
                 </button>
+                {canEdit('students.profile.edit') && (
                 <button
                   onClick={handleSave}
                   className="flex items-center gap-1.5 py-2 px-[1.125rem] rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_12px_rgba(99,102,241,0.3)]"
@@ -281,6 +284,7 @@ export default function UpdateStudentPage() {
                   <Save size={14} />
                   {isBn ? 'সেভ করুন' : 'Save Changes'}
                 </button>
+                )}
               </div>
             </div>
 
@@ -476,6 +480,7 @@ export default function UpdateStudentPage() {
               >
                 {isBn ? 'রিসেট' : 'Reset'}
               </button>
+              {canEdit('students.profile.edit') && (
               <button
                 onClick={handleSave}
                 className="flex items-center gap-1.5 py-[0.625rem] px-[1.375rem] rounded-[0.5625rem] bg-[var(--brand)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit] shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
@@ -483,6 +488,7 @@ export default function UpdateStudentPage() {
                 <Save size={15} />
                 {isBn ? 'পরিবর্তন সেভ করুন' : 'Save Changes'}
               </button>
+              )}
             </div>
           </div>
         ) : (

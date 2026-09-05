@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { Plus, Users, Shield, Trash2 } from 'lucide-react'
 import { usePermissionStore } from '@/store/permissionStore'
+import { usePermission } from '@/hooks/usePermission'
 
 interface Props {
   isBn: boolean
@@ -13,6 +14,7 @@ interface Props {
 export function RolesList({ isBn, onBack, onCreateRole, onEditRole }: Props) {
   const bn = isBn
   const { roles, staffPermissions, removeRole } = usePermissionStore()
+  const { canManage } = usePermission()
 
   const roleStaffCounts = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -66,7 +68,7 @@ export function RolesList({ isBn, onBack, onCreateRole, onEditRole }: Props) {
                   </div>
                 </div>
               </button>
-              {!role.isSystemRole && (
+              {!role.isSystemRole && canManage('settings.roles') && (
                 <button
                   onClick={() => { if (confirm(bn ? 'এই ভূমিকা মুছে ফেলতে চান?' : 'Delete this role?')) removeRole(role.id) }}
                   className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 cursor-pointer bg-transparent border-none transition-colors shrink-0"
@@ -79,13 +81,15 @@ export function RolesList({ isBn, onBack, onCreateRole, onEditRole }: Props) {
           )
         })}
 
-        <button
-          onClick={onCreateRole}
-          className="w-full h-11 rounded-xl border border-dashed border-[var(--brand)]/30 text-[var(--brand)] text-[0.875rem] font-semibold cursor-pointer hover:border-[var(--brand)] hover:bg-[var(--brand)]/5 transition-colors flex items-center justify-center gap-2 bg-transparent"
-        >
-          <Plus size={18} />
-          {bn ? 'নতুন ভূমিকা তৈরি করুন' : 'Create New Role'}
-        </button>
+        {canManage('settings.roles') && (
+          <button
+            onClick={onCreateRole}
+            className="w-full h-11 rounded-xl border border-dashed border-[var(--brand)]/30 text-[var(--brand)] text-[0.875rem] font-semibold cursor-pointer hover:border-[var(--brand)] hover:bg-[var(--brand)]/5 transition-colors flex items-center justify-center gap-2 bg-transparent"
+          >
+            <Plus size={18} />
+            {bn ? 'নতুন ভূমিকা তৈরি করুন' : 'Create New Role'}
+          </button>
+        )}
       </div>
     </SettingsPanel>
   )
