@@ -3,6 +3,8 @@ import { X, Calendar, Flag, Users } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useTodoStore, type TodoTask } from '@/store/todoStore'
 import { inputCls, selectCls, btnPrimary } from '@/lib/styles'
@@ -14,6 +16,7 @@ interface Props {
 export function CreateTaskModal({ onClose }: Props) {
   const isBn = useBn()
   const { canCreate } = usePermission()
+  const { user } = useAuth()
   const teachers = useTeacherStore((s) => s.teachers)
   const addTodo = useTodoStore((s) => s.addTodo)
 
@@ -47,7 +50,7 @@ export function CreateTaskModal({ onClose }: Props) {
       priority,
       status: 'pending',
       assignedTo,
-      createdBy: 'Admin',
+      createdBy: getAuditUser(user),
       createdAt: now,
     })
     onClose()

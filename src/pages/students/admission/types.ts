@@ -7,6 +7,7 @@ export interface StudentAdmission {
   status: AdmissionStatus
   active?: boolean
   approvedAt?: string
+  approvedBy?: string
   inactiveAt?: string
   inactiveReason?: string
   photo: string

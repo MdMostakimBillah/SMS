@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Link, Calendar } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useOnlineStore, detectPlatform, getThumbnail, platformColors, platformLabels } from '@/store/onlineStore'
@@ -18,6 +20,7 @@ interface Props {
 
 export function CreateClassModal({ open, onClose, editItem }: Props) {
   const isBn = useBn()
+  const { user } = useAuth()
   const { classes } = useClassStore()
   const { teachers, subjects } = useTeacherStore()
   const addClass = useOnlineStore((s) => s.addClass)
@@ -74,7 +77,7 @@ export function CreateClassModal({ open, onClose, editItem }: Props) {
     if (editItem) {
       updateClass(editItem.id, { ...form, platform: detectedPlatform, thumbnailUrl: thumbnail })
     } else {
-      addClass({ ...form, platform: detectedPlatform, thumbnailUrl: thumbnail, createdBy: 'admin' })
+      addClass({ ...form, platform: detectedPlatform, thumbnailUrl: thumbnail, createdBy: getAuditUser(user) })
     }
     onClose()
   }

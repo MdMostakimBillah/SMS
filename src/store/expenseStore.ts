@@ -24,6 +24,7 @@ export interface ExpenseEntry {
   isRecurring: boolean
   recurringMonths: number[]
   academicYear: string
+  createdBy: string
   createdAt: string
   isActive: boolean
 }

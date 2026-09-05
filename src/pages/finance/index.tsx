@@ -13,6 +13,8 @@ import {
   Plus,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useFeeStore } from '@/store/feeStore'
 import { useAppStore } from '@/store/appStore'
@@ -175,6 +177,7 @@ const STATIC_OPTIONS: {
 
 export default function FeeManagementPage() {
   const bn = useBn()
+  const { user } = useAuth()
   const { isMobile, isTablet } = useWindowSize()
   const { structures, payments, addStructure, updateStructure, addPayment, bulkAddStructures } = useFeeStore()
   const students = useSessionStudents()
@@ -424,7 +427,7 @@ export default function FeeManagementPage() {
                 method,
                 reference: '',
                 note,
-                collectedBy: 'admin',
+                collectedBy: getAuditUser(user),
                 createdAt: today,
               }
               addPayment(payment)

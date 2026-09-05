@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import { useStoreStore, type StoreSaleItem } from '@/store/storeStore'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -16,6 +18,7 @@ interface Props {
 
 export function SaleModal({ onSaved, onClose, initialStudentId }: Props) {
   const bn = useBn()
+  const { user } = useAuth()
   const classes = useClassStore((s) => s.classes)
   const students = useAdmissionStore((s) => s.students)
   const products = useStoreStore((s) => s.products)
@@ -68,7 +71,7 @@ export function SaleModal({ onSaved, onClose, initialStudentId }: Props) {
       soldToClass: selectedStudent.class,
       soldToSection: selectedStudent.section,
       note: note.trim(),
-      createdBy: 'Admin',
+      createdBy: getAuditUser(user),
       createdAt: new Date().toISOString(),
     })
     onSaved()

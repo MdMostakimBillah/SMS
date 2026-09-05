@@ -4,6 +4,8 @@ import { User, Search, X, CheckCircle2, Plus, History, Ban, Receipt, Trash2, Dow
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
@@ -208,6 +210,7 @@ const fieldInputCls = 'w-full border border-[var(--border)] rounded-lg px-3 py-2
 
 export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect, initialStudentId, initialFeeStructureId, onClearCollectFromDue }: Props) {
   const bn = useBn()
+  const { user } = useAuth()
   const { canCreate, canDelete, canPrint } = usePermission()
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
@@ -453,7 +456,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           }
         }
       }
-      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: paymentNote, collectedBy: 'admin', createdAt: new Date().toISOString(), batchId, forMonth }
+      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: paymentNote, collectedBy: getAuditUser(user), createdAt: new Date().toISOString(), batchId, forMonth }
       addPayment(payment)
       // Handle shop product sales — deduct stock
       if (row.key.startsWith('shop-')) {

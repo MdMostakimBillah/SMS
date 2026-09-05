@@ -21,6 +21,7 @@ export interface BonusRecord {
   month: string
   reason: string
   date: string
+  createdBy: string
 }
 
 export interface PromotionRecord {
@@ -30,6 +31,7 @@ export interface PromotionRecord {
   toDesignation: string
   date: string
   reason: string
+  createdBy: string
 }
 
 export interface FundRecord {
@@ -38,6 +40,7 @@ export interface FundRecord {
   amount: number
   description: string
   date: string
+  createdBy: string
 }
 
 export interface HomeworkRecord {

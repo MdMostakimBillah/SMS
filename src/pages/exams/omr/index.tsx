@@ -12,6 +12,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { useExamStore, type OMRTemplate } from '@/store/examStore'
 import { usePermission } from '@/hooks/usePermission'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { generateOMRHtml, generateOMRSheet, generateOMRSheetMultiCopy, type OMRConfig, type PaperSize } from '@/pages/exams/omrTemplate'
@@ -44,6 +46,7 @@ export default function OMRSheetPage() {
   const { language: lang } = useAppStore()
   const isBn = lang === 'bn'
   const { canCreate, canRead, canUpdate, canDelete } = usePermission()
+  const { user } = useAuth()
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const examConfigs = useExamStore((s) => s.examConfigs)
@@ -311,7 +314,7 @@ export default function OMRSheetPage() {
   const handleSaveTemplate = () => {
     if (!templateName.trim()) return
     if (activeTemplateId) {
-      updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: 'Admin' })
+      updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: getAuditUser(user) })
       logger.info(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
     } else {
       saveOMRTemplate({
@@ -324,7 +327,7 @@ export default function OMRSheetPage() {
         totalCopy,
         isArchived: false,
         isDefault: false,
-        modifiedBy: 'Admin',
+        modifiedBy: getAuditUser(user),
       })
       logger.info(isBn ? 'টেমপ্লেট সংরক্ষিত হয়েছে' : 'Template saved')
     }
@@ -1064,7 +1067,7 @@ export default function OMRSheetPage() {
             {(canCreate('exams.create.create') || canUpdate('exams.edit.edit')) && (
               <button onClick={() => {
                 if (activeTemplateId) {
-                  updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: 'Admin' })
+                  updateOMRTemplate(activeTemplateId, { ...omrConfig, name: templateName, nameBn: templateName, modifiedBy: getAuditUser(user) })
                   logger.info(isBn ? 'টেমপ্লেট আপডেট হয়েছে' : 'Template updated')
                 } else {
                   setShowSaveDialog(true)

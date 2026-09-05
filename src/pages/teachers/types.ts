@@ -72,4 +72,5 @@ export interface Teacher {
   signature?: string
   expertSubjects?: string
   applySalaryRule?: boolean
+  createdBy?: string
 }

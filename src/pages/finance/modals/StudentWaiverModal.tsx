@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Gift, Search, ChevronRight, X, Check, Calendar, DollarSign, Users } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore, type StudentWaiver } from '@/store/feeStore'
@@ -22,6 +24,7 @@ const MONTH_LABELS = [
 
 export function StudentWaiverModal({ onSaved, onClose }: Props) {
   const bn = useBn()
+  const { user } = useAuth()
   const students = useSessionStudents()
   const { structures, waiverCategories, addStudentWaiver } = useFeeStore()
   const { institution, classes } = useClassStore()
@@ -181,7 +184,7 @@ export function StudentWaiverModal({ onSaved, onClose }: Props) {
       reason,
       reasonBn: reason,
       notes: notes || undefined,
-      approvedBy: 'admin',
+      approvedBy: getAuditUser(user),
       createdAt: new Date().toISOString().split('T')[0],
     }))
     swEntries.forEach((w) => addStudentWaiver(w))

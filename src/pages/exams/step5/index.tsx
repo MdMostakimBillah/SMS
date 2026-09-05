@@ -6,6 +6,8 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { usePermission } from '@/hooks/usePermission'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useExamStore } from '@/store/examStore'
@@ -20,6 +22,7 @@ export default function Step5Marksheet() {
   const currentSession = useClassStore((s) => s.institution.currentSession)
   const students = useSessionStudents()
   const isBn = useBn()
+  const { user } = useAuth()
   const { isMobile, isTablet } = useWindowSize()
   const { canCreate, canUpdate, canDelete, canPublish } = usePermission()
 
@@ -159,7 +162,7 @@ export default function Step5Marksheet() {
       percentage: p.percentage,
       grade: p.grade,
       promotedAt: new Date().toISOString(),
-      promotedBy: 'Admin',
+      promotedBy: getAuditUser(user),
     }))
     bulkPromote(newPromotions)
     setShowPromoConfirm(false)

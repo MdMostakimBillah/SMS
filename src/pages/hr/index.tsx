@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import {
   TrendingUp,
   Gift,
@@ -82,6 +84,7 @@ function HRPageSkeleton() {
 
 export default function HRPage() {
   const isBn = useBn()
+  const { user } = useAuth()
   const { canRead } = usePermission()
   const { isMobile, isTablet } = useWindowSize()
   const { teachers, departments, attendance } = useTeacherStore(
@@ -636,7 +639,7 @@ export default function HRPage() {
       percentage: Number(incForm.percentage),
       reason: incForm.reason,
       date: today,
-      approvedBy: 'HR Admin',
+      approvedBy: getAuditUser(user),
     })
     setIncForm({ teacherId: '', type: 'annual', percentage: '', reason: '' })
     setModalType(null)
@@ -652,6 +655,7 @@ export default function HRPage() {
       month: bonForm.month || today.slice(0, 7),
       reason: bonForm.reason,
       date: today,
+      createdBy: getAuditUser(user),
     })
     setBonForm({ teacherId: '', type: 'festival', amount: '', reason: '', month: '' })
     setModalType(null)
@@ -666,6 +670,7 @@ export default function HRPage() {
       toDesignation: proForm.toDesignation,
       date: today,
       reason: proForm.reason,
+      createdBy: getAuditUser(user),
     })
     setProForm({ teacherId: '', fromDesignation: '', toDesignation: '', reason: '' })
     setModalType(null)
@@ -679,6 +684,7 @@ export default function HRPage() {
       amount: Number(fundForm.amount),
       description: fundForm.description,
       date: today,
+      createdBy: getAuditUser(user),
     })
     setFundForm({ type: 'contribution', amount: '', description: '' })
     setModalType(null)
@@ -819,6 +825,7 @@ export default function HRPage() {
         month: today.slice(0, 7),
         reason: rec.reason,
         date: today,
+        createdBy: getAuditUser(user),
       })
     } else if (rec.type === 'promotion') {
       const t = teachers.find((tx) => tx.id === rec.teacherId)
@@ -830,6 +837,7 @@ export default function HRPage() {
           toDesignation: 'Senior ' + t.designation,
           date: today,
           reason: rec.reason,
+          createdBy: getAuditUser(user),
         })
     } else if (rec.type === 'increment') {
       const t = teachers.find((tx) => tx.id === rec.teacherId)
@@ -842,7 +850,7 @@ export default function HRPage() {
           percentage: 5,
           reason: rec.reason,
           date: today,
-          approvedBy: 'HR Admin',
+          approvedBy: getAuditUser(user),
         })
     }
   }

@@ -12,6 +12,8 @@ import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
 import { usePermission } from '@/hooks/usePermission'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 
 const INPUT_BASE = 'w-full py-[0.625rem] px-3 rounded-[0.5rem] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none transition-colors duration-200 box-border'
 const inputNormal = `${INPUT_BASE} border border-[var(--border)] focus:border-[var(--brand)]`
@@ -86,6 +88,7 @@ export default function AddTeacherPage() {
     }))
   )
   const { canCreate, canConfigure } = usePermission()
+  const { user } = useAuth()
   const departmentMap = useMemo(() => new Map(departments.map(d => [d.id, d])), [departments])
   const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s])), [subjects])
   const fileRef = useRef<HTMLInputElement>(null)
@@ -174,6 +177,7 @@ export default function AddTeacherPage() {
       guardianName: form.guardianName.trim(), guardianPhone: form.guardianPhone.trim(),
       guardianRelation: form.guardianRelation.trim(), parentAddress: form.parentAddress.trim(),
       signature: form.signature,
+      createdBy: getAuditUser(user),
     }
     addTeacher(teacher)
     setSaving(false)

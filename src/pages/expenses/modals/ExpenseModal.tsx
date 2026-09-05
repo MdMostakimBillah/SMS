@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Receipt, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAuditUser } from '@/lib/auditUser'
 import { useExpenseStore, expenseEntryId, PAYMENT_METHODS, getMonthName, type ExpenseEntry } from '@/store/expenseStore'
 import { useClassStore } from '@/store/classStore'
 
@@ -17,6 +19,7 @@ interface Props {
 
 export function ExpenseModal({ existing, onSaved, onClose }: Props) {
   const bn = useBn()
+  const { user } = useAuth()
   const { categories, addExpense, updateExpense } = useExpenseStore()
   const currentSession = useClassStore((s) => s.institution.currentSession) || '2025-26'
 
@@ -72,6 +75,7 @@ export function ExpenseModal({ existing, onSaved, onClose }: Props) {
         isRecurring,
         recurringMonths: isRecurring ? recurringMonths : [],
         academicYear: currentSession,
+        createdBy: getAuditUser(user),
         createdAt: now,
         isActive: true,
       })
