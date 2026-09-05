@@ -437,7 +437,13 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         <div className="relative z-10 text-center px-8">
           {institution.logo ? (
             <div className="w-[72px] h-[72px] rounded-2xl mx-auto mb-4 overflow-hidden shadow-xl">
-              <img src={institution.logo} alt={institution.name} className="w-full h-full object-cover" />
+              <img
+                src={institution.logo}
+                alt={institution.name}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+              />
             </div>
           ) : (
             <GraduationCap size={72} style={{ color: institution.brandColor }} className="mx-auto mb-4" />
@@ -465,7 +471,13 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           <div className="lg:hidden text-center mb-8">
             {institution.logo ? (
               <div className="w-11 h-11 rounded-xl mx-auto mb-4 overflow-hidden shadow-lg">
-                <img src={institution.logo} alt={institution.name} className="w-full h-full object-cover" />
+              <img
+                src={institution.logo}
+                alt={institution.name}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+              />
               </div>
             ) : (
               <GraduationCap size={44} style={{ color: institution.brandColor }} className="mx-auto mb-4" />
@@ -519,6 +531,8 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError('') }}
                   placeholder={isBn ? 'admin@school.edu.bd' : 'admin@school.edu.bd'}
+                  autoComplete="username"
+                  data-1p-ignore="true"
                   className={`w-full h-11 pl-10 pr-4 rounded-xl border text-[0.875rem] outline-none transition-all ${
                     isDark
                       ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
@@ -541,6 +555,8 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError('') }}
                   placeholder="••••••••"
+                  autoComplete="current-password"
+                  data-1p-ignore="true"
                   className={`w-full h-11 pl-10 pr-11 rounded-xl border text-[0.875rem] outline-none transition-all ${
                     isDark
                       ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
