@@ -258,6 +258,26 @@ export default function DashboardPage() {
 
   if (isLoading) return <DashboardSkeleton />
 
+  const hasAnySection = canRead('students') || canRead('teachers') || canRead('finance') || canRead('exams') || canRead('attendance') || canRead('classes')
+
+  if (!hasAnySection) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1rem' }}>
+        <div style={{ width: '4rem', height: '4rem', borderRadius: '1rem', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <GraduationCap size={28} style={{ color: 'var(--brand)' }} />
+        </div>
+        <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+          {isBn ? 'স্বাগতম' : 'Welcome'}
+        </h2>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', textAlign: 'center', maxWidth: '24rem' }}>
+          {isBn
+            ? 'আপনার ভূমিকার জন্য কোনো ড্যাশবোর্ড ডেটা উপলব্ধ নেই। মেনু থেকে আপনার অনুমোদিত পৃষ্ঠাগুলো অ্যাক্সেস করুন।'
+            : 'No dashboard data is available for your role. Access your authorized pages from the menu.'}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div ref={containerRef} style={{ display: 'flex', flexDirection: 'column', gap }}>
       {/* Header */}

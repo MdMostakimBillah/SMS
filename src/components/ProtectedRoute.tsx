@@ -65,12 +65,13 @@ export function ProtectedRoute() {
       }
 
       // Permission check for institution pages (skip for super_admin viewing)
+      // Dashboard is always accessible — it conditionally renders sections by permission
       if (!isAdmin && user.role !== 'super_admin') {
         const pathParts = location.pathname.split('/')
         // URL structure: /i/{slug}/{role}/{page}/...
         const pageSegment = pathParts[4] || ''
         const permKey = ROUTE_TO_PERMISSION[pageSegment]
-        if (permKey && !canRead(permKey)) {
+        if (permKey && permKey !== 'dashboard' && !canRead(permKey)) {
           const s = sessionStorage.getItem('edutech_inst_slug')
           return <Navigate to={`/i/${s}/${userRole}/dashboard`} replace />
         }
