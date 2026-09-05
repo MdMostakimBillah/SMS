@@ -436,7 +436,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             {user?.role === 'admin' && !collapsed && (
               <div className={`flex items-center gap-2.5`}>
                 {institution.logo ? (
-                  <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                  <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover shrink-0" />
                 ) : (
                   <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
                     <span className="text-white font-bold text-sm">{(institution.name || 'SA').slice(0, 2).toUpperCase()}</span>
@@ -457,7 +457,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             {user?.role !== 'admin' && (
               <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center' : ''}`}>
                 {isViewing && institution.logo && !collapsed ? (
-                  <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+                  <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover shrink-0" />
                 ) : (
                   <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
                     <GraduationCap size={17} color="#fff" />
@@ -547,7 +547,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
         {collapsed && (
           <div className="flex flex-col items-center py-3 border-b border-[var(--border)]">
             {user?.role === 'admin' && institution.logo ? (
-              <img src={institution.logo} alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
+              <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover" />
             ) : (
               <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center">
                 <GraduationCap size={17} color="#fff" />

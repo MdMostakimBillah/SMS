@@ -683,7 +683,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div style={{ width: '100%', height: isMobile ? 160 : 200 }}>
-            <ResponsiveContainer width="100%" height={isMobile ? 160 : 200}>
+            <ResponsiveContainer width="100%" height={isMobile ? 160 : 200} minWidth={0} minHeight={0}>
               <LineChart data={weeklyTrend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
@@ -721,7 +721,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div style={{ width: '100%', height: isMobile ? 160 : 200 }}>
-            <ResponsiveContainer width="100%" height={isMobile ? 160 : 200}>
+            <ResponsiveContainer width="100%" height={isMobile ? 160 : 200} minWidth={0} minHeight={0}>
               <BarChart data={classDist.length > 0 ? classDist : [{ name: 'No data', value: 0 }]}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="name" tick={{ fontSize: 9, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
@@ -755,7 +755,7 @@ export default function DashboardPage() {
             }}
           >
             <div style={{ width: isMobile ? 120 : 130, height: isMobile ? 120 : 130 }}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                 <PieChart>
                   <Pie data={statusData} cx="50%" cy="50%" innerRadius={28} outerRadius={42} dataKey="value" paddingAngle={3}>
                     {statusData.map((e, i) => (

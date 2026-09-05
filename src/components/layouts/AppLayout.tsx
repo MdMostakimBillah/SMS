@@ -117,7 +117,7 @@ export default function AppLayout() {
             style={{ animation: 'pulse 2s infinite' }}
           >
             {loadingLogo ? (
-              <img src={loadingLogo} alt={loadingName} className="w-full h-full object-cover" />
+              <img src={loadingLogo} alt={loadingName} referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-full h-full object-cover" />
             ) : (
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z" />

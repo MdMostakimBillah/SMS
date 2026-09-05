@@ -715,7 +715,7 @@ export default React.memo(function Topbar() {
               }}
             >
               {user?.photo ? (
-                <img src={user.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={user.photo} alt="" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 (user?.name || 'U').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
               )}
@@ -775,7 +775,7 @@ export default React.memo(function Topbar() {
                   }}
                 >
                   {user?.photo ? (
-                    <img src={user.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={user.photo} alt="" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     (user?.name || 'U').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
                   )}
