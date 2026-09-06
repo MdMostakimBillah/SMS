@@ -37,6 +37,7 @@ import {
 } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
+import { usePermission } from '@/hooks/usePermission'
 
 const iconMap: Record<string, LucideIcon> = {
   'layout-dashboard': LayoutDashboard,
@@ -75,139 +76,140 @@ interface SearchItem {
   icon: LucideIcon
   group: string
   groupBn: string
+  permissionKey: string
 }
 
 const navigationItems: Omit<SearchItem, 'icon'>[] = [
   // Main
-  { id: 'dashboard', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', path: '/dashboard', group: 'Main', groupBn: 'প্রধান' },
+  { id: 'dashboard', label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', path: '/dashboard', group: 'Main', groupBn: 'প্রধান', permissionKey: 'dashboard' },
 
   // Students
-  { id: 'students', label: 'Student Management', labelBn: 'ছাত্র ব্যবস্থাপনা', path: '/students', group: 'Students', groupBn: 'ছাত্র' },
-  { id: 'students-admission', label: 'Student Admission', labelBn: 'ভর্তি', path: '/students/admission', group: 'Students', groupBn: 'ছাত্র' },
-  { id: 'students-admission-general', label: 'General Admission', labelBn: 'সাধারণ ভর্তি', path: '/students/admission', group: 'Students', groupBn: 'ছাত্র' },
-  { id: 'students-admission-bulk', label: 'Bulk Admission', labelBn: 'বাল্ক ভর্তি', path: '/students/admission', group: 'Students', groupBn: 'ছাত্র' },
-  { id: 'students-admission-manage', label: 'Manage Admission', labelBn: 'ভর্তি ব্যবস্থাপনা', path: '/students/admission', group: 'Students', groupBn: 'ছাত্র' },
-  { id: 'students-all', label: 'All Students', labelBn: 'সকল ছাত্র', path: '/students/all', group: 'Students', groupBn: 'ছাত্র' },
-  { id: 'students-id-cards', label: 'ID Cards', labelBn: 'আইডি কার্ড', path: '/students/id-cards', group: 'Students', groupBn: 'ছাত্র' },
-  { id: 'students-promotion', label: 'Student Promotion', labelBn: 'পদোন্নতি', path: '/students/promotion', group: 'Students', groupBn: 'ছাত্র' },
+  { id: 'students', label: 'Student Management', labelBn: 'ছাত্র ব্যবস্থাপনা', path: '/students', group: 'Students', groupBn: 'ছাত্র', permissionKey: 'students' },
+  { id: 'students-admission', label: 'Student Admission', labelBn: 'ভর্তি', path: '/students/admission', group: 'Students', groupBn: 'ছাত্র', permissionKey: 'students' },
+  { id: 'students-admission-general', label: 'General Admission', labelBn: 'সাধারণ ভর্তি', path: '/students/admission', group: 'Students', groupBn: 'ছাত্র', permissionKey: 'students' },
+  { id: 'students-admission-bulk', label: 'Bulk Admission', labelBn: 'বাল্ক ভর্তি', path: '/students/admission', group: 'Students', groupBn: 'ছাত্র', permissionKey: 'students' },
+  { id: 'students-admission-manage', label: 'Manage Admission', labelBn: 'ভর্তি ব্যবস্থাপনা', path: '/students/admission', group: 'Students', groupBn: 'ছাত্র', permissionKey: 'students' },
+  { id: 'students-all', label: 'All Students', labelBn: 'সকল ছাত্র', path: '/students/all', group: 'Students', groupBn: 'ছাত্র', permissionKey: 'students' },
+  { id: 'students-id-cards', label: 'ID Cards', labelBn: 'আইডি কার্ড', path: '/students/id-cards', group: 'Students', groupBn: 'ছাত্র', permissionKey: 'students' },
+  { id: 'students-promotion', label: 'Student Promotion', labelBn: 'পদোন্নতি', path: '/students/promotion', group: 'Students', groupBn: 'ছাত্র', permissionKey: 'students' },
 
   // Teachers
-  { id: 'teachers', label: 'Teacher Management', labelBn: 'শিক্ষক ব্যবস্থাপনা', path: '/teachers', group: 'Teachers', groupBn: 'শিক্ষক' },
-  { id: 'teachers-add', label: 'Add Teacher', labelBn: 'শিক্ষক যোগ', path: '/teachers/add', group: 'Teachers', groupBn: 'শিক্ষক' },
-  { id: 'teachers-all', label: 'All Teachers', labelBn: 'সকল শিক্ষক', path: '/teachers/all', group: 'Teachers', groupBn: 'শিক্ষক' },
-  { id: 'teachers-departments', label: 'Departments', labelBn: 'বিভাগ', path: '/teachers/departments', group: 'Teachers', groupBn: 'শিক্ষক' },
-  { id: 'teachers-subjects', label: 'Subjects', labelBn: 'বিষয়', path: '/teachers/subjects', group: 'Teachers', groupBn: 'শিক্ষক' },
-  { id: 'teachers-designations', label: 'Designations', labelBn: 'পদবি', path: '/teachers/designations', group: 'Teachers', groupBn: 'শিক্ষক' },
+  { id: 'teachers', label: 'Teacher Management', labelBn: 'শিক্ষক ব্যবস্থাপনা', path: '/teachers', group: 'Teachers', groupBn: 'শিক্ষক', permissionKey: 'teachers' },
+  { id: 'teachers-add', label: 'Add Teacher', labelBn: 'শিক্ষক যোগ', path: '/teachers/add', group: 'Teachers', groupBn: 'শিক্ষক', permissionKey: 'teachers' },
+  { id: 'teachers-all', label: 'All Teachers', labelBn: 'সকল শিক্ষক', path: '/teachers/all', group: 'Teachers', groupBn: 'শিক্ষক', permissionKey: 'teachers' },
+  { id: 'teachers-departments', label: 'Departments', labelBn: 'বিভাগ', path: '/teachers/departments', group: 'Teachers', groupBn: 'শিক্ষক', permissionKey: 'teachers' },
+  { id: 'teachers-subjects', label: 'Subjects', labelBn: 'বিষয়', path: '/teachers/subjects', group: 'Teachers', groupBn: 'শিক্ষক', permissionKey: 'teachers' },
+  { id: 'teachers-designations', label: 'Designations', labelBn: 'পদবি', path: '/teachers/designations', group: 'Teachers', groupBn: 'শিক্ষক', permissionKey: 'teachers' },
 
   // Classes
-  { id: 'classes', label: 'Classes & Sections', labelBn: 'ক্লাস ও সেকশন', path: '/classes', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'classes-routine', label: 'Class Routine', labelBn: 'ক্লাস রুটিন', path: '/classes', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'classes-syllabus', label: 'Class Syllabus', labelBn: 'ক্লাস সিলেবাস', path: '/classes', group: 'Academic', groupBn: 'একাডেমিক' },
+  { id: 'classes', label: 'Classes & Sections', labelBn: 'ক্লাস ও সেকশন', path: '/classes', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'classes' },
+  { id: 'classes-routine', label: 'Class Routine', labelBn: 'ক্লাস রুটিন', path: '/classes', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'classes' },
+  { id: 'classes-syllabus', label: 'Class Syllabus', labelBn: 'ক্লাস সিলেবাস', path: '/classes', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'classes' },
 
   // HR
-  { id: 'hr', label: 'HR & Staff', labelBn: 'HR ও স্টাফ', path: '/hr', group: 'HR', groupBn: 'এইচআর' },
-  { id: 'hr-staff', label: 'Staff List', labelBn: 'স্টাফ তালিকা', path: '/hr', group: 'HR', groupBn: 'এইচআর' },
-  { id: 'hr-attendance', label: 'Staff Attendance', labelBn: 'স্টাফ উপস্থিতি', path: '/hr', group: 'HR', groupBn: 'এইচআর' },
+  { id: 'hr', label: 'HR & Staff', labelBn: 'HR ও স্টাফ', path: '/hr', group: 'HR', groupBn: 'এইচআর', permissionKey: 'hr' },
+  { id: 'hr-staff', label: 'Staff List', labelBn: 'স্টাফ তালিকা', path: '/hr', group: 'HR', groupBn: 'এইচআর', permissionKey: 'hr' },
+  { id: 'hr-attendance', label: 'Staff Attendance', labelBn: 'স্টাফ উপস্থিতি', path: '/hr', group: 'HR', groupBn: 'এইচআর', permissionKey: 'hr' },
 
   // Attendance
-  { id: 'attendance', label: 'Attendance', labelBn: 'উপস্থিতি', path: '/attendance', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'attendance-student', label: 'Student Attendance', labelBn: 'ছাত্র উপস্থিতি', path: '/attendance', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'attendance-teacher', label: 'Teacher Attendance', labelBn: 'শিক্ষক উপস্থিতি', path: '/attendance', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'attendance-report', label: 'Attendance Report', labelBn: 'উপস্থিতি রিপোর্ট', path: '/attendance', group: 'Academic', groupBn: 'একাডেমিক' },
+  { id: 'attendance', label: 'Attendance', labelBn: 'উপস্থিতি', path: '/attendance', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'attendance' },
+  { id: 'attendance-student', label: 'Student Attendance', labelBn: 'ছাত্র উপস্থিতি', path: '/attendance', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'attendance' },
+  { id: 'attendance-teacher', label: 'Teacher Attendance', labelBn: 'শিক্ষক উপস্থিতি', path: '/attendance', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'attendance' },
+  { id: 'attendance-report', label: 'Attendance Report', labelBn: 'উপস্থিতি রিপোর্ট', path: '/attendance', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'attendance' },
 
   // Exams
-  { id: 'exams', label: 'Exams & Results', labelBn: 'পরীক্ষা ও ফলাফল', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'exams-create', label: 'Create Exam', labelBn: 'পরীক্ষা তৈরি', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'exams-schedule', label: 'Exam Schedule', labelBn: 'পরীক্ষার সময়সূচী', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'exams-results', label: 'Exam Results', labelBn: 'পরীক্ষার ফলাফল', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'exams-grade', label: 'Grade Setup', labelBn: 'গ্রেড সেটআপ', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'exams-invigilator', label: 'Invigilator Setup', labelBn: 'পরীক্ষার্থী পরিদর্শক', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক' },
+  { id: 'exams', label: 'Exams & Results', labelBn: 'পরীক্ষা ও ফলাফল', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'exams' },
+  { id: 'exams-create', label: 'Create Exam', labelBn: 'পরীক্ষা তৈরি', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'exams' },
+  { id: 'exams-schedule', label: 'Exam Schedule', labelBn: 'পরীক্ষার সময়সূচী', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'exams' },
+  { id: 'exams-results', label: 'Exam Results', labelBn: 'পরীক্ষার ফলাফল', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'exams' },
+  { id: 'exams-grade', label: 'Grade Setup', labelBn: 'গ্রেড সেটআপ', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'exams' },
+  { id: 'exams-invigilator', label: 'Invigilator Setup', labelBn: 'পরীক্ষার্থী পরিদর্শক', path: '/exams', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'exams' },
 
   // Syllabus
-  { id: 'syllabus', label: 'Syllabus', labelBn: 'সিলেবাস', path: '/syllabus', group: 'Academic', groupBn: 'একাডেমিক' },
+  { id: 'syllabus', label: 'Syllabus', labelBn: 'সিলেবাস', path: '/syllabus', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'syllabus' },
 
   // Assignments
-  { id: 'assignments', label: 'Assignments', labelBn: 'অ্যাসাইনমেন্ট', path: '/assignments', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'assignments-create', label: 'Create Assignment', labelBn: 'অ্যাসাইনমেন্ট তৈরি', path: '/assignments', group: 'Academic', groupBn: 'একাডেমিক' },
-  { id: 'assignments-list', label: 'Assignment List', labelBn: 'অ্যাসাইনমেন্ট তালিকা', path: '/assignments', group: 'Academic', groupBn: 'একাডেমিক' },
+  { id: 'assignments', label: 'Assignments', labelBn: 'অ্যাসাইনমেন্ট', path: '/assignments', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'assignments' },
+  { id: 'assignments-create', label: 'Create Assignment', labelBn: 'অ্যাসাইনমেন্ট তৈরি', path: '/assignments', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'assignments' },
+  { id: 'assignments-list', label: 'Assignment List', labelBn: 'অ্যাসাইনমেন্ট তালিকা', path: '/assignments', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'assignments' },
 
   // Online Classes
-  { id: 'online', label: 'Online Classes', labelBn: 'অনলাইন ক্লাস', path: '/online', group: 'Academic', groupBn: 'একাডেমিক' },
+  { id: 'online', label: 'Online Classes', labelBn: 'অনলাইন ক্লাস', path: '/online', group: 'Academic', groupBn: 'একাডেমিক', permissionKey: 'online' },
 
   // Finance
-  { id: 'finance', label: 'Fee Management', labelBn: 'ফি ব্যবস্থাপনা', path: '/finance', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'finance-fee-structure', label: 'Fee Structure', labelBn: 'ফি কাঠামো', path: '/finance', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'finance-fee-collect', label: 'Fee Collection', labelBn: 'ফি সংগ্রহ', path: '/finance', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'finance-fee-report', label: 'Fee Report', labelBn: 'ফি রিপোর্ট', path: '/finance', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'finance-due', label: 'Due Fees', labelBn: 'বকেয় ফি', path: '/finance', group: 'Finance', groupBn: 'আর্থিক' },
+  { id: 'finance', label: 'Fee Management', labelBn: 'ফি ব্যবস্থাপনা', path: '/finance', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'finance' },
+  { id: 'finance-fee-structure', label: 'Fee Structure', labelBn: 'ফি কাঠামো', path: '/finance', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'finance' },
+  { id: 'finance-fee-collect', label: 'Fee Collection', labelBn: 'ফি সংগ্রহ', path: '/finance', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'finance' },
+  { id: 'finance-fee-report', label: 'Fee Report', labelBn: 'ফি রিপোর্ট', path: '/finance', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'finance' },
+  { id: 'finance-due', label: 'Due Fees', labelBn: 'বকেয় ফি', path: '/finance', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'finance' },
 
   // Payroll
-  { id: 'payroll', label: 'Payroll', labelBn: 'বেতন', path: '/payroll', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'payroll-salary', label: 'Salary Setup', labelBn: 'বেতন সেটআপ', path: '/payroll', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'payroll-generate', label: 'Generate Salary', labelBn: 'বেতন তৈরি', path: '/payroll', group: 'Finance', groupBn: 'আর্থিক' },
+  { id: 'payroll', label: 'Payroll', labelBn: 'বেতন', path: '/payroll', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'payroll' },
+  { id: 'payroll-salary', label: 'Salary Setup', labelBn: 'বেতন সেটআপ', path: '/payroll', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'payroll' },
+  { id: 'payroll-generate', label: 'Generate Salary', labelBn: 'বেতন তৈরি', path: '/payroll', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'payroll' },
 
   // Store
-  { id: 'store', label: 'School Store', labelBn: 'স্কুল স্টোর', path: '/store', group: 'Finance', groupBn: 'আর্থিক' },
+  { id: 'store', label: 'School Store', labelBn: 'স্কুল স্টোর', path: '/store', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'store' },
 
   // Expenses
-  { id: 'expenses', label: 'Expense Management', labelBn: 'খরচ ব্যবস্থাপনা', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'expenses-add', label: 'Add Expense', labelBn: 'খরচ যোগ', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'expenses-category', label: 'Expense Categories', labelBn: 'খরচ বিভাগ', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'expenses-report', label: 'Expense Report', labelBn: 'খরচ রিপোর্ট', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক' },
+  { id: 'expenses', label: 'Expense Management', labelBn: 'খরচ ব্যবস্থাপনা', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'finance.expenses' },
+  { id: 'expenses-add', label: 'Add Expense', labelBn: 'খরচ যোগ', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'finance.expenses' },
+  { id: 'expenses-category', label: 'Expense Categories', labelBn: 'খরচ বিভাগ', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'finance.expenses' },
+  { id: 'expenses-report', label: 'Expense Report', labelBn: 'খরচ রিপোর্ট', path: '/expenses', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'finance.expenses' },
 
   // Accounting Report
-  { id: 'accounting-report', label: 'Accounting Report', labelBn: 'হিসাব রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'accounting-income', label: 'Income Report', labelBn: 'আয় রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'accounting-expenses', label: 'Expense Report', labelBn: 'খরচ রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক' },
-  { id: 'accounting-profit-loss', label: 'Profit/Loss Report', labelBn: 'লাভ/ক্ষতি রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক' },
+  { id: 'accounting-report', label: 'Accounting Report', labelBn: 'হিসাব রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'accounting' },
+  { id: 'accounting-income', label: 'Income Report', labelBn: 'আয় রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'accounting' },
+  { id: 'accounting-expenses', label: 'Expense Report', labelBn: 'খরচ রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'accounting' },
+  { id: 'accounting-profit-loss', label: 'Profit/Loss Report', labelBn: 'লাভ/ক্ষতি রিপোর্ট', path: '/accounting-report', group: 'Finance', groupBn: 'আর্থিক', permissionKey: 'accounting' },
 
   // Library
-  { id: 'library', label: 'Library', labelBn: 'লাইব্রেরি', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি' },
-  { id: 'library-books', label: 'Books', labelBn: 'বই', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি' },
-  { id: 'library-issue', label: 'Issue Book', labelBn: 'বই ইস্যু', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি' },
-  { id: 'library-return', label: 'Return Book', labelBn: 'বই ফেরত', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি' },
+  { id: 'library', label: 'Library', labelBn: 'লাইব্রেরি', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'library' },
+  { id: 'library-books', label: 'Books', labelBn: 'বই', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'library' },
+  { id: 'library-issue', label: 'Issue Book', labelBn: 'বই ইস্যু', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'library' },
+  { id: 'library-return', label: 'Return Book', labelBn: 'বই ফেরত', path: '/library', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'library' },
 
   // Transport
-  { id: 'transport', label: 'Transport', labelBn: 'পরিবহন', path: '/transport', group: 'Facilities', groupBn: 'সুবিধাদি' },
-  { id: 'transport-routes', label: 'Routes', labelBn: 'রুট', path: '/transport', group: 'Facilities', groupBn: 'সুবিধাদি' },
-  { id: 'transport-vehicles', label: 'Vehicles', labelBn: 'যানবাহন', path: '/transport', group: 'Facilities', groupBn: 'সুবিধাদি' },
+  { id: 'transport', label: 'Transport', labelBn: 'পরিবহন', path: '/transport', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'transport' },
+  { id: 'transport-routes', label: 'Routes', labelBn: 'রুট', path: '/transport', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'transport' },
+  { id: 'transport-vehicles', label: 'Vehicles', labelBn: 'যানবাহন', path: '/transport', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'transport' },
 
   // Hostel
-  { id: 'hostel', label: 'Hostel', labelBn: 'হোস্টেল', path: '/hostel', group: 'Facilities', groupBn: 'সুবিধাদি' },
-  { id: 'hostel-rooms', label: 'Rooms', labelBn: 'কক্ষ', path: '/hostel', group: 'Facilities', groupBn: 'সুবিধাদি' },
-  { id: 'hostel-bed', label: 'Bed Allocation', labelBn: 'বিছানা বরাদ্দ', path: '/hostel', group: 'Facilities', groupBn: 'সুবিধাদি' },
+  { id: 'hostel', label: 'Hostel', labelBn: 'হোস্টেল', path: '/hostel', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'hostel' },
+  { id: 'hostel-rooms', label: 'Rooms', labelBn: 'কক্ষ', path: '/hostel', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'hostel' },
+  { id: 'hostel-bed', label: 'Bed Allocation', labelBn: 'বিছানা বরাদ্দ', path: '/hostel', group: 'Facilities', groupBn: 'সুবিধাদি', permissionKey: 'hostel' },
 
   // Messages
-  { id: 'messages', label: 'Messages', labelBn: 'বার্তা', path: '/messages', group: 'Communication', groupBn: 'যোগাযোগ' },
-  { id: 'messages-inbox', label: 'Inbox', labelBn: 'ইনবক্স', path: '/messages', group: 'Communication', groupBn: 'যোগাযোগ' },
-  { id: 'messages-compose', label: 'Compose Message', labelBn: 'বার্তা লিখুন', path: '/messages', group: 'Communication', groupBn: 'যোগাযোগ' },
+  { id: 'messages', label: 'Messages', labelBn: 'বার্তা', path: '/messages', group: 'Communication', groupBn: 'যোগাযোগ', permissionKey: 'messages' },
+  { id: 'messages-inbox', label: 'Inbox', labelBn: 'ইনবক্স', path: '/messages', group: 'Communication', groupBn: 'যোগাযোগ', permissionKey: 'messages' },
+  { id: 'messages-compose', label: 'Compose Message', labelBn: 'বার্তা লিখুন', path: '/messages', group: 'Communication', groupBn: 'যোগাযোগ', permissionKey: 'messages' },
 
   // Notice Board
-  { id: 'notice', label: 'Notice Board', labelBn: 'নোটিশ বোর্ড', path: '/notice', group: 'Communication', groupBn: 'যোগাযোগ' },
-  { id: 'notice-create', label: 'Create Notice', labelBn: 'নোটিশ তৈরি', path: '/notice', group: 'Communication', groupBn: 'যোগাযোগ' },
+  { id: 'notice', label: 'Notice Board', labelBn: 'নোটিশ বোর্ড', path: '/notice', group: 'Communication', groupBn: 'যোগাযোগ', permissionKey: 'notice' },
+  { id: 'notice-create', label: 'Create Notice', labelBn: 'নোটিশ তৈরি', path: '/notice', group: 'Communication', groupBn: 'যোগাযোগ', permissionKey: 'notice' },
 
   // Notifications
-  { id: 'notifications', label: 'Notifications', labelBn: 'নোটিফিকেশন', path: '/notifications', group: 'Communication', groupBn: 'যোগাযোগ' },
+  { id: 'notifications', label: 'Notifications', labelBn: 'নোটিফিকেশন', path: '/notifications', group: 'Communication', groupBn: 'যোগাযোগ', permissionKey: 'notifications' },
 
   // Portals
-  { id: 'parent-portal', label: 'Parent Portal', labelBn: 'অভিভাবক পোর্টাল', path: '/parent-portal', group: 'Portals', groupBn: 'পোর্টাল' },
-  { id: 'student-portal', label: 'Student Portal', labelBn: 'ছাত্র পোর্টাল', path: '/student-portal', group: 'Portals', groupBn: 'পোর্টাল' },
+  { id: 'parent-portal', label: 'Parent Portal', labelBn: 'অভিভাবক পোর্টাল', path: '/parent-portal', group: 'Portals', groupBn: 'পোর্টাল', permissionKey: '' },
+  { id: 'student-portal', label: 'Student Portal', labelBn: 'ছাত্র পোর্টাল', path: '/student-portal', group: 'Portals', groupBn: 'পোর্টাল', permissionKey: '' },
 
   // Reports
-  { id: 'analytics', label: 'Analytics', labelBn: 'Analytics', path: '/analytics', group: 'Reports', groupBn: 'রিপোর্ট' },
-  { id: 'reports', label: 'Reports', labelBn: 'রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট' },
-  { id: 'reports-student', label: 'Student Reports', labelBn: 'ছাত্র রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট' },
-  { id: 'reports-teacher', label: 'Teacher Reports', labelBn: 'শিক্ষক রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট' },
-  { id: 'reports-attendance', label: 'Attendance Reports', labelBn: 'উপস্থিতি রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট' },
-  { id: 'reports-finance', label: 'Finance Reports', labelBn: 'আর্থিক রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট' },
-  { id: 'reports-exam', label: 'Exam Reports', labelBn: 'পরীক্ষা রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট' },
+  { id: 'analytics', label: 'Analytics', labelBn: 'Analytics', path: '/analytics', group: 'Reports', groupBn: 'রিপোর্ট', permissionKey: 'reports' },
+  { id: 'reports', label: 'Reports', labelBn: 'রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট', permissionKey: 'reports' },
+  { id: 'reports-student', label: 'Student Reports', labelBn: 'ছাত্র রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট', permissionKey: 'reports' },
+  { id: 'reports-teacher', label: 'Teacher Reports', labelBn: 'শিক্ষক রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট', permissionKey: 'reports' },
+  { id: 'reports-attendance', label: 'Attendance Reports', labelBn: 'উপস্থিতি রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট', permissionKey: 'reports' },
+  { id: 'reports-finance', label: 'Finance Reports', labelBn: 'আর্থিক রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট', permissionKey: 'reports' },
+  { id: 'reports-exam', label: 'Exam Reports', labelBn: 'পরীক্ষা রিপোর্ট', path: '/reports', group: 'Reports', groupBn: 'রিপোর্ট', permissionKey: 'reports' },
 
   // System
-  { id: 'super-admin', label: 'Super Admin', labelBn: 'Super Admin', path: '/super-admin', group: 'System', groupBn: 'সিস্টেম' },
-  { id: 'settings', label: 'Settings', labelBn: 'সেটিংস', path: '/settings', group: 'System', groupBn: 'সিস্টেম' },
-  { id: 'settings-general', label: 'General Settings', labelBn: 'সাধারণ সেটিংস', path: '/settings', group: 'System', groupBn: 'সিস্টেম' },
-  { id: 'settings-academic', label: 'Academic Settings', labelBn: 'একাডেমিক সেটিংস', path: '/settings', group: 'System', groupBn: 'সিস্টেম' },
-  { id: 'settings-institution', label: 'Institution Profile', labelBn: 'প্রতিষ্ঠান প্রোফাইল', path: '/settings', group: 'System', groupBn: 'সিস্টেম' },
+  { id: 'super-admin', label: 'Super Admin', labelBn: 'Super Admin', path: '/super-admin', group: 'System', groupBn: 'সিস্টেম', permissionKey: '' },
+  { id: 'settings', label: 'Settings', labelBn: 'সেটিংস', path: '/settings', group: 'System', groupBn: 'সিস্টেম', permissionKey: 'settings' },
+  { id: 'settings-general', label: 'General Settings', labelBn: 'সাধারণ সেটিংস', path: '/settings', group: 'System', groupBn: 'সিস্টেম', permissionKey: 'settings' },
+  { id: 'settings-academic', label: 'Academic Settings', labelBn: 'একাডেমিক সেটিংস', path: '/settings', group: 'System', groupBn: 'সিস্টেম', permissionKey: 'settings' },
+  { id: 'settings-institution', label: 'Institution Profile', labelBn: 'প্রতিষ্ঠান প্রোফাইল', path: '/settings', group: 'System', groupBn: 'সিস্টেম', permissionKey: 'settings' },
 ]
 
 const iconKeyMap: Record<string, string> = {
@@ -308,6 +310,7 @@ interface QuickAction {
 export default function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen, theme, setTheme, language, setLanguage } = useAppStore()
   const isBn = useBn()
+  const { canRead } = usePermission()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -349,10 +352,17 @@ export default function CommandPalette() {
     },
   ], [theme, language])
 
+  const permittedItems = useMemo(() => {
+    return items.filter((item) => {
+      if (!item.permissionKey) return true
+      return canRead(item.permissionKey)
+    })
+  }, [canRead])
+
   const filteredItems = useMemo(() => {
-    if (!query.trim()) return items
+    if (!query.trim()) return permittedItems
     const q = query.toLowerCase()
-    return items.filter(
+    return permittedItems.filter(
       (item) =>
         item.label.toLowerCase().includes(q) ||
         item.labelBn.includes(q) ||
@@ -360,7 +370,7 @@ export default function CommandPalette() {
         item.group.toLowerCase().includes(q) ||
         item.groupBn.includes(q)
     )
-  }, [query])
+  }, [query, permittedItems])
 
   const filteredQuickActions = useMemo(() => {
     if (!query.trim()) return quickActions
