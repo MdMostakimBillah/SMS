@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { authApi, setAuthToken, ApiError, API_BASE } from '@/lib/api'
 import { createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
-import { nsGet, nsSet, nsRemove, migrateOldKeys, setSlug } from '@/lib/storage'
+import { nsGet, nsSet, nsRemove, migrateOldKeys, setSlug, setUserId, clearUserId } from '@/lib/storage'
 
 const VITE_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL as string) || 'admin@edutech.com'
 const VITE_PASSWORD = (import.meta.env.VITE_SUPER_ADMIN_PASSWORD as string) || 'Admin@123456'
@@ -107,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     nsRemove('user')
     nsRemove('institutionId')
     nsRemove('institutionSubdomain')
+    clearUserId()
   }, [])
 
   // Restore user from localStorage (set by InstitutionLogin)
@@ -144,6 +145,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             photo: parsed.photo || null,
           })
           loginTimestampRef.current = parsed.loginTimestamp || Date.now()
+          if (!isViewing) {
+            setUserId(parsed.staffId || parsed.email)
+          }
         }
       }
     } catch { /* ignore */ }
@@ -193,6 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() })
         nsSet('user', userData)
         localStorage.setItem('edutech_superadmin_user', userData)
+        setUserId(email)
         clearLoginAttempts()
         return
       }
@@ -223,6 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData2 = JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() })
         nsSet('user', userData2)
         localStorage.setItem('edutech_superadmin_user', userData2)
+        setUserId(email)
         clearLoginAttempts()
         return
       }
@@ -237,6 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(res.token)
       setUser({ ...res.user, subdomain: (res.user as any).subdomain || null })
       loginTimestampRef.current = Date.now()
+      setUserId((res.user as any).staffId || email)
       clearLoginAttempts()
       return
     } catch (err) {
@@ -291,6 +298,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     nsSet('institutionId', institutionId)
     nsSet('institutionSubdomain', subdomain)
     sessionStorage.setItem('edutech_inst_subdomain', subdomain)
+    setUserId(staffId || email)
   }, [])
 
   const ctxValue = useMemo(() => ({

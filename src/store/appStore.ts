@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Theme, Language } from '@/types'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getStorageKey } from '@/lib/storage'
 
 interface PageVisit {
   path: string
@@ -211,10 +211,9 @@ registerStoreReset(() => {
 })
 
 registerStoreLoad(() => {
-  const slug = sessionStorage.getItem('edutech_inst_slug')
-  if (!slug) return
+  const key = getStorageKey('edutech-settings')
   try {
-    const raw = localStorage.getItem(`edutech-settings_${slug}`)
+    const raw = localStorage.getItem(key)
     if (raw) {
       const parsed = JSON.parse(raw)
       if (parsed.state) useAppStore.setState(parsed.state)

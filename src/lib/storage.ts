@@ -8,14 +8,40 @@ function getSlug(): string | null {
   }
 }
 
+function getUserId(): string | null {
+  try {
+    return sessionStorage.getItem('edutech_user_id')
+  } catch {
+    return null
+  }
+}
+
+export function setUserId(userId: string): void {
+  try {
+    sessionStorage.setItem('edutech_user_id', userId)
+  } catch { /* ignore */ }
+}
+
+export function clearUserId(): void {
+  try {
+    sessionStorage.removeItem('edutech_user_id')
+  } catch { /* ignore */ }
+}
+
 export function getStorageKey(base: string): string {
   const slug = getSlug()
-  return slug ? `${base}_${slug}` : base
+  const userId = getUserId()
+  if (slug && userId) return `${base}_${slug}_${userId}`
+  if (slug) return `${base}_${slug}`
+  return base
 }
 
 export function nsKey(key: string): string {
   const slug = getSlug()
-  return slug ? `${STORAGE_PREFIX}_${key}_${slug}` : `${STORAGE_PREFIX}_${key}`
+  const userId = getUserId()
+  if (slug && userId) return `${STORAGE_PREFIX}_${key}_${slug}_${userId}`
+  if (slug) return `${STORAGE_PREFIX}_${key}_${slug}`
+  return `${STORAGE_PREFIX}_${key}`
 }
 
 export function nsGet(key: string): string | null {
