@@ -20,29 +20,29 @@ interface Props {
   onCreated?: (newRoleId: string) => void
 }
 
-const MODULE_CONFIG: Record<string, { icon: LucideIcon; color: string }> = {
-  dashboard: { icon: LayoutDashboard, color: 'border-l-slate-500' },
-  students: { icon: Users, color: 'border-l-blue-500' },
-  teachers: { icon: GraduationCap, color: 'border-l-emerald-500' },
-  classes: { icon: Building2, color: 'border-l-violet-500' },
-  attendance: { icon: CalendarCheck, color: 'border-l-amber-500' },
-  exams: { icon: ClipboardList, color: 'border-l-rose-500' },
-  finance: { icon: Landmark, color: 'border-l-emerald-600' },
-  payroll: { icon: Wallet, color: 'border-l-teal-500' },
-  hr: { icon: Briefcase, color: 'border-l-orange-500' },
-  store: { icon: ShoppingBag, color: 'border-l-pink-500' },
-  accounting: { icon: FileBarChart, color: 'border-l-indigo-500' },
-  library: { icon: Library, color: 'border-l-cyan-500' },
-  transport: { icon: Bus, color: 'border-l-yellow-500' },
-  hostel: { icon: Home, color: 'border-l-purple-500' },
-  messages: { icon: MessageCircle, color: 'border-l-blue-400' },
-  notice: { icon: Megaphone, color: 'border-l-red-400' },
-  notifications: { icon: Bell, color: 'border-l-amber-400' },
-  syllabus: { icon: BookOpen, color: 'border-l-teal-400' },
-  assignments: { icon: FileBarChart, color: 'border-l-indigo-400' },
-  online: { icon: Video, color: 'border-l-blue-600' },
-  reports: { icon: BarChart2, color: 'border-l-slate-600' },
-  settings: { icon: Settings, color: 'border-l-gray-500' },
+const MODULE_CONFIG: Record<string, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  students: Users,
+  teachers: GraduationCap,
+  classes: Building2,
+  attendance: CalendarCheck,
+  exams: ClipboardList,
+  finance: Landmark,
+  payroll: Wallet,
+  hr: Briefcase,
+  store: ShoppingBag,
+  accounting: FileBarChart,
+  library: Library,
+  transport: Bus,
+  hostel: Home,
+  messages: MessageCircle,
+  notice: Megaphone,
+  notifications: Bell,
+  syllabus: BookOpen,
+  assignments: FileBarChart,
+  online: Video,
+  reports: BarChart2,
+  settings: Settings,
 }
 
 const PRESET_ICONS: Record<string, LucideIcon> = {
@@ -338,20 +338,22 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
     const allChecked = isAllActionsChecked(fullKey)
     const someChecked = isSomeActionsChecked(fullKey)
     const isModule = depth === 0
-    const modCfg = isModule ? MODULE_CONFIG[node.key] : null
-    const ModIcon = modCfg?.icon
+    const ModIcon = isModule ? MODULE_CONFIG[node.key] : null
 
     // Module card (depth 0)
     if (isModule) {
+      const isLeaf = !hasChildren
       return (
         <div
           key={fullKey}
-          className={`rounded-xl border border-[var(--border)] mb-3 overflow-hidden border-l-[3px] ${modCfg?.color || 'border-l-[var(--brand)]'}`}
+          className="rounded-xl border border-[var(--border)] mb-3 overflow-hidden"
         >
           {/* Module header */}
           <button
-            onClick={() => toggleExpand(fullKey)}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer border-none text-left"
+            onClick={() => !isLeaf && toggleExpand(fullKey)}
+            className={`w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-secondary)] transition-colors text-left border-none ${
+              isLeaf ? 'cursor-default' : 'hover:bg-[var(--bg-tertiary)] cursor-pointer'
+            }`}
           >
             {ModIcon && (
               <div className="w-8 h-8 rounded-lg bg-[var(--brand)]/10 flex items-center justify-center shrink-0">
@@ -363,15 +365,64 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
                 {bn ? node.labelBn : node.label}
               </div>
             </div>
-            <span className="text-[0.625rem] text-[var(--text-muted)] mr-2">
-              {node.children?.length || 0} {bn ? 'পৃষ্ঠা' : 'pages'}
-            </span>
-            <div className="shrink-0 text-[var(--text-muted)]">
-              {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            </div>
+            {isLeaf ? (
+              <span className="text-[0.625rem] text-[var(--text-muted)]">
+                {node.actions.length} {bn ? 'অ্যাকশন' : 'actions'}
+              </span>
+            ) : (
+              <>
+                <span className="text-[0.625rem] text-[var(--text-muted)] mr-2">
+                  {node.children?.length || 0} {bn ? 'পৃষ্ঠা' : 'pages'}
+                </span>
+                <div className="shrink-0 text-[var(--text-muted)]">
+                  {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </div>
+              </>
+            )}
           </button>
 
-          {/* Module children */}
+          {/* Leaf module — show action buttons directly */}
+          {isLeaf && (
+            <div className="border-t border-[var(--border)] px-4 py-3">
+              <div className="flex items-center gap-2 mb-2">
+                <button
+                  onClick={() => handleToggleAll(fullKey)}
+                  className={`w-[18px] h-[18px] rounded flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+                    allChecked
+                      ? 'bg-[var(--brand)] text-white border-none'
+                      : someChecked
+                      ? 'bg-[var(--brand)]/20 text-[var(--brand)] border-none'
+                      : 'bg-transparent border-2 border-solid border-[var(--text-muted)]/30 text-transparent'
+                  }`}
+                >
+                  {(allChecked || someChecked) && <Check size={11} className={allChecked ? 'text-white' : ''} />}
+                </button>
+                <span className="text-[0.8125rem] text-[var(--text-secondary)]">
+                  {bn ? 'সব অ্যাকশন' : 'All Actions'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {node.actions.map((action) => {
+                  const checked = getPerm(fullKey)[action]
+                  return (
+                    <button
+                      key={action}
+                      onClick={() => handleToggleAction(fullKey, action)}
+                      className={`h-[26px] px-2.5 rounded-md text-[0.6875rem] font-medium border cursor-pointer transition-colors ${
+                        checked
+                          ? 'bg-[var(--brand)]/15 border-[var(--brand)]/40 text-[var(--brand)]'
+                          : 'bg-[var(--bg-primary)] border-[var(--border-2)] text-[var(--text-muted)] hover:border-[var(--brand)]/30 hover:text-[var(--text-secondary)]'
+                      }`}
+                    >
+                      {actionLabels[action]}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Module children (non-leaf) */}
           {isExpanded && hasChildren && (
             <div className="border-t border-[var(--border)]">
               {node.children!.map((child) => renderNode(child, depth + 1, fullKey))}
@@ -461,8 +512,8 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
                 onClick={() => handleToggleAction(fullKey, action)}
                 className={`h-[26px] px-2.5 rounded-md text-[0.6875rem] font-medium border cursor-pointer transition-colors ${
                   checked
-                    ? 'bg-[var(--brand)]/10 border-[var(--brand)]/30 text-[var(--brand)]'
-                    : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--brand)]/20'
+                    ? 'bg-[var(--brand)]/15 border-[var(--brand)]/40 text-[var(--brand)]'
+                    : 'bg-[var(--bg-primary)] border-[var(--border-2)] text-[var(--text-muted)] hover:border-[var(--brand)]/30 hover:text-[var(--text-secondary)]'
                 }`}
               >
                 {actionLabels[action]}
