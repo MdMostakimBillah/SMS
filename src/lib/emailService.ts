@@ -31,8 +31,9 @@ export async function sendVerificationCode(
         TEMPLATE_ID,
         {
           to_email: email,
+          from_name: 'EduTech SMS',
           verification_code: code,
-          school_name: 'EduTech SMS',
+          message: 'Your verification code for EduTech SMS registration. This code expires in 10 minutes.',
         }
       )
       return { success: true, simulated: false }
