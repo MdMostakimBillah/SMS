@@ -346,7 +346,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
       return (
         <div
           key={fullKey}
-          className="rounded-xl border border-[var(--border)] mb-4 overflow-hidden"
+          className="rounded-xl border border-[var(--border)] overflow-hidden"
         >
           {/* Module header */}
           <button
@@ -662,7 +662,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
         </div>
 
         {/* Permission Tree */}
-        <div className="space-y-0">
+        <div className="flex flex-col gap-3">
           {filteredTree.map((node) => renderNode(node))}
         </div>
 
