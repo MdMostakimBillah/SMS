@@ -247,21 +247,21 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] overflow-hidden">
+      <div className="rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full">
             <thead>
-              <tr className="bg-[var(--surface)] border-b border-[var(--border)]">
-                <th className="py-2.5 pl-3 pr-2">
+              <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+                <th className="py-2.5 pl-4 pr-2">
                   <ModernCheckbox checked={selected.size === paginated.length && paginated.length > 0} onChange={toggleAll} />
                 </th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ছাত্র' : 'Student'}</th>
-                <th className="py-2.5 px-3 text-left font-medium text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'ধরন' : 'Type'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'মাস' : 'Months'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
-                <th className="py-2.5 px-3 text-center font-medium text-[var(--text-secondary)]">{bn ? 'কার্যক্রম' : 'Actions'}</th>
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ছাত্র' : 'Student'}</th>
+                <th className="text-left py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'ধরন' : 'Type'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'মাস' : 'Months'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'স্ট্যাটাস' : 'Status'}</th>
+                <th className="text-center py-2.5 px-4 text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase">{bn ? 'কার্যক্রম' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
