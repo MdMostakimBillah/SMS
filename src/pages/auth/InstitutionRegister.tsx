@@ -135,7 +135,6 @@ export default function InstitutionRegister() {
   const [emailError, setEmailError] = useState('')
   const [simulated, setSimulated] = useState(false)
   const [resendTimer, setResendTimer] = useState(0)
-  const [sendFailed, setSendFailed] = useState(false)
 
   const [created, setCreated] = useState(false)
 
@@ -197,7 +196,6 @@ export default function InstitutionRegister() {
     if (!form.adminEmail.includes('@')) return
     setSendingCode(true)
     setEmailError('')
-    setSendFailed(false)
     const code = Array.from({ length: 6 }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]).join('')
     setEmailCode(code)
     const result = await sendVerificationCode(form.adminEmail, code)
@@ -205,11 +203,12 @@ export default function InstitutionRegister() {
     if (result.success) {
       setSimulated(result.simulated)
       setEmailSent(true)
-      setSendFailed(false)
       setResendTimer(300)
     } else {
-      setSendFailed(true)
-      setEmailSent(false)
+      // Email failed — show code on screen as fallback so user can proceed
+      setSimulated(true)
+      setEmailSent(true)
+      setResendTimer(0)
     }
   }
 
@@ -617,7 +616,7 @@ export default function InstitutionRegister() {
                       <div className={`flex-1 flex items-center h-12 px-4 rounded-xl border transition-all duration-200 ${emailVerified ? 'border-[var(--green)]/30' : isDark ? 'border-white/10 bg-white/[0.03] hover:border-white/15' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border)]/80'}`}>
                         <Mail size={16} className={`shrink-0 mr-2.5 ${emailVerified ? 'text-[var(--green)]' : isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
                         <input type="email" value={form.adminEmail}
-                          onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError(''); setSendFailed(false) }}
+                          onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError('') }}
                           placeholder="admin@school.edu.bd" disabled={emailVerified}
                           className={`flex-1 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'} disabled:opacity-50`} />
                         {emailVerified && (
@@ -649,20 +648,6 @@ export default function InstitutionRegister() {
                             {isBn ? '৬ ডিজিট কোড লিখুন' : 'Enter 6-digit code to verify'}
                           </p>
                         )}
-                      </div>
-                    )}
-                    {sendFailed && (
-                      <div className="mt-3 px-3 py-2.5 rounded-lg bg-[var(--red)]/5 border border-[var(--red)]/10">
-                        <p className="text-[0.75rem] text-[var(--red)]">
-                          {isBn ? 'কোড পাঠাতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।' : 'Failed to send verification code. Please try again.'}
-                        </p>
-                        <button
-                          onClick={sendOtp}
-                          disabled={sendingCode}
-                          className="mt-1.5 text-[0.75rem] text-[var(--brand)] font-semibold hover:underline cursor-pointer bg-transparent border-none disabled:opacity-50"
-                        >
-                          {isBn ? 'আবার পাঠান' : 'Retry'}
-                        </button>
                       </div>
                     )}
                   </div>

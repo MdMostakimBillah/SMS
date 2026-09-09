@@ -34,16 +34,18 @@ export async function sendVerificationCode(
           from_name: 'EduTech SMS',
           verification_code: code,
           message: 'Your verification code for EduTech SMS registration. This code expires in 10 minutes.',
+          reply_to: email,
         }
       )
       return { success: true, simulated: false }
-    } catch {
-      // Wait before retrying: 1s, 2s, then give up
+    } catch (err) {
+      console.error(`EmailJS attempt ${attempt + 1} failed:`, err)
+      // Wait before retrying: 2s, 4s, then give up
       if (attempt < 2) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)))
+        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)))
       }
     }
   }
 
-  return { success: false, simulated: false, error: 'Failed to send verification email' }
+  return { success: false, simulated: false, error: 'Failed to send verification email. Please check your email address and try again.' }
 }
