@@ -410,8 +410,8 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
                       onClick={() => handleToggleAction(fullKey, action)}
                       className={`h-[26px] px-2.5 rounded-md text-[0.6875rem] font-medium border cursor-pointer transition-colors ${
                         checked
-                          ? 'bg-[var(--brand)]/15 border-[var(--brand)]/40 text-[var(--brand)]'
-                          : 'bg-[var(--bg-primary)] border-[var(--border-2)] text-[var(--text-muted)] hover:border-[var(--brand)]/30 hover:text-[var(--text-secondary)]'
+                          ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
+                          : 'bg-[var(--bg-primary)] border-[var(--border-2)] text-[var(--text-muted)] hover:border-[var(--brand)]/40 hover:text-[var(--text-secondary)]'
                       }`}
                     >
                       {actionLabels[action]}
@@ -512,8 +512,8 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
                 onClick={() => handleToggleAction(fullKey, action)}
                 className={`h-[26px] px-2.5 rounded-md text-[0.6875rem] font-medium border cursor-pointer transition-colors ${
                   checked
-                    ? 'bg-[var(--brand)]/15 border-[var(--brand)]/40 text-[var(--brand)]'
-                    : 'bg-[var(--bg-primary)] border-[var(--border-2)] text-[var(--text-muted)] hover:border-[var(--brand)]/30 hover:text-[var(--text-secondary)]'
+                    ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-sm'
+                    : 'bg-[var(--bg-primary)] border-[var(--border-2)] text-[var(--text-muted)] hover:border-[var(--brand)]/40 hover:text-[var(--text-secondary)]'
                 }`}
               >
                 {actionLabels[action]}
