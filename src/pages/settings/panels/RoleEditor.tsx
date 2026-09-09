@@ -346,7 +346,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
       return (
         <div
           key={fullKey}
-          className="rounded-xl border border-[var(--border)] mb-3 overflow-hidden"
+          className="rounded-xl border border-[var(--border)] mb-4 overflow-hidden"
         >
           {/* Module header */}
           <button
