@@ -13,24 +13,36 @@ function initEmailJS() {
   }
 }
 
-export async function sendVerificationCode(email: string, code: string): Promise<{ success: boolean; simulated: boolean }> {
+export async function sendVerificationCode(
+  email: string,
+  code: string
+): Promise<{ success: boolean; simulated: boolean; error?: string }> {
+  // Missing config → intentional demo mode (show code on screen)
   if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
     return { success: true, simulated: true }
   }
 
-  try {
-    initEmailJS()
-    await emailjs.send(
-      SERVICE_ID,
-      TEMPLATE_ID,
-      {
-        to_email: email,
-        verification_code: code,
-        school_name: 'EduTech SMS',
+  // Retry up to 3 times with increasing delay
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      initEmailJS()
+      await emailjs.send(
+        SERVICE_ID,
+        TEMPLATE_ID,
+        {
+          to_email: email,
+          verification_code: code,
+          school_name: 'EduTech SMS',
+        }
+      )
+      return { success: true, simulated: false }
+    } catch {
+      // Wait before retrying: 1s, 2s, then give up
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)))
       }
-    )
-    return { success: true, simulated: false }
-  } catch {
-    return { success: true, simulated: true }
+    }
   }
+
+  return { success: false, simulated: false, error: 'Failed to send verification email' }
 }
