@@ -10,6 +10,7 @@ import { useClassStore, defaultThemeColors, defaultThemeColorsDark, type ThemeCo
 import { nsSet, migrateOldKeys, setSlug } from '@/lib/storage'
 import { usePermissionStore } from '@/store/permissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { presets } from '@/components/shared/ColorSettings'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -36,21 +37,23 @@ function withAlpha(hex: string, alpha: number): string {
 }
 
 function generateLightColors(brandHex: string): ThemeColors {
+  const preset = presets.find((p) => p.brand.toLowerCase() === brandHex.toLowerCase())
   return {
     ...defaultThemeColors,
-    brand: brandHex,
-    brand2: lighten(brandHex, 20),
-    brandLight: withAlpha(brandHex, 0.06),
+    brand: preset?.brand || brandHex,
+    brand2: preset?.brand2 || lighten(brandHex, 20),
+    brandLight: preset?.brandLight || withAlpha(brandHex, 0.06),
   }
 }
 
 function generateDarkColors(brandHex: string): ThemeColors {
+  const preset = presets.find((p) => p.brand.toLowerCase() === brandHex.toLowerCase())
   const dark = lighten(brandHex, 15)
   return {
     ...defaultThemeColorsDark,
-    brand: dark,
-    brand2: lighten(brandHex, 30),
-    brandLight: withAlpha(dark, 0.1),
+    brand: preset ? lighten(preset.brand, 15) : dark,
+    brand2: preset ? lighten(preset.brand, 30) : lighten(brandHex, 30),
+    brandLight: preset?.brandLightDark || withAlpha(dark, 0.1),
   }
 }
 

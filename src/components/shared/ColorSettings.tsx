@@ -5,7 +5,7 @@ import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 
-interface Preset {
+export interface Preset {
   name: string
   nameBn: string
   brand: string
@@ -14,7 +14,7 @@ interface Preset {
   brandLightDark: string
 }
 
-const presets: Preset[] = [
+export const presets: Preset[] = [
   { name: 'Indigo', nameBn: 'ইন্ডিগো', brand: '#6366f1', brand2: '#818cf8', brandLight: '#eef2ff', brandLightDark: 'rgba(129,140,248,0.1)' },
   { name: 'Blue', nameBn: 'নীল', brand: '#3b82f6', brand2: '#60a5fa', brandLight: '#eff6ff', brandLightDark: 'rgba(96,165,250,0.1)' },
   { name: 'Cyan', nameBn: 'সায়ান', brand: '#06b6d4', brand2: '#22d3ee', brandLight: '#ecfeff', brandLightDark: 'rgba(34,211,238,0.1)' },
