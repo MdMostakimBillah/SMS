@@ -103,8 +103,8 @@ function loadInstitutionData(inst: Institution) {
     breaks: current.breaks?.length ? current.breaks : [],
     currentSession: current.currentSession || inst.sessions?.[1] || '2025-26',
     sessions: current.sessions?.length ? current.sessions : (inst.sessions || ['2024-25', '2025-26']),
-    lightColors: current.lightColors?.brand ? current.lightColors : generateLightColors(brandColor),
-    darkColors: current.darkColors?.brand ? current.darkColors : generateDarkColors(brandColor),
+    lightColors: current.lightColors?.brand === defaultThemeColors.brand ? generateLightColors(brandColor) : current.lightColors,
+    darkColors: current.darkColors?.brand === defaultThemeColorsDark.brand ? generateDarkColors(brandColor) : current.darkColors,
     bannerPosition: current.bannerPosition || { x: 0, y: 0 },
   })
 }
