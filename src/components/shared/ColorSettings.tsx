@@ -60,6 +60,10 @@ export default function ColorSettings({ colors, onChange, isBn }: Props) {
     (p) => p.brand === colors.brand && p.brand2 === colors.brand2
   )
 
+  const isCustomActive = !presets.some(
+    (p) => p.brand === colors.brand && p.brand2 === colors.brand2
+  )
+
   const handlePresetClick = (preset: Preset) => {
     const brandLight = isDark ? preset.brandLightDark : preset.brandLight
     const updated = { ...colors, brand: preset.brand, brand2: preset.brand2, brandLight }
@@ -113,6 +117,30 @@ export default function ColorSettings({ colors, onChange, isBn }: Props) {
         </div>
         <div className="p-3">
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            {/* User Defined Custom Color */}
+            <button
+              className={`relative flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all ${
+                isCustomActive
+                  ? 'border-[var(--brand)] bg-[var(--brand-light)]'
+                  : 'border-dashed border-[var(--border)] bg-[var(--bg-secondary)]'
+              }`}
+              title={isBn ? 'আপনার কাস্টম ব্র্যান্ড রঙ' : 'Your custom brand color'}
+            >
+              <div className="relative">
+                <div
+                  className="w-8 h-8 rounded-lg shadow-sm"
+                  style={{ background: colors.brand }}
+                />
+                {isCustomActive && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--brand)] flex items-center justify-center">
+                    <Check size={10} className="text-white" />
+                  </div>
+                )}
+              </div>
+              <span className="text-[0.625rem] font-medium text-[var(--text-secondary)]">
+                {isBn ? 'ব্যবহারকারী সংজ্ঞায়িত' : 'Custom'}
+              </span>
+            </button>
             {presets.map((p) => {
               const isActive = activePreset?.name === p.name
               return (

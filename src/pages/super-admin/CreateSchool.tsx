@@ -153,6 +153,7 @@ export default function CreateSchool() {
   const [sendingCode, setSendingCode] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [simulated, setSimulated] = useState(false)
+  const [resendTimer, setResendTimer] = useState(0)
   const [inputWidth, setInputWidth] = useState(420)
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null)
   const dragHandlersRef = useRef<{ onMove: (ev: MouseEvent) => void; onUp: () => void } | null>(null)
@@ -198,6 +199,15 @@ export default function CreateSchool() {
     const t = setTimeout(() => inputRef.current?.focus(), 150)
     return () => clearTimeout(t)
   }, [step])
+
+  // Resend cooldown countdown (5 minutes = 300 seconds)
+  useEffect(() => {
+    if (resendTimer <= 0) return
+    const interval = setInterval(() => {
+      setResendTimer((t) => (t <= 1 ? 0 : t - 1))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [resendTimer])
 
   const handleClose = () => {
     setExiting(true)
@@ -400,7 +410,7 @@ export default function CreateSchool() {
                           ref={inputRef}
                           type="email"
                           value={form.adminEmail}
-                          onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError('') }}
+                          onChange={(e) => { set('adminEmail', e.target.value); setEmailSent(false); setEmailVerified(false); setEmailCode(''); setEmailError(''); setResendTimer(0) }}
                           placeholder="admin@school.edu.bd"
                           disabled={emailVerified}
                           className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all disabled:opacity-50"
@@ -413,16 +423,26 @@ export default function CreateSchool() {
                                  setEmailError('')
                                  const code = Math.random().toString(36).slice(-6).toUpperCase()
                                  const result = await sendVerificationCode(form.adminEmail, code)
-                                 setEmailCode(code)
-                                 setEmailSent(true)
-                                 setSimulated(result.simulated)
+                                 if (result.success || result.simulated) {
+                                   setEmailCode(code)
+                                   setEmailSent(true)
+                                   setSimulated(result.simulated)
+                                   setResendTimer(300) // 5 minute cooldown
+                                 } else {
+                                   // Email failed — still show code as fallback
+                                   setEmailCode(code)
+                                   setEmailSent(true)
+                                   setSimulated(false)
+                                   setEmailError(result.error || (isBn ? 'ইমেইল পাঠানো যায়নি। নিচের কোড ব্যবহার করুন।' : 'Email could not be sent. Use the code shown below.'))
+                                   setResendTimer(300)
+                                 }
                                  setSendingCode(false)
                                }
                              }}
-                             disabled={!form.adminEmail.includes('@') || emailSent || sendingCode}
+                             disabled={!form.adminEmail.includes('@') || sendingCode || (emailSent && resendTimer > 0)}
                              className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                            >
-                             {sendingCode ? (isBn ? 'পাঠানো হচ্ছে...' : 'Sending...') : emailSent ? (isBn ? 'পাঠানো হয়েছে' : 'Sent') : (isBn ? 'কোড পাঠান' : 'Send Code')}
+                             {sendingCode ? (isBn ? 'পাঠানো হচ্ছে...' : 'Sending...') : emailSent && resendTimer > 0 ? (isBn ? `পুনঃ পাঠান (${resendTimer}s)` : `Resend (${resendTimer}s)`) : emailSent ? (isBn ? 'পুনঃ পাঠান' : 'Resend') : (isBn ? 'কোড পাঠান' : 'Send Code')}
                            </button>
                          )}
                          {emailVerified && (
@@ -438,14 +458,26 @@ export default function CreateSchool() {
                      {emailSent && !emailVerified && (
                        <div>
                          <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{isBn ? 'যাচাইকরণ কোড' : 'Verification Code'}</label>
-                         {simulated && (
-                           <p className="text-[0.625rem] text-[var(--amber)] mb-1 font-medium">{isBn ? 'ইমেইল পাঠানো সম্ভব হয়নি। নিচের কোড ব্যবহার করুন:' : 'Email could not be sent. Use the code below:'}</p>
-                         )}
-                         {simulated && emailCode && (
-                           <div className="mb-2 px-3 py-2 rounded-lg bg-[var(--amber)]/10 border border-[var(--amber)]/20">
-                             <p className="text-[0.75rem] font-mono font-bold text-[var(--amber)] tracking-widest">{emailCode}</p>
-                           </div>
-                         )}
+                         {simulated ? (
+                           <>
+                             <p className="text-[0.625rem] text-[var(--amber)] mb-1 font-medium">{isBn ? 'ইমেইল পাঠানো সম্ভব হয়নি। নিচের কোড ব্যবহার করুন:' : 'Email could not be sent. Use the code below:'}</p>
+                             {emailCode && (
+                               <div className="mb-2 px-3 py-2 rounded-lg bg-[var(--amber)]/10 border border-[var(--amber)]/20">
+                                 <p className="text-[0.75rem] font-mono font-bold text-[var(--amber)] tracking-widest">{emailCode}</p>
+                               </div>
+                             )}
+                           </>
+                         ) : emailError ? (
+                           <>
+                             <p className="text-[0.625rem] text-[var(--red)] mb-1 font-medium">{emailError}</p>
+                             {emailCode && (
+                               <div className="mb-2 px-3 py-2 rounded-lg bg-[var(--red)]/10 border border-[var(--red)]/20">
+                                 <p className="text-[0.625rem] text-[var(--red)] mb-1">{isBn ? 'আপনার যাচাইকরণ কোড:' : 'Your verification code:'}</p>
+                                 <p className="text-[0.875rem] font-mono font-bold text-[var(--red)] tracking-widest">{emailCode}</p>
+                               </div>
+                             )}
+                           </>
+                         ) : null}
                          <p className="text-[0.625rem] text-[var(--text-muted)] mb-2">{isBn ? `${form.adminEmail}-এ ৬-ডিজিট কোড পাঠানো হয়েছে` : `A 6-digit code was sent to ${form.adminEmail}`}</p>
                          <OtpInput
                            length={6}
