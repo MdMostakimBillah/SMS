@@ -151,7 +151,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
     document.documentElement.dataset.lang = lang
     setTheme(t)
     document.documentElement.setAttribute('data-theme', t)
-    setAppTheme(t)
+    // Don't call setAppTheme here — login page should not overwrite user's global theme preference
   }, [institution])
 
   const toggleTheme = () => {
