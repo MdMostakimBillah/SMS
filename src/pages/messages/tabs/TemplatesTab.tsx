@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { FileText, Save, RotateCcw, ChevronDown, ChevronRight, Plus, Trash2, Tag, Sparkles } from 'lucide-react'
+import { FileText, Save, RotateCcw, ChevronDown, ChevronRight, Plus, Trash2, Tag, Sparkles, Banknote, ClipboardList, Clock, Award } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useMessageTemplateStore, type MessageTemplate, type TemplateTrigger } from '@/store/messageTemplateStore'
@@ -94,12 +94,12 @@ const TRIGGER_VARIABLES: Record<TemplateTrigger, { var: string; label: string; l
   ],
 }
 
-const TRIGGER_LABELS: Record<TemplateTrigger, { label: string; labelBn: string; color: string; icon: string }> = {
-  fee_collect: { label: 'Fee Collection', labelBn: 'ফি আদায়', color: 'var(--green)', icon: '💰' },
-  exam_schedule: { label: 'Exam Schedule', labelBn: 'পরীক্ষা সূচি', color: 'var(--brand)', icon: '📝' },
-  exam_result: { label: 'Exam Result', labelBn: 'পরীক্ষার ফলাফল', color: 'var(--purple, #8b5cf6)', icon: '📊' },
-  due_reminder: { label: 'Due Reminder', labelBn: 'বকেয় পেমেন্ট', color: 'var(--orange)', icon: '⏰' },
-  manual: { label: 'General/Manual', labelBn: 'সাধারণ/ম্যানুয়াল', color: 'var(--text-muted)', icon: '📝' },
+const TRIGGER_LABELS: Record<TemplateTrigger, { label: string; labelBn: string; color: string; icon: ReactNode }> = {
+  fee_collect: { label: 'Fee Collection', labelBn: 'ফি আদায়', color: 'var(--green)', icon: <Banknote size={16} /> },
+  exam_schedule: { label: 'Exam Schedule', labelBn: 'পরীক্ষা সূচি', color: 'var(--brand)', icon: <ClipboardList size={16} /> },
+  exam_result: { label: 'Exam Result', labelBn: 'পরীক্ষার ফলাফল', color: 'var(--purple, #8b5cf6)', icon: <Award size={16} /> },
+  due_reminder: { label: 'Due Reminder', labelBn: 'বকেয় পেমেন্ট', color: 'var(--orange)', icon: <Clock size={16} /> },
+  manual: { label: 'General/Manual', labelBn: 'সাধারণ/ম্যানুয়াল', color: 'var(--text-muted)', icon: <FileText size={16} /> },
 }
 
 const DEFAULT_VARIABLES: { var: string; label: string; labelBn: string }[] = [
@@ -115,7 +115,7 @@ function getVariablesForTrigger(trigger: TemplateTrigger) {
 }
 
 function getTriggerConfig(trigger: TemplateTrigger) {
-  return TRIGGER_LABELS[trigger] || { label: trigger, labelBn: trigger, color: 'var(--text-muted)', icon: '📝' }
+  return TRIGGER_LABELS[trigger] || { label: trigger, labelBn: trigger, color: 'var(--text-muted)', icon: <FileText size={16} /> }
 }
 
 export function TemplatesTab() {
@@ -305,7 +305,9 @@ export function TemplatesTab() {
                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-[var(--bg-tertiary)] transition-colors"
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className="text-lg">{cfg.icon}</span>
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${cfg.color}18`, color: cfg.color }}>
+                        {cfg.icon}
+                      </div>
                       <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{bn ? tpl.nameBn : tpl.name}</span>
                       {tpl.isDefault && <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-medium bg-[var(--brand)]/10 text-[var(--brand)]">{bn ? 'ডিফল্ট' : 'Default'}</span>}
                       <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-medium" style={{ background: `${cfg.color}15`, color: cfg.color }}>
