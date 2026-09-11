@@ -138,7 +138,7 @@ export default function NoticeBoardPage() {
             return (
               <div
                 key={notice.id}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 transition-all hover:border-[var(--brand)]"
+                className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 transition-all hover:border-[var(--brand)]"
                 style={notice.pinned ? { borderColor: 'var(--brand)', borderWidth: '2px' } : {}}
               >
                 <div className="flex items-start gap-3">
@@ -265,7 +265,7 @@ function NoticeModal({ item, onSave, onClose, bn }: { item: Notice | null; onSav
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--bg-card)] border border-[var(--border)] shadow-xl">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-xl">
         <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
           <h2 className="font-semibold text-[1rem] text-[var(--text-primary)]">
             {item ? (bn ? 'নোটিশ সম্পাদনা' : 'Edit Notice') : (bn ? 'নতুন নোটিশ' : 'New Notice')}

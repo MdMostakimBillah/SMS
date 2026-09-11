@@ -130,7 +130,7 @@ export default function NotificationsPage() {
                 onClick={() => handleClick(n)}
                 className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                   n.read
-                    ? 'border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--brand)]'
+                    ? 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]'
                     : 'border-[var(--brand)] bg-[var(--brand)]05 hover:border-[var(--brand)]'
                 }`}
               >

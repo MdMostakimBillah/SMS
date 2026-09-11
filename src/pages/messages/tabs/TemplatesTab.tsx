@@ -447,7 +447,7 @@ export function TemplatesTab() {
       {/* Create Template Modal */}
       {showCreateModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)}>
-          <div className="w-full max-w-2xl rounded-2xl bg-[var(--bg-card)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-2xl rounded-2xl bg-[var(--bg-primary)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-4 py-3 rounded-t-2xl" style={{ background: 'var(--brand)' }}>
               <h3 className="font-semibold text-[0.9375rem] text-white flex items-center gap-2">
                 <Sparkles size={16} />
@@ -525,7 +525,7 @@ export function TemplatesTab() {
       {/* Category Management Modal */}
       {showCategoryModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowCategoryModal(false)}>
-          <div className="w-full max-w-md rounded-2xl bg-[var(--bg-card)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl bg-[var(--bg-primary)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-4 py-3 rounded-t-2xl" style={{ background: 'var(--brand)' }}>
               <h3 className="font-semibold text-[0.9375rem] text-white flex items-center gap-2">
                 <Tag size={16} />

@@ -357,7 +357,7 @@ function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Me
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
         <div className="msg-content text-[0.875rem] text-[var(--text-primary)] leading-relaxed" dangerouslySetInnerHTML={{ __html: message.body }} />
       </div>
 
