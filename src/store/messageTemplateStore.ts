@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
 
-export type BuiltinTemplateType = 'fee' | 'exam' | 'due' | 'general'
+export type BuiltinTemplateType = 'fee' | 'exam' | 'due' | 'general' | 'exam_result'
 export type TemplateType = BuiltinTemplateType | string
 
 export type TemplateTrigger = 'fee_collect' | 'exam_schedule' | 'due_reminder' | 'manual' | string
@@ -58,6 +58,18 @@ const DEFAULT_TEMPLATES: MessageTemplate[] = [
     updatedAt: new Date().toISOString(),
   },
   {
+    id: 'TPL-EXAM-RESULT-001',
+    type: 'exam_result',
+    name: 'Exam Result',
+    nameBn: 'পরীক্ষার ফলাফল',
+    subject: 'Exam Result Notification',
+    body: 'Dear {student_name},\n\nYour {exam_name} results for {subject} are as follows:\nObtained: {obtained_marks}/{total_marks}\nGrade: {grade}\nPosition: {position} out of {total_position}\n\nBest wishes.',
+    trigger: 'exam_result',
+    category: 'Exam',
+    isDefault: true,
+    updatedAt: new Date().toISOString(),
+  },
+  {
     id: 'TPL-GEN-001',
     type: 'general',
     name: 'General Message',
@@ -71,7 +83,7 @@ const DEFAULT_TEMPLATES: MessageTemplate[] = [
   },
 ]
 
-const DEFAULT_CATEGORIES = ['Fee', 'Exam', 'Due', 'General']
+const DEFAULT_CATEGORIES = ['Fee', 'Exam', 'Due', 'General', 'Result']
 
 interface MessageTemplateState {
   templates: MessageTemplate[]

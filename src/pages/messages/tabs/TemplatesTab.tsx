@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { FileText, Save, RotateCcw, ChevronDown, ChevronRight, Plus, Trash2, Tag, Sparkles } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
@@ -7,35 +8,96 @@ import { useMessageTemplateStore, type MessageTemplate, type TemplateTrigger } f
 const TRIGGER_VARIABLES: Record<TemplateTrigger, { var: string; label: string; labelBn: string }[]> = {
   fee_collect: [
     { var: '{student_name}', label: 'Student Name', labelBn: 'শিক্ষার্থীর নাম' },
-    { var: '{amount}', label: 'Amount', labelBn: 'পরিমাণ' },
-    { var: '{month}', label: 'Month', labelBn: 'মাস' },
-    { var: '{receipt_no}', label: 'Receipt No', labelBn: 'রসিদ নং' },
+    { var: '{student_id}', label: 'Student ID', labelBn: 'শিক্ষার্থী আইডি' },
+    { var: '{class}', label: 'Class', labelBn: 'শ্রেণি' },
+    { var: '{section}', label: 'Section', labelBn: 'শাখা' },
+    { var: '{roll}', label: 'Roll No', labelBn: 'রোল নং' },
+    { var: '{father_name}', label: "Father's Name", labelBn: 'পিতার নাম' },
     { var: '{fee_name}', label: 'Fee Name', labelBn: 'ফির নাম' },
+    { var: '{amount}', label: 'Paid Amount', labelBn: 'পরিশোধিত পরিমাণ' },
+    { var: '{total_fee}', label: 'Total Fee', labelBn: 'মোট ফি' },
+    { var: '{due_amount}', label: 'Due Amount', labelBn: 'বকেয় পরিমাণ' },
+    { var: '{discount}', label: 'Discount', labelBn: 'ছাড়' },
+    { var: '{fine}', label: 'Fine', labelBn: 'জরিমানা' },
+    { var: '{month}', label: 'Month', labelBn: 'মাস' },
+    { var: '{academic_year}', label: 'Academic Year', labelBn: 'শিক্ষাবর্ষ' },
+    { var: '{receipt_no}', label: 'Receipt No', labelBn: 'রসিদ নং' },
+    { var: '{payment_date}', label: 'Payment Date', labelBn: 'পেমেন্ট তারিখ' },
+    { var: '{payment_method}', label: 'Payment Method', labelBn: 'পেমেন্ট পদ্ধতি' },
+    { var: '{transaction_id}', label: 'Transaction ID', labelBn: 'ট্রানজেকশন আইডি' },
+    { var: '{school_name}', label: 'School Name', labelBn: 'বিদ্যালয়ের নাম' },
   ],
   exam_schedule: [
     { var: '{student_name}', label: 'Student Name', labelBn: 'শিক্ষার্থীর নাম' },
+    { var: '{class}', label: 'Class', labelBn: 'শ্রেণি' },
+    { var: '{section}', label: 'Section', labelBn: 'শাখা' },
     { var: '{exam_name}', label: 'Exam Name', labelBn: 'পরীক্ষার নাম' },
+    { var: '{exam_type}', label: 'Exam Type', labelBn: 'পরীক্ষার ধরন' },
+    { var: '{subject}', label: 'Subject', labelBn: 'বিষয়' },
     { var: '{start_date}', label: 'Start Date', labelBn: 'শুরুর তারিখ' },
     { var: '{end_date}', label: 'End Date', labelBn: 'শেষ তারিখ' },
+    { var: '{exam_time}', label: 'Exam Time', labelBn: 'পরীক্ষার সময়' },
+    { var: '{duration}', label: 'Duration', labelBn: 'সময়কাল' },
+    { var: '{room}', label: 'Room/Center', labelBn: 'কক্ষ/কেন্দ্র' },
+    { var: '{syllabus}', label: 'Syllabus', labelBn: 'পাঠ্যসূচি' },
+    { var: '{school_name}', label: 'School Name', labelBn: 'বিদ্যালয়ের নাম' },
+  ],
+  exam_result: [
+    { var: '{student_name}', label: 'Student Name', labelBn: 'শিক্ষার্থীর নাম' },
+    { var: '{student_id}', label: 'Student ID', labelBn: 'শিক্ষার্থী আইডি' },
     { var: '{class}', label: 'Class', labelBn: 'শ্রেণি' },
+    { var: '{section}', label: 'Section', labelBn: 'শাখা' },
+    { var: '{roll}', label: 'Roll No', labelBn: 'রোল নং' },
+    { var: '{father_name}', label: "Father's Name", labelBn: 'পিতার নাম' },
+    { var: '{exam_name}', label: 'Exam Name', labelBn: 'পরীক্ষার নাম' },
+    { var: '{subject}', label: 'Subject', labelBn: 'বিষয়' },
+    { var: '{total_marks}', label: 'Total Marks', labelBn: 'মোট নম্বর' },
+    { var: '{obtained_marks}', label: 'Obtained Marks', labelBn: 'প্রাপ্ত নম্বর' },
+    { var: '{pass_marks}', label: 'Pass Marks', labelBn: 'পাশের নম্বর' },
+    { var: '{percentage}', label: 'Percentage', labelBn: 'শতাংশ' },
+    { var: '{gpa}', label: 'GPA/CGPA', labelBn: 'জিপিএ/সিজিপিএ' },
+    { var: '{grade}', label: 'Grade', labelBn: 'গ্রেড' },
+    { var: '{position}', label: 'Position/Rank', labelBn: 'অবস্থান/র‍্যাঙ্ক' },
+    { var: '{total_position}', label: 'Total Students', labelBn: 'মোট শিক্ষার্থী' },
+    { var: '{result_status}', label: 'Result (Pass/Fail)', labelBn: 'ফলাফল (পাশ/ফেল)' },
+    { var: '{remarks}', label: 'Remarks', labelBn: 'মন্তব্য' },
+    { var: '{school_name}', label: 'School Name', labelBn: 'বিদ্যালয়ের নাম' },
   ],
   due_reminder: [
     { var: '{student_name}', label: 'Student Name', labelBn: 'শিক্ষার্থীর নাম' },
+    { var: '{student_id}', label: 'Student ID', labelBn: 'শিক্ষার্থী আইডি' },
+    { var: '{class}', label: 'Class', labelBn: 'শ্রেণি' },
+    { var: '{section}', label: 'Section', labelBn: 'শাখা' },
+    { var: '{roll}', label: 'Roll No', labelBn: 'রোল নং' },
+    { var: '{father_name}', label: "Father's Name", labelBn: 'পিতার নাম' },
+    { var: '{fee_name}', label: 'Fee Name', labelBn: 'ফির নাম' },
+    { var: '{total_fee}', label: 'Total Fee', labelBn: 'মোট ফি' },
+    { var: '{paid_amount}', label: 'Paid Amount', labelBn: 'পরিশোধিত পরিমাণ' },
     { var: '{due_amount}', label: 'Due Amount', labelBn: 'বকেয় পরিমাণ' },
+    { var: '{fine}', label: 'Fine', labelBn: 'জরিমানা' },
+    { var: '{late_fee}', label: 'Late Fee', labelBn: 'বিলম্ব ফি' },
     { var: '{month}', label: 'Month', labelBn: 'মাস' },
+    { var: '{academic_year}', label: 'Academic Year', labelBn: 'শিক্ষাবর্ষ' },
     { var: '{due_date}', label: 'Due Date', labelBn: 'শেষ তারিখ' },
+    { var: '{days_overdue}', label: 'Days Overdue', labelBn: 'বিলম্বিত দিন' },
+    { var: '{school_name}', label: 'School Name', labelBn: 'বিদ্যালয়ের নাম' },
   ],
   manual: [
     { var: '{recipient_name}', label: 'Recipient Name', labelBn: 'প্রাপকের নাম' },
+    { var: '{student_name}', label: 'Student Name', labelBn: 'শিক্ষার্থীর নাম' },
+    { var: '{class}', label: 'Class', labelBn: 'শ্রেণি' },
     { var: '{subject}', label: 'Subject', labelBn: 'বিষয়' },
     { var: '{message}', label: 'Message', labelBn: 'বার্তা' },
     { var: '{school_name}', label: 'School Name', labelBn: 'বিদ্যালয়ের নাম' },
+    { var: '{date}', label: 'Date', labelBn: 'তারিখ' },
+    { var: '{time}', label: 'Time', labelBn: 'সময়' },
   ],
 }
 
 const TRIGGER_LABELS: Record<TemplateTrigger, { label: string; labelBn: string; color: string; icon: string }> = {
   fee_collect: { label: 'Fee Collection', labelBn: 'ফি আদায়', color: 'var(--green)', icon: '💰' },
   exam_schedule: { label: 'Exam Schedule', labelBn: 'পরীক্ষা সূচি', color: 'var(--brand)', icon: '📝' },
+  exam_result: { label: 'Exam Result', labelBn: 'পরীক্ষার ফলাফল', color: 'var(--purple, #8b5cf6)', icon: '📊' },
   due_reminder: { label: 'Due Reminder', labelBn: 'বকেয় পেমেন্ট', color: 'var(--orange)', icon: '⏰' },
   manual: { label: 'General/Manual', labelBn: 'সাধারণ/ম্যানুয়াল', color: 'var(--text-muted)', icon: '📝' },
 }
@@ -383,32 +445,34 @@ export function TemplatesTab() {
       </div>
 
       {/* Create Template Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50" onClick={() => setShowCreateModal(false)}>
+      {showCreateModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowCreateModal(false)}>
           <div className="w-full max-w-2xl rounded-2xl bg-[var(--bg-card)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-              <h3 className="font-semibold text-[0.9375rem] text-[var(--text-primary)] flex items-center gap-2">
-                <Sparkles size={16} className="text-[var(--brand)]" />
+            <div className="flex items-center justify-between px-4 py-3 rounded-t-2xl" style={{ background: 'var(--brand)' }}>
+              <h3 className="font-semibold text-[0.9375rem] text-white flex items-center gap-2">
+                <Sparkles size={16} />
                 {bn ? 'নতুন টেমপ্লেট তৈরি করুন' : 'Create New Template'}
               </h3>
-              <button onClick={() => setShowCreateModal(false)} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><ChevronRight size={16} className="rotate-90" /></button>
+              <button onClick={() => setShowCreateModal(false)} className="p-1.5 rounded-lg hover:bg-white/20 text-white">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             </div>
             <div className="p-4 space-y-4 max-h-[70vh] overflow-auto">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1">{bn ? 'নাম (ইংরেজি)*' : 'Name (English)*'}</label>
-                  <input value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+                  <input value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} className="w-full px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
                 </div>
                 <div>
                   <label className="block text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1">{bn ? 'নাম (বাংলা)' : 'Name (Bengali)'}</label>
-                  <input value={createForm.nameBn} onChange={(e) => setCreateForm({ ...createForm, nameBn: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+                  <input value={createForm.nameBn} onChange={(e) => setCreateForm({ ...createForm, nameBn: e.target.value })} className="w-full px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
                 </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1">{bn ? 'ট্রিগার/টাইপ' : 'Trigger/Type'}</label>
-                  <select value={createForm.trigger} onChange={(e) => setCreateForm({ ...createForm, trigger: e.target.value as TemplateTrigger })} className="w-full px-3 py-2 rounded-lg text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
+                  <select value={createForm.trigger} onChange={(e) => setCreateForm({ ...createForm, trigger: e.target.value as TemplateTrigger })} className="w-full px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
                     {Object.entries(TRIGGER_LABELS).map(([key, val]) => (
                       <option key={key} value={key}>{bn ? val.labelBn : val.label}</option>
                     ))}
@@ -416,7 +480,7 @@ export function TemplatesTab() {
                 </div>
                 <div>
                   <label className="block text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1">{bn ? 'ক্যাটাগরি' : 'Category'}</label>
-                  <select value={createForm.category} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
+                  <select value={createForm.category} onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })} className="w-full px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer">
                     <option value="">{bn ? 'ক্যাটাগরি বেছে নিন' : 'Select Category'}</option>
                     {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                     <option value="Custom">{bn ? 'কাস্টম' : 'Custom'}</option>
@@ -426,16 +490,16 @@ export function TemplatesTab() {
 
               <div>
                 <label className="block text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1">{bn ? 'বিষয়' : 'Subject'}</label>
-                <input value={createForm.subject} onChange={(e) => setCreateForm({ ...createForm, subject: e.target.value })} className="w-full px-3 py-2 rounded-lg text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+                <input value={createForm.subject} onChange={(e) => setCreateForm({ ...createForm, subject: e.target.value })} className="w-full px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
               </div>
 
               <div>
                 <label className="block text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1">{bn ? 'বার্তা' : 'Message'}</label>
-                <textarea value={createForm.body} onChange={(e) => setCreateForm({ ...createForm, body: e.target.value })} rows={6} className="w-full px-3 py-2 rounded-lg text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors resize-none leading-relaxed" />
+                <textarea value={createForm.body} onChange={(e) => setCreateForm({ ...createForm, body: e.target.value })} rows={6} className="w-full px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors resize-none leading-relaxed" />
               </div>
 
               <div className="pt-2">
-                <label className="block text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1.5">{bn ? 'ভেরিয়েবল' : 'Variables'} <span className="text-[0.625rem">({bn ? 'ক্লিক করলে যোগ হবে' : 'Click to insert'})</span></label>
+                <label className="block text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1.5">{bn ? 'ভেরিয়েবল' : 'Variables'} <span className="text-[0.625rem]">({bn ? 'ক্লিক করলে যোগ হবে' : 'Click to insert'})</span></label>
                 <div className="flex flex-wrap gap-1.5">
                   {getVariablesForTrigger(createForm.trigger).map((v) => (
                     <button key={v.var} type="button" onClick={() => setCreateForm({ ...createForm, body: createForm.body + v.var })} className="px-2 py-1 rounded-md text-[0.625rem] font-mono bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors cursor-pointer" title={bn ? v.labelBn : v.label}>
@@ -446,46 +510,58 @@ export function TemplatesTab() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border)]">
-                <button onClick={() => { setCreateForm({ name: '', nameBn: '', trigger: 'manual', category: 'General', subject: '', body: '' }); setShowCreateModal(false) }} className="px-4 py-2 rounded-lg text-[0.8125rem] font-medium bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors">{bn ? 'বাতিল' : 'Cancel'}</button>
-                <button onClick={handleCreateTemplate} disabled={!createForm.name.trim() || !canCreate('messages.templates')} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--brand)' }}>
+                <button onClick={() => { setCreateForm({ name: '', nameBn: '', trigger: 'manual', category: 'General', subject: '', body: '' }); setShowCreateModal(false) }} className="px-4 py-2 rounded-xl text-[0.8125rem] font-medium bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors">{bn ? 'বাতিল' : 'Cancel'}</button>
+                <button onClick={handleCreateTemplate} disabled={!createForm.name.trim() || !canCreate('messages.templates')} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[0.8125rem] font-medium text-white transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--brand)' }}>
                   <Save size={13} />
                   {bn ? 'টেমপ্লেট তৈরি করুন' : 'Create Template'}
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Category Management Modal */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50" onClick={() => setShowCategoryModal(false)}>
+      {showCategoryModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowCategoryModal(false)}>
           <div className="w-full max-w-md rounded-2xl bg-[var(--bg-card)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-primary)]">
-              <h3 className="font-semibold text-[0.9375rem] text-[var(--text-primary)] flex items-center gap-2">
-                <Tag size={16} className="text-[var(--brand)]" />
+            <div className="flex items-center justify-between px-4 py-3 rounded-t-2xl" style={{ background: 'var(--brand)' }}>
+              <h3 className="font-semibold text-[0.9375rem] text-white flex items-center gap-2">
+                <Tag size={16} />
                 {bn ? 'ক্যাটাগরি পরিচালনা' : 'Manage Categories'}
               </h3>
-              <button onClick={() => setShowCategoryModal(false)} className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><ChevronRight size={16} className="rotate-90" /></button>
+              <button onClick={() => setShowCategoryModal(false)} className="p-1.5 rounded-lg hover:bg-white/20 text-white">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
             </div>
-            <div className="p-4 space-y-3 max-h-[70vh] overflow-auto">
+            <div className="p-4 space-y-3 max-h-[60vh] overflow-auto">
+              {categories.length === 0 && (
+                <p className="text-[0.75rem] text-[var(--text-muted)] text-center py-3">{bn ? 'কোনো ক্যাটাগরি নেই' : 'No categories yet'}</p>
+              )}
               {categories.map((cat) => (
-                <div key={cat} className="flex items-center justify-between px-3 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-                  <span className="text-[0.8125rem] text-[var(--text-primary)]">{cat}</span>
-                  <button onClick={() => handleRemoveCategory(cat)} className="p-1.5 rounded hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--red)] transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                <div key={cat} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] hover:border-[var(--brand)]/30 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--brand)' }}>
+                      <Tag size={13} className="text-white" />
+                    </div>
+                    <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{cat}</span>
+                  </div>
+                  <button onClick={() => handleRemoveCategory(cat)} className="p-1.5 rounded-lg hover:bg-[var(--red)]/10 text-[var(--text-muted)] hover:text-[var(--red)] transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
                     <Trash2 size={13} />
                   </button>
                 </div>
               ))}
-              <div className="pt-2 border-t border-[var(--border)] flex gap-2">
-                <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder={bn ? 'নতুন ক্যাটাগরি নাম' : 'New category name'} className="flex-1 px-3 py-2 rounded-lg text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
-                <button onClick={handleAddCategory} disabled={!newCategory.trim()} className="px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--brand)' }}>
+              <div className="pt-3 border-t border-[var(--border)] flex gap-2">
+                <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()} placeholder={bn ? 'নতুন ক্যাটাগরি নাম' : 'New category name'} className="flex-1 px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+                <button onClick={handleAddCategory} disabled={!newCategory.trim()} className="px-4 py-2 rounded-xl text-[0.8125rem] font-medium text-white transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--brand)' }}>
                   {bn ? 'জোড়া দিন' : 'Add'}
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
