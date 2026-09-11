@@ -1,35 +1,38 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Plus, Megaphone, Pin, PinOff, Edit3, Trash2, X, AlertTriangle, Info } from 'lucide-react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { Plus, Megaphone, Pin, Search, AlertTriangle, Info } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useNoticeStore, type Notice, type NoticeTarget, type NoticePriority, noticeId } from '@/store/noticeStore'
-import { useAuth } from '@/contexts/AuthContext'
+import { useTabSlider } from '@/hooks/useTabSlider'
+import { useNoticeStore, type Notice, type NoticePriority, noticeId } from '@/store/noticeStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
+import { NoticeDetail } from './NoticeDetail'
+import { NoticeModal } from './NoticeModal'
 
-const selectCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] bg-[url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2394a3b8\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'m6 9 6 6 6-6\'/%3E%3C/svg%3E")]'
-const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
-const textareaCls = inputCls + ' resize-none'
-
-const TARGET_OPTIONS = [
-  { value: 'all', label: 'All', labelBn: 'সকল' },
-  { value: 'students', label: 'Students', labelBn: 'শিক্ষার্থী' },
-  { value: 'teachers', label: 'Teachers', labelBn: 'শিক্ষক' },
-  { value: 'parents', label: 'Parents', labelBn: 'অভিভাবক' },
-]
 const PRIORITY_OPTIONS = [
   { value: 'low', label: 'Low', labelBn: 'কম', color: 'var(--text-muted)' },
   { value: 'medium', label: 'Medium', labelBn: 'মাঝারি', color: 'var(--brand)' },
   { value: 'high', label: 'High', labelBn: 'বেশি', color: 'var(--orange)' },
   { value: 'urgent', label: 'Urgent', labelBn: 'জরুরি', color: 'var(--red)' },
 ]
-
+const TARGET_OPTIONS = [
+  { value: 'all', label: 'All', labelBn: 'সকল' },
+  { value: 'students', label: 'Students', labelBn: 'শিক্ষার্থী' },
+  { value: 'teachers', label: 'Teachers', labelBn: 'শিক্ষক' },
+  { value: 'parents', label: 'Parents', labelBn: 'অভিভাবক' },
+]
 const PRIORITY_ICONS: Record<NoticePriority, typeof AlertTriangle> = {
   low: Info,
   medium: Megaphone,
   high: AlertTriangle,
   urgent: AlertTriangle,
 }
+
+const ALL_TABS = [
+  { key: 'all', icon: Megaphone },
+  { key: 'pinned', icon: Pin },
+  { key: 'expired', icon: AlertTriangle },
+]
 
 export default function NoticeBoardPage() {
   const bn = useBn()
@@ -41,30 +44,54 @@ export default function NoticeBoardPage() {
   const deleteNotice = useNoticeStore((s) => s.deleteNotice)
   const togglePin = useNoticeStore((s) => s.togglePin)
 
+  const [activeTab, setActiveTab] = useState('all')
+  const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState<Notice | null>(null)
+  const [viewNotice, setViewNotice] = useState<Notice | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
-  const [filterTarget, setFilterTarget] = useState<string>('')
-  const [filterPriority, setFilterPriority] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
+
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(null)
+  const sliderRef = useRef<HTMLDivElement>(null)
+  useTabSlider({ activeTab, tabRefs, sliderRef })
 
   useEffect(() => {
     const t = setTimeout(() => setIsLoading(false), 400)
     return () => clearTimeout(t)
   }, [])
 
+  const isExpired = (n: Notice) => n.expiresAt && new Date(n.expiresAt) < new Date()
+
   const filtered = useMemo(() => {
     let list = notices.filter((n) => n.isActive)
-    if (filterTarget) list = list.filter((n) => n.target === filterTarget)
-    if (filterPriority) list = list.filter((n) => n.priority === filterPriority)
+    if (activeTab === 'pinned') list = list.filter((n) => n.pinned)
+    if (activeTab === 'expired') list = list.filter((n) => isExpired(n))
+    if (search) {
+      const q = search.toLowerCase()
+      list = list.filter((n) =>
+        n.title.toLowerCase().includes(q) || n.titleBn.includes(search) ||
+        n.content.toLowerCase().includes(q) || n.contentBn.includes(search) ||
+        n.author.toLowerCase().includes(q) || n.authorBn.includes(search)
+      )
+    }
     return list.sort((a, b) => {
       if (a.pinned && !b.pinned) return -1
       if (!a.pinned && b.pinned) return 1
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     })
-  }, [notices, filterTarget, filterPriority])
+  }, [notices, activeTab, search])
 
   const pinnedCount = useMemo(() => notices.filter((n) => n.pinned && n.isActive).length, [notices])
+  const expiredCount = useMemo(() => notices.filter((n) => n.isActive && isExpired(n)).length, [notices])
+
+  const tabs = useMemo(() => {
+    return ALL_TABS.map((t) => ({
+      ...t,
+      count: t.key === 'all' ? filtered.length : t.key === 'pinned' ? pinnedCount : expiredCount,
+      label: t.key === 'all' ? (bn ? 'সকল' : 'All') : t.key === 'pinned' ? (bn ? 'পিন করা' : 'Pinned') : (bn ? 'মেয়াদোত্তীর্ণ' : 'Expired'),
+    }))
+  }, [bn, filtered.length, pinnedCount, expiredCount])
 
   const handleSave = (data: Omit<Notice, 'id'>) => {
     if (editItem) {
@@ -81,8 +108,23 @@ export default function NoticeBoardPage() {
       <div className="p-4 space-y-4">
         <div className="skeleton h-8 w-48 rounded-lg" />
         <div className="skeleton h-10 w-full rounded-xl" />
-        <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="skeleton h-32 rounded-xl" />)}</div>
+        <div className="space-y-2">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}</div>
       </div>
+    )
+  }
+
+  if (viewNotice) {
+    return (
+      <NoticeDetail
+        notice={viewNotice}
+        onBack={() => setViewNotice(null)}
+        onEdit={(n) => { setEditItem(n); setShowModal(true); setViewNotice(null) }}
+        onDelete={(id) => { deleteNotice(id); setViewNotice(null) }}
+        onTogglePin={togglePin}
+        canEdit={canEdit('notice')}
+        canDelete={canDelete('notice')}
+        bn={bn}
+      />
     )
   }
 
@@ -110,27 +152,49 @@ export default function NoticeBoardPage() {
         )}
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 mb-4 flex-wrap">
-        <select value={filterTarget} onChange={(e) => setFilterTarget(e.target.value)} className={selectCls}>
-          <option value="">{bn ? 'সকল মূল্যায়ন' : 'All Targets'}</option>
-          {TARGET_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
-        </select>
-        <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className={selectCls}>
-          <option value="">{bn ? 'সকল অগ্রাধিকার' : 'All Priorities'}</option>
-          {PRIORITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
-        </select>
+      {/* Tabs */}
+      <div className="relative mb-4">
+        <div className="flex gap-1 border-b border-[var(--border)]">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              ref={(el) => { if (!tabRefs.current) tabRefs.current = new Map(); if (el) tabRefs.current.set(tab.key, el) }}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-[0.8125rem] font-medium transition-colors relative ${activeTab === tab.key ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              <tab.icon size={15} />
+              {tab.label}
+              {tab.count > 0 && (
+                <span className="ml-1 px-1.5 py-0 rounded-full text-[0.625rem] font-bold text-white" style={{ background: 'var(--brand)' }}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+          <div ref={sliderRef} className="absolute bottom-0 h-[2px] bg-[var(--brand)] transition-all duration-200 rounded-full" style={{ zIndex: 1 }} />
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={bn ? 'নোটিশ খুঁজুন...' : 'Search notices...'}
+          className="w-full pl-9 px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
+        />
       </div>
 
       {/* Notice List */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
           <Megaphone size={48} className="mb-3 opacity-30" />
-          <p className="text-[0.9375rem]">{bn ? 'কোনো নোটিশ নেই' : 'No notices yet'}</p>
+          <p className="text-[0.9375rem]">{bn ? 'কোনো নোটিশ নেই' : 'No notices found'}</p>
           <p className="text-[0.75rem] mt-1">{bn ? 'নতুন নোটিশ তৈরি করতে উপরের বোতাম ক্লিক করুন' : 'Click the button above to create a notice'}</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filtered.map((notice) => {
             const priority = PRIORITY_OPTIONS.find((p) => p.value === notice.priority) || PRIORITY_OPTIONS[0]
             const PriorityIcon = PRIORITY_ICONS[notice.priority] || Megaphone
@@ -138,69 +202,55 @@ export default function NoticeBoardPage() {
             return (
               <div
                 key={notice.id}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 transition-all hover:border-[var(--brand)]"
-                style={notice.pinned ? { borderColor: 'var(--brand)', borderWidth: '2px' } : {}}
+                onClick={() => setViewNotice(notice)}
+                className="flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer"
+                style={notice.pinned ? { borderColor: 'var(--brand)', background: 'var(--bg-secondary)' } : { borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}
               >
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 p-2 rounded-lg" style={{ background: `${priority.color}15`, color: priority.color }}>
-                    <PriorityIcon size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      {notice.pinned && (
-                        <span className="text-[0.625rem] px-1.5 py-0.5 rounded-full font-medium" style={{ background: 'var(--brand)15', color: 'var(--brand)' }}>
-                          {bn ? 'পিন' : 'Pinned'}
-                        </span>
-                      )}
-                      <span className="text-[0.625rem] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${priority.color}15`, color: priority.color }}>
-                        {bn ? priority.labelBn : priority.label}
-                      </span>
-                      <span className="text-[0.625rem] px-1.5 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-muted)]">
-                        {bn ? target?.labelBn : target?.label}
-                      </span>
-                      <span className="text-[0.625rem] text-[var(--text-muted)] ml-auto">
-                        {new Date(notice.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </span>
-                    </div>
-                    <h3 className="font-semibold text-[0.9375rem] text-[var(--text-primary)] mb-1">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${priority.color}18`, color: priority.color }}>
+                  <PriorityIcon size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)] truncate">
                       {bn ? notice.titleBn : notice.title}
-                    </h3>
-                    <p className="text-[0.8125rem] text-[var(--text-secondary)] line-clamp-3 whitespace-pre-line">
-                      {bn ? notice.contentBn : notice.content}
-                    </p>
-                    <div className="flex items-center gap-2 mt-3">
-                      <span className="text-[0.6875rem] text-[var(--text-muted)]">
-                        {bn ? notice.authorBn : notice.author}
-                      </span>
-                      <div className="flex items-center gap-1 ml-auto">
-                        {canEdit('notice') && (
-                          <button
-                            onClick={() => togglePin(notice.id)}
-                            className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
-                            title={notice.pinned ? (bn ? 'পিন সরান' : 'Unpin') : (bn ? 'পিন করুন' : 'Pin')}
-                          >
-                            {notice.pinned ? <PinOff size={14} /> : <Pin size={14} />}
-                          </button>
-                        )}
-                        {canEdit('notice') && (
-                          <button
-                            onClick={() => { setEditItem(notice); setShowModal(true) }}
-                            className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
-                            title={bn ? 'সম্পাদনা' : 'Edit'}
-                          >
-                            <Edit3 size={14} />
-                          </button>
-                        )}
-                        {canDelete('notice') && (
-                          <button
-                            onClick={() => setDeleteTarget(notice.id)}
-                            className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--red)] transition-colors"
-                            title={bn ? 'মুছুন' : 'Delete'}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        )}
-                      </div>
+                    </span>
+                    {notice.pinned && <Pin size={12} className="text-[var(--brand)] shrink-0" />}
+                    <span className="px-1.5 py-0 rounded-full text-[0.5625rem] font-medium" style={{ background: `${priority.color}15`, color: priority.color }}>
+                      {bn ? priority.labelBn : priority.label}
+                    </span>
+                    <span className="px-1.5 py-0 rounded-full text-[0.5625rem] font-medium bg-[var(--bg-tertiary)] text-[var(--text-muted)]">
+                      {bn ? target?.labelBn : target?.label}
+                    </span>
+                    <span className="text-[0.625rem] text-[var(--text-muted)] ml-auto shrink-0">
+                      {new Date(notice.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                  <p className="text-[0.75rem] text-[var(--text-muted)] truncate mt-0.5">
+                    {(bn ? notice.contentBn : notice.content).replace(/<[^>]*>/g, '')}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-[0.6875rem] text-[var(--text-muted)]">
+                      {bn ? notice.authorBn : notice.author}
+                    </span>
+                    <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
+                      {canEdit('notice') && (
+                        <button
+                          onClick={() => togglePin(notice.id)}
+                          className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] transition-colors"
+                          title={notice.pinned ? (bn ? 'পিন সরান' : 'Unpin') : (bn ? 'পিন করুন' : 'Pin')}
+                        >
+                          <Pin size={14} />
+                        </button>
+                      )}
+                      {canDelete('notice') && (
+                        <button
+                          onClick={() => setDeleteTarget(notice.id)}
+                          className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] transition-colors"
+                          title={bn ? 'মুছুন' : 'Delete'}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -230,93 +280,6 @@ export default function NoticeBoardPage() {
           isBn={bn}
         />
       )}
-    </div>
-  )
-}
-
-function NoticeModal({ item, onSave, onClose, bn }: { item: Notice | null; onSave: (data: Omit<Notice, 'id'>) => void; onClose: () => void; bn: boolean }) {
-  const { user } = useAuth()
-  const [title, setTitle] = useState(item?.title || '')
-  const [titleBn, setTitleBn] = useState(item?.titleBn || '')
-  const [content, setContent] = useState(item?.content || '')
-  const [contentBn, setContentBn] = useState(item?.contentBn || '')
-  const [target, setTarget] = useState<NoticeTarget>(item?.target || 'all')
-  const [priority, setPriority] = useState<NoticePriority>(item?.priority || 'medium')
-  const [expiresAt, setExpiresAt] = useState(item?.expiresAt || '')
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim() || !content.trim()) return
-    onSave({
-      title: title.trim(),
-      titleBn: titleBn.trim() || title.trim(),
-      content: content.trim(),
-      contentBn: contentBn.trim() || content.trim(),
-      author: user?.name || 'Admin',
-      authorBn: user?.name || 'Admin',
-      target,
-      priority,
-      pinned: item?.pinned || false,
-      isActive: item?.isActive ?? true,
-      publishedAt: item?.publishedAt || new Date().toISOString(),
-      expiresAt: expiresAt || '',
-    })
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
-          <h2 className="font-semibold text-[1rem] text-[var(--text-primary)]">
-            {item ? (bn ? 'নোটিশ সম্পাদনা' : 'Edit Notice') : (bn ? 'নতুন নোটিশ' : 'New Notice')}
-          </h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]"><X size={18} /></button>
-        </div>
-        <form onSubmit={handleSubmit} className="p-4 space-y-3">
-          <div>
-            <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'শিরোনাম (ইংরেজি)' : 'Title (English)'} *</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputCls + ' w-full'} required />
-          </div>
-          <div>
-            <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'শিরোনাম (বাংলা)' : 'Title (Bangla)'}</label>
-            <input value={titleBn} onChange={(e) => setTitleBn(e.target.value)} className={inputCls + ' w-full'} placeholder={bn ? 'বাংলায় শিরোনাম' : 'Title in Bangla'} />
-          </div>
-          <div>
-            <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'বিষয়বস্তু (ইংরেজি)' : 'Content (English)'} *</label>
-            <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={4} className={textareaCls + ' w-full'} required />
-          </div>
-          <div>
-            <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'বিষয়বস্তু (বাংলা)' : 'Content (Bangla)'}</label>
-            <textarea value={contentBn} onChange={(e) => setContentBn(e.target.value)} rows={4} className={textareaCls + ' w-full'} placeholder={bn ? 'বাংলায় বিষয়বস্তু' : 'Content in Bangla'} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'মূল্যায়ন' : 'Target'}</label>
-              <select value={target} onChange={(e) => setTarget(e.target.value as NoticeTarget)} className={selectCls + ' w-full'}>
-                {TARGET_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'অগ্রাধিকার' : 'Priority'}</label>
-              <select value={priority} onChange={(e) => setPriority(e.target.value as NoticePriority)} className={selectCls + ' w-full'}>
-                {PRIORITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{bn ? o.labelBn : o.label}</option>)}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1">{bn ? 'মেয়াদ শেষ' : 'Expires At'}</label>
-            <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className={inputCls + ' w-full'} />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-[0.8125rem] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]">
-              {bn ? 'বাতিল' : 'Cancel'}
-            </button>
-            <button type="submit" className="px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white" style={{ background: 'var(--brand)' }}>
-              {item ? (bn ? 'আপডেট' : 'Update') : (bn ? 'প্রকাশ' : 'Publish')}
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   )
 }
