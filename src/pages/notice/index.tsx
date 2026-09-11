@@ -6,6 +6,7 @@ import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useNoticeStore, type Notice, noticeId } from '@/store/noticeStore'
+import { useClassStore } from '@/store/classStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { NoticeDetail } from './NoticeDetail'
 import { NoticeModal } from './NoticeModal'
@@ -41,6 +42,9 @@ export default function NoticeBoardPage() {
   const togglePin = useNoticeStore((s) => s.togglePin)
   const addCategory = useNoticeStore((s) => s.addCategory)
   const removeCategory = useNoticeStore((s) => s.removeCategory)
+  const institution = useClassStore((s) => s.institution)
+  const logo = institution.logo
+  const schoolName = institution.name || 'EduTech'
 
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
@@ -253,23 +257,25 @@ export default function NoticeBoardPage() {
                   : { borderColor: 'var(--border)', background: 'var(--bg-primary)' }
                 }
               >
-                {/* Card header: avatar + author + date */}
+                {/* Card header: school logo + author + date */}
                 <div className="flex items-start gap-3 p-4 pb-2">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-[0.75rem]" style={{ background: 'var(--brand)' }}>
-                    {notice.storage ? (
-                      <img src={notice.storage} alt="" className="w-full h-full rounded-full object-cover" />
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2" style={{ borderColor: 'var(--brand)', background: logo ? 'var(--bg-secondary)' : 'var(--brand)' }}>
+                    {logo ? (
+                      <img src={logo} alt={schoolName} className="w-full h-full object-contain p-0.5" />
                     ) : (
-                      <span>{(bn ? notice.authorBn : notice.author).charAt(0).toUpperCase()}</span>
+                      <span className="text-white font-bold text-[0.75rem]">{schoolName.charAt(0).toUpperCase()}</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                        {bn ? notice.authorBn : notice.author}
+                        {schoolName}
                       </span>
                       {notice.pinned && <Pin size={12} className="text-[var(--brand)] shrink-0" />}
                     </div>
                     <div className="flex items-center gap-1.5 text-[0.6875rem] text-[var(--text-muted)]">
+                      <span>{bn ? notice.authorBn : notice.author}</span>
+                      <span>·</span>
                       <Calendar size={11} />
                       {new Date(notice.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </div>
