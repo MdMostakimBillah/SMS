@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { authApi, setAuthToken, ApiError, API_BASE } from '@/lib/api'
 import { createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
-import { nsGet, nsSet, nsRemove, migrateOldKeys, setSlug, setUserId, clearUserId } from '@/lib/storage'
+import { nsGet, nsSet, nsRemove, migrateOldKeys, setSlug, setUserId, clearUserId, getStorageKey } from '@/lib/storage'
 
 const VITE_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL as string) || 'admin@edutech.com'
 const VITE_PASSWORD = (import.meta.env.VITE_SUPER_ADMIN_PASSWORD as string) || 'Admin@123456'
@@ -126,6 +126,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         if (slug) migrateOldKeys(slug)
         stored = nsGet('user')
+        // Fallback: try key without userId (handles cases where userId not yet set in sessionStorage)
+        if (!stored && slug) {
+          const fallbackKey = `edutech_user_${slug}`
+          stored = localStorage.getItem(fallbackKey)
+        }
+        // Fallback: try base key (handles old format)
+        if (!stored) {
+          stored = localStorage.getItem('edutech_user')
+        }
       }
 
       if (stored) {
@@ -147,6 +156,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           loginTimestampRef.current = parsed.loginTimestamp || Date.now()
           if (!isViewing) {
             setUserId(parsed.staffId || parsed.email)
+          }
+          // Re-write to the correct namespaced key if we used a fallback
+          if (!isViewing && slug) {
+            const correctKey = `${parsed.staffId || parsed.email ? `edutech_user_${slug}_${parsed.staffId || parsed.email}` : ''}`
+            if (correctKey && !localStorage.getItem(correctKey)) {
+              localStorage.setItem(correctKey, stored)
+            }
           }
         }
       }

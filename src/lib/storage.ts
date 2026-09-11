@@ -136,8 +136,16 @@ export function clearSlug(): void {
   resetAllStores()
 }
 
-export function createNamespacedStorage<T>(base: string, fallback?: string, opts?: { debounce?: boolean }): PersistStorage<T> {
+export function createNamespacedStorage<T>(base: string, fallback?: string, opts?: { debounce?: boolean; perUser?: boolean }): PersistStorage<T> {
+  const isPerUser = !!opts?.perUser
+
   function resolveKey(slug: string | null): string {
+    if (isPerUser) {
+      const userId = getUserId()
+      if (slug && userId) return `${base}_${slug}_${userId}`
+      if (slug) return `${base}_${slug}`
+      return (fallback || base)
+    }
     return slug ? `${base}_${slug}` : (fallback || base)
   }
 
@@ -151,7 +159,18 @@ export function createNamespacedStorage<T>(base: string, fallback?: string, opts
       if (pending) return JSON.parse(pending.value) as StorageValue<T>
       try {
         const raw = localStorage.getItem(key)
-        return raw ? (JSON.parse(raw) as StorageValue<T>) : null
+        if (raw) return JSON.parse(raw) as StorageValue<T>
+        // Fallback: try without userId for per-user stores (migration from old format)
+        if (isPerUser && slug && getUserId()) {
+          const oldKey = `${base}_${slug}`
+          const oldRaw = localStorage.getItem(oldKey)
+          if (oldRaw) {
+            localStorage.setItem(key, oldRaw)
+            localStorage.removeItem(oldKey)
+            return JSON.parse(oldRaw) as StorageValue<T>
+          }
+        }
+        return null
       } catch { return null }
     },
     setItem: (_name: string, value: StorageValue<T>): void => {

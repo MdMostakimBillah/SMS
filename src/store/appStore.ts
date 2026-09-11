@@ -186,7 +186,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'edutech-settings',
-      storage: createNamespacedStorage('edutech-settings', 'edutech-settings'),
+      storage: createNamespacedStorage('edutech-settings', 'edutech-settings', { perUser: true }),
       version: 1,
       partialize: (state) => ({
         theme: state.theme,
@@ -213,7 +213,19 @@ registerStoreReset(() => {
 registerStoreLoad(() => {
   const key = getStorageKey('edutech-settings')
   try {
-    const raw = localStorage.getItem(key)
+    let raw = localStorage.getItem(key)
+    // Migration: try old key without userId if new key has no data
+    if (!raw) {
+      const slug = sessionStorage.getItem('edutech_inst_slug')
+      if (slug) {
+        const oldKey = `edutech-settings_${slug}`
+        raw = localStorage.getItem(oldKey)
+        if (raw) {
+          localStorage.setItem(key, raw)
+          localStorage.removeItem(oldKey)
+        }
+      }
+    }
     if (raw) {
       const parsed = JSON.parse(raw)
       if (parsed.state) useAppStore.setState(parsed.state)
