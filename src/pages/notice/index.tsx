@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Plus, Megaphone, Pin, Search, AlertTriangle, Info, Tag, Trash2 } from 'lucide-react'
+import { Plus, Megaphone, Pin, Search, AlertTriangle, Info, Tag, Trash2, Filter, Calendar, Users, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
@@ -50,6 +50,7 @@ export default function NoticeBoardPage() {
 
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState<Notice | null>(null)
   const [viewNotice, setViewNotice] = useState<Notice | null>(null)
@@ -73,12 +74,14 @@ export default function NoticeBoardPage() {
     let list = notices.filter((n) => n.isActive)
     if (activeTab === 'pinned') list = list.filter((n) => n.pinned)
     if (activeTab === 'expired') list = list.filter((n) => isExpired(n))
+    if (filterCategory) list = list.filter((n) => n.category === filterCategory)
     if (search) {
       const q = search.toLowerCase()
       list = list.filter((n) =>
         n.title.toLowerCase().includes(q) || n.titleBn.includes(search) ||
         n.content.toLowerCase().includes(q) || n.contentBn.includes(search) ||
-        n.author.toLowerCase().includes(q) || n.authorBn.includes(search)
+        n.author.toLowerCase().includes(q) || n.authorBn.includes(search) ||
+        n.category.toLowerCase().includes(q)
       )
     }
     return list.sort((a, b) => {
@@ -86,7 +89,7 @@ export default function NoticeBoardPage() {
       if (!a.pinned && b.pinned) return 1
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     })
-  }, [notices, activeTab, search])
+  }, [notices, activeTab, search, filterCategory])
 
   const pinnedCount = useMemo(() => notices.filter((n) => n.pinned && n.isActive).length, [notices])
   const expiredCount = useMemo(() => notices.filter((n) => n.isActive && isExpired(n)).length, [notices])
@@ -148,6 +151,7 @@ export default function NoticeBoardPage() {
 
   return (
     <div>
+      {/* Header */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="flex-1">
           <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
@@ -166,6 +170,11 @@ export default function NoticeBoardPage() {
           >
             <Tag size={13} />
             {bn ? 'ক্যাটাগরি' : 'Categories'}
+            {categories.length > 0 && (
+              <span className="ml-0.5 px-1.5 py-0 rounded-full text-[0.5625rem] font-bold text-white" style={{ background: 'var(--brand)' }}>
+                {categories.length}
+              </span>
+            )}
           </button>
           {canCreate('notice') && (
             <button
@@ -179,17 +188,6 @@ export default function NoticeBoardPage() {
           )}
         </div>
       </div>
-
-      {/* Category pills */}
-      {categories.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-1.5">
-          {categories.map((cat) => (
-            <span key={cat} className="px-2 py-1 rounded-full text-[0.625rem] font-medium bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)]">
-              {cat}
-            </span>
-          ))}
-        </div>
-      )}
 
       {/* Tabs */}
       <div className="relative mb-4">
@@ -214,18 +212,31 @@ export default function NoticeBoardPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-4">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={bn ? 'নোটিশ খুঁজুন...' : 'Search notices...'}
-          className="w-full pl-9 px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
-        />
+      {/* Search + Category Filter */}
+      <div className="flex gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={bn ? 'নোটিশ খুঁজুন...' : 'Search notices...'}
+            className="w-full pl-9 px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
+          />
+        </div>
+        <div className="relative">
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="appearance-none pl-3 pr-8 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer"
+          >
+            <option value="">{bn ? 'সকল ক্যাটাগরি' : 'All Categories'}</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+        </div>
       </div>
 
-      {/* Notice List */}
+      {/* Notice List - Social Media Style Cards */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
           <Megaphone size={48} className="mb-3 opacity-30" />
@@ -233,68 +244,87 @@ export default function NoticeBoardPage() {
           <p className="text-[0.75rem] mt-1">{bn ? 'নতুন নোটিশ তৈরি করতে উপরের বোতাম ক্লিক করুন' : 'Click the button above to create a notice'}</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {filtered.map((notice) => {
             const priority = PRIORITY_OPTIONS.find((p) => p.value === notice.priority) || PRIORITY_OPTIONS[0]
-            const PriorityIcon = PRIORITY_ICONS[notice.priority] || Megaphone
             const target = TARGET_OPTIONS.find((t) => t.value === notice.target)
+            const plainContent = (bn ? notice.contentBn : notice.content).replace(/<[^>]*>/g, '')
             return (
               <div
                 key={notice.id}
                 onClick={() => setViewNotice(notice)}
-                className="flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer"
-                style={notice.pinned ? { borderColor: 'var(--brand)', background: 'var(--bg-secondary)' } : { borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}
+                className="rounded-2xl border transition-all cursor-pointer overflow-hidden"
+                style={notice.pinned
+                  ? { borderColor: 'var(--brand)', background: 'var(--bg-primary)' }
+                  : { borderColor: 'var(--border)', background: 'var(--bg-primary)' }
+                }
               >
-                <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: `${priority.color}18`, color: priority.color }}>
-                  <PriorityIcon size={16} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)] truncate">
-                      {bn ? notice.titleBn : notice.title}
-                    </span>
-                    {notice.pinned && <Pin size={12} className="text-[var(--brand)] shrink-0" />}
-                    <span className="px-1.5 py-0 rounded-full text-[0.5625rem] font-medium" style={{ background: `${priority.color}15`, color: priority.color }}>
-                      {bn ? priority.labelBn : priority.label}
-                    </span>
-                    <span className="px-1.5 py-0 rounded-full text-[0.5625rem] font-medium bg-[var(--brand)]/10 text-[var(--brand)]">
-                      {notice.category}
-                    </span>
-                    <span className="px-1.5 py-0 rounded-full text-[0.5625rem] font-medium bg-[var(--bg-tertiary)] text-[var(--text-muted)]">
-                      {bn ? target?.labelBn : target?.label}
-                    </span>
-                    <span className="text-[0.625rem] text-[var(--text-muted)] ml-auto shrink-0">
-                      {new Date(notice.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </span>
+                {/* Card header: avatar + author + date */}
+                <div className="flex items-start gap-3 p-4 pb-2">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-bold text-[0.75rem]" style={{ background: 'var(--brand)' }}>
+                    {notice.storage ? (
+                      <img src={notice.storage} alt="" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <span>{(bn ? notice.authorBn : notice.author).charAt(0).toUpperCase()}</span>
+                    )}
                   </div>
-                  <p className="text-[0.75rem] text-[var(--text-muted)] truncate mt-0.5">
-                    {(bn ? notice.contentBn : notice.content).replace(/<[^>]*>/g, '')}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span className="text-[0.6875rem] text-[var(--text-muted)]">
-                      {bn ? notice.authorBn : notice.author}
-                    </span>
-                    <div className="flex items-center gap-1 ml-auto" onClick={(e) => e.stopPropagation()}>
-                      {canEdit('notice') && (
-                        <button
-                          onClick={() => togglePin(notice.id)}
-                          className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] transition-colors"
-                          title={notice.pinned ? (bn ? 'পিন সরান' : 'Unpin') : (bn ? 'পিন করুন' : 'Pin')}
-                        >
-                          <Pin size={14} />
-                        </button>
-                      )}
-                      {canDelete('notice') && (
-                        <button
-                          onClick={() => setDeleteTarget(notice.id)}
-                          className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] transition-colors"
-                          title={bn ? 'মুছুন' : 'Delete'}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                        {bn ? notice.authorBn : notice.author}
+                      </span>
+                      {notice.pinned && <Pin size={12} className="text-[var(--brand)] shrink-0" />}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[0.6875rem] text-[var(--text-muted)]">
+                      <Calendar size={11} />
+                      {new Date(notice.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </div>
                   </div>
+                  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {canEdit('notice') && (
+                      <button
+                        onClick={() => togglePin(notice.id)}
+                        className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
+                        title={notice.pinned ? (bn ? 'পিন সরান' : 'Unpin') : (bn ? 'পিন করুন' : 'Pin')}
+                      >
+                        <Pin size={14} />
+                      </button>
+                    )}
+                    {canDelete('notice') && (
+                      <button
+                        onClick={() => setDeleteTarget(notice.id)}
+                        className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
+                        title={bn ? 'মুছুন' : 'Delete'}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Badges */}
+                <div className="px-4 pb-2 flex items-center gap-1.5 flex-wrap">
+                  <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium" style={{ background: `${priority.color}15`, color: priority.color }}>
+                    {bn ? priority.labelBn : priority.label}
+                  </span>
+                  {notice.category && (
+                    <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium flex items-center gap-0.5" style={{ background: 'var(--brand)15', color: 'var(--brand)' }}>
+                      <Tag size={9} /> {notice.category}
+                    </span>
+                  )}
+                  <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)] flex items-center gap-0.5">
+                    <Users size={9} /> {bn ? target?.labelBn : target?.label}
+                  </span>
+                </div>
+
+                {/* Title + Content preview */}
+                <div className="px-4 pb-3">
+                  <h3 className="text-[0.9375rem] font-bold text-[var(--text-primary)] leading-snug mb-1">
+                    {bn ? notice.titleBn : notice.title}
+                  </h3>
+                  <p className="text-[0.8125rem] text-[var(--text-muted)] leading-relaxed line-clamp-3">
+                    {plainContent}
+                  </p>
                 </div>
               </div>
             )
