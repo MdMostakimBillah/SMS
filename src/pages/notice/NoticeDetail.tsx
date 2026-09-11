@@ -89,6 +89,11 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
         <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
           {bn ? target?.labelBn : target?.label}
         </span>
+        {notice.category && (
+          <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium" style={{ background: 'var(--brand)15', color: 'var(--brand)' }}>
+            {notice.category}
+          </span>
+        )}
         {notice.expiresAt && (
           <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium bg-[var(--orange)]/10 text-[var(--orange)]">
             {bn ? `মেয়াদ: ${notice.expiresAt}` : `Expires: ${notice.expiresAt}`}

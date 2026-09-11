@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Plus, Megaphone, Pin, Search, AlertTriangle, Info } from 'lucide-react'
+import { Plus, Megaphone, Pin, Search, AlertTriangle, Info, Tag, Trash2 } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -39,10 +40,13 @@ export default function NoticeBoardPage() {
   const { canCreate, canEdit, canDelete } = usePermission()
   const { isMobile } = useWindowSize()
   const notices = useNoticeStore((s) => s.notices)
+  const categories = useNoticeStore((s) => s.categories)
   const addNotice = useNoticeStore((s) => s.addNotice)
   const updateNotice = useNoticeStore((s) => s.updateNotice)
   const deleteNotice = useNoticeStore((s) => s.deleteNotice)
   const togglePin = useNoticeStore((s) => s.togglePin)
+  const addCategory = useNoticeStore((s) => s.addCategory)
+  const removeCategory = useNoticeStore((s) => s.removeCategory)
 
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
@@ -50,6 +54,8 @@ export default function NoticeBoardPage() {
   const [editItem, setEditItem] = useState<Notice | null>(null)
   const [viewNotice, setViewNotice] = useState<Notice | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [newCategory, setNewCategory] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(null)
@@ -103,6 +109,18 @@ export default function NoticeBoardPage() {
     setEditItem(null)
   }
 
+  const handleAddCategory = () => {
+    if (!newCategory.trim()) return
+    addCategory(newCategory.trim())
+    setNewCategory('')
+  }
+
+  const handleRemoveCategory = (cat: string) => {
+    if (window.confirm(bn ? `'${cat}' ক্যাটাগরি মুছে ফেলতে চান?` : `Delete category '${cat}'?`)) {
+      removeCategory(cat)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="p-4 space-y-4">
@@ -140,17 +158,38 @@ export default function NoticeBoardPage() {
             {pinnedCount > 0 && ` · ${bn ? `${pinnedCount}টি পিন করা` : `${pinnedCount} pinned`}`}
           </p>
         </div>
-        {canCreate('notice') && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => { setEditItem(null); setShowModal(true) }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-colors"
-            style={{ background: 'var(--brand)' }}
+            type="button"
+            onClick={() => setShowCategoryModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
           >
-            <Plus size={16} />
-            {bn ? 'নোটিশ তৈরি' : 'Create Notice'}
+            <Tag size={13} />
+            {bn ? 'ক্যাটাগরি' : 'Categories'}
           </button>
-        )}
+          {canCreate('notice') && (
+            <button
+              onClick={() => { setEditItem(null); setShowModal(true) }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-colors"
+              style={{ background: 'var(--brand)' }}
+            >
+              <Plus size={16} />
+              {bn ? 'নোটিশ তৈরি' : 'Create Notice'}
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Category pills */}
+      {categories.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-1.5">
+          {categories.map((cat) => (
+            <span key={cat} className="px-2 py-1 rounded-full text-[0.625rem] font-medium bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)]">
+              {cat}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="relative mb-4">
@@ -218,6 +257,9 @@ export default function NoticeBoardPage() {
                     <span className="px-1.5 py-0 rounded-full text-[0.5625rem] font-medium" style={{ background: `${priority.color}15`, color: priority.color }}>
                       {bn ? priority.labelBn : priority.label}
                     </span>
+                    <span className="px-1.5 py-0 rounded-full text-[0.5625rem] font-medium bg-[var(--brand)]/10 text-[var(--brand)]">
+                      {notice.category}
+                    </span>
                     <span className="px-1.5 py-0 rounded-full text-[0.5625rem] font-medium bg-[var(--bg-tertiary)] text-[var(--text-muted)]">
                       {bn ? target?.labelBn : target?.label}
                     </span>
@@ -248,7 +290,7 @@ export default function NoticeBoardPage() {
                           className="p-1.5 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] transition-colors"
                           title={bn ? 'মুছুন' : 'Delete'}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          <Trash2 size={14} />
                         </button>
                       )}
                     </div>
@@ -264,10 +306,53 @@ export default function NoticeBoardPage() {
       {showModal && (
         <NoticeModal
           item={editItem}
+          categories={categories}
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditItem(null) }}
           bn={bn}
         />
+      )}
+
+      {/* Category Management Modal */}
+      {showCategoryModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setShowCategoryModal(false)}>
+          <div className="w-full max-w-md rounded-2xl bg-[var(--bg-primary)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 rounded-t-2xl" style={{ background: 'var(--brand)' }}>
+              <h3 className="font-semibold text-[0.9375rem] text-white flex items-center gap-2">
+                <Tag size={16} />
+                {bn ? 'ক্যাটাগরি পরিচালনা' : 'Manage Categories'}
+              </h3>
+              <button onClick={() => setShowCategoryModal(false)} className="p-1.5 rounded-lg hover:bg-white/20 text-white">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            <div className="p-4 space-y-3 max-h-[60vh] overflow-auto">
+              {categories.length === 0 && (
+                <p className="text-[0.75rem] text-[var(--text-muted)] text-center py-3">{bn ? 'কোনো ক্যাটাগরি নেই' : 'No categories yet'}</p>
+              )}
+              {categories.map((cat) => (
+                <div key={cat} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] hover:border-[var(--brand)]/30 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--brand)' }}>
+                      <Tag size={13} className="text-white" />
+                    </div>
+                    <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{cat}</span>
+                  </div>
+                  <button onClick={() => handleRemoveCategory(cat)} className="p-1.5 rounded-lg hover:bg-[var(--red)]/10 text-[var(--text-muted)] hover:text-[var(--red)] transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+              <div className="pt-3 border-t border-[var(--border)] flex gap-2">
+                <input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()} placeholder={bn ? 'নতুন ক্যাটাগরি নাম' : 'New category name'} className="flex-1 px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+                <button onClick={handleAddCategory} disabled={!newCategory.trim()} className="px-4 py-2 rounded-xl text-[0.8125rem] font-medium text-white transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--brand)' }}>
+                  {bn ? 'জোড়া দিন' : 'Add'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* Delete Confirmation */}

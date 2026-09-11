@@ -15,6 +15,7 @@ export interface Notice {
   authorBn: string
   target: NoticeTarget
   priority: NoticePriority
+  category: string
   pinned: boolean
   isActive: boolean
   publishedAt: string
@@ -27,6 +28,8 @@ export function noticeId(): string {
   return `NOTICE-${Date.now()}-${counter}`
 }
 
+const DEFAULT_CATEGORIES = ['General', 'Academic', 'Events', 'Emergency', 'Holiday']
+
 const SEED_NOTICES: Notice[] = [
   {
     id: 'NOTICE-SEED-001',
@@ -38,6 +41,7 @@ const SEED_NOTICES: Notice[] = [
     authorBn: 'অধ্যক্ষ',
     target: 'all',
     priority: 'high',
+    category: 'Events',
     pinned: true,
     isActive: true,
     publishedAt: new Date(Date.now() - 259200000).toISOString(),
@@ -53,6 +57,7 @@ const SEED_NOTICES: Notice[] = [
     authorBn: 'একাডেমিক সমন্বয়কারী',
     target: 'students',
     priority: 'high',
+    category: 'Academic',
     pinned: false,
     isActive: true,
     publishedAt: new Date(Date.now() - 432000000).toISOString(),
@@ -68,6 +73,7 @@ const SEED_NOTICES: Notice[] = [
     authorBn: 'উপাধ্যক্ষ',
     target: 'parents',
     priority: 'medium',
+    category: 'Events',
     pinned: false,
     isActive: true,
     publishedAt: new Date(Date.now() - 604800000).toISOString(),
@@ -83,6 +89,7 @@ const SEED_NOTICES: Notice[] = [
     authorBn: 'অ্যাডমিন',
     target: 'teachers',
     priority: 'medium',
+    category: 'General',
     pinned: false,
     isActive: true,
     publishedAt: new Date(Date.now() - 86400000).toISOString(),
@@ -98,6 +105,7 @@ const SEED_NOTICES: Notice[] = [
     authorBn: 'গ্রন্থপাল',
     target: 'students',
     priority: 'low',
+    category: 'Academic',
     pinned: false,
     isActive: true,
     publishedAt: new Date(Date.now() - 172800000).toISOString(),
@@ -107,17 +115,21 @@ const SEED_NOTICES: Notice[] = [
 
 interface NoticeState {
   notices: Notice[]
+  categories: string[]
   addNotice: (n: Notice) => void
   updateNotice: (id: string, data: Partial<Notice>) => void
   deleteNotice: (id: string) => void
   togglePin: (id: string) => void
   toggleActive: (id: string) => void
+  addCategory: (name: string) => void
+  removeCategory: (name: string) => void
 }
 
 export const useNoticeStore = create<NoticeState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       notices: [],
+      categories: DEFAULT_CATEGORIES,
 
       addNotice: (n) => set((state) => ({ notices: [n, ...state.notices] })),
       updateNotice: (id, data) =>
@@ -128,11 +140,31 @@ export const useNoticeStore = create<NoticeState>()(
         set((state) => ({ notices: state.notices.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n)) })),
       toggleActive: (id) =>
         set((state) => ({ notices: state.notices.map((n) => (n.id === id ? { ...n, isActive: !n.isActive } : n)) })),
+
+      addCategory: (name) =>
+        set((state) => ({
+          categories: state.categories.includes(name) ? state.categories : [...state.categories, name],
+        })),
+      removeCategory: (name) =>
+        set((state) => ({
+          categories: state.categories.filter((c) => c !== name),
+          notices: state.notices.map((n) => (n.category === name ? { ...n, category: 'General' } : n)),
+        })),
     }),
     {
       name: 'edutech-notices',
       storage: createNamespacedStorage('edutech-notices'),
-      version: 1,
+      version: 2,
+      migrate: (state: any, version: number) => {
+        if (version < 2) {
+          const updated = (state.notices || []).map((n: Notice) => ({
+            ...n,
+            category: n.category || 'General',
+          }))
+          return { ...state, notices: updated, categories: state.categories || DEFAULT_CATEGORIES }
+        }
+        return state
+      },
       onRehydrateStorage: () => (state) => {
         if (state && state.notices.length === 0) {
           state.notices = SEED_NOTICES
@@ -143,5 +175,5 @@ export const useNoticeStore = create<NoticeState>()(
 )
 
 registerStoreReset(() => {
-  useNoticeStore.setState({ notices: [] })
+  useNoticeStore.setState({ notices: [], categories: DEFAULT_CATEGORIES })
 })
