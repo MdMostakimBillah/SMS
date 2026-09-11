@@ -164,7 +164,6 @@ export default React.memo(function Topbar() {
   const roles = usePermissionStore((s) => s.roles) ?? []
   const myStaff = user?.staffId ? staffPermissions.find((s) => s.staffId === user.staffId) : undefined
   const myRole = myStaff ? roles.find((r) => r.id === myStaff.roleId) : undefined
-  const roleDisplayName = myRole?.name || (user?.role === 'admin' ? undefined : ROLE_LABELS[user?.role as InstitutionRole])
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const isBn = useBn()
   const { isMobile } = useWindowSize()

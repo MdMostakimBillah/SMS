@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { authApi, setAuthToken, ApiError, API_BASE } from '@/lib/api'
 import { createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
-import { nsGet, nsSet, nsRemove, migrateOldKeys, setSlug, setUserId, clearUserId } from '@/lib/storage'
+import { nsGet, nsSet, nsRemove, setSlug, setUserId, clearUserId } from '@/lib/storage'
 
 const VITE_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL as string) || 'admin@edutech.com'
 const VITE_PASSWORD = (import.meta.env.VITE_SUPER_ADMIN_PASSWORD as string) || 'Admin@123456'
@@ -115,29 +115,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const slug = sessionStorage.getItem('edutech_inst_slug')
+      const userId = sessionStorage.getItem('edutech_user_id')
       const isViewing = !!sessionStorage.getItem('edutech_viewing_id')
 
       let stored: string | null = null
       if (isViewing) {
-        // Super admin viewing — read from dedicated backup key first,
-        // then base key. Never read from namespaced key (edutech_user_{slug})
-        // as that may contain institution admin data.
         stored = localStorage.getItem('edutech_superadmin_user')
         if (!stored) stored = localStorage.getItem('edutech_user')
       } else {
-        if (slug) migrateOldKeys(slug)
-        stored = nsGet('user')
-        // Fallback: try key without userId
+        // Primary: namespaced key with slug + userId
+        if (slug && userId) {
+          stored = localStorage.getItem(`edutech_user_${slug}_${userId}`)
+        }
+        // Fallback: backup key (simple non-namespaced, always works)
+        if (!stored) {
+          stored = localStorage.getItem('edutech_current_user')
+        }
+        // Fallback: key without userId
         if (!stored && slug) {
           stored = localStorage.getItem(`edutech_user_${slug}`)
         }
-        // Fallback: try base key
+        // Fallback: base key
         if (!stored) {
           stored = localStorage.getItem('edutech_user')
-        }
-        // Fallback: try backup key (simple non-namespaced key)
-        if (!stored) {
-          stored = localStorage.getItem('edutech_current_user')
         }
       }
 
@@ -161,11 +161,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!isViewing) {
             setUserId(parsed.staffId || parsed.email)
           }
-          // Re-write to correct namespaced key if we used a fallback
+          // Ensure correct namespaced key exists for future reads
           if (!isViewing && slug) {
-            const userId = parsed.staffId || parsed.email
-            if (userId) {
-              const correctKey = `edutech_user_${slug}_${userId}`
+            const uid = parsed.staffId || parsed.email
+            if (uid) {
+              const correctKey = `edutech_user_${slug}_${uid}`
               if (!localStorage.getItem(correctKey)) {
                 localStorage.setItem(correctKey, stored)
               }
@@ -173,7 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       }
-    } catch { /* ignore */ }
+    } catch (e) {
+      console.error('[Auth] initializeAuth failed:', e)
+    }
     setLoading(false)
   }, [])
 
@@ -302,11 +304,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearError = useCallback(() => setError(null), [])
 
   const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string, staffId?: string, photo?: string | null, schoolName?: string) => {
+    // Set userId BEFORE setSlug so loadAllStores() rehydrates with correct keys
+    setUserId(staffId || email)
     if (slug) {
       setSlug(slug)
     }
-    setUserId(staffId || email)
-    const userData = { email, role, name, institutionId, subdomain, slug, staffId, photo, schoolName: schoolName || name }
+    const userData = { email, role, name, institutionId, subdomain, slug, staffId, photo, schoolName: schoolName || name, loginTimestamp: Date.now() }
     setUser({
       id: institutionId,
       email,
@@ -319,6 +322,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       staffId,
       photo: photo || null,
     })
+    // Write to namespaced key (slug + userId)
     nsSet('user', JSON.stringify(userData))
     nsSet('institutionId', institutionId)
     nsSet('institutionSubdomain', subdomain)

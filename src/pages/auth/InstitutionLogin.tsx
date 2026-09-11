@@ -8,7 +8,7 @@ import { AuthContext } from '@/contexts/AuthContext'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark, type ThemeColors } from '@/store/classStore'
-import { nsSet, migrateOldKeys, setSlug } from '@/lib/storage'
+import { nsSet, migrateOldKeys, setSlug, setUserId } from '@/lib/storage'
 import { usePermissionStore } from '@/store/permissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { presets } from '@/components/shared/ColorSettings'
@@ -337,14 +337,15 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
             })
           })
         }
+        const adminData = { email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug, loginTimestamp: Date.now() }
         if (setInstitutionUser) {
           setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain, institution.slug, undefined, undefined, institution.name)
         } else {
-          nsSet('user', JSON.stringify({
-            email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug
-          }))
+          setUserId(email)
+          nsSet('user', JSON.stringify(adminData))
           nsSet('institutionId', institution.id)
           nsSet('institutionSubdomain', institution.subdomain)
+          localStorage.setItem('edutech_current_user', JSON.stringify(adminData))
         }
         navigate(`/i/${institution.slug}/admin/dashboard`)
         setLoading(false)
@@ -383,16 +384,18 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         }
         const teacherName = isBn ? matchedStaff.staffNameBn : matchedStaff.staffName
         const teacherRecord = teachers.find((t) => t.id === matchedStaff.staffId)
+        const teacherData = { email: matchedStaff.email, role: matchedStaff.role || 'teacher', name: teacherName,
+            institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug,
+            staffId: matchedStaff.staffId, photo: teacherRecord?.photo || null, loginTimestamp: Date.now()
+          }
         if (setInstitutionUser) {
           setInstitutionUser(matchedStaff.email, teacherName, matchedStaff.role || 'teacher', institution.id, institution.subdomain, institution.slug, matchedStaff.staffId, teacherRecord?.photo || null, institution.name)
         } else {
-          nsSet('user', JSON.stringify({
-            email: matchedStaff.email, role: matchedStaff.role || 'teacher', name: teacherName,
-            institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug,
-            staffId: matchedStaff.staffId, photo: teacherRecord?.photo || null
-          }))
+          setUserId(matchedStaff.staffId || matchedStaff.email)
+          nsSet('user', JSON.stringify(teacherData))
           nsSet('institutionId', institution.id)
           nsSet('institutionSubdomain', institution.subdomain)
+          localStorage.setItem('edutech_current_user', JSON.stringify(teacherData))
         }
         navigate(`/i/${institution.slug}/admin/dashboard`)
         setLoading(false)
