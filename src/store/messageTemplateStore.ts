@@ -156,6 +156,21 @@ export const useMessageTemplateStore = create<MessageTemplateState>()(
     {
       name: 'edutech-message-templates',
       storage: createNamespacedStorage('edutech-message-templates'),
+      version: 2,
+      migrate: (state: any, version: number) => {
+        if (version < 2) {
+          const merged = DEFAULT_TEMPLATES.map((dt) => {
+            const cached = state.templates?.find((t: MessageTemplate) => t.id === dt.id)
+            if (cached && cached.isDefault) {
+              return { ...dt, body: dt.body, subject: dt.subject }
+            }
+            return cached || dt
+          })
+          const custom = (state.templates || []).filter((t: MessageTemplate) => !t.isDefault)
+          return { ...state, templates: [...merged, ...custom], categories: state.categories || DEFAULT_CATEGORIES }
+        }
+        return state
+      },
     }
   )
 )
