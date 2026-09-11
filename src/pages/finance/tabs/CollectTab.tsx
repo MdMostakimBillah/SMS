@@ -600,7 +600,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         })
       }
     }
-  }, [selectedStudent, displayRows, getRowEdit, receivedDate, addPayment, addSale, storeProducts, storeCategoryMap, fSession])
+  }, [selectedStudent, displayRows, getRowEdit, receivedDate, addPayment, addSale, storeProducts, storeCategoryMap, fSession, sendSms, templates, bn, institution, user])
 
   const numberToWords = useCallback((n: number): string => {
     if (n === 0) return 'Zero'
