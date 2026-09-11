@@ -792,8 +792,6 @@ export default React.memo(function Topbar() {
                   </div>
                   <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
                     {user?.role === 'admin' ? (isBn ? 'প্রশাসক' : 'Admin') : user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
-                    {' · '}
-                    {user?.email || 'admin@school.edu'}
                   </div>
                 </div>
               </div>
