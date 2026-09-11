@@ -560,24 +560,42 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       if (feeTemplate) {
         const feeNames = receiptFees.map((f) => bn ? f.nameBn : f.name).join(', ')
         const months = receiptFees.filter((f) => f.month).map((f) => `${f.month}-${f.year}`).join(', ')
-        const smsBody = feeTemplate.body
-          .replace(/{student_name}/g, bn ? selectedStudent.nameBn : selectedStudent.nameEn)
-          .replace(/{amount}/g, String(totalReceive))
-          .replace(/{month}/g, months || fSession)
-          .replace(/{receipt_no}/g, rn)
-          .replace(/{fee_name}/g, feeNames)
-        const smsSubject = feeTemplate.subject
-          .replace(/{student_name}/g, bn ? selectedStudent.nameBn : selectedStudent.nameEn)
-          .replace(/{amount}/g, String(totalReceive))
-          .replace(/{month}/g, months || fSession)
-          .replace(/{receipt_no}/g, rn)
-          .replace(/{fee_name}/g, feeNames)
+        const totalFee = receiptFees.reduce((s, f) => s + f.amount + (f.discount || 0) + (f.waived || 0), 0) + totalDiscount
+        const totalFine = receiptFees.reduce((s, f) => s + (f.discount || 0), 0)
+        const now = new Date()
+        const payDate = bn
+          ? `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`
+          : `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`
+        const txId = `TXN-${Date.now()}`
+        const vars: Record<string, string> = {
+          student_name: bn ? selectedStudent.nameBn : selectedStudent.nameEn,
+          student_id: selectedStudent.id,
+          class: selectedStudent.class,
+          section: selectedStudent.section || '-',
+          roll: selectedStudent.roll || '-',
+          father_name: bn ? selectedStudent.fatherNameBn : selectedStudent.fatherNameEn,
+          fee_name: feeNames,
+          amount: String(totalReceive),
+          total_fee: String(totalFee),
+          due_amount: String(totalDue),
+          discount: String(totalDiscount),
+          fine: String(totalFine),
+          month: months || fSession,
+          academic_year: fSession,
+          receipt_no: rn,
+          payment_date: payDate,
+          payment_method: 'cash',
+          transaction_id: txId,
+          school_name: institution?.name || 'EduTech',
+        }
+        const replaceVars = (text: string) =>
+          Object.entries(vars).reduce((result, [key, val]) => result.replace(new RegExp(`\\{${key}\\}`, 'g'), val), text)
         sendTemplateSMS({
           studentId: selectedStudent.id,
           studentName: bn ? selectedStudent.nameBn : selectedStudent.nameEn,
           phoneNumber: selectedStudent.phone,
-          subject: smsSubject,
-          body: smsBody,
+          subject: replaceVars(feeTemplate.subject),
+          body: replaceVars(feeTemplate.body),
           templateId: feeTemplate.id,
         })
       }
