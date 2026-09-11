@@ -267,12 +267,15 @@ export default function InstitutionRegister() {
       theme: 'light',
     }
     addInstitution(inst)
-    loadInstitutionData(inst)
 
-    // Auto-login
+    // Set slug BEFORE loadInstitutionData so classStore persists to the correct key
     const slug = inst.slug
     sessionStorage.setItem('edutech_inst_slug', slug)
     localStorage.setItem(`edutech_inst_slug`, slug)
+
+    loadInstitutionData(inst)
+
+    // Auto-login
     const userData = JSON.stringify({
       email: inst.email, role: 'admin', name: inst.name,
       institutionId: inst.id, subdomain: inst.subdomain, slug: inst.slug,

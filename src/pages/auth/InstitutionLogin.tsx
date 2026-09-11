@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Building2, Mail, Lock, Eye, EyeOff, LogIn, X, GraduationCap, Clock } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
+import { applyThemeColors } from '@/hooks/useThemeColors'
 import { AuthContext } from '@/contexts/AuthContext'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
@@ -311,6 +312,10 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
         migrateOldKeys(institution.slug)
         loadInstitutionData(institution)
+        // Force-apply colors immediately so dashboard renders with correct brand color
+        const isDark = useAppStore.getState().theme === 'dark' || (useAppStore.getState().theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        const { lightColors, darkColors } = useClassStore.getState().institution
+        applyThemeColors(isDark ? darkColors : lightColors)
         clearLoginAttempts()
         // Notify service worker of institution for PWA identity
         if (navigator.serviceWorker) {
@@ -352,6 +357,10 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
         migrateOldKeys(institution.slug)
         loadInstitutionData(institution)
+        // Force-apply colors immediately so dashboard renders with correct brand color
+        const isDark2 = useAppStore.getState().theme === 'dark' || (useAppStore.getState().theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        const { lightColors: lc2, darkColors: dc2 } = useClassStore.getState().institution
+        applyThemeColors(isDark2 ? dc2 : lc2)
         clearLoginAttempts()
         if (navigator.serviceWorker) {
           navigator.serviceWorker.ready.then((reg) => {
