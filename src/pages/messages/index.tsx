@@ -322,7 +322,7 @@ function StatusBadge({ status, bn }: { status: MessageStatus; bn: boolean }) {
 
 function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Message; onBack: () => void; onReply: (m: Message) => void; onDelete: (id: string) => void; bn: boolean }) {
   return (
-    <div>
+    <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
         <button onClick={onBack} className="p-2 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]">
           <ArrowLeft size={20} />
@@ -357,8 +357,8 @@ function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Me
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-        <div className="msg-content text-[0.875rem] text-[var(--text-primary)] leading-relaxed" dangerouslySetInnerHTML={{ __html: message.body }} />
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 max-w-lg">
+        <div className="msg-content text-[0.875rem] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: message.body }} />
       </div>
 
       <div className="mt-3 flex items-center gap-2 text-[0.6875rem] text-[var(--text-muted)]">
