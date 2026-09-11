@@ -29,6 +29,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { ROLE_LABELS, type InstitutionRole } from '@/lib/navUtils'
+import { usePermissionStore } from '@/store/permissionStore'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { getNavBase, getSuperAdminViewNavBase } from '@/lib/navUtils'
@@ -157,6 +158,13 @@ export default React.memo(function Topbar() {
   const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useAppStore((s) => s.setSidebarCollapsed)
   const setCommandPaletteOpen = useAppStore((s) => s.setCommandPaletteOpen)
+
+  // Look up the actual role name from permission store
+  const staffPermissions = usePermissionStore((s) => s.staffPermissions) ?? []
+  const roles = usePermissionStore((s) => s.roles) ?? []
+  const myStaff = user?.staffId ? staffPermissions.find((s) => s.staffId === user.staffId) : undefined
+  const myRole = myStaff ? roles.find((r) => r.id === myStaff.roleId) : undefined
+  const roleDisplayName = myRole?.name || (user?.role === 'admin' ? undefined : ROLE_LABELS[user?.role as InstitutionRole])
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const isBn = useBn()
   const { isMobile } = useWindowSize()
@@ -740,7 +748,7 @@ export default React.memo(function Topbar() {
                     marginTop: '0.0625rem',
                   }}
                 >
-                  {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
+                  {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : user?.role === 'admin' ? (isBn ? 'প্রশাসক' : 'Admin') : myRole ? (isBn ? (myRole.nameBn || myRole.name) : myRole.name) : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
                 </div>
               </div>
             )}
@@ -792,7 +800,7 @@ export default React.memo(function Topbar() {
                     {user?.name || (isBn ? 'ব্যবহারকারী' : 'User')}
                   </div>
                   <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
-                    {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
+                  {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : user?.role === 'admin' ? (isBn ? 'প্রশাসক' : 'Admin') : myRole ? (isBn ? (myRole.nameBn || myRole.name) : myRole.name) : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
                   </div>
                 </div>
               </div>

@@ -1,0 +1,7 @@
+import{B as e}from"./index-BNpFvbK4.js";import{t}from"./sanitize-BDIw0C5e.js";function n(){let{institution:t}=e.getState();return{logo:t.logo||``,schoolName:t.name||`EduTech`,schoolNameBn:t.nameBn||``,address:t.address||``,phone:t.phone||``,email:t.email||``,brandColor:t.lightColors?.brand||`#6366f1`}}function r(e,n=32){return e.logo?`<img src="${t(e.logo)}" style="width:${n}px;height:${n}px;border-radius:7px;object-fit:contain" />`:`<div style="width:${n}px;height:${n}px;background:${e.brandColor};border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:${Math.round(n*.44)}px;font-weight:700">ET</div>`}function i(e){return`<div style="margin-top:10px;padding-top:7px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#888">
+  <span style="font-size:7px;color:#999">Powered by EduTech</span>
+  <div style="display:flex;gap:50px">
+    <div style="text-align:center"><div style="width:110px;height:1px;background:#333;margin-bottom:3px"></div>${e?`প্রধান শিক্ষক`:`Principal`}</div>
+    <div style="text-align:center"><div style="width:110px;height:1px;background:#333;margin-bottom:3px"></div>${e?`অফিস সিল`:`Office Seal`}</div>
+  </div>
+</div>`}export{i as n,r,n as t};

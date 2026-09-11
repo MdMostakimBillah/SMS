@@ -107,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     nsRemove('user')
     nsRemove('institutionId')
     nsRemove('institutionSubdomain')
+    localStorage.removeItem('edutech_current_user')
     clearUserId()
   }, [])
 
@@ -126,14 +127,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         if (slug) migrateOldKeys(slug)
         stored = nsGet('user')
-        // Fallback: try key without userId (handles cases where userId not yet set in sessionStorage)
+        // Fallback: try key without userId
         if (!stored && slug) {
-          const fallbackKey = `edutech_user_${slug}`
-          stored = localStorage.getItem(fallbackKey)
+          stored = localStorage.getItem(`edutech_user_${slug}`)
         }
-        // Fallback: try base key (handles old format)
+        // Fallback: try base key
         if (!stored) {
           stored = localStorage.getItem('edutech_user')
+        }
+        // Fallback: try backup key (simple non-namespaced key)
+        if (!stored) {
+          stored = localStorage.getItem('edutech_current_user')
         }
       }
 
@@ -157,11 +161,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!isViewing) {
             setUserId(parsed.staffId || parsed.email)
           }
-          // Re-write to the correct namespaced key if we used a fallback
+          // Re-write to correct namespaced key if we used a fallback
           if (!isViewing && slug) {
-            const correctKey = `${parsed.staffId || parsed.email ? `edutech_user_${slug}_${parsed.staffId || parsed.email}` : ''}`
-            if (correctKey && !localStorage.getItem(correctKey)) {
-              localStorage.setItem(correctKey, stored)
+            const userId = parsed.staffId || parsed.email
+            if (userId) {
+              const correctKey = `edutech_user_${slug}_${userId}`
+              if (!localStorage.getItem(correctKey)) {
+                localStorage.setItem(correctKey, stored)
+              }
             }
           }
         }
@@ -299,6 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSlug(slug)
     }
     setUserId(staffId || email)
+    const userData = { email, role, name, institutionId, subdomain, slug, staffId, photo, schoolName: schoolName || name }
     setUser({
       id: institutionId,
       email,
@@ -311,10 +319,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       staffId,
       photo: photo || null,
     })
-    nsSet('user', JSON.stringify({ email, role, name, institutionId, subdomain, slug, staffId, photo, schoolName: schoolName || name }))
+    nsSet('user', JSON.stringify(userData))
     nsSet('institutionId', institutionId)
     nsSet('institutionSubdomain', subdomain)
     sessionStorage.setItem('edutech_inst_subdomain', subdomain)
+    // Backup key: simple non-namespaced key for reliable restore on reload
+    localStorage.setItem('edutech_current_user', JSON.stringify(userData))
   }, [])
 
   const ctxValue = useMemo(() => ({
