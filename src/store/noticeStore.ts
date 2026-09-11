@@ -363,7 +363,7 @@ interface NoticeState {
 
 export const useNoticeStore = create<NoticeState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       notices: [],
       categories: DEFAULT_CATEGORIES,
 

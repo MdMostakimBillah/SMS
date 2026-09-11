@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Plus, Megaphone, Pin, Search, AlertTriangle, Info, Tag, Trash2, Filter, Calendar, Users, ChevronDown } from 'lucide-react'
+import { Plus, Megaphone, Pin, Search, AlertTriangle, Tag, Trash2, Calendar, Users, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
-import { useNoticeStore, type Notice, type NoticePriority, noticeId } from '@/store/noticeStore'
+import { useNoticeStore, type Notice, noticeId } from '@/store/noticeStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { NoticeDetail } from './NoticeDetail'
 import { NoticeModal } from './NoticeModal'
@@ -22,12 +22,6 @@ const TARGET_OPTIONS = [
   { value: 'teachers', label: 'Teachers', labelBn: 'শিক্ষক' },
   { value: 'parents', label: 'Parents', labelBn: 'অভিভাবক' },
 ]
-const PRIORITY_ICONS: Record<NoticePriority, typeof AlertTriangle> = {
-  low: Info,
-  medium: Megaphone,
-  high: AlertTriangle,
-  urgent: AlertTriangle,
-}
 
 const ALL_TABS = [
   { key: 'all', icon: Megaphone },

@@ -1,7 +1,7 @@
-import { ArrowLeft, Pin, PinOff, Edit3, Trash2, AlertTriangle, Info, Megaphone, Download, Calendar, Users, Tag } from 'lucide-react'
+import { ArrowLeft, Pin, PinOff, Edit3, Trash2, Download, Calendar, Users, Tag } from 'lucide-react'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML, pdfFooterHTML } from '@/lib/pdfBranding'
-import type { Notice, NoticePriority } from '@/store/noticeStore'
+import type { Notice } from '@/store/noticeStore'
 
 const PRIORITY_OPTIONS = [
   { value: 'low', label: 'Low', labelBn: 'কম', color: 'var(--text-muted)' },
@@ -15,12 +15,6 @@ const TARGET_OPTIONS = [
   { value: 'teachers', label: 'Teachers', labelBn: 'শিক্ষক' },
   { value: 'parents', label: 'Parents', labelBn: 'অভিভাবক' },
 ]
-const PRIORITY_ICONS: Record<NoticePriority, typeof AlertTriangle> = {
-  low: Info,
-  medium: Megaphone,
-  high: AlertTriangle,
-  urgent: AlertTriangle,
-}
 
 interface Props {
   notice: Notice
@@ -36,7 +30,6 @@ interface Props {
 export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, canEdit: canEditNotice, canDelete: canDeleteNotice, bn }: Props) {
   const priority = PRIORITY_OPTIONS.find((p) => p.value === notice.priority) || PRIORITY_OPTIONS[0]
   const target = TARGET_OPTIONS.find((t) => t.value === notice.target)
-  const PriorityIcon = PRIORITY_ICONS[notice.priority] || Megaphone
 
   const handleDownloadPDF = () => {
     const brand = getPDFBranding()

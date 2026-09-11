@@ -13,7 +13,6 @@ import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import { useAuth } from '@/contexts/AuthContext'
-import { useClassStore } from '@/store/classStore'
 import type { Notice, NoticeTarget, NoticePriority } from '@/store/noticeStore'
 
 const COMPOSE_BG = 'var(--bg-primary, #1a1a2e)'
@@ -54,7 +53,6 @@ function ToolbarSep() {
 
 export function NoticeModal({ item, categories, onSave, onClose, bn }: Props) {
   const { user } = useAuth()
-  const institution = useClassStore((s) => s.institution)
   const [title, setTitle] = useState(item?.title || '')
   const [titleBn, setTitleBn] = useState(item?.titleBn || '')
   const [content, setContent] = useState(item?.content || '')
@@ -206,75 +204,7 @@ export function NoticeModal({ item, categories, onSave, onClose, bn }: Props) {
     e.target.value = ''
   }
 
-  const toolbarBlock = (e: typeof editor, insertLinkFn: () => void, insertTableFn: () => void, insertImageFn: (ev: React.ChangeEvent<HTMLInputElement>) => void, imgInputId: string, compact: boolean) => e && (
-    <div className={`flex items-center gap-0.5 px-${compact ? '3' : '4'} py-1.5 border-t border-[var(--border)]`} style={{ background: COMPOSE_BG }}>
-      <ToolbarBtn onClick={() => e.chain().focus().undo().run()} disabled={!e.can().undo()} title={bn ? 'পূর্বাবস্থায় ফেরান' : 'Undo'}>
-        <Undo2 size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().redo().run()} disabled={!e.can().redo()} title={bn ? 'পুনরায়' : 'Redo'}>
-        <Redo2 size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarSep />
-      <ToolbarBtn onClick={() => e.chain().focus().toggleBold().run()} active={e.isActive('bold')} title={bn ? 'মোটা' : 'Bold'}>
-        <Bold size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().toggleItalic().run()} active={e.isActive('italic')} title={bn ? 'তির্যক' : 'Italic'}>
-        <Italic size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().toggleUnderline().run()} active={e.isActive('underline')} title={bn ? 'আন্ডারলাইন' : 'Underline'}>
-        <Underline size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().toggleCode().run()} active={e.isActive('code')} title={bn ? 'কোড' : 'Code'}>
-        <Code size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarSep />
-      <ToolbarBtn onClick={() => e.chain().focus().toggleHeading({ level: 1 }).run()} active={e.isActive('heading', { level: 1 })} title={bn ? 'শিরোনাম ১' : 'Heading 1'}>
-        <Heading1 size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().toggleHeading({ level: 2 }).run()} active={e.isActive('heading', { level: 2 })} title={bn ? 'শিরোনাম ২' : 'Heading 2'}>
-        <Heading2 size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().toggleHeading({ level: 3 }).run()} active={e.isActive('heading', { level: 3 })} title={bn ? 'শিরোনাম ৩' : 'Heading 3'}>
-        <Heading3 size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarSep />
-      <ToolbarBtn onClick={() => e.chain().focus().setTextAlign('left').run()} active={e.isActive({ textAlign: 'left' })} title={bn ? 'বামে সাজান' : 'Align Left'}>
-        <AlignLeft size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().setTextAlign('center').run()} active={e.isActive({ textAlign: 'center' })} title={bn ? 'মাঝে সাজান' : 'Align Center'}>
-        <AlignCenter size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().setTextAlign('right').run()} active={e.isActive({ textAlign: 'right' })} title={bn ? 'ডানে সাজান' : 'Align Right'}>
-        <AlignRight size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarSep />
-      <ToolbarBtn onClick={() => e.chain().focus().toggleBulletList().run()} active={e.isActive('bulletList')} title={bn ? 'তালিকা' : 'Bullet List'}>
-        <List size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().toggleOrderedList().run()} active={e.isActive('orderedList')} title={bn ? 'নম্বর তালিকা' : 'Numbered List'}>
-        <ListOrdered size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().toggleBlockquote().run()} active={e.isActive('blockquote')} title={bn ? 'উদ্ধৃতি' : 'Quote'}>
-        <Quote size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={insertLinkFn} title={bn ? 'লিংক' : 'Insert link'}>
-        <Link2 size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => document.getElementById(imgInputId)?.click()} title={bn ? 'ছবি (সর্বোচ্চ ২ এমবি)' : 'Insert image (max 2MB)'}>
-        <ImageIcon size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <input id={imgInputId} type="file" accept="image/*" className="hidden" onChange={insertImageFn} />
-      <ToolbarSep />
-      <ToolbarBtn onClick={insertTableFn} title={bn ? 'টেবিল' : 'Insert Table'}>
-        <TableIcon size={compact ? 14 : 15} />
-      </ToolbarBtn>
-      <ToolbarBtn onClick={() => e.chain().focus().setHorizontalRule().run()} title={bn ? 'সমান্তরাল রেখা' : 'Horizontal Rule'}>
-        <Minus size={compact ? 14 : 15} />
-      </ToolbarBtn>
-    </div>
-  )
-
-  const contentBlock = (label: string, editorInstance: typeof editor, insertLinkFn: () => void, insertTableFn: () => void, insertImageFn: (ev: React.ChangeEvent<HTMLInputElement>) => void, imgInputId: string, placeholder: string) => (
+  const contentBlock = (label: string, editorInstance: typeof editor, insertLinkFn: () => void, insertTableFn: () => void, insertImageFn: (ev: React.ChangeEvent<HTMLInputElement>) => void, imgInputId: string) => (
     <div>
       <label className="block text-[0.6875rem] font-medium text-[var(--text-muted)] mb-1">{label}</label>
       <div className="rounded-xl border border-[var(--border)] overflow-hidden" style={{ background: COMPOSE_BG }}>
@@ -412,8 +342,7 @@ export function NoticeModal({ item, categories, onSave, onClose, bn }: Props) {
           insertLink,
           insertTable,
           insertImage,
-          'notice-img-en',
-          bn ? 'নোটিশের বিষয়বস্তু লিখুন...' : 'Write notice content...'
+          'notice-img-en'
         )}
 
         {contentBlock(
@@ -422,8 +351,7 @@ export function NoticeModal({ item, categories, onSave, onClose, bn }: Props) {
           insertLinkBn,
           insertTableBn,
           insertImageBn,
-          'notice-img-bn',
-          bn ? 'বাংলায় নোটিশের বিষয়বস্তু লিখুন...' : 'Write notice content in Bangla...'
+          'notice-img-bn'
         )}
       </div>
 
