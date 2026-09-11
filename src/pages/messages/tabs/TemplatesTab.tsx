@@ -194,7 +194,6 @@ export function TemplatesTab() {
   }
 
   const handleDelete = (tpl: MessageTemplate) => {
-    if (tpl.isDefault) return
     if (window.confirm(bn ? 'এই টেমপ্লেটটি মুছে ফেলতে চান?' : 'Delete this template?')) {
       deleteTemplate(tpl.id)
       if (expandedId === tpl.id) setExpandedId(null)
@@ -316,14 +315,14 @@ export function TemplatesTab() {
                       {changed && <span className="w-1.5 h-1.5 rounded-full bg-[var(--orange)]" />}
                     </div>
                     <div className="flex items-center gap-1">
-                      {!tpl.isDefault && canDelete('messages.templates') && (
+                      {canDelete('messages.templates') && (
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handleDelete(tpl) }}
-                          className="p-1.5 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--red)] transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-[var(--red)]/10 text-[var(--text-muted)] hover:text-[var(--red)] transition-colors"
                           title={bn ? 'মুছুন' : 'Delete'}
                         >
-                          <Trash2 size={13} />
+                          <Trash2 size={14} />
                         </button>
                       )}
                       {isExpanded ? <ChevronDown size={16} className="text-[var(--text-muted)]" /> : <ChevronRight size={16} className="text-[var(--text-muted)]" />}

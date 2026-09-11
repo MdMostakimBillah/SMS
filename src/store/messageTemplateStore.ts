@@ -139,7 +139,7 @@ export const useMessageTemplateStore = create<MessageTemplateState>()(
 
       deleteTemplate: (id) =>
         set((state) => ({
-          templates: state.templates.filter((t) => t.id !== id || t.isDefault),
+          templates: state.templates.filter((t) => t.id !== id),
         })),
 
       addCategory: (name) =>
