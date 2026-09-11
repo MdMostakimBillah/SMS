@@ -453,10 +453,10 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               </div>
             )}
 
-            {/* Super admin or non-admin: show EduTech header */}
+            {/* Non-admin: show institution name for teacher/staff, or EduTech for super admin */}
             {user?.role !== 'admin' && (
               <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center' : ''}`}>
-                {isViewing && institution.logo && !collapsed ? (
+                {(isViewing || (institution.name && user?.role !== 'super_admin')) && institution.logo && !collapsed ? (
                   <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover shrink-0" />
                 ) : (
                   <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
@@ -466,10 +466,18 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">
-                      {isViewing ? (institution.brandName || institution.name || 'EduTech') : 'EduTech'}
+                      {isViewing
+                        ? (institution.brandName || institution.name || 'EduTech')
+                        : (user?.role !== 'super_admin' && institution.name
+                            ? (institution.brandName || institution.name)
+                            : 'EduTech')}
                     </div>
                     <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
-                      {isViewing ? (institution.nameBn || institution.name || 'School Management') : 'School Management'}
+                      {isViewing
+                        ? (institution.nameBn || institution.name || 'School Management')
+                        : (user?.role !== 'super_admin' && institution.name
+                            ? (institution.nameBn || institution.name)
+                            : 'School Management')}
                     </div>
                   </div>
                 )}
@@ -546,7 +554,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
         {/* Collapsed Logo */}
         {collapsed && (
           <div className="flex flex-col items-center py-3 border-b border-[var(--border)]">
-            {user?.role === 'admin' && institution.logo ? (
+            {((user?.role === 'admin' || (user?.role !== 'super_admin' && institution.name)) && institution.logo) ? (
               <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover" />
             ) : (
               <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center">

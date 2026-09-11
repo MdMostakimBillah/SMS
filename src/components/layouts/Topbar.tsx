@@ -28,6 +28,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { ROLE_LABELS, type InstitutionRole } from '@/lib/navUtils'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { getNavBase, getSuperAdminViewNavBase } from '@/lib/navUtils'
@@ -739,7 +740,7 @@ export default React.memo(function Topbar() {
                     marginTop: '0.0625rem',
                   }}
                 >
-                  {user?.role === 'admin' ? (isBn ? 'প্রশাসক' : 'Admin') : user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
+                  {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
                 </div>
               </div>
             )}
@@ -791,7 +792,7 @@ export default React.memo(function Topbar() {
                     {user?.name || (isBn ? 'ব্যবহারকারী' : 'User')}
                   </div>
                   <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
-                    {user?.role === 'admin' ? (isBn ? 'প্রশাসক' : 'Admin') : user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
+                    {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
                   </div>
                 </div>
               </div>

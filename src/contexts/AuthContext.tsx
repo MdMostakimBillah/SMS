@@ -282,6 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (slug) {
       setSlug(slug)
     }
+    setUserId(staffId || email)
     setUser({
       id: institutionId,
       email,
@@ -298,7 +299,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     nsSet('institutionId', institutionId)
     nsSet('institutionSubdomain', subdomain)
     sessionStorage.setItem('edutech_inst_subdomain', subdomain)
-    setUserId(staffId || email)
   }, [])
 
   const ctxValue = useMemo(() => ({
