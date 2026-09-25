@@ -7,11 +7,11 @@ import { useNotificationStore, type Notification, type NotificationType } from '
 import { useNavigate } from 'react-router-dom'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 
-const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; bg: string }> = {
-  info: { icon: Info, color: 'var(--brand)', bg: 'var(--brand-light)' },
-  success: { icon: CheckCircle, color: 'var(--green)', bg: 'var(--green-light)' },
-  warning: { icon: AlertTriangle, color: 'var(--orange)', bg: 'var(--orange-light)' },
-  error: { icon: XCircle, color: 'var(--red)', bg: 'var(--red-light)' },
+const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; bg: string; border: string }> = {
+  info: { icon: Info, color: 'var(--brand)', bg: 'var(--brand)', border: 'var(--brand)' },
+  success: { icon: CheckCircle, color: 'var(--green)', bg: 'var(--green-light)', border: 'var(--green)' },
+  warning: { icon: AlertTriangle, color: 'var(--orange)', bg: 'var(--orange-light)', border: 'var(--orange)' },
+  error: { icon: XCircle, color: 'var(--red)', bg: 'var(--red-light)', border: 'var(--red)' },
 }
 
 export default function NotificationsPage() {
@@ -56,18 +56,13 @@ export default function NotificationsPage() {
       <div className="p-4 space-y-4">
         <div className="skeleton h-8 w-48 rounded-lg" />
         <div className="skeleton h-10 w-full rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="skeleton h-24 rounded-xl" />
-          ))}
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}</div>
       </div>
     )
   }
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="flex-1">
           <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
@@ -82,7 +77,7 @@ export default function NotificationsPage() {
           {unreadCount > 0 && canEdit('notifications') && (
             <button
               onClick={() => markAllRead()}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]"
             >
               <CheckCheck size={14} />
               {bn ? 'সব পড়া হয়েছে' : 'Mark All Read'}
@@ -91,7 +86,7 @@ export default function NotificationsPage() {
           {notifications.length > 0 && canDelete('notifications') && (
             <button
               onClick={() => setShowClearConfirm(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white"
             >
               <Trash2 size={14} />
               {bn ? 'সব মুছুন' : 'Clear All'}
@@ -102,34 +97,26 @@ export default function NotificationsPage() {
 
       {/* Filters */}
       <div className="flex gap-2 mb-4 flex-wrap">
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2394a3b8%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E')]"
-        >
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2394a3b8%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E')}">
           <option value="">{bn ? 'সকল ধরন' : 'All Types'}</option>
           <option value="info">{bn ? 'তথ্য' : 'Info'}</option>
           <option value="success">{bn ? 'সফল' : 'Success'}</option>
           <option value="warning">{bn ? 'সতর্কতা' : 'Warning'}</option>
           <option value="error">{bn ? 'ত্রুটি' : 'Error'}</option>
         </select>
-        <select
-          value={filterRead}
-          onChange={(e) => setFilterRead(e.target.value as 'all' | 'read' | 'unread')}
-          className="px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2394a3b8%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E')]"
-        >
+        <select value={filterRead} onChange={(e) => setFilterRead(e.target.value as 'all' | 'read' | 'unread')} className="px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2394a3b8%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E')}">
           <option value="all">{bn ? 'সব' : 'All'}</option>
           <option value="unread">{bn ? 'অপঠিত' : 'Unread'}</option>
           <option value="read">{bn ? 'পঠিত' : 'Read'}</option>
         </select>
       </div>
 
-      {/* Notification Grid */}
+      {/* Notification List */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-[var(--text-muted)]">
-          <Bell size={48} className="mx-auto mb-3 opacity-30" />
-          <p className="text-[0.9375rem]">{bn ? 'কোনো নোটিফিকেশন নেই' : 'No notifications'}</p>
-          <p className="text-[0.75rem] mt-1">{bn ? 'নতুন নোটিফিকেশন এখানে দেখা যাবে' : 'New notifications will appear here'}</p>
+        <div className="col-span-full text-center py-12 text-[var(--text-muted)]">
+          <Bell size={48} className="mx-auto opacity-30" />
+          <p className="text-[0.9375rem] mb-2">{bn ? 'কোনো নোটিফিকেশন নেই' : 'No notifications'}</p>
+          <p className="text-[0.75rem]">{bn ? 'নতুন নোটিফিকেশন এখানে দেখা যাবে' : 'New notifications will appear here'}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -142,71 +129,33 @@ export default function NotificationsPage() {
               <div
                 key={n.id}
                 onClick={() => handleClick(n)}
-                className={`group relative rounded-xl border p-4 transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${
-                  isUnread
-                    ? 'border-[var(--brand)]/40 bg-[var(--brand-light)]/50'
-                    : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]'
-                }`}
+                className={isUnread
+                  ? 'group rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] transition-all cursor-pointer hover:border-[var(--brand)] border-[var(--brand)]/30'
+                  : 'group rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] transition-all cursor-pointer hover:border-[var(--brand)]'}
               >
-                {/* Delete button - visible on hover */}
+                <div className="mt-0.5 p-2 rounded-lg shrink-0" style={{ background: config.bg, color: config.color }}>
+                  <Icon size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-[0.8125rem] font-medium text-[var(--text-primary)] {isUnread && 'font-semibold'}">
+                      {bn ? n.titleBn : n.title}
+                    </h3>
+                    {!n.read && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--brand)' }} />}
+                  </div>
+                  <p className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5 line-clamp-2">
+                    {bn ? n.messageBn : n.message}
+                  </p>
+                  <span className="text-[0.625rem] text-[var(--text-muted)] mt-1 block">{timeAgo}</span>
+                </div>
                 {canDelete('notifications') && (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDeleteTarget(n.id)
-                    }}
-                    className="absolute top-3 right-3 p-1.5 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-muted)] opacity-0 group-hover:opacity-100 hover:text-[var(--red)] hover:bg-[var(--red-light)] transition-all"
-                    title={bn ? 'মুছুন' : 'Delete'}
+                    onClick={(e) => { e.stopPropagation(); setDeleteTarget(n.id) }}
+                    className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] shrink-0 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={12} />
                   </button>
                 )}
-
-                {/* Card content */}
-                <div className="flex items-start gap-3">
-                  {/* Type icon */}
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ background: config.bg, color: config.color }}
-                  >
-                    <Icon size={18} />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    {/* Title + unread dot */}
-                    <div className="flex items-center gap-2 pr-7">
-                      <h3
-                        className={`text-[0.8125rem] text-[var(--text-primary)] leading-snug truncate ${
-                          isUnread ? 'font-semibold' : 'font-medium'
-                        }`}
-                      >
-                        {bn ? n.titleBn : n.title}
-                      </h3>
-                      {isUnread && (
-                        <span
-                          className="w-2 h-2 rounded-full shrink-0"
-                          style={{ background: 'var(--brand)' }}
-                        />
-                      )}
-                    </div>
-
-                    {/* Message */}
-                    <p className="text-[0.75rem] text-[var(--text-secondary)] mt-1 line-clamp-2 leading-relaxed">
-                      {bn ? n.messageBn : n.message}
-                    </p>
-
-                    {/* Footer: type badge + time */}
-                    <div className="flex items-center gap-2 mt-2">
-                      <span
-                        className="text-[0.5625rem] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                        style={{ background: config.bg, color: config.color }}
-                      >
-                        {n.type}
-                      </span>
-                      <span className="text-[0.625rem] text-[var(--text-muted)]">{timeAgo}</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             )
           })}
@@ -215,10 +164,7 @@ export default function NotificationsPage() {
 
       {deleteTarget && (
         <DeleteConfirmDialog
-          onConfirm={() => {
-            deleteNotification(deleteTarget)
-            setDeleteTarget(null)
-          }}
+          onConfirm={() => { deleteNotification(deleteTarget); setDeleteTarget(null) }}
           onCancel={() => setDeleteTarget(null)}
           title={bn ? 'নোটিফিকেশন মুছুন' : 'Delete Notification'}
           message={bn ? 'আপনি কি নিশ্চিত?' : 'Are you sure?'}
@@ -228,10 +174,7 @@ export default function NotificationsPage() {
 
       {showClearConfirm && (
         <DeleteConfirmDialog
-          onConfirm={() => {
-            clearAll()
-            setShowClearConfirm(false)
-          }}
+          onConfirm={() => { clearAll(); setShowClearConfirm(false) }}
           onCancel={() => setShowClearConfirm(false)}
           title={bn ? 'সব নোটিফিকেশন মুছুন' : 'Clear All Notifications'}
           message={bn ? 'আপনি কি নিশ্চিত সব নোটিফিকেশন মুছে ফেলতে চান?' : 'Are you sure you want to clear all notifications?'}
