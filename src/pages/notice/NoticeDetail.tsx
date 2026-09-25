@@ -120,7 +120,9 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
       </div>
 
       {/* Social-media-style card */}
-      <div className="rounded-2xl border border-[var(--border)] overflow-hidden relative" style={{ background: 'var(--bg-primary)' }}>
+      <div className="glass rounded-[0.75rem] overflow-hidden relative" style={{ background: 'var(--bg-primary)' }}>
+        {/* Priority accent bar */}
+        <div className="h-[0.1875rem] w-full" style={{ background: priority.color }} />
         {/* Watermark */}
         {logo && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">

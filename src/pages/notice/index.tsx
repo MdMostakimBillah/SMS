@@ -1,28 +1,15 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { Plus, Megaphone, Pin, Search, AlertTriangle, Tag, Trash2, Calendar, Users, ChevronDown } from 'lucide-react'
+import { Plus, Megaphone, Pin, Search, AlertTriangle, Tag, Trash2, ChevronDown } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useNoticeStore, type Notice, noticeId } from '@/store/noticeStore'
-import { useClassStore } from '@/store/classStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { NoticeDetail } from './NoticeDetail'
 import { NoticeModal } from './NoticeModal'
-
-const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low', labelBn: 'কম', color: 'var(--text-muted)' },
-  { value: 'medium', label: 'Medium', labelBn: 'মাঝারি', color: 'var(--brand)' },
-  { value: 'high', label: 'High', labelBn: 'বেশি', color: 'var(--orange)' },
-  { value: 'urgent', label: 'Urgent', labelBn: 'জরুরি', color: 'var(--red)' },
-]
-const TARGET_OPTIONS = [
-  { value: 'all', label: 'All', labelBn: 'সকল' },
-  { value: 'students', label: 'Students', labelBn: 'শিক্ষার্থী' },
-  { value: 'teachers', label: 'Teachers', labelBn: 'শিক্ষক' },
-  { value: 'parents', label: 'Parents', labelBn: 'অভিভাবক' },
-]
+import { NoticeCard } from '@/components/ui/NoticeCard'
 
 const ALL_TABS = [
   { key: 'all', icon: Megaphone },
@@ -42,10 +29,6 @@ export default function NoticeBoardPage() {
   const togglePin = useNoticeStore((s) => s.togglePin)
   const addCategory = useNoticeStore((s) => s.addCategory)
   const removeCategory = useNoticeStore((s) => s.removeCategory)
-  const institution = useClassStore((s) => s.institution)
-  const logo = institution.logo
-  const schoolName = institution.name || 'EduTech'
-
   const [activeTab, setActiveTab] = useState('all')
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
@@ -234,7 +217,7 @@ export default function NoticeBoardPage() {
         </div>
       </div>
 
-      {/* Notice List - Social Media Style Cards */}
+      {/* Notice List */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
           <Megaphone size={48} className="mb-3 opacity-30" />
@@ -242,93 +225,19 @@ export default function NoticeBoardPage() {
           <p className="text-[0.75rem] mt-1">{bn ? 'নতুন নোটিশ তৈরি করতে উপরের বোতাম ক্লিক করুন' : 'Click the button above to create a notice'}</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((notice) => {
-            const priority = PRIORITY_OPTIONS.find((p) => p.value === notice.priority) || PRIORITY_OPTIONS[0]
-            const target = TARGET_OPTIONS.find((t) => t.value === notice.target)
-            const plainContent = (bn ? notice.contentBn : notice.content).replace(/<[^>]*>/g, '')
-            return (
-              <div
-                key={notice.id}
-                onClick={() => setViewNotice(notice)}
-                className="rounded-2xl border transition-all cursor-pointer overflow-hidden"
-                style={notice.pinned
-                  ? { borderColor: 'var(--brand)', background: 'var(--bg-primary)' }
-                  : { borderColor: 'var(--border)', background: 'var(--bg-primary)' }
-                }
-              >
-                {/* Card header: school logo + author + date */}
-                <div className="flex items-start gap-3 p-4 pb-2">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2" style={{ borderColor: 'var(--brand)', background: logo ? 'var(--bg-secondary)' : 'var(--brand)' }}>
-                    {logo ? (
-                      <img src={logo} alt={schoolName} className="w-full h-full object-contain p-0.5" />
-                    ) : (
-                      <span className="text-white font-bold text-[0.75rem]">{schoolName.charAt(0).toUpperCase()}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                        {schoolName}
-                      </span>
-                      {notice.pinned && <Pin size={12} className="text-[var(--brand)] shrink-0" />}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[0.6875rem] text-[var(--text-muted)]">
-                      <span>{bn ? notice.authorBn : notice.author}</span>
-                      <span>·</span>
-                      <Calendar size={11} />
-                      {new Date(notice.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    {canEdit('notice') && (
-                      <button
-                        onClick={() => togglePin(notice.id)}
-                        className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
-                        title={notice.pinned ? (bn ? 'পিন সরান' : 'Unpin') : (bn ? 'পিন করুন' : 'Pin')}
-                      >
-                        <Pin size={14} />
-                      </button>
-                    )}
-                    {canDelete('notice') && (
-                      <button
-                        onClick={() => setDeleteTarget(notice.id)}
-                        className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
-                        title={bn ? 'মুছুন' : 'Delete'}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Badges */}
-                <div className="px-4 pb-2 flex items-center gap-1.5 flex-wrap">
-                  <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium" style={{ background: `${priority.color}15`, color: priority.color }}>
-                    {bn ? priority.labelBn : priority.label}
-                  </span>
-                  {notice.category && (
-                    <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium flex items-center gap-0.5" style={{ background: 'var(--brand)15', color: 'var(--brand)' }}>
-                      <Tag size={9} /> {notice.category}
-                    </span>
-                  )}
-                  <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)] flex items-center gap-0.5">
-                    <Users size={9} /> {bn ? target?.labelBn : target?.label}
-                  </span>
-                </div>
-
-                {/* Title + Content preview */}
-                <div className="px-4 pb-3">
-                  <h3 className="text-[0.9375rem] font-bold text-[var(--text-primary)] leading-snug mb-1">
-                    {bn ? notice.titleBn : notice.title}
-                  </h3>
-                  <p className="text-[0.8125rem] text-[var(--text-muted)] leading-relaxed line-clamp-3">
-                    {plainContent}
-                  </p>
-                </div>
-              </div>
-            )
-          })}
+        <div className="space-y-3 notice-list">
+          {filtered.map((notice) => (
+            <NoticeCard
+              key={notice.id}
+              notice={notice}
+              onClick={() => setViewNotice(notice)}
+              onPin={() => togglePin(notice.id)}
+              onDelete={() => setDeleteTarget(notice.id)}
+              canEdit={canEdit('notice')}
+              canDelete={canDelete('notice')}
+              bn={bn}
+            />
+          ))}
         </div>
       )}
 

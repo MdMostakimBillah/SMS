@@ -7,11 +7,11 @@ import { useNotificationStore, type Notification, type NotificationType } from '
 import { useNavigate } from 'react-router-dom'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 
-const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; bg: string }> = {
-  info: { icon: Info, color: 'var(--brand)', bg: 'var(--brand)' },
-  success: { icon: CheckCircle, color: 'var(--green)', bg: 'var(--green)' },
-  warning: { icon: AlertTriangle, color: 'var(--orange)', bg: 'var(--orange)' },
-  error: { icon: XCircle, color: 'var(--red)', bg: 'var(--red)' },
+const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; bg: string; border: string }> = {
+  info: { icon: Info, color: 'var(--brand)', bg: 'var(--brand)', border: 'var(--brand)' },
+  success: { icon: CheckCircle, color: 'var(--green)', bg: 'var(--green-light)', border: 'var(--green)' },
+  warning: { icon: AlertTriangle, color: 'var(--orange)', bg: 'var(--orange-light)', border: 'var(--orange)' },
+  error: { icon: XCircle, color: 'var(--red)', bg: 'var(--red-light)', border: 'var(--red)' },
 }
 
 export default function NotificationsPage() {
@@ -56,7 +56,7 @@ export default function NotificationsPage() {
       <div className="p-4 space-y-4">
         <div className="skeleton h-8 w-48 rounded-lg" />
         <div className="skeleton h-10 w-full rounded-xl" />
-        <div className="space-y-2">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}</div>
       </div>
     )
   }
@@ -113,17 +113,18 @@ export default function NotificationsPage() {
 
       {/* Notification List */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
-          <Bell size={48} className="mb-3 opacity-30" />
-          <p className="text-[0.9375rem]">{bn ? 'কোনো নোটিফিকেশন নেই' : 'No notifications'}</p>
-          <p className="text-[0.75rem] mt-1">{bn ? 'নতুন নোটিফিকেশন এখানে দেখা যাবে' : 'New notifications will appear here'}</p>
+        <div className="col-span-full text-center py-12 text-[var(--text-muted)]">
+          <Bell size={48} className="mx-auto opacity-30" />
+          <p className="text-[0.9375rem] mb-2">{bn ? 'কোনো নোটিফিকেশন নেই' : 'No notifications'}</p>
+          <p className="text-[0.75rem]">{bn ? 'নতুন নোটিফিকেশন এখানে দেখা যাবে' : 'New notifications will appear here'}</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((n) => {
             const config = TYPE_CONFIG[n.type] || TYPE_CONFIG.info
             const Icon = config.icon
             const timeAgo = getTimeAgo(n.createdAt, bn)
+            const isUnread = !n.read
             return (
               <div
                 key={n.id}
@@ -134,12 +135,12 @@ export default function NotificationsPage() {
                     : 'border-[var(--brand)] bg-[var(--brand)]05 hover:border-[var(--brand)]'
                 }`}
               >
-                <div className="mt-0.5 p-2 rounded-lg shrink-0" style={{ background: `${config.color}15`, color: config.color }}>
+                <div className="mt-0.5 p-2 rounded-lg shrink-0" style={{ background: `${config.bg}`, color: `${config.color}` }}>
                   <Icon size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className={`text-[0.8125rem] font-medium text-[var(--text-primary)] ${!n.read ? 'font-semibold' : ''}`}>
+                    <h3 className="text-[0.8125rem] font-medium text-[var(--text-primary)] {isUnread && 'font-semibold'}">
                       {bn ? n.titleBn : n.title}
                     </h3>
                     {!n.read && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--brand)' }} />}
@@ -152,9 +153,9 @@ export default function NotificationsPage() {
                 {canDelete('notifications') && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteTarget(n.id) }}
-                    className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] shrink-0"
+                    className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] shrink-0 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={12} />
                   </button>
                 )}
               </div>
