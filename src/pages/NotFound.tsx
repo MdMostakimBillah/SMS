@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { FileQuestion, ArrowLeft } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { getDashboardPath } from '@/lib/navUtils'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function NotFoundPage() {
@@ -8,15 +9,7 @@ export default function NotFoundPage() {
   const isBn = useBn()
   const { user } = useAuth()
 
-  const goHome = () => {
-    if (!user) return navigate('/')
-    const slug = sessionStorage.getItem('edutech_inst_slug')
-    const viewingId = sessionStorage.getItem('edutech_viewing_id')
-    if (viewingId) return navigate('/super-admin/viewing/admin/dashboard')
-    if (slug) return navigate(`/i/${slug}/${user.role}/dashboard`)
-    if (user.role === 'super_admin') return navigate('/super-admin/admin/dashboard')
-    return navigate('/')
-  }
+  const goHome = () => navigate(getDashboardPath(user))
 
   return (
     <div className="flex items-center justify-center min-h-[70vh]">

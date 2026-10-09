@@ -7,6 +7,7 @@ import { UpdateToast } from '@/components/ui/UpdateToast'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
+import { DashboardRoute } from '@/components/DashboardRoute'
 import { LOGIN_PATH } from '@/lib/constants'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
@@ -147,6 +148,7 @@ function AppContent() {
           <Route path="/register" element={<F><InstitutionRegister /></F>} />
           <Route path="/" element={<Navigate to="/register" replace />} />
           <Route path="/login" element={<Navigate to="/register" replace />} />
+          <Route path="/dashboard" element={<DashboardRoute />} />
         </Route>
 
         <Route element={<RoleProtectedRoute allowedRoles={['super_admin']} />}>

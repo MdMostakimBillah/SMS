@@ -4,6 +4,7 @@ import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock, ChevronRight } from 'lucide-r
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
+import { getDashboardPath } from '@/lib/navUtils'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 
 function getInitialTheme(): 'light' | 'dark' {
@@ -24,14 +25,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (user) {
-      const slug = sessionStorage.getItem('edutech_inst_slug')
-      const viewingId = sessionStorage.getItem('edutech_viewing_id')
-      if (viewingId) navigate('/super-admin/viewing/admin/dashboard', { replace: true })
-      else if (slug) navigate(`/i/${slug}/${user.role}/dashboard`, { replace: true })
-      else if (user.role === 'super_admin') navigate('/super-admin/admin/dashboard', { replace: true })
-      else navigate('/', { replace: true })
-    }
+    if (user) navigate(getDashboardPath(user), { replace: true })
   }, [user, navigate])
 
   const [email, setEmail] = useState('')

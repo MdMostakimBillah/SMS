@@ -34,6 +34,42 @@ export function getLoginPath(resolved: ResolvedInstitution | null): string {
   return '/'
 }
 
+export interface DashboardSession {
+  /** Institution slug when the user is working inside one. */
+  slug: string | null
+  /** Set while a super admin is previewing another institution. */
+  viewingId: string | null
+}
+
+function readDashboardSession(): DashboardSession {
+  return {
+    slug: sessionStorage.getItem('edutech_inst_slug'),
+    viewingId: sessionStorage.getItem('edutech_viewing_id'),
+  }
+}
+
+/**
+ * Resolve "the dashboard" for whoever is signed in.
+ *
+ * `/dashboard` is not a page of its own — it is the entry point the installed
+ * PWA launches into (`start_url`) and the target of the palette's Dashboard
+ * command — so it always has to be resolved against the signed-in user. This
+ * used to be hand-rolled, each time slightly differently, in four places, which
+ * is how the PWA ended up dropping super admins on the 404 route.
+ *
+ * Signed-out visitors get `/`, where `AuthRoute` shows the public landing page.
+ */
+export function getDashboardPath(
+  user: { role: string } | null,
+  session: DashboardSession = readDashboardSession()
+): string {
+  if (!user) return '/'
+  if (session.viewingId) return '/super-admin/viewing/admin/dashboard'
+  if (session.slug) return `/i/${session.slug}/${user.role}/dashboard`
+  if (user.role === 'super_admin') return '/super-admin/admin/dashboard'
+  return '/'
+}
+
 export function getRoleFromPath(pathname: string): InstitutionRole | null {
   const parts = pathname.split('/').filter(Boolean)
 
