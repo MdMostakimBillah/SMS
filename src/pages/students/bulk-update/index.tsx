@@ -27,8 +27,7 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { logger } from '@/lib/logger'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
-import { compressImage } from '@/lib/compressImage'
-import { validateImageSize } from '@/lib/imageUpload'
+import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
 type Op = 'photo' | 'roll' | 'class' | 'section' | 'bloodGroup' | 'religion' | 'academicYear'
@@ -164,19 +163,17 @@ export default function BulkUpdatePage() {
 
   const handlePhotoUpload = useCallback(
     async (id: string, file: File) => {
-      const sizeErr = validateImageSize(file, isBn)
-      if (sizeErr) {
-        alert(sizeErr)
+      const result = await compressImageWithinLimit(file, { maxDim: 300 })
+      if (!result.ok) {
+        if (result.reason === 'too-large') {
+          alert(imageTooLargeMessage(isBn))
+        } else {
+          logger.error('Image compression failed', { reason: result.reason })
+          alert(isBn ? 'ছবি প্রসেস করতে সমস্যা হয়েছে' : 'Failed to process image')
+        }
         return
       }
-
-      try {
-        const base64 = await compressImage(file)
-        setPhotoMap((prev) => ({ ...prev, [id]: base64 }))
-      } catch (error) {
-        logger.error('Image compression failed', { error: (error as Error).message })
-        alert(isBn ? 'ছবি প্রসেস করতে সমস্যা হয়েছে' : 'Failed to process image')
-      }
+      setPhotoMap((prev) => ({ ...prev, [id]: result.dataUrl }))
     },
     [isBn]
   )

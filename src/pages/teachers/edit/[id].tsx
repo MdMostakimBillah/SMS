@@ -8,7 +8,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { TeacherStatus } from '@/pages/teachers/types'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
-import { validateImageSize } from '@/lib/imageUpload'
+import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
 // ─── FormField (outside parent component — fixes input focus loss) ───────────
@@ -202,14 +202,16 @@ export default function EditTeacherPage() {
     const file = e.target.files?.[0]
     if (!file) return
     setPhotoErr('')
-    const sizeErr = validateImageSize(file, isBn)
-    if (sizeErr) {
-      setPhotoErr(sizeErr)
+    const result = await compressImageWithinLimit(file, { maxDim: 512 })
+    if (!result.ok) {
+      setPhotoErr(
+        result.reason === 'too-large'
+          ? imageTooLargeMessage(isBn)
+          : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image')
+      )
       return
     }
-    const reader = new FileReader()
-    reader.onload = (ev) => setPhoto(ev.target?.result as string)
-    reader.readAsDataURL(file)
+    setPhoto(result.dataUrl)
   }
 
   const handleSignature = async (e: React.ChangeEvent<HTMLInputElement>) => {

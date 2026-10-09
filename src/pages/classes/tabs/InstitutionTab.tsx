@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react'
-import { validateImageSize } from '@/lib/imageUpload'
+import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
 import {
   Building2,
   Phone,
@@ -470,17 +470,15 @@ export default React.memo(function InstitutionTab({
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0]
                       if (!file) return
-                      const sizeErr = validateImageSize(file, isBn)
-                      if (sizeErr) {
-                        alert(sizeErr)
+                      const result = await compressImageWithinLimit(file, { maxDim: 512 })
+                      if (!result.ok) {
+                        alert(result.reason === 'too-large' ? imageTooLargeMessage(isBn) : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
                         return
                       }
-                      const reader = new FileReader()
-                      reader.onload = (ev) => setInstForm((p: any) => ({ ...p, logo: ev.target?.result as string }))
-                      reader.readAsDataURL(file)
+                      setInstForm((p: any) => ({ ...p, logo: result.dataUrl }))
                     }}
                   />
                 </label>

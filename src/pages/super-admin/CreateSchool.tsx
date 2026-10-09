@@ -11,7 +11,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
-import { validateImageSize } from '@/lib/imageUpload'
+import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 
 const btnBounce = `animate-[btnBounce_0.35s_cubic-bezier(0.34,1.56,0.64,1)]`
@@ -797,18 +797,17 @@ function FileUpload({ label, value, onChange, accept, isBn, aspect = 'logo' }: {
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const sizeErr = validateImageSize(file, isBn)
-    if (sizeErr) {
-      alert(sizeErr)
+    const result = await compressImageWithinLimit(file, { maxDim: aspect === 'banner' ? 1600 : 512 })
+    if (!result.ok) {
+      alert(result.reason === 'too-large' ? imageTooLargeMessage(isBn) : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
       e.target.value = ''
       return
     }
-    const reader = new FileReader()
-    reader.onload = (ev) => onChange(ev.target?.result as string)
-    reader.readAsDataURL(file)
+    onChange(result.dataUrl)
+    e.target.value = ''
   }
 
   const isBanner = aspect === 'banner'

@@ -7,8 +7,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
-import { compressImage } from '@/lib/compressImage'
-import { validateImageSize } from '@/lib/imageUpload'
+import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 
 interface FP {
   l: string
@@ -120,16 +119,16 @@ export default function UpdateStudentPage() {
       const file = e.target.files?.[0]
       if (!file) return
       setPhotoErr('')
-      const sizeErr = validateImageSize(file, isBn)
-      if (sizeErr) {
-        setPhotoErr(sizeErr)
+      const result = await compressImageWithinLimit(file, { maxDim: 300 })
+      if (!result.ok) {
+        setPhotoErr(
+          result.reason === 'too-large'
+            ? imageTooLargeMessage(isBn)
+            : (isBn ? 'ছবি লোড হয়নি' : 'Error loading')
+        )
         return
       }
-      try {
-        set('photo', await compressImage(file))
-      } catch {
-        setPhotoErr(isBn ? 'ছবি লোড হয়নি' : 'Error loading')
-      }
+      set('photo', result.dataUrl)
     },
     [set, isBn]
   )

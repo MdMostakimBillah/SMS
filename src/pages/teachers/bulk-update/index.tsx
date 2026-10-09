@@ -22,8 +22,7 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
-import { compressImage } from '@/lib/compressImage'
-import { validateImageSize } from '@/lib/imageUpload'
+import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
 type Op = 'salary' | 'phone' | 'photo' | 'department' | 'designation' | 'inTime' | 'outTime'
@@ -113,17 +112,16 @@ export default function TeacherBulkUpdatePage() {
 
   const handlePhotoUpload = useCallback(
     async (id: string, file: File) => {
-      const sizeErr = validateImageSize(file, isBn)
-      if (sizeErr) {
-        alert(sizeErr)
+      const result = await compressImageWithinLimit(file, { maxDim: 300 })
+      if (!result.ok) {
+        alert(
+          result.reason === 'too-large'
+            ? imageTooLargeMessage(isBn)
+            : (isBn ? 'ছবি প্রসেস করতে সমস্যা হয়েছে' : 'Failed to process image')
+        )
         return
       }
-      try {
-        const base64 = await compressImage(file)
-        setPhotoMap((p) => ({ ...p, [id]: base64 }))
-      } catch {
-        alert(isBn ? 'ছবি প্রসেস করতে সমস্যা হয়েছে' : 'Failed to process image')
-      }
+      setPhotoMap((p) => ({ ...p, [id]: result.dataUrl }))
     },
     [isBn]
   )

@@ -14,7 +14,7 @@ import { FormField } from '@/components/ui/FormField'
 import { usePermission } from '@/hooks/usePermission'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAuditUser } from '@/lib/auditUser'
-import { validateImageSize } from '@/lib/imageUpload'
+import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
 
 const INPUT_BASE = 'w-full py-[0.625rem] px-3 rounded-[0.5rem] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none transition-colors duration-200 box-border'
 const inputNormal = `${INPUT_BASE} border border-[var(--border)] focus:border-[var(--brand)]`
@@ -140,11 +140,16 @@ export default function AddTeacherPage() {
     const file = e.target.files?.[0]
     if (!file) return
     setPhotoErr('')
-    const sizeErr = validateImageSize(file, isBn)
-    if (sizeErr) { setPhotoErr(sizeErr); return }
-    const reader = new FileReader()
-    reader.onload = (ev) => setField('photo', ev.target?.result as string)
-    reader.readAsDataURL(file)
+    const result = await compressImageWithinLimit(file, { maxDim: 512 })
+    if (!result.ok) {
+      setPhotoErr(
+        result.reason === 'too-large'
+          ? imageTooLargeMessage(isBn)
+          : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image')
+      )
+      return
+    }
+    setField('photo', result.dataUrl)
   }
 
   const handleSignature = async (e: React.ChangeEvent<HTMLInputElement>) => {

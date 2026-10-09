@@ -13,8 +13,7 @@ import { printRawHTML } from '@/lib/pdf'
 import QRCode from 'qrcode'
 import { RELIGION_OPTIONS, DISTRICT_OPTIONS } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
-import { compressImage } from '@/lib/compressImage'
-import { validateImageSize } from '@/lib/imageUpload'
+import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
 type FormData = Omit<StudentAdmission, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'approvedAt'>
@@ -143,9 +142,16 @@ export default function GeneralAdmission() {
     const file = e.target.files?.[0]
     if (!file) return
     setPhotoErr('')
-    const sizeErr = validateImageSize(file, isBn)
-    if (sizeErr) { setPhotoErr(sizeErr); return }
-    try { set('photo', await compressImage(file, 0.7)) } catch { setPhotoErr(isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image') }
+    const result = await compressImageWithinLimit(file, { maxDim: 300 })
+    if (!result.ok) {
+      setPhotoErr(
+        result.reason === 'too-large'
+          ? imageTooLargeMessage(isBn)
+          : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image')
+      )
+      return
+    }
+    set('photo', result.dataUrl)
   }
 
   const handleSubmit = useCallback(() => {
