@@ -17,8 +17,19 @@ if (!fs.existsSync(faviconPath) || fs.readFileSync(faviconPath, 'utf8') !== favi
   fs.writeFileSync(faviconPath, faviconSVG)
 }
 
+// `public/version.txt` is stamped by the `prebuild` script on every build.
+// Inlining that same value into the bundle lets the client compare the code it
+// is actually running against what the server publishes — comparing against a
+// remembered string instead can only ever guess, and guesses go stale the moment
+// someone reloads the page by hand.
+const versionPath = path.resolve(__dirname, 'public/version.txt')
+const appVersion = fs.existsSync(versionPath) ? fs.readFileSync(versionPath, 'utf8').trim() : ''
+
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

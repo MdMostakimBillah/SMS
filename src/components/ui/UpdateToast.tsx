@@ -2,9 +2,18 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { RefreshCw } from 'lucide-react'
 import { useUpdateStore } from '@/store/updateStore'
+import { useBn } from '@/hooks/useBn'
 
 export function UpdateToast() {
-  const { isUpdateAvailable, dismiss, checkForUpdate, startPeriodicCheck, stopPeriodicCheck } = useUpdateStore()
+  const isBn = useBn()
+  const {
+    isUpdateAvailable,
+    dismiss,
+    applyUpdate,
+    checkForUpdate,
+    startPeriodicCheck,
+    stopPeriodicCheck,
+  } = useUpdateStore()
 
   useEffect(() => {
     checkForUpdate()
@@ -22,23 +31,23 @@ export function UpdateToast() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-            Update available
+            {isBn ? 'আপডেট পাওয়া যাচ্ছে' : 'Update available'}
           </p>
           <p className="text-[0.6875rem] text-[var(--text-muted)]">
-            New version ready
+            {isBn ? 'নতুন সংস্করণ প্রস্তুত' : 'New version ready'}
           </p>
         </div>
         <button
-          onClick={() => window.location.reload()}
+          onClick={applyUpdate}
           className="px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.75rem] font-semibold cursor-pointer hover:opacity-90 transition-opacity shrink-0"
         >
-          Update
+          {isBn ? 'আপডেট' : 'Update'}
         </button>
         <button
           onClick={dismiss}
           className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] font-semibold cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors shrink-0"
         >
-          Later
+          {isBn ? 'পরে' : 'Later'}
         </button>
       </div>
     </div>,
