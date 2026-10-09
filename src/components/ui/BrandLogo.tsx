@@ -11,11 +11,13 @@ interface Props {
 }
 
 const CB = 'cubic-bezier(.65,0,.35,1)'
+/** Full animation cycle in seconds — one knob to speed up / slow the whole logo. */
+const LOOP = 12
 
 /**
  * Animated EduTech brand logo.
  *
- * 30s loop, staggered per shape: each shape's outline draws on, its fill fades
+ * Fast loop, staggered per shape: each shape's outline draws on, its fill fades
  * in, everything holds, then the sequence plays in reverse (fill fades out,
  * outline undraws) before replaying. The stagger order reads top → chev → bub →
  * d2 → d1 so the logo dismantles and reassembles rather than blinking off.
@@ -61,8 +63,8 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
         71% { opacity: 0; }
         100% { opacity: 0; }
       }
-      .${root} .d1 .ln { animation: ${unq('ln_d1')} 30s linear infinite; }
-      .${root} .d1 .body { animation: ${unq('bd_d1')} 30s linear infinite; }
+      .${root} .d1 .ln { animation: ${unq('ln_d1')} ${LOOP}s linear infinite; }
+      .${root} .d1 .body { animation: ${unq('bd_d1')} ${LOOP}s linear infinite; }
       @keyframes ${unq('rl_d1')} {
         0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
         21% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
@@ -74,7 +76,7 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
         70.6667% { stroke-dashoffset: 1; stroke-opacity: 1; }
         100% { stroke-dashoffset: 1; stroke-opacity: 1; }
       }
-      .${root} .d1 .rl { animation: ${unq('rl_d1')} 30s linear infinite; }
+      .${root} .d1 .rl { animation: ${unq('rl_d1')} ${LOOP}s linear infinite; }
 
       @keyframes ${unq('ln_d2')} {
         0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
@@ -95,8 +97,8 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
         66.3333% { opacity: 0; }
         100% { opacity: 0; }
       }
-      .${root} .d2 .ln { animation: ${unq('ln_d2')} 30s linear infinite; }
-      .${root} .d2 .body { animation: ${unq('bd_d2')} 30s linear infinite; }
+      .${root} .d2 .ln { animation: ${unq('ln_d2')} ${LOOP}s linear infinite; }
+      .${root} .d2 .body { animation: ${unq('bd_d2')} ${LOOP}s linear infinite; }
       @keyframes ${unq('rl_d2')} {
         0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
         25.6667% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
@@ -108,7 +110,7 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
         66% { stroke-dashoffset: 1; stroke-opacity: 1; }
         100% { stroke-dashoffset: 1; stroke-opacity: 1; }
       }
-      .${root} .d2 .rl { animation: ${unq('rl_d2')} 30s linear infinite; }
+      .${root} .d2 .rl { animation: ${unq('rl_d2')} ${LOOP}s linear infinite; }
 
       @keyframes ${unq('ln_top')} {
         0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
@@ -129,8 +131,8 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
         85.6667% { opacity: 0; }
         100% { opacity: 0; }
       }
-      .${root} .top .ln { animation: ${unq('ln_top')} 30s linear infinite; }
-      .${root} .top .body { animation: ${unq('bd_top')} 30s linear infinite; }
+      .${root} .top .ln { animation: ${unq('ln_top')} ${LOOP}s linear infinite; }
+      .${root} .top .body { animation: ${unq('bd_top')} ${LOOP}s linear infinite; }
 
       @keyframes ${unq('ln_chev')} {
         0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
@@ -151,8 +153,8 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
         80.6667% { opacity: 0; }
         100% { opacity: 0; }
       }
-      .${root} .chev .ln { animation: ${unq('ln_chev')} 30s linear infinite; }
-      .${root} .chev .body { animation: ${unq('bd_chev')} 30s linear infinite; }
+      .${root} .chev .ln { animation: ${unq('ln_chev')} ${LOOP}s linear infinite; }
+      .${root} .chev .body { animation: ${unq('bd_chev')} ${LOOP}s linear infinite; }
 
       @keyframes ${unq('ln_bub')} {
         0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
@@ -173,8 +175,8 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
         76.6667% { opacity: 0; }
         100% { opacity: 0; }
       }
-      .${root} .bub .ln { animation: ${unq('ln_bub')} 30s linear infinite; }
-      .${root} .bub .body { animation: ${unq('bd_bub')} 30s linear infinite; }
+      .${root} .bub .ln { animation: ${unq('ln_bub')} ${LOOP}s linear infinite; }
+      .${root} .bub .body { animation: ${unq('bd_bub')} ${LOOP}s linear infinite; }
       @keyframes ${unq('rl_bub')} {
         0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
         15.3333% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
@@ -186,7 +188,7 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
         76.3333% { stroke-dashoffset: 1; stroke-opacity: 1; }
         100% { stroke-dashoffset: 1; stroke-opacity: 1; }
       }
-      .${root} .bub .rl { animation: ${unq('rl_bub')} 30s linear infinite; }
+      .${root} .bub .rl { animation: ${unq('rl_bub')} ${LOOP}s linear infinite; }
 
       @keyframes ${unq('jump')} {
         0% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in-out; }
@@ -198,7 +200,7 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
         33.6667% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in-out; }
         100% { transform: translateY(0) scale(1, 1); }
       }
-      .${root} .life { transform-box: view-box; animation: ${unq('jump')} 30s linear infinite; }
+      .${root} .life { transform-box: view-box; animation: ${unq('jump')} ${LOOP}s linear infinite; }
 
       @media (prefers-reduced-motion: reduce) {
         .${root} * { animation: none !important; }
