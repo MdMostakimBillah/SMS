@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogIn, Eye, EyeOff, GraduationCap, Mail, Lock, X, Clock, ChevronRight } from 'lucide-react'
+import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock, ChevronRight } from 'lucide-react'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
@@ -99,7 +100,7 @@ export default function LoginPage() {
         }} />
         <BackgroundPaths isDark={isDark} />
         <div className="relative z-10 text-center px-8">
-          <GraduationCap size={72} className="text-[var(--brand)] mx-auto mb-4" />
+          <BrandLogo size={104} className="mx-auto mb-5" />
           <h1 className="text-[2rem] font-bold mb-3 tracking-tight text-white">EduTech SMS</h1>
           <p className="text-[1rem] max-w-[280px] mx-auto leading-relaxed text-white/50">
             {isBn ? 'স্কুল ম্যানেজমেন্ট সিস্টেম' : 'School Management System'}
@@ -117,7 +118,7 @@ export default function LoginPage() {
 
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <GraduationCap size={44} className="text-[var(--brand)] mx-auto mb-4" />
+            <BrandLogo size={64} className="mx-auto mb-4" />
             <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>EduTech SMS</h1>
           </div>
 

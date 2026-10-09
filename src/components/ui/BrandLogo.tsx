@@ -53,14 +53,14 @@ export function BrandLogo({ size = 32, className, static: isStatic = false, titl
       {!isStatic && (
         <>
           <style>{`
-            @keyframes ${rid('ln')} { 0%, 4% { stroke-dashoffset: 1; stroke-opacity: 1; } 5.5% { stroke-dashoffset: 0; stroke-opacity: 1; } 6.4%, 100% { stroke-dashoffset: 0; stroke-opacity: 0; } }
-            @keyframes ${rid('fade')} { 0%, 5% { opacity: 0; } 6.4%, 100% { opacity: 1; } }
-            @keyframes ${rid('jump')} { 0%, 7.3% { transform: translateY(0) scale(1,1); } 7.55% { transform: translateY(1px) scale(1.18,.8); } 7.8% { transform: translateY(-7px) scale(.86,1.25); } 8.1% { transform: translateY(0) scale(1.1,.9); } 8.3% { transform: translateY(-1px) scale(.97,1.04); } 8.5%, 100% { transform: translateY(0) scale(1,1); } }
-            .${rid('fills')} { animation: ${rid('fade')} 120s linear infinite; }
-            .${rid('ln')} { fill: none; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; animation: ${rid('ln')} 120s linear infinite; }
-            .${rid('rl')} { fill: none; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; animation: ${rid('ln')} 120s linear infinite; }
-            .${rid('jump-wrap')} { transform-box: view-box; animation: ${rid('jump')} 120s linear infinite; }
-            @media (prefers-reduced-motion: reduce) { .${rid('ln')}, .${rid('rl')} { animation: none !important; stroke-opacity: 0; } .${rid('fills')} { animation: none !important; } }
+            @keyframes ${rid('ln')} { 0% { stroke-dashoffset: 1; stroke-opacity: 1; } 5% { stroke-dashoffset: 0; stroke-opacity: 1; } 8%, 85% { stroke-dashoffset: 0; stroke-opacity: 0; } 92% { stroke-dashoffset: 0; stroke-opacity: 1; } 100% { stroke-dashoffset: 1; stroke-opacity: 1; } }
+            @keyframes ${rid('fade')} { 0%, 6% { opacity: 0; } 8%, 85% { opacity: 1; } 100% { opacity: 0; } }
+            @keyframes ${rid('jump')} { 0%, 8.5% { transform: translateY(0) scale(1,1); } 8.8% { transform: translateY(1px) scale(1.18,.8); } 9.1% { transform: translateY(-7px) scale(.86,1.25); } 9.4% { transform: translateY(0) scale(1.1,.9); } 9.7% { transform: translateY(-1px) scale(.97,1.04); } 10%, 85% { transform: translateY(0) scale(1,1); } 92% { transform: translateY(0) scale(1.04,.96); } 100% { transform: translateY(0) scale(1,1); } }
+            .${rid('fills')} { animation: ${rid('fade')} 120s cubic-bezier(.65,0,.35,1) infinite; }
+            .${rid('ln')} { fill: none; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; animation: ${rid('ln')} 120s cubic-bezier(.65,0,.35,1) infinite; }
+            .${rid('rl')} { fill: none; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; animation: ${rid('ln')} 120s cubic-bezier(.65,0,.35,1) infinite; }
+            .${rid('jump-wrap')} { transform-box: view-box; animation: ${rid('jump')} 120s cubic-bezier(.65,0,.35,1) infinite; }
+            @media (prefers-reduced-motion: reduce) { .${rid('ln')}, .${rid('rl')} { animation: none !important; stroke-opacity: 0; } .${rid('fills')} { animation: none !important; opacity: 1; } }
           `}</style>
           {/* Stroke overlays that draw on before the fills appear */}
           <g opacity="0.9">

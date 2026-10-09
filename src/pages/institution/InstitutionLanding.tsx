@@ -121,9 +121,7 @@ export default function InstitutionLanding() {
               <img src={institution.logo} alt={institution.name} className="w-full h-full object-cover" />
             </div>
           ) : (
-            <div className="w-[72px] h-[72px] rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
-              <BrandLogo size={48} />
-            </div>
+            <BrandLogo size={104} className="mx-auto mb-5" />
           )}
           <h1 className="text-[2rem] font-bold mb-3 tracking-tight text-white">
             {institution.brandName || institution.name}
@@ -153,9 +151,7 @@ export default function InstitutionLanding() {
                 <img src={institution.logo} alt={institution.name} className="w-full h-full object-cover" />
               </div>
             ) : (
-              <div className="w-11 h-11 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'var(--bg-secondary)' }}>
-                <BrandLogo size={30} />
-              </div>
+              <BrandLogo size={64} className="mx-auto mb-4" />
             )}
             <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>
               {institution.brandName || institution.name}
