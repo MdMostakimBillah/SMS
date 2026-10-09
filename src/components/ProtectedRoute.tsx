@@ -4,6 +4,7 @@ import { useSuperAdminStore } from '@/store/superAdminStore'
 import { usePermission } from '@/hooks/usePermission'
 import { LOGIN_PATH } from '@/lib/constants'
 import { INSTITUTION_ROLES, type InstitutionRole } from '@/lib/navUtils'
+import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
 
 const ROUTE_TO_PERMISSION: Record<string, string> = {
   dashboard: 'dashboard',
@@ -44,7 +45,7 @@ export function ProtectedRoute() {
   const { canRead, isAdmin } = usePermission()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
-  if (loading) return null
+  if (loading) return <BrandLoadingScreen />
   if (!user) return <Navigate to={getLoginRedirect(slug)} replace />
 
   const isViewing = user.role === 'super_admin' && (!!viewingInstitutionId || !!sessionStorage.getItem('edutech_viewing_id'))
@@ -86,7 +87,7 @@ export function ViewingRoute() {
   const { user, loading } = useAuth()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
-  if (loading) return null
+  if (loading) return <BrandLoadingScreen />
   if (!user) return <Navigate to={getLoginRedirect()} replace />
   if (user.role !== 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
   if (!viewingInstitutionId && !sessionStorage.getItem('edutech_viewing_id')) return <Navigate to="/super-admin/schools" replace />
@@ -97,7 +98,7 @@ export function ViewingRoute() {
 export function RoleProtectedRoute({ allowedRoles }: { allowedRoles: string[] }) {
   const { user, loading } = useAuth()
 
-  if (loading) return null
+  if (loading) return <BrandLoadingScreen />
   if (!user) return <Navigate to="/register" replace />
   if (!allowedRoles.includes(user.role)) {
     const slug = sessionStorage.getItem('edutech_inst_slug')

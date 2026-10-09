@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { gsap } from 'gsap'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 import {
   GraduationCap,
   LayoutDashboard,
@@ -438,8 +439,8 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                 {institution.logo ? (
                   <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover shrink-0" />
                 ) : (
-                  <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
-                    <span className="text-white font-bold text-sm">{(institution.name || 'SA').slice(0, 2).toUpperCase()}</span>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
+                    <BrandLogo size={22} />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -459,8 +460,8 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                 {(isViewing || (institution.name && user?.role !== 'super_admin')) && institution.logo && !collapsed ? (
                   <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover shrink-0" />
                 ) : (
-                  <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center shrink-0">
-                    <GraduationCap size={17} color="#fff" />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
+                    <BrandLogo size={22} />
                   </div>
                 )}
                 {!collapsed && (
@@ -557,8 +558,8 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             {((user?.role === 'admin' || (user?.role !== 'super_admin' && institution.name)) && institution.logo) ? (
               <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover" />
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center">
-                <GraduationCap size={17} color="#fff" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
+                <BrandLogo size={22} />
               </div>
             )}
           </div>

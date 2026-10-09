@@ -1,6 +1,7 @@
 import { useState, useMemo, useContext, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Mail, Lock, Eye, EyeOff, LogIn, X, GraduationCap, Clock } from 'lucide-react'
+import { Building2, Mail, Lock, Eye, EyeOff, LogIn, X, Clock } from 'lucide-react'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
 import { applyThemeColors } from '@/hooks/useThemeColors'
@@ -468,7 +469,9 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
               />
             </div>
           ) : (
-            <GraduationCap size={72} style={{ color: institution.brandColor }} className="mx-auto mb-4" />
+            <div className="w-[72px] h-[72px] rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <BrandLogo size={48} />
+            </div>
           )}
           <h1 className="text-[2rem] font-bold mb-3 tracking-tight text-white">
             {institution.brandName || institution.name}
@@ -502,7 +505,9 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
               />
               </div>
             ) : (
-              <GraduationCap size={44} style={{ color: institution.brandColor }} className="mx-auto mb-4" />
+              <div className="w-11 h-11 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'var(--bg-secondary)' }}>
+                <BrandLogo size={30} />
+              </div>
             )}
             <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>{institution.brandName || institution.name}</h1>
           </div>

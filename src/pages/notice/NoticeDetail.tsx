@@ -1,6 +1,7 @@
 import { ArrowLeft, Pin, PinOff, Edit3, Trash2, Download, Calendar, Users, Tag } from 'lucide-react'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML, pdfFooterHTML } from '@/lib/pdfBranding'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useClassStore } from '@/store/classStore'
 import type { Notice } from '@/store/noticeStore'
 
@@ -120,9 +121,7 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
       </div>
 
       {/* Social-media-style card */}
-      <div className="glass rounded-[0.75rem] overflow-hidden relative" style={{ background: 'var(--bg-primary)' }}>
-        {/* Priority accent bar */}
-        <div className="h-[0.1875rem] w-full" style={{ background: priority.color }} />
+      <div className="rounded-2xl border border-[var(--border)] overflow-hidden relative" style={{ background: 'var(--bg-primary)' }}>
         {/* Watermark */}
         {logo && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
@@ -132,11 +131,11 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
 
         {/* Card header: school logo + author + meta */}
         <div className="relative flex items-start gap-3 p-4 pb-3">
-          <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2" style={{ borderColor: 'var(--brand)', background: logo ? 'var(--bg-secondary)' : 'var(--brand)' }}>
+          <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2" style={{ borderColor: 'var(--brand)', background: 'var(--bg-secondary)' }}>
             {logo ? (
               <img src={logo} alt={schoolName} className="w-full h-full object-contain p-0.5" />
             ) : (
-              <span className="text-white font-bold text-[0.8125rem]">{schoolName.charAt(0).toUpperCase()}</span>
+              <BrandLogo size={26} />
             )}
           </div>
           <div className="flex-1 min-w-0">
@@ -161,11 +160,11 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
 
         {/* Badges row */}
         <div className="relative px-4 pb-3 flex items-center gap-1.5 flex-wrap">
-          <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium" style={{ background: `${priority.color}15`, color: priority.color }}>
+          <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium" style={{ background: 'color-mix(in srgb, var(--brand) 12%, transparent)', color: priority.color }}>
             {bn ? priority.labelBn : priority.label}
           </span>
           {notice.category && (
-            <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium flex items-center gap-1" style={{ background: 'var(--brand)15', color: 'var(--brand)' }}>
+            <span className="px-2 py-0.5 rounded-full text-[0.5625rem] font-medium flex items-center gap-1" style={{ background: 'color-mix(in srgb, var(--brand) 12%, transparent)', color: 'var(--brand)' }}>
               <Tag size={10} /> {notice.category}
             </span>
           )}

@@ -1,5 +1,6 @@
 import { useClassStore } from '@/store/classStore'
 import { escapeHtml } from '@/lib/sanitize'
+import { brandLogoStaticSVG } from '@/lib/brandLogo'
 
 export interface PDFBranding {
   logo: string
@@ -28,7 +29,7 @@ export function pdfLogoHTML(b: PDFBranding, size = 32): string {
   if (b.logo) {
     return `<img src="${escapeHtml(b.logo)}" style="width:${size}px;height:${size}px;border-radius:7px;object-fit:contain" />`
   }
-  return `<div style="width:${size}px;height:${size}px;background:${b.brandColor};border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:${Math.round(size * 0.44)}px;font-weight:700">ET</div>`
+  return brandLogoStaticSVG(size)
 }
 
 export function pdfHeaderHTML(b: PDFBranding, opts?: { showAddress?: boolean; extraMeta?: string }): string {
