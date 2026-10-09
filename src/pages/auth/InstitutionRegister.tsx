@@ -10,6 +10,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
+import { validateImageSize } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { setAuthToken } from '@/lib/api'
@@ -188,6 +189,12 @@ export default function InstitutionRegister() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    const sizeErr = validateImageSize(file, isBn)
+    if (sizeErr) {
+      alert(sizeErr)
+      e.target.value = ''
+      return
+    }
     const reader = new FileReader()
     reader.onload = (ev) => set('logo', ev.target?.result as string)
     reader.readAsDataURL(file)

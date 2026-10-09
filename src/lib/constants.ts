@@ -4,6 +4,15 @@
  */
 export const LOGIN_PATH = import.meta.env.VITE_LOGIN_PATH || ''
 
+/**
+ * Hard ceiling for every image upload in the app, in KB.
+ *
+ * One limit, shared by every image input — photo, signature, logo, banner and
+ * inline editor images alike.
+ */
+export const MAX_IMAGE_SIZE_KB = 200
+export const MAX_IMAGE_BYTES = MAX_IMAGE_SIZE_KB * 1024
+
 export const BLOOD_GROUPS = [
   'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
 ]

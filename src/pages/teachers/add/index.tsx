@@ -14,6 +14,7 @@ import { FormField } from '@/components/ui/FormField'
 import { usePermission } from '@/hooks/usePermission'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAuditUser } from '@/lib/auditUser'
+import { validateImageSize } from '@/lib/imageUpload'
 
 const INPUT_BASE = 'w-full py-[0.625rem] px-3 rounded-[0.5rem] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none transition-colors duration-200 box-border'
 const inputNormal = `${INPUT_BASE} border border-[var(--border)] focus:border-[var(--brand)]`
@@ -139,7 +140,8 @@ export default function AddTeacherPage() {
     const file = e.target.files?.[0]
     if (!file) return
     setPhotoErr('')
-    if (file.size > 2 * 1024 * 1024) { setPhotoErr(isBn ? 'ছবির সাইজ সর্বোচ্চ ২ MB' : 'Photo must be under 2MB'); return }
+    const sizeErr = validateImageSize(file, isBn)
+    if (sizeErr) { setPhotoErr(sizeErr); return }
     const reader = new FileReader()
     reader.onload = (ev) => setField('photo', ev.target?.result as string)
     reader.readAsDataURL(file)
@@ -148,7 +150,8 @@ export default function AddTeacherPage() {
   const handleSignature = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 1 * 1024 * 1024) { alert(isBn ? 'সিগনেচারের সাইজ সর্বোচ্চ ১ MB' : 'Signature must be under 1MB'); return }
+    const sizeErr = validateImageSize(file, isBn)
+    if (sizeErr) { alert(sizeErr); return }
     const reader = new FileReader()
     reader.onload = (ev) => setField('signature', ev.target?.result as string)
     reader.readAsDataURL(file)

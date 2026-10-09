@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react'
+import { validateImageSize } from '@/lib/imageUpload'
 import {
   Building2,
   Phone,
@@ -133,8 +134,9 @@ function BannerPositionEditor({ banner, position, onPositionChange, onUpload, on
                 onChange={(e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
-                  if (file.size > 5 * 1024 * 1024) {
-                    alert(isBn ? 'ব্যানারের সাইজ সর্বোচ্চ ৫ MB' : 'Banner must be under 5MB')
+                  const sizeErr = validateImageSize(file, isBn)
+                  if (sizeErr) {
+                    alert(sizeErr)
                     return
                   }
                   const reader = new FileReader()
@@ -174,8 +176,9 @@ function BannerPositionEditor({ banner, position, onPositionChange, onUpload, on
               onChange={(e) => {
                 const file = e.target.files?.[0]
                 if (!file) return
-                if (file.size > 5 * 1024 * 1024) {
-                  alert(isBn ? 'ব্যানারের সাইজ সর্বোচ্চ ৫ MB' : 'Banner must be under 5MB')
+                const sizeErr = validateImageSize(file, isBn)
+                if (sizeErr) {
+                  alert(sizeErr)
                   return
                 }
                 const reader = new FileReader()
@@ -470,8 +473,9 @@ export default React.memo(function InstitutionTab({
                     onChange={(e) => {
                       const file = e.target.files?.[0]
                       if (!file) return
-                      if (file.size > 2 * 1024 * 1024) {
-                        alert(isBn ? 'লোগোর সাইজ সর্বোচ্চ ২ MB' : 'Logo must be under 2MB')
+                      const sizeErr = validateImageSize(file, isBn)
+                      if (sizeErr) {
+                        alert(sizeErr)
                         return
                       }
                       const reader = new FileReader()

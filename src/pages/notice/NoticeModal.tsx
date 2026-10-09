@@ -6,6 +6,8 @@ import StarterKit from '@tiptap/starter-kit'
 import UnderlineExt from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import LinkExt from '@tiptap/extension-link'
+import { validateImageSize } from '@/lib/imageUpload'
+import { MAX_IMAGE_SIZE_KB } from '@/lib/constants'
 import ImageExt from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Table } from '@tiptap/extension-table'
@@ -161,8 +163,9 @@ export function NoticeModal({ item, categories, onSave, onClose, bn }: Props) {
   const insertImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) {
-      alert(bn ? 'ছবি ২ এমবির বেশি। সর্বোচ্চ সাইজ ২ এমবি।' : 'Image exceeds 2MB max size.')
+    const sizeErr = validateImageSize(file, bn)
+    if (sizeErr) {
+      alert(sizeErr)
       e.target.value = ''
       return
     }
@@ -177,8 +180,9 @@ export function NoticeModal({ item, categories, onSave, onClose, bn }: Props) {
   const insertImageBn = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) {
-      alert(bn ? 'ছবি ২ এমবির বেশি। সর্বোচ্চ সাইজ ২ এমবি।' : 'Image exceeds 2MB max size.')
+    const sizeErr = validateImageSize(file, bn)
+    if (sizeErr) {
+      alert(sizeErr)
       e.target.value = ''
       return
     }
@@ -193,8 +197,9 @@ export function NoticeModal({ item, categories, onSave, onClose, bn }: Props) {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 2 * 1024 * 1024) {
-      alert(bn ? 'লোগো ২ এমবির বেশি। সর্বোচ্চ সাইজ ২ এমবি।' : 'Logo exceeds 2MB max size.')
+    const sizeErr = validateImageSize(file, bn)
+    if (sizeErr) {
+      alert(sizeErr)
       e.target.value = ''
       return
     }
@@ -262,7 +267,7 @@ export function NoticeModal({ item, categories, onSave, onClose, bn }: Props) {
             <ToolbarBtn onClick={insertLinkFn} title={bn ? 'লিংক' : 'Insert link'}>
               <Link2 size={14} />
             </ToolbarBtn>
-            <ToolbarBtn onClick={() => document.getElementById(imgInputId)?.click()} title={bn ? 'ছবি (সর্বোচ্চ ২ এমবি)' : 'Insert image (max 2MB)'}>
+            <ToolbarBtn onClick={() => document.getElementById(imgInputId)?.click()} title={bn ? `ছবি (সর্বোচ্চ ${MAX_IMAGE_SIZE_KB} KB)` : `Insert image (max ${MAX_IMAGE_SIZE_KB}KB)`}>
               <ImageIcon size={14} />
             </ToolbarBtn>
             <input id={imgInputId} type="file" accept="image/*" className="hidden" onChange={insertImageFn} />

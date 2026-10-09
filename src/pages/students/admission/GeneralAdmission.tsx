@@ -14,6 +14,7 @@ import QRCode from 'qrcode'
 import { RELIGION_OPTIONS, DISTRICT_OPTIONS } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
 import { compressImage } from '@/lib/compressImage'
+import { validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
 type FormData = Omit<StudentAdmission, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'approvedAt'>
@@ -142,7 +143,8 @@ export default function GeneralAdmission() {
     const file = e.target.files?.[0]
     if (!file) return
     setPhotoErr('')
-    if (file.size > 2 * 1024 * 1024) { setPhotoErr(isBn ? 'ছবির সাইজ সর্বোচ্চ ২ MB' : 'Photo must be under 2MB'); return }
+    const sizeErr = validateImageSize(file, isBn)
+    if (sizeErr) { setPhotoErr(sizeErr); return }
     try { set('photo', await compressImage(file, 0.7)) } catch { setPhotoErr(isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image') }
   }
 

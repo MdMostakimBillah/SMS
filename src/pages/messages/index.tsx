@@ -6,6 +6,8 @@ import StarterKit from '@tiptap/starter-kit'
 import UnderlineExt from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Placeholder from '@tiptap/extension-placeholder'
+import { validateImageSize } from '@/lib/imageUpload'
+import { MAX_IMAGE_SIZE_KB } from '@/lib/constants'
 import LinkExt from '@tiptap/extension-link'
 import ImageExt from '@tiptap/extension-image'
 import { useBn } from '@/hooks/useBn'
@@ -545,8 +547,9 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   const handleImageInsert = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > MAX_FILE_SIZE) {
-      alert(bn ? 'ছবি ৫ এমবির বেশি। সর্বোচ্চ সাইজ ৫ এমবি।' : 'Image exceeds 5MB max size.')
+    const sizeErr = validateImageSize(file, bn)
+    if (sizeErr) {
+      alert(sizeErr)
       e.target.value = ''
       return
     }
@@ -645,7 +648,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
             ))}
           </div>
         )}
-        <button type="button" onClick={() => imageInputRef.current?.click()} className={`p-${compact ? '1.5' : '2'} rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]`} title={bn ? 'ছবি (সর্বোচ্চ ৫ এমবি)' : 'Insert photo (max 5MB)'}>
+        <button type="button" onClick={() => imageInputRef.current?.click()} className={`p-${compact ? '1.5' : '2'} rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]`} title={bn ? `ছবি (সর্বোচ্চ ${MAX_IMAGE_SIZE_KB} KB)` : `Insert photo (max ${MAX_IMAGE_SIZE_KB}KB)`}>
           <Image size={compact ? 15 : 16} />
         </button>
         <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageInsert} />

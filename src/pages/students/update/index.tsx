@@ -8,6 +8,7 @@ import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { compressImage } from '@/lib/compressImage'
+import { validateImageSize } from '@/lib/imageUpload'
 
 interface FP {
   l: string
@@ -119,8 +120,9 @@ export default function UpdateStudentPage() {
       const file = e.target.files?.[0]
       if (!file) return
       setPhotoErr('')
-      if (file.size > 2 * 1024 * 1024) {
-        setPhotoErr(isBn ? 'ছবি ২ MB এর বেশি নয়' : 'Max 2MB')
+      const sizeErr = validateImageSize(file, isBn)
+      if (sizeErr) {
+        setPhotoErr(sizeErr)
         return
       }
       try {

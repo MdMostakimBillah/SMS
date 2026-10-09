@@ -23,6 +23,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImage } from '@/lib/compressImage'
+import { validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
 type Op = 'salary' | 'phone' | 'photo' | 'department' | 'designation' | 'inTime' | 'outTime'
@@ -112,8 +113,9 @@ export default function TeacherBulkUpdatePage() {
 
   const handlePhotoUpload = useCallback(
     async (id: string, file: File) => {
-      if (file.size > 2 * 1024 * 1024) {
-        alert(isBn ? 'ছবি ২ এমবি এর বেশি হতে পারবে না' : 'Image must be under 2MB')
+      const sizeErr = validateImageSize(file, isBn)
+      if (sizeErr) {
+        alert(sizeErr)
         return
       }
       try {

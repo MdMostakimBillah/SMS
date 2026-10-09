@@ -28,6 +28,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { logger } from '@/lib/logger'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImage } from '@/lib/compressImage'
+import { validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
 type Op = 'photo' | 'roll' | 'class' | 'section' | 'bloodGroup' | 'religion' | 'academicYear'
@@ -163,8 +164,9 @@ export default function BulkUpdatePage() {
 
   const handlePhotoUpload = useCallback(
     async (id: string, file: File) => {
-      if (file.size > 2 * 1024 * 1024) {
-        alert(isBn ? 'ছবি ২ এমবি এর বেশি হতে পারবে না' : 'Photo must be under 2MB')
+      const sizeErr = validateImageSize(file, isBn)
+      if (sizeErr) {
+        alert(sizeErr)
         return
       }
 

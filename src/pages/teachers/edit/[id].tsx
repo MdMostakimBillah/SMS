@@ -8,6 +8,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { TeacherStatus } from '@/pages/teachers/types'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
+import { validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
 // ─── FormField (outside parent component — fixes input focus loss) ───────────
@@ -201,8 +202,9 @@ export default function EditTeacherPage() {
     const file = e.target.files?.[0]
     if (!file) return
     setPhotoErr('')
-    if (file.size > 2 * 1024 * 1024) {
-      setPhotoErr(isBn ? 'ছবির সাইজ সর্বোচ্চ ২ MB' : 'Photo must be under 2MB')
+    const sizeErr = validateImageSize(file, isBn)
+    if (sizeErr) {
+      setPhotoErr(sizeErr)
       return
     }
     const reader = new FileReader()
@@ -213,8 +215,9 @@ export default function EditTeacherPage() {
   const handleSignature = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 1 * 1024 * 1024) {
-      alert(isBn ? 'সিগনেচারের সাইজ সর্বোচ্চ ১ MB' : 'Signature must be under 1MB')
+    const sizeErr = validateImageSize(file, isBn)
+    if (sizeErr) {
+      alert(sizeErr)
       return
     }
     const reader = new FileReader()
