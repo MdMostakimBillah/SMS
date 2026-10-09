@@ -182,6 +182,13 @@ header.glass:hover {
   --glass-bg: rgba(255, 255, 255, 0.95);
   --glass-border: rgba(232, 236, 244, 0.9);
   --glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  /* Inverted surface for the one highlighted quick-access card on each page */
+  --highlight-bg: #1a1d2e;
+  --highlight-fg: #f5f6fa;
+  --highlight-fg-muted: rgba(245, 246, 250, 0.6);
+  --highlight-shadow: 0 8px 24px rgba(26, 29, 46, 0.16);
+  --highlight-shadow-hover: 0 14px 36px rgba(26, 29, 46, 0.24);
 }
 
 [data-theme='dark'] {
@@ -230,6 +237,13 @@ header.glass:hover {
   --glass-bg: rgba(26, 26, 26, 0.95);
   --glass-border: rgba(42, 42, 42, 0.9);
   --glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+
+  /* Inverted surface for the one highlighted quick-access card on each page */
+  --highlight-bg: #f2f3f5;
+  --highlight-fg: #141414;
+  --highlight-fg-muted: rgba(20, 20, 20, 0.55);
+  --highlight-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --highlight-shadow-hover: 0 14px 36px rgba(0, 0, 0, 0.6);
 }
 
 [data-theme='light'] {
@@ -277,6 +291,13 @@ header.glass:hover {
   --glass-bg: rgba(255, 255, 255, 0.95);
   --glass-border: rgba(232, 236, 244, 0.9);
   --glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+
+  /* Inverted surface for the one highlighted quick-access card on each page */
+  --highlight-bg: #1a1d2e;
+  --highlight-fg: #f5f6fa;
+  --highlight-fg-muted: rgba(245, 246, 250, 0.6);
+  --highlight-shadow: 0 8px 24px rgba(26, 29, 46, 0.16);
+  --highlight-shadow-hover: 0 14px 36px rgba(26, 29, 46, 0.24);
 }
 
 * {

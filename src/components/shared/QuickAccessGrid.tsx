@@ -190,6 +190,13 @@ export function QuickAccessGrid({
             ? fullColumns
             : spanFor(variant, isMobile, isTablet)
 
+        // The accent card drops `glass` for a solid inverted surface, so exactly
+        // one tile on every page reads as highlighted.
+        const restShadow = isAccent ? 'var(--highlight-shadow)' : 'none'
+        const hoverShadow = isAccent ? 'var(--highlight-shadow-hover)' : '0 8px 32px rgba(0,0,0,0.12)'
+        const labelColor = isAccent ? 'var(--highlight-fg-muted)' : 'var(--text-secondary)'
+        const iconColor = isAccent ? 'var(--highlight-fg-muted)' : item.iconColor
+
         return (
           <div
             key={item.id}
@@ -209,26 +216,27 @@ export function QuickAccessGrid({
               minHeight: isMobile
                 ? variant === 'hero' || variant === 'action' ? '9.5rem' : '7.5rem'
                 : variant === 'hero' || variant === 'action' ? '11.5rem' : '8.5rem',
+              background: isAccent ? 'var(--highlight-bg)' : undefined,
+              borderColor: isAccent ? 'transparent' : isDragOver ? 'var(--brand)' : undefined,
               opacity: isDragging ? 0.5 : 1,
               transform: isDragOver ? 'translateY(-2px)' : undefined,
-              boxShadow: isDragOver ? '0 8px 32px rgba(0,0,0,0.12)' : 'none',
-              borderColor: isDragOver ? 'var(--brand)' : undefined,
+              boxShadow: isDragOver ? hoverShadow : restShadow,
             }}
             onMouseEnter={(e) => {
               if (draggedIdx !== null) return
               e.currentTarget.style.transform = 'translateY(-2px)'
-              e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)'
+              e.currentTarget.style.boxShadow = hoverShadow
             }}
             onMouseLeave={(e) => {
               if (draggedIdx !== null) return
               e.currentTarget.style.transform = 'translateY(0)'
-              e.currentTarget.style.boxShadow = 'none'
+              e.currentTarget.style.boxShadow = restShadow
             }}
           >
             {/* Header: icon + label, with the card's affordance on the right */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between' }}>
-              <div style={labelStyle}>
-                <IconComp size={14} style={{ color: item.iconColor, flexShrink: 0 }} />
+              <div style={{ ...labelStyle, color: labelColor }}>
+                <IconComp size={14} style={{ color: iconColor, flexShrink: 0 }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {isAccent ? (isBn ? 'দ্রুত অ্যাক্সেস' : 'Quick action') : isBn ? item.titleBn : item.titleEn}
                 </span>
@@ -246,29 +254,17 @@ export function QuickAccessGrid({
                     style={{
                       fontSize: isMobile ? '0.875rem' : '1rem',
                       fontWeight: 600,
-                      color: 'var(--text-primary)',
+                      color: 'var(--highlight-fg)',
                       lineHeight: 1.3,
                     }}
                   >
                     {isBn ? item.titleBn : item.titleEn}
                   </div>
-                  <div style={{ ...captionStyle, marginTop: '0.25rem' }}>{isBn ? item.statBn : item.statEn}</div>
+                  <div style={{ ...captionStyle, color: 'var(--highlight-fg-muted)', marginTop: '0.25rem' }}>
+                    {isBn ? item.statBn : item.statEn}
+                  </div>
                 </div>
-                <div
-                  style={{
-                    width: '1.75rem',
-                    height: '1.75rem',
-                    borderRadius: '0.5rem',
-                    border: '1px solid var(--border-2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  <Plus size={15} />
-                </div>
+                <Plus size={isMobile ? 18 : 20} style={{ color: 'var(--highlight-fg)', flexShrink: 0 }} />
               </div>
             ) : variant === 'hero' ? (
               <div
