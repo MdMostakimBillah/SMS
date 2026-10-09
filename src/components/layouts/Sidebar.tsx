@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
-import { BrandLogo } from '@/components/ui/BrandLogo'
+import { LogoTile } from '@/components/ui/LogoTile'
 import {
   GraduationCap,
   LayoutDashboard,
@@ -91,6 +91,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   const toggleSidebarPosition = useAppStore((s) => s.toggleSidebarPosition)
   const { isMobile, width } = useWindowSize()
   const location = useLocation()
+  const navigate = useNavigate()
   const institution = useClassStore((s) => s.institution)
   const switchSession = useClassStore((s) => s.switchSession)
   const addSession = useClassStore((s) => s.addSession)
@@ -418,6 +419,22 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
     setHoveredItem(null)
   }, [location.pathname])
 
+  // Brand header (logo + name) — unified for every role and for collapsed/expanded.
+  // Mirrors the previous per-role branches: super admins (not viewing) get the
+  // generic EduTech brand; everyone else gets the institution's branding.
+  const showInstLogo =
+    !!institution.logo &&
+    (user?.role === 'admin' || isViewing || (!isSuperAdmin && !!institution.name))
+  const brandName =
+    isSuperAdmin && !isViewing
+      ? 'EduTech'
+      : institution.brandName || institution.name || 'EduTech'
+  const brandSub =
+    isSuperAdmin && !isViewing
+      ? 'School Management'
+      : institution.nameBn || institution.name || 'School Management'
+  const goDashboard = () => navigate(`${navBase}/dashboard`)
+
   return (
     <>
       <aside
@@ -433,57 +450,32 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               collapsed ? 'px-0 py-3' : 'px-3.5 py-3'
             }`}
           >
-            {/* Institution admin: show institution info directly */}
-            {user?.role === 'admin' && !collapsed && (
-              <div className={`flex items-center gap-2.5`}>
-                {institution.logo ? (
-                  <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
-                    <BrandLogo size={22} />
-                  </div>
-                )}
+            {/* Brand: logo + name — click to open the dashboard */}
+            <button
+              type="button"
+              onClick={goDashboard}
+              title={isBn ? 'ড্যাশবোর্ডে যান' : 'Go to dashboard'}
+              aria-label={isBn ? 'ড্যাশবোর্ডে যান' : 'Go to dashboard'}
+              className={`flex w-full items-center gap-2.5 border-0 bg-transparent p-0 m-0 text-left rounded-lg cursor-pointer ${
+                collapsed ? 'justify-center' : ''
+              }`}
+            >
+              <LogoTile
+                src={showInstLogo ? institution.logo : null}
+                alt={brandName}
+                className={collapsed ? 'w-9 h-9' : 'w-10 h-10'}
+              />
+              {!collapsed && (
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-[var(--text-primary)] leading-none truncate">
-                    {institution.brandName || institution.name || 'EduTech'}
+                    {brandName}
                   </div>
                   <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5 truncate">
-                    {institution.nameBn || institution.name || 'School Management'}
+                    {brandSub}
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* Non-admin: show institution name for teacher/staff, or EduTech for super admin */}
-            {user?.role !== 'admin' && (
-              <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center' : ''}`}>
-                {(isViewing || (institution.name && user?.role !== 'super_admin')) && institution.logo && !collapsed ? (
-                  <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
-                    <BrandLogo size={22} />
-                  </div>
-                )}
-                {!collapsed && (
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-[var(--text-primary)] leading-none">
-                      {isViewing
-                        ? (institution.brandName || institution.name || 'EduTech')
-                        : (user?.role !== 'super_admin' && institution.name
-                            ? (institution.brandName || institution.name)
-                            : 'EduTech')}
-                    </div>
-                    <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
-                      {isViewing
-                        ? (institution.nameBn || institution.name || 'School Management')
-                        : (user?.role !== 'super_admin' && institution.name
-                            ? (institution.nameBn || institution.name)
-                            : 'School Management')}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </button>
 
             {/* Session Switcher — show for institution admin or when super admin viewing */}
             {!collapsed && (user?.role === 'admin' || isViewing) && (
@@ -551,19 +543,6 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             </div>
           )}
         </div>
-
-        {/* Collapsed Logo */}
-        {collapsed && (
-          <div className="flex flex-col items-center py-3 border-b border-[var(--border)]">
-            {((user?.role === 'admin' || (user?.role !== 'super_admin' && institution.name)) && institution.logo) ? (
-              <img src={institution.logo} alt="Logo" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-8 h-8 rounded-lg object-cover" />
-            ) : (
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden" style={{ background: 'var(--bg-secondary)' }}>
-                <BrandLogo size={22} />
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Nav */}
         <nav className={`flex-1 overflow-y-auto overflow-x-auto ${collapsed ? 'px-1 py-2.5' : 'px-2 py-2.5'}`}>

@@ -71,6 +71,16 @@ button:focus-visible {
   box-shadow: var(--glass-shadow-hover);
 }
 
+/* Layout chrome — sidebar (aside) and topbar (header) must stay static on
+   hover: no background/border/shadow shift (it reads as an opacity change
+   across the whole panel). Higher specificity than .glass:hover above. */
+aside.glass:hover,
+header.glass:hover {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
 /* Glass tab buttons */
 .glass-tab {
   background: var(--glass-bg);
