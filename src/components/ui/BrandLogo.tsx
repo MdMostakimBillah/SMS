@@ -1,87 +1,252 @@
-import { useId } from 'react'
-import { BRAND_LOGO_VIEWBOX, BRAND_LOGO_STROKES } from '@/lib/brandLogo'
+import { Fragment, useId } from 'react'
+import { BRAND_LOGO_SHAPES, BRAND_LOGO_VIEWBOX } from '@/lib/brandLogo'
 
 interface Props {
   /** Rendered width/height in px (or any CSS size string). */
   size?: number | string
   className?: string
-  /** Disable the draw-on animation (e.g. for reduced-motion contexts). */
+  /** Disable the animation and render the settled (filled) artwork only. */
   static?: boolean
   title?: string
 }
 
+const CB = 'cubic-bezier(.65,0,.35,1)'
+
 /**
  * Animated EduTech brand logo.
  *
- * Draws each shape's stroke outline, then fills it in. The whole sequence
- * plays once on mount and replays every 120s. Honors `prefers-reduced-motion`
- * (renders the settled/filled state immediately).
+ * 30s loop, staggered per shape: each shape's outline draws on, its fill fades
+ * in, everything holds, then the sequence plays in reverse (fill fades out,
+ * outline undraws) before replaying. The stagger order reads top → chev → bub →
+ * d2 → d1 so the logo dismantles and reassembles rather than blinking off.
  *
- * Path geometry lives in `@/lib/brandLogo` so PDF/print code can reuse it
- * without pulling in React.
+ * Honors `prefers-reduced-motion` (renders the filled state, no strokes).
+ * Geometry lives in `@/lib/brandLogo` so PDF/print code reuses it without React.
  */
 export function BrandLogo({ size = 32, className, static: isStatic = false, title }: Props) {
-  const uid = useId().replace(/[^a-zA-Z0-9]/g, '')
-  const rid = (s: string) => `${s}-${uid}`
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '') || 'bl0'
+  /** Unique suffix for element ids and @keyframes names alike. */
+  const unq = (s: string) => `${s}_${uid}`
+  const root = `bl_${uid}`
 
-  // The two indigo pillar shapes used for the draw-on stroke overlay.
-  const strokeShapes = [BRAND_LOGO_STROKES[0], BRAND_LOGO_STROKES[1]]
+  // Scope every selector under this instance's root class so multiple logos
+  // on a page can't clobber each other's keyframes or animation rules.
+  const sc = (sel: string) =>
+    sel
+      .split(',')
+      .map((s) => `.${root} ${s.trim()}`)
+      .join(', ')
+
+  const style = isStatic
+    ? null
+    : `
+      ${sc('.ln, .rl')} { fill: none; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+
+      @keyframes ${unq('ln_d1')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        16.3333% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        21.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        23.6667% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        25.6667% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        68.3333% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        70% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        75.3333% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_d1')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        20.6667% { opacity: 0; animation-timing-function: ease; }
+        23.3333% { opacity: 1; }
+        68.3333% { opacity: 1; animation-timing-function: ease; }
+        71% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .d1 .ln { animation: ${unq('ln_d1')} 30s linear infinite; }
+      .${root} .d1 .body { animation: ${unq('bd_d1')} 30s linear infinite; }
+      @keyframes ${unq('rl_d1')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        21% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        23.3333% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        23.6667% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        25.6667% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        68.3333% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        69.3333% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        70.6667% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      .${root} .d1 .rl { animation: ${unq('rl_d1')} 30s linear infinite; }
+
+      @keyframes ${unq('ln_d2')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        21% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        26.3333% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        28.3333% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        30.3333% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        63.6667% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        65.3333% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        70.6667% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_d2')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        25.3333% { opacity: 0; animation-timing-function: ease; }
+        28% { opacity: 1; }
+        63.6667% { opacity: 1; animation-timing-function: ease; }
+        66.3333% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .d2 .ln { animation: ${unq('ln_d2')} 30s linear infinite; }
+      .${root} .d2 .body { animation: ${unq('bd_d2')} 30s linear infinite; }
+      @keyframes ${unq('rl_d2')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        25.6667% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        28% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        28.3333% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        30.3333% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        63.6667% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        64.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        66% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      .${root} .d2 .rl { animation: ${unq('rl_d2')} 30s linear infinite; }
+
+      @keyframes ${unq('ln_top')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        0.6667% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        6.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        9% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        11% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        83% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        85% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        91% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_top')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        6% { opacity: 0; animation-timing-function: ease; }
+        8.6667% { opacity: 1; }
+        83% { opacity: 1; animation-timing-function: ease; }
+        85.6667% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .top .ln { animation: ${unq('ln_top')} 30s linear infinite; }
+      .${root} .top .body { animation: ${unq('bd_top')} 30s linear infinite; }
+
+      @keyframes ${unq('ln_chev')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        7% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        12% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        14% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        16% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        78% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        79.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        84.6667% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_chev')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        11% { opacity: 0; animation-timing-function: ease; }
+        13.6667% { opacity: 1; }
+        78% { opacity: 1; animation-timing-function: ease; }
+        80.6667% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .chev .ln { animation: ${unq('ln_chev')} 30s linear infinite; }
+      .${root} .chev .body { animation: ${unq('bd_chev')} 30s linear infinite; }
+
+      @keyframes ${unq('ln_bub')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        11.6667% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        16% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        18% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        20% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        74% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        75.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        80% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_bub')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        15% { opacity: 0; animation-timing-function: ease; }
+        17.6667% { opacity: 1; }
+        74% { opacity: 1; animation-timing-function: ease; }
+        76.6667% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .bub .ln { animation: ${unq('ln_bub')} 30s linear infinite; }
+      .${root} .bub .body { animation: ${unq('bd_bub')} 30s linear infinite; }
+      @keyframes ${unq('rl_bub')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        15.3333% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        17.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        18% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        20% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        74% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        75% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        76.3333% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      .${root} .bub .rl { animation: ${unq('rl_bub')} 30s linear infinite; }
+
+      @keyframes ${unq('jump')} {
+        0% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in-out; }
+        29.3333% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in-out; }
+        30.2% { transform: translateY(1px) scale(1.18, .8); animation-timing-function: ease-in-out; }
+        31.2667% { transform: translateY(-7px) scale(.86, 1.25); animation-timing-function: ease-in-out; }
+        32.3667% { transform: translateY(0) scale(1.1, .9); animation-timing-function: ease-in-out; }
+        33.1667% { transform: translateY(-1px) scale(.97, 1.04); animation-timing-function: ease-in-out; }
+        33.6667% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in-out; }
+        100% { transform: translateY(0) scale(1, 1); }
+      }
+      .${root} .life { transform-box: view-box; animation: ${unq('jump')} 30s linear infinite; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .${root} * { animation: none !important; }
+        .${root} .ln, .${root} .rl { stroke-opacity: 0; }
+        .${root} .body { opacity: 1; }
+      }
+    `
 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
+      xmlnsXlink="http://www.w3.org/1999/xlink"
       viewBox={BRAND_LOGO_VIEWBOX}
       width={size}
       height={size}
-      className={className}
+      className={className ? `${className} ${root}` : root}
       role="img"
       aria-label={title || 'EduTech logo'}
     >
       {title ? <title>{title}</title> : null}
+      {style ? <style>{style}</style> : null}
 
-      {/* Settled (filled) artwork — always present, animated strokes overlay on top */}
-      <g className={rid('fills')}>
-        {/* indigo: two pillars + cap */}
-        <path d="M 302.12 243.69 L 301.81 263.60 C 301.54 280.84, 301.24 284.04, 299.56 287.50 L 290.53 314.00 C 290.79 314.00, 291.00 316.94, 291.00 320.53 C 291.00 326.76, 290.84 327.20, 287.45 330.18 C 282.76 334.30, 280.73 338.43, 280.84 343.67 C 280.95 349.39, 282.99 353.03, 288.04 356.53 C 299.83 364.70, 314.97 355.68, 313.77 341.21 C 313.33 335.99, 312.96 335.28, 308.26 330.97 L 303.22 326.33 303.71 314.49 C 304.17 303.22, 304.34 302.46, 307.13 298.99 C 313.53 291.02, 314.36 286.93, 314.96 260.57 L 315.50 236.64 Z M 302.05 340.09 C 304.83 345.30, 299.24 350.70, 294.37 347.50 C 291.77 345.80, 291.13 341.27, 293.20 339.20 C 295.24 337.16, 300.78 337.72, 302.05 340.09 Z" fill="#6366f1" fillRule="evenodd" />
-        <path d="M 327.75 230.04 C 328.73 230.01, 329.00 237.53, 329.00 264.43 L 329.00 298.86 326.07 300.95 C 319.21 305.83, 317.13 314.41, 320.97 321.94 C 326.22 332.24, 343.19 333.30, 349.04 323.70 C 353.73 316.02, 352.79 308.39, 346.41 302.27 L 342.00 298.03 342.00 259.70 L 342.00 221.36 Z M 339.48 310.63 C 341.82 312.97, 341.00 317.15, 337.87 318.91 C 332.58 321.86, 327.29 314.85, 331.57 310.57 C 333.61 308.54, 337.42 308.56, 339.48 310.63 Z" fill="#6366f1" fillRule="evenodd" />
-        <path d="M 212.5 146.64 C 122.94 196.65, 121.73 197.36, 122.20 199.75 C 122.36 200.60, 130.38 205.87, 140 211.47 C 149.63 217.07, 167.63 227.64, 180 234.97 C 192.38 242.29, 204.08 249.16, 206 250.25 C 207.93 251.33, 209.95 252.57, 210.5 253 C 211.05 253.43, 213.3 254.79, 215.5 256.01 C 217.7 257.24, 224.51 261.14, 230.62 264.68 C 248.44 274.99, 250.60 274.82, 273.20 261.23 C 280.28 256.98, 288.41 252.12, 291.28 250.44 C 294.15 248.76, 297.76 246.56, 299.31 245.54 L 302.12 243.69 L 315.5 236.64 L 321 233.36 L 342 221.36 L 350.65 216.43 C 355.41 213.72, 361.59 210.19, 364.40 208.59 C 374.68 202.73, 377.13 200.90, 376.81 199.31 C 376.48 197.63, 370.89 194.47, 265.61 136.33 C 256.32 131.20, 248.45 127.02, 248.11 127.05 C 247.78 127.08, 231.75 135.90, 212.5 146.64 Z" fill="#6366f1" />
-        {/* navy: chevron + bubble */}
-        <path d="M 161.23 261.16 L 161.50 287.33 168.00 288.64 C 187.95 292.66, 217.84 308.43, 234.21 323.57 C 236.24 325.46, 238.43 327.00, 239.07 327.00 C 239.70 327.00, 242.69 324.74, 245.72 321.97 C 251.86 316.37, 262.67 308.10, 271.00 302.65 C 290.29 290.04, 292.52 287.24, 293.60 274.22 C 294.34 265.39, 293.68 261.00, 291.61 261.00 C 290.86 261.00, 286.04 263.54, 280.88 266.65 C 251.49 284.35, 248.20 284.76, 228.50 273.11 C 223.00 269.85, 207.48 260.77, 194.00 252.93 C 180.53 245.08, 168.31 237.84, 166.85 236.83 C 160.87 232.71, 160.94 232.41, 161.23 261.16 Z" fill="#30329b" />
-        <path d="M 299.56 287.50 C 297.19 292.40, 286.39 303.11, 278.41 308.47 C 268.77 314.95, 263.83 319.02, 257.82 325.44 C 249.99 333.80, 249.11 334.66, 244.04 338.94 C 239.67 342.63, 239.58 342.83, 239.20 349.60 C 238.76 357.81, 240.95 362.01, 247.47 365.37 C 262.26 373.01, 277.16 358.28, 269.87 343.24 C 268.70 340.82, 267.13 338.60, 266.37 338.31 C 263.84 337.34, 264.96 334.66, 269.75 330.24 C 274.54 325.81, 289.66 314.00, 290.53 314.00 Z M 258.36 346.51 C 263.61 351.76, 258.50 358.48, 251.93 354.96 C 249.20 353.50, 249.37 348.55, 252.22 346.56 C 255.01 344.61, 256.45 344.59, 258.36 346.51 Z" fill="#30329b" fillRule="evenodd" />
-      </g>
+      <defs>
+        {BRAND_LOGO_SHAPES.map((s) => (
+          <Fragment key={s.key}>
+            {/* stroke outline + fill body may share geometry (cap/chevron) */}
+            <path id={unq(`f_${s.key}`)} d={s.fill} fillRule={s.fillRule} />
+            <path id={unq(`s_${s.key}`)} d={s.stroke} pathLength={1} />
+            {s.ring ? <path id={unq(`r_${s.key}`)} d={s.ring} pathLength={1} /> : null}
+          </Fragment>
+        ))}
+      </defs>
 
-      {!isStatic && (
-        <>
-          <style>{`
-            @keyframes ${rid('ln')} { 0% { stroke-dashoffset: 1; stroke-opacity: 1; } 5% { stroke-dashoffset: 0; stroke-opacity: 1; } 8%, 85% { stroke-dashoffset: 0; stroke-opacity: 0; } 92% { stroke-dashoffset: 0; stroke-opacity: 1; } 100% { stroke-dashoffset: 1; stroke-opacity: 1; } }
-            @keyframes ${rid('fade')} { 0%, 6% { opacity: 0; } 8%, 85% { opacity: 1; } 100% { opacity: 0; } }
-            @keyframes ${rid('jump')} { 0%, 8.5% { transform: translateY(0) scale(1,1); } 8.8% { transform: translateY(1px) scale(1.18,.8); } 9.1% { transform: translateY(-7px) scale(.86,1.25); } 9.4% { transform: translateY(0) scale(1.1,.9); } 9.7% { transform: translateY(-1px) scale(.97,1.04); } 10%, 85% { transform: translateY(0) scale(1,1); } 92% { transform: translateY(0) scale(1.04,.96); } 100% { transform: translateY(0) scale(1,1); } }
-            .${rid('fills')} { animation: ${rid('fade')} 120s cubic-bezier(.65,0,.35,1) infinite; }
-            .${rid('ln')} { fill: none; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; animation: ${rid('ln')} 120s cubic-bezier(.65,0,.35,1) infinite; }
-            .${rid('rl')} { fill: none; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; animation: ${rid('ln')} 120s cubic-bezier(.65,0,.35,1) infinite; }
-            .${rid('jump-wrap')} { transform-box: view-box; animation: ${rid('jump')} 120s cubic-bezier(.65,0,.35,1) infinite; }
-            @media (prefers-reduced-motion: reduce) { .${rid('ln')}, .${rid('rl')} { animation: none !important; stroke-opacity: 0; } .${rid('fills')} { animation: none !important; opacity: 1; } }
-          `}</style>
-          {/* Stroke overlays that draw on before the fills appear */}
-          <g opacity="0.9">
-            {strokeShapes.map((s) => (
-              <path
-                key={s.id}
-                className={`${rid('ln')} ${rid(s.id + '-ln')}`}
-                d={s.d}
-                pathLength={1}
-                fill="none"
-                stroke={s.color}
-                strokeWidth={6}
-                strokeLinejoin="round"
-              />
-            ))}
-            <path className={`${rid('ln')} ${rid('top-ln')}`} d="M 212.5 146.64 C 122.94 196.65, 121.73 197.36, 122.20 199.75 C 122.36 200.60, 130.38 205.87, 140 211.47 C 149.63 217.07, 167.63 227.64, 180 234.97 C 192.38 242.29, 204.08 249.16, 206 250.25 C 207.93 251.33, 209.95 252.57, 210.5 253 C 211.05 253.43, 213.3 254.79, 215.5 256.01 C 217.7 257.24, 224.51 261.14, 230.62 264.68 C 248.44 274.99, 250.60 274.82, 273.20 261.23 C 280.28 256.98, 288.41 252.12, 291.28 250.44 C 294.15 248.76, 297.76 246.56, 299.31 245.54 L 302.12 243.69 L 315.5 236.64 L 321 233.36 L 342 221.36 L 350.65 216.43 C 355.41 213.72, 361.59 210.19, 364.40 208.59 C 374.68 202.73, 377.13 200.90, 376.81 199.31 C 376.48 197.63, 370.89 194.47, 265.61 136.33 C 256.32 131.20, 248.45 127.02, 248.11 127.05 C 247.78 127.08, 231.75 135.90, 212.5 146.64 Z" pathLength={1} fill="none" stroke="#6366f1" strokeWidth={6} strokeLinejoin="round" />
-            <path className={`${rid('ln')} ${rid('chev-ln')}`} d="M 161.23 261.16 L 161.50 287.33 168.00 288.64 C 187.95 292.66, 217.84 308.43, 234.21 323.57 C 236.24 325.46, 238.43 327.00, 239.07 327.00 C 239.70 327.00, 242.69 324.74, 245.72 321.97 C 251.86 316.37, 262.67 308.10, 271.00 302.65 C 290.29 290.04, 292.52 287.24, 293.60 274.22 C 294.34 265.39, 293.68 261.00, 291.61 261.00 C 290.86 261.00, 286.04 263.54, 280.88 266.65 C 251.49 284.35, 248.20 284.76, 228.50 273.11 C 223.00 269.85, 207.48 260.77, 194.00 252.93 C 180.53 245.08, 168.31 237.84, 166.85 236.83 C 160.87 232.71, 160.94 232.41, 161.23 261.16 Z" pathLength={1} fill="none" stroke="#30329b" strokeWidth={6} strokeLinejoin="round" />
-            <path className={`${rid('ln')} ${rid('bub-ln')}`} d="M 299.56 287.50 C 297.19 292.40, 286.39 303.11, 278.41 308.47 C 268.77 314.95, 263.83 319.02, 257.82 325.44 C 249.99 333.80, 249.11 334.66, 244.04 338.94 C 239.67 342.63, 239.58 342.83, 239.20 349.60 C 238.76 357.81, 240.95 362.01, 247.47 365.37 C 262.26 373.01, 277.16 358.28, 269.87 343.24 C 268.70 340.82, 267.13 338.60, 266.37 338.31 C 263.84 337.34, 264.96 334.66, 269.75 330.24 C 274.54 325.81, 289.66 314.00, 290.53 314.00 Z" pathLength={1} fill="none" stroke="#30329b" strokeWidth={6} strokeLinejoin="round" />
-          </g>
-        </>
-      )}
+      {BRAND_LOGO_SHAPES.map((s) => (
+        <g key={s.key} className={s.key}>
+          <use className="body" href={`#${unq(`f_${s.key}`)}`} xlinkHref={`#${unq(`f_${s.key}`)}`} fill={s.color} />
+          {!isStatic ? (
+            <>
+              <use className="ln" href={`#${unq(`s_${s.key}`)}`} xlinkHref={`#${unq(`s_${s.key}`)}`} stroke={s.color} strokeWidth={6} />
+              {s.ring ? (
+                <g className={s.ringAnimated ? 'life' : undefined} style={{ transformOrigin: s.ringOrigin }}>
+                  <use className="rl" href={`#${unq(`r_${s.key}`)}`} xlinkHref={`#${unq(`r_${s.key}`)}`} stroke={s.color} strokeWidth={3} />
+                </g>
+              ) : null}
+            </>
+          ) : null}
+        </g>
+      ))}
     </svg>
   )
 }
