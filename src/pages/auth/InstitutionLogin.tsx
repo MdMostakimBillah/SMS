@@ -202,7 +202,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
     return () => {
       document.title = 'EduTech SMS'
       const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-      if (link) link.href = '/favicon.ico'
+      if (link) link.href = '/favicon.svg'
     }
   }, [institution, isBn])
 

@@ -80,9 +80,6 @@ export function applyThemeColors(colors: ThemeColors) {
     // Update PWA manifest theme_color dynamically
     updateManifestThemeColor(brandColor)
 
-    // Update favicon with brand color
-    updateFavicon(brandColor)
-
     // Notify service worker of brand color change
     sendBrandColorToSW(brandColor)
   }
@@ -129,22 +126,6 @@ function generateFaviconSVG(color: string): string {
   <path d="M36 22V32" stroke="white" stroke-width="2" opacity="0.7"/>
   <circle cx="36" cy="34" r="2" fill="white" opacity="0.7"/>
 </svg>`
-}
-
-function updateFavicon(color: string) {
-  const svg = generateFaviconSVG(color)
-  const dataUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`
-
-  const oldLink = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-  if (oldLink) {
-    oldLink.remove()
-  }
-
-  const link = document.createElement('link')
-  link.rel = 'icon'
-  link.type = 'image/svg+xml'
-  link.href = dataUrl
-  document.head.appendChild(link)
 }
 
 function sendBrandColorToSW(color: string) {

@@ -1,9 +1,9 @@
 /**
- * EduTech brand logo — shared path geometry + static SVG builder.
+ * EduTech brand logo — shared path geometry, animation CSS + SVG builders.
  *
- * The animated React version lives in `src/components/ui/BrandLogo.tsx`.
- * This module is the source of truth for the path geometry so that static
- * usages (favicon, PDF branding, print) don't have to pull in React.
+ * The React wrapper lives in `src/components/ui/BrandLogo.tsx`, but the geometry
+ * and the keyframes live here so that every non-React usage (favicon, PDF
+ * branding, print) reuses exactly the same artwork instead of a copy of it.
  *
  * The logo is 5 shape groups drawn in this order: top cap, chevron, bubble,
  * and two pillars (d1, d2). Indigo shapes use #6366f1; navy shapes #30329b.
@@ -13,6 +13,12 @@ export const BRAND_LOGO_VIEWBOX = '112 118 276 264'
 
 const INDIGO = '#6366f1'
 const NAVY = '#30329b'
+
+/** Easing used by every draw-on / undraw step of the animation. */
+const CB = 'cubic-bezier(.65,0,.35,1)'
+
+/** Full animation cycle in seconds — one knob to speed up / slow the whole logo. */
+export const BRAND_LOGO_LOOP = 12
 
 /** One shape group's full geometry. */
 export interface BrandShape {
@@ -86,4 +92,265 @@ export function brandLogoStaticSVG(size: number | string, className?: string): s
 /** data-URI variant, useful for `<img src>` fallbacks. */
 export function brandLogoDataURI(size: number | string): string {
   return `data:image/svg+xml,${encodeURIComponent(brandLogoStaticSVG(size))}`
+}
+
+/**
+ * Builds the `<style>` body for the animated logo: the per-shape `@keyframes`
+ * plus the rules that scope them to `ns`. Shared by the React `BrandLogo` and
+ * the standalone favicon document so the animation only ever exists once.
+ *
+ * Fast loop, staggered per shape: each shape's outline draws on, its fill fades
+ * in, everything holds, then the sequence plays in reverse (fill fades out,
+ * outline undraws) before replaying. The stagger order reads top → chev → bub →
+ * d2 → d1 so the logo dismantles and reassembles rather than blinking off.
+ *
+ * @param ns  namespaces both the root class (`bl_<ns>`) and every keyframe name
+ *            (`<name>_<ns>`), so several logos can share one page. Standalone
+ *            documents such as the favicon can use a fixed value like `'fav'`.
+ * @param loop  animation cycle in seconds — normally {@link BRAND_LOGO_LOOP}.
+ * @param delay  optional negative `animation-delay` in seconds. `-loop / 2`
+ *               starts the cycle on its settled frame, which keeps a renderer
+ *               that rasterizes the icon before it has ticked from capturing a
+ *               blank logo.
+ */
+export function brandLogoAnimationCSS(ns: string, loop: number, delay = 0): string {
+  const root = `bl_${ns}`
+  const unq = (s: string) => `${s}_${ns}`
+  const sc = (sel: string) =>
+    sel
+      .split(',')
+      .map((s) => `.${root} ${s.trim()}`)
+      .join(', ')
+  const anim = (name: string) =>
+    `animation: ${unq(name)} ${loop}s linear${delay ? ` ${delay}s` : ''} infinite;`
+
+  return `
+      ${sc('.ln, .rl')} { fill: none; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; stroke-opacity: 0; }
+
+      @keyframes ${unq('ln_d1')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        16.3333% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        21.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        23.6667% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        25.6667% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        68.3333% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        70% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        75.3333% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_d1')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        20.6667% { opacity: 0; animation-timing-function: ease; }
+        23.3333% { opacity: 1; }
+        68.3333% { opacity: 1; animation-timing-function: ease; }
+        71% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .d1 .ln { ${anim('ln_d1')} }
+      .${root} .d1 .body { ${anim('bd_d1')} }
+      @keyframes ${unq('rl_d1')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        21% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        23.3333% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        23.6667% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        25.6667% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        68.3333% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        69.3333% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        70.6667% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      .${root} .d1 .rl { ${anim('rl_d1')} }
+
+      @keyframes ${unq('ln_d2')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        21% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        26.3333% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        28.3333% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        30.3333% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        63.6667% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        65.3333% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        70.6667% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_d2')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        25.3333% { opacity: 0; animation-timing-function: ease; }
+        28% { opacity: 1; }
+        63.6667% { opacity: 1; animation-timing-function: ease; }
+        66.3333% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .d2 .ln { ${anim('ln_d2')} }
+      .${root} .d2 .body { ${anim('bd_d2')} }
+      @keyframes ${unq('rl_d2')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        25.6667% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        28% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        28.3333% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        30.3333% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        63.6667% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        64.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        66% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      .${root} .d2 .rl { ${anim('rl_d2')} }
+
+      @keyframes ${unq('ln_top')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        0.6667% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        6.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        9% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        11% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        83% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        85% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        91% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_top')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        6% { opacity: 0; animation-timing-function: ease; }
+        8.6667% { opacity: 1; }
+        83% { opacity: 1; animation-timing-function: ease; }
+        85.6667% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .top .ln { ${anim('ln_top')} }
+      .${root} .top .body { ${anim('bd_top')} }
+
+      @keyframes ${unq('ln_chev')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        7% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        12% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        14% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        16% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        78% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        79.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        84.6667% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_chev')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        11% { opacity: 0; animation-timing-function: ease; }
+        13.6667% { opacity: 1; }
+        78% { opacity: 1; animation-timing-function: ease; }
+        80.6667% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .chev .ln { ${anim('ln_chev')} }
+      .${root} .chev .body { ${anim('bd_chev')} }
+
+      @keyframes ${unq('ln_bub')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        11.6667% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        16% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        18% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        20% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        74% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        75.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        80% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      @keyframes ${unq('bd_bub')} {
+        0% { opacity: 0; animation-timing-function: ease; }
+        15% { opacity: 0; animation-timing-function: ease; }
+        17.6667% { opacity: 1; }
+        74% { opacity: 1; animation-timing-function: ease; }
+        76.6667% { opacity: 0; }
+        100% { opacity: 0; }
+      }
+      .${root} .bub .ln { ${anim('ln_bub')} }
+      .${root} .bub .body { ${anim('bd_bub')} }
+      @keyframes ${unq('rl_bub')} {
+        0% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        15.3333% { stroke-dashoffset: 1; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        17.6667% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ease; }
+        18% { stroke-dashoffset: 0; stroke-opacity: 1; }
+        20% { stroke-dashoffset: 0; stroke-opacity: 0; }
+        74% { stroke-dashoffset: 0; stroke-opacity: 0; animation-timing-function: ease; }
+        75% { stroke-dashoffset: 0; stroke-opacity: 1; animation-timing-function: ${CB}; }
+        76.3333% { stroke-dashoffset: 1; stroke-opacity: 1; }
+        100% { stroke-dashoffset: 1; stroke-opacity: 1; }
+      }
+      .${root} .bub .rl { ${anim('rl_bub')} }
+
+      @keyframes ${unq('jump')} {
+        0% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in-out; }
+        29.3333% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in-out; }
+        30.2% { transform: translateY(1px) scale(1.18, .8); animation-timing-function: ease-in-out; }
+        31.2667% { transform: translateY(-7px) scale(.86, 1.25); animation-timing-function: ease-in-out; }
+        32.3667% { transform: translateY(0) scale(1.1, .9); animation-timing-function: ease-in-out; }
+        33.1667% { transform: translateY(-1px) scale(.97, 1.04); animation-timing-function: ease-in-out; }
+        33.6667% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-in-out; }
+        100% { transform: translateY(0) scale(1, 1); }
+      }
+      .${root} .life { transform-box: view-box; ${anim('jump')} }
+
+      @media (prefers-reduced-motion: reduce) {
+        .${root} * { animation: none !important; }
+        .${root} .ln, .${root} .rl { stroke-opacity: 0; }
+        .${root} .body { opacity: 1; }
+      }
+    `
+}
+
+export interface BrandLogoAnimatedSVGOptions {
+  /** Namespace for the `id`s and `@keyframes` names inside the document. */
+  ns?: string
+  /** Animation cycle in seconds. Defaults to {@link BRAND_LOGO_LOOP}. */
+  loop?: number
+  /**
+   * Negative `animation-delay` in seconds. Defaults to `-loop / 2` so the very
+   * first frame is the settled logo instead of an empty one.
+   */
+  delay?: number
+  /** width/height written on the root `<svg>`. */
+  size?: number | string
+}
+
+/**
+ * Builds a complete, self-contained animated SVG document — the standalone
+ * counterpart to the React `BrandLogo`. Used for `public/favicon.svg`, which a
+ * Vite plugin regenerates from this function so the icon can never drift away
+ * from the animation it ships with.
+ */
+export function brandLogoAnimatedSVG(opts: BrandLogoAnimatedSVGOptions = {}): string {
+  const {
+    ns = 'fav',
+    loop = BRAND_LOGO_LOOP,
+    delay = -BRAND_LOGO_LOOP / 2,
+    size = 512,
+  } = opts
+  const root = `bl_${ns}`
+  const id = (prefix: string, key: string) => `${prefix}_${key}_${ns}`
+  const css = brandLogoAnimationCSS(ns, loop, delay)
+
+  const defs = BRAND_LOGO_SHAPES.map((s) => {
+    const parts = [
+      `<path id="${id('f', s.key)}" d="${s.fill}"${s.fillRule ? ` fill-rule="${s.fillRule}"` : ''}/>`,
+      `<path id="${id('s', s.key)}" d="${s.stroke}" pathLength="1"/>`,
+    ]
+    if (s.ring) parts.push(`<path id="${id('r', s.key)}" d="${s.ring}" pathLength="1"/>`)
+    return parts.join('')
+  }).join('')
+
+  const groups = BRAND_LOGO_SHAPES.map((s) => {
+    const origin = s.ringOrigin ? ` style="transform-origin: ${s.ringOrigin}"` : ''
+    const ring = s.ring
+      ? `<g${s.ringAnimated ? ' class="life"' : ''}${origin}><use class="rl" href="#${id('r', s.key)}" xlink:href="#${id('r', s.key)}" stroke="${s.color}" stroke-width="3"/></g>`
+      : ''
+    return (
+      `<g class="${s.key}">` +
+      `<use class="body" href="#${id('f', s.key)}" xlink:href="#${id('f', s.key)}" fill="${s.color}"/>` +
+      `<use class="ln" href="#${id('s', s.key)}" xlink:href="#${id('s', s.key)}" stroke="${s.color}" stroke-width="6"/>` +
+      ring +
+      `</g>`
+    )
+  }).join('')
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"` +
+    ` viewBox="${BRAND_LOGO_VIEWBOX}" width="${size}" height="${size}" class="${root}"` +
+    ` role="img" aria-label="EduTech logo">` +
+    `<style>${css}</style><defs>${defs}</defs>${groups}</svg>`
+  )
 }

@@ -74,7 +74,7 @@ export default function AppLayout() {
     } else {
       document.title = 'EduTech SMS'
       const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
-      if (link) link.href = '/favicon.ico'
+      if (link) link.href = '/favicon.svg'
     }
   }, [institution, viewedInst])
 

@@ -10,14 +10,6 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
 })
 
-function generateFaviconSVG(color, letter) {
-  const l = letter || 'E'
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
-  <rect width="48" height="48" rx="10" fill="${color}"/>
-  <text x="24" y="32" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="24" font-weight="700" fill="white">${l}</text>
-</svg>`
-}
-
 function generateManifest(color) {
   const name = institution?.name || 'EduTech SMS'
   const shortName = institution?.brandName || institution?.name || 'EduTech'
@@ -78,32 +70,21 @@ self.addEventListener('fetch', (event) => {
     }
   }
 
-  // Favicon — return institution logo if available, otherwise generate SVG
+  // Favicon — an institution's own logo always wins; otherwise let the
+  // animated brand logo at /favicon.svg through untouched.
   if (url.pathname === '/favicon.svg' || url.pathname === '/favicon.ico') {
     if (institution?.logo) {
-      // Proxy the institution logo directly
       event.respondWith(
-        fetch(institution.logo).then((res) => {
-          if (res.ok) return res
-          // Fallback to generated SVG if logo fetch fails
-          const letter = institution.name ? institution.name.charAt(0).toUpperCase() : 'E'
-          return new Response(generateFaviconSVG(brandColor, letter), {
-            headers: { 'Content-Type': 'image/svg+xml' },
-          })
-        }).catch(() => {
-          const letter = institution.name ? institution.name.charAt(0).toUpperCase() : 'E'
-          return new Response(generateFaviconSVG(brandColor, letter), {
-            headers: { 'Content-Type': 'image/svg+xml' },
-          })
-        })
+        fetch(institution.logo)
+          .then((res) => (res.ok ? res : fetch('/favicon.svg')))
+          .catch(() => fetch('/favicon.svg'))
       )
-    } else {
-      const letter = institution?.name ? institution.name.charAt(0).toUpperCase() : 'E'
-      event.respondWith(
-        new Response(generateFaviconSVG(brandColor, letter), {
-          headers: { 'Content-Type': 'image/svg+xml' },
-        })
-      )
+      return
+    }
+    // No .ico ships — the animated brand SVG stands in for it.
+    if (url.pathname === '/favicon.ico') {
+      event.respondWith(fetch('/favicon.svg'))
+      return
     }
     return
   }
