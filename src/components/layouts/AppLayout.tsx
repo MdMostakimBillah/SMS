@@ -12,6 +12,7 @@ import Topbar from './Topbar'
 import CommandPalette from '@/components/shared/CommandPalette'
 import QuickAccessFAB from '@/components/shared/QuickAccessFAB'
 import { Crown, X } from 'lucide-react'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 import { clearSlug } from '@/lib/storage'
 import { useBn } from '@/hooks/useBn'
 
@@ -39,8 +40,12 @@ export default function AppLayout() {
 
   useThemeColors()
   const [isLoading, setIsLoading] = useState(true)
+  const [loadingLogoErr, setLoadingLogoErr] = useState(false)
   const backdropRef = useRef<HTMLDivElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
+
+  // Fresh attempt whenever the institution (and therefore its logo) changes.
+  useEffect(() => { setLoadingLogoErr(false) }, [institution.logo])
 
   useEffect(() => {
     if (theme === 'system') {
@@ -107,31 +112,24 @@ export default function AppLayout() {
 
   if (isLoading) {
     const isSuperAdmin = user?.role === 'super_admin'
-    const loadingName = isSuperAdmin ? 'EduTech' : (institution.brandName || institution.name || 'EduTech')
+    const loadingName = isSuperAdmin ? 'EduTech' : institution.name
     const loadingLogo = isSuperAdmin ? null : institution.logo
     return (
       <div className="flex h-screen overflow-hidden bg-[var(--bg-tertiary)] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div
-            className="w-16 h-16 rounded-2xl bg-[var(--brand)] flex items-center justify-center overflow-hidden"
-            style={{ animation: 'pulse 2s infinite' }}
-          >
-            {loadingLogo ? (
-              <img src={loadingLogo} alt={loadingName} referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-full h-full object-cover" />
-            ) : (
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                <path d="M6 12v5c3 3 9 3 12 0v-5" />
-              </svg>
-            )}
-          </div>
-          <div className="text-sm font-semibold text-[var(--text-primary)]">{loadingName}</div>
-          <div className="w-[6.25rem] h-[0.1875rem] bg-[var(--border)] rounded-[0.125rem] overflow-hidden">
-            <div
-              className="h-full w-2/5 bg-[var(--brand)] rounded-[0.125rem]"
-              style={{ animation: 'shimmer 1.5s infinite' }}
-            />
-          </div>
+          {loadingLogo && !loadingLogoErr ? (
+            <div className="w-16 h-16 rounded-2xl bg-[var(--brand)] flex items-center justify-center overflow-hidden">
+              <img
+                src={loadingLogo}
+                alt={loadingName}
+                referrerPolicy="no-referrer"
+                onError={() => setLoadingLogoErr(true)}
+                className="w-full h-full object-contain p-1.5"
+              />
+            </div>
+          ) : (
+            <BrandLogo size={72} />
+          )}
         </div>
       </div>
     )
@@ -210,7 +208,7 @@ export default function AppLayout() {
             isMobile ? 'p-3.5' : isTablet ? 'px-4 pt-[18px] pb-[18px]' : 'p-6'
           }`}
         >
-          <div className="fade-in">
+          <div className="fade-in mx-auto w-full max-w-[1800px]">
             <Outlet />
           </div>
         </main>
