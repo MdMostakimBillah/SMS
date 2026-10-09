@@ -13,6 +13,7 @@ import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
+import { withSlug } from '@/lib/storage'
 
 const btnBounce = `animate-[btnBounce_0.35s_cubic-bezier(0.34,1.56,0.64,1)]`
 
@@ -285,7 +286,15 @@ export default function CreateSchool() {
       theme: 'light',
     }
     addInstitution(inst)
-    loadInstitutionData(inst)
+
+    // classStore persists under `edutech-classes_${slug}`, so the new school's
+    // data has to be seeded while the namespace points at it. Otherwise the
+    // logo, banner and brand colours land in the super admin's own bucket — or
+    // overwrite whichever school was last viewed — and are gone the moment this
+    // school logs in. `fresh` keeps it from inheriting that session's breaks,
+    // sessions and start time as well.
+    withSlug(inst.slug, () => loadInstitutionData(inst, { fresh: true }))
+
     setCreated(true)
     setTimeout(() => navigate('/super-admin/schools'), 1500)
   }

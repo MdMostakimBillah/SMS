@@ -136,6 +136,30 @@ export function clearSlug(): void {
   resetAllStores()
 }
 
+/**
+ * Run `fn` with the storage namespace pointed at `slug`, then put it back.
+ *
+ * Needed when seeding an institution that has just been created: its data has
+ * to be written under its own key, but the person doing the creating — a super
+ * admin — must not end up signed in to it. Reads the slug directly rather than
+ * going through `setSlug` on purpose, so switching namespaces does not reset
+ * and reload every store twice.
+ *
+ * Safe with the debounced persist: `createNamespacedStorage` resolves the key
+ * when the write is scheduled, not when the timer fires, so a pending write
+ * still lands under `slug` after this returns.
+ */
+export function withSlug<T>(slug: string, fn: () => T): T {
+  const previous = getSlug()
+  try {
+    sessionStorage.setItem('edutech_inst_slug', slug)
+    return fn()
+  } finally {
+    if (previous) sessionStorage.setItem('edutech_inst_slug', previous)
+    else sessionStorage.removeItem('edutech_inst_slug')
+  }
+}
+
 export function createNamespacedStorage<T>(base: string, fallback?: string, opts?: { debounce?: boolean; perUser?: boolean }): PersistStorage<T> {
   const isPerUser = !!opts?.perUser
 

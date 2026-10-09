@@ -95,22 +95,37 @@ function getLockoutRemaining(): number {
   } catch { return 0 }
 }
 
-function loadInstitutionData(inst: Institution) {
+interface LoadInstitutionOptions {
+  /**
+   * True when seeding an institution that has just been created.
+   *
+   * Logging *in to* a school has to keep whatever config it already has stored,
+   * so everything below prefers `current`. Creating one has nothing to protect
+   * — inheriting `current` would seed the new school with another school's
+   * breaks, sessions and start time.
+   */
+  fresh?: boolean
+}
+
+function loadInstitutionData(inst: Institution, opts: LoadInstitutionOptions = {}) {
   const current = useClassStore.getState().institution
   const brandColor = inst.brandColor || '#6366f1'
+  // `null` while seeding, so every "prefer the existing config" branch falls
+  // through to the new institution's own values instead.
+  const prev = opts.fresh ? null : current
   useClassStore.getState().updateInstitution({
     name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner,
     brandName: inst.brandName || inst.name, motto: inst.motto, mottoBn: inst.mottoBn,
     eiin: inst.eiin, phone: inst.phone, email: inst.email,
     address: inst.address, website: inst.website, subjects: inst.optionalSubjects || [],
-    startTime: current.startTime || inst.startTime || '07:30',
-    endTime: current.endTime || inst.endTime || '14:30',
-    breaks: current.breaks?.length ? current.breaks : [],
-    currentSession: current.currentSession || inst.sessions?.[1] || '2025-26',
-    sessions: current.sessions?.length ? current.sessions : (inst.sessions || ['2024-25', '2025-26']),
-    lightColors: current.lightColors?.brand === defaultThemeColors.brand ? generateLightColors(brandColor) : current.lightColors,
-    darkColors: current.darkColors?.brand === defaultThemeColorsDark.brand ? generateDarkColors(brandColor) : current.darkColors,
-    bannerPosition: current.bannerPosition || { x: 0, y: 0 },
+    startTime: prev?.startTime || inst.startTime || '07:30',
+    endTime: prev?.endTime || inst.endTime || '14:30',
+    breaks: prev?.breaks?.length ? prev.breaks : [],
+    currentSession: prev?.currentSession || inst.sessions?.[0] || '2025-26',
+    sessions: prev?.sessions?.length ? prev.sessions : (inst.sessions?.length ? inst.sessions : ['2025-26']),
+    lightColors: prev && prev.lightColors?.brand !== defaultThemeColors.brand ? prev.lightColors : generateLightColors(brandColor),
+    darkColors: prev && prev.darkColors?.brand !== defaultThemeColorsDark.brand ? prev.darkColors : generateDarkColors(brandColor),
+    bannerPosition: prev?.bannerPosition || { x: 0, y: 0 },
   })
 }
 
