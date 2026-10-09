@@ -6,6 +6,7 @@ import {
   Zap, BarChart3, Users, Lock,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
@@ -338,7 +339,9 @@ export default function InstitutionRegister() {
           <div className="absolute inset-0" style={{ background: isDark ? 'linear-gradient(180deg, #0f0f18 0%, #141420 100%)' : 'linear-gradient(180deg, #1a1a2e 0%, #1e1e32 100%)' }} />
           <BackgroundPaths isDark={isDark} />
           <div className="relative z-10 text-center px-8">
-            <GraduationCap size={72} className="text-[var(--brand)] mx-auto mb-4" />
+            <div className="w-[72px] h-[72px] rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
+              <BrandLogo size={48} />
+            </div>
             <h1 className="text-[2rem] font-bold mb-3 tracking-tight text-white">EduTech SMS</h1>
             <p className="text-[1rem] max-w-[280px] mx-auto leading-relaxed text-white/50">
               {isBn ? 'স্কুল ম্যানেজমেন্ট সিস্টেম' : 'School Management System'}
@@ -354,7 +357,9 @@ export default function InstitutionRegister() {
         <div className={`flex-1 flex items-center justify-center px-6 py-12 ${isDark ? 'bg-[#0a0a0f]' : 'bg-[#f0f2f8]'}`}>
           <div className="w-full max-w-[24rem] relative">
             <div className="lg:hidden text-center mb-8">
-              <GraduationCap size={44} className="text-[var(--brand)] mx-auto mb-4" />
+              <div className="w-11 h-11 rounded-xl mx-auto mb-4 flex items-center justify-center" style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'var(--bg-secondary)' }}>
+                <BrandLogo size={30} />
+              </div>
               <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>EduTech SMS</h1>
             </div>
 
