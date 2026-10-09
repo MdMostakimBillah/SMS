@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { UserPlus, Users, User, UserPen, TableProperties, IdCard, ArrowUpCircle, ArrowRight } from 'lucide-react'
+import { UserPlus, Users, User, UserPen, TableProperties, IdCard, ArrowUpCircle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useAppStore } from '@/store/appStore'
 import { usePermission } from '@/hooks/usePermission'
+import { QuickAccessGrid } from '@/components/shared/QuickAccessGrid'
 import type { LucideIcon } from 'lucide-react'
 import gsap from 'gsap'
 import { toBnNum } from '@/lib/i18n'
@@ -55,8 +56,6 @@ export default function StudentsPage() {
   const isBn = useBn()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
   const { studentCardsOrder, setStudentCardsOrder } = useAppStore()
   const { canRead } = usePermission()
 
@@ -85,18 +84,6 @@ export default function StudentsPage() {
     statColor: string
   }[] = [
     {
-      id: 'admission',
-      path: '/students/admission',
-      icon: UserPlus,
-      iconColor: 'var(--teal)',
-      iconBg: 'var(--teal-light)',
-      titleBn: 'নতুন ভর্তি',
-      titleEn: 'New Admission',
-      descBn: 'নতুন ছাত্র ভর্তি করুন।',
-      descEn: 'Admit a new student.',
-      statColor: 'var(--teal)',
-    },
-    {
       id: 'all',
       path: '/students/all',
       icon: Users,
@@ -107,6 +94,18 @@ export default function StudentsPage() {
       descBn: 'সকল ছাত্রের তালিকা।',
       descEn: 'View all students.',
       statColor: 'var(--brand)',
+    },
+    {
+      id: 'admission',
+      path: '/students/admission',
+      icon: UserPlus,
+      iconColor: 'var(--teal)',
+      iconBg: 'var(--teal-light)',
+      titleBn: 'নতুন ভর্তি',
+      titleEn: 'New Admission',
+      descBn: 'নতুন ছাত্র ভর্তি করুন।',
+      descEn: 'Admit a new student.',
+      statColor: 'var(--teal)',
     },
     {
       id: 'update',
@@ -165,13 +164,13 @@ export default function StudentsPage() {
     : defaultCardIds
 
   const getStatForOpt = (opt: typeof STATIC_OPTIONS[number]) => {
-    if (opt.id === 'admission') return { statBn: `${toBnNum(admissionThisMonth)} জন এই মাসে`, statEn: `${admissionThisMonth} this month` }
-    if (opt.id === 'all') return { statBn: `${toBnNum(allStudentsCount)} জন`, statEn: `${allStudentsCount} total` }
-    if (opt.id === 'update') return { statBn: `${toBnNum(pendingStudents)} টি অপেক্ষমান`, statEn: `${pendingStudents} pending` }
-    if (opt.id === 'bulk-update') return { statBn: 'CSV সাপোর্ট', statEn: 'CSV supported' }
-    if (opt.id === 'id-cards') return { statBn: `${toBnNum(allStudentsCount)} জন`, statEn: `${allStudentsCount} students` }
-    if (opt.id === 'promotion') return { statBn: 'পরীক্ষার পরে', statEn: 'After exams' }
-    return { statBn: '', statEn: '' }
+    if (opt.id === 'admission') return { valueBn: toBnNum(admissionThisMonth), valueEn: String(admissionThisMonth), statBn: `${toBnNum(admissionThisMonth)} জন এই মাসে`, statEn: `${admissionThisMonth} added this month` }
+    if (opt.id === 'all') return { valueBn: toBnNum(allStudentsCount), valueEn: String(allStudentsCount), statBn: `${toBnNum(allStudentsCount)} জন`, statEn: `${allStudentsCount} total` }
+    if (opt.id === 'update') return { valueBn: toBnNum(pendingStudents), valueEn: String(pendingStudents), statBn: `${toBnNum(pendingStudents)} টি অপেক্ষমান`, statEn: `${pendingStudents} pending` }
+    if (opt.id === 'bulk-update') return { valueBn: toBnNum(allStudentsCount), valueEn: String(allStudentsCount), statBn: 'CSV সাপোর্ট', statEn: 'CSV supported' }
+    if (opt.id === 'id-cards') return { valueBn: toBnNum(allStudentsCount), valueEn: String(allStudentsCount), statBn: `${toBnNum(allStudentsCount)} জন`, statEn: `${allStudentsCount} students` }
+    if (opt.id === 'promotion') return { valueBn: toBnNum(allStudentsCount), valueEn: String(allStudentsCount), statBn: 'পরীক্ষার পরে', statEn: 'After exams' }
+    return { valueBn: '0', valueEn: '0', statBn: '', statEn: '' }
   }
 
   const orderedOptions = orderedCardIds.map((id) => {
@@ -179,32 +178,12 @@ export default function StudentsPage() {
     return { ...opt, ...getStatForOpt(opt) }
   }).filter(Boolean).filter((opt) => canRead('students', opt.id))
 
-  const handleDragStart = useCallback((e: React.DragEvent, idx: number) => {
-    setDraggedIdx(idx)
-    e.dataTransfer.effectAllowed = 'move'
-  }, [])
-
-  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDragOverIdx(idx)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent, dropIdx: number) => {
-    e.preventDefault()
-    if (draggedIdx === null || draggedIdx === dropIdx) return
+  const handleReorder = useCallback((from: number, to: number) => {
     const newOrder = [...orderedCardIds]
-    const [removed] = newOrder.splice(draggedIdx, 1)
-    newOrder.splice(dropIdx, 0, removed)
+    const [removed] = newOrder.splice(from, 1)
+    newOrder.splice(to, 0, removed)
     setStudentCardsOrder(newOrder)
-    setDraggedIdx(null)
-    setDragOverIdx(null)
-  }, [draggedIdx, orderedCardIds, setStudentCardsOrder])
-
-  const handleDragEnd = useCallback(() => {
-    setDraggedIdx(null)
-    setDragOverIdx(null)
-  }, [])
+  }, [orderedCardIds, setStudentCardsOrder])
 
   const statsData = [
     {
@@ -319,65 +298,18 @@ export default function StudentsPage() {
         {isBn ? 'কী করতে চান?' : 'Quick Actions'}
       </div>
 
-      <div
-        className={`gsap-fade-up grid ${isMobile ? 'grid-cols-2' : isTablet ? 'grid-cols-2' : 'grid-cols-3'} ${isMobile ? 'gap-2' : 'gap-3'}`}
-      >
-        {orderedOptions.map((opt, idx) => {
-          const IconComp = opt.icon
-          const isDragging = draggedIdx === idx
-          const isDragOver = dragOverIdx === idx
-          return (
-            <div
-              key={opt.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, idx)}
-              onDragOver={(e) => handleDragOver(e, idx)}
-              onDrop={(e) => handleDrop(e, idx)}
-              onDragEnd={handleDragEnd}
-              onClick={() => {
-                if (draggedIdx !== null) return
-                navigate(nav(opt.path))
-              }}
-              className={`glass rounded-[0.75rem] cursor-pointer transition-all duration-200 flex ${isMobile ? 'flex-row items-center gap-3' : 'flex-col items-start gap-0'} ${isMobile ? 'p-3' : 'p-4'} ${isDragOver ? '!border-[var(--brand)] shadow-[0_8px_32px_rgba(0,0,0,0.12)]' : ''} ${isDragging ? 'opacity-50' : ''}`}
-              style={{ transform: isDragOver ? 'translateY(-2px)' : undefined }}
-              onMouseEnter={(e) => {
-                if (draggedIdx !== null) return
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)'
-              }}
-              onMouseLeave={(e) => {
-                if (draggedIdx !== null) return
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
-              <div
-                className={`rounded-[0.625rem] flex items-center justify-center flex-shrink-0 ${isMobile ? 'w-[2.75rem] h-[2.75rem] rounded-xl mb-0' : 'w-10 h-10 mb-[0.625rem]'}`}
-                style={{ background: opt.iconBg }}
-              >
-                <IconComp size={isMobile ? 21 : 19} style={{ color: opt.iconColor }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className={`text-[var(--text-primary)] font-semibold ${isMobile ? 'text-[0.8125rem] mb-[0.125rem]' : 'text-sm mb-1'}`}>
-                  {isBn ? opt.titleBn : opt.titleEn}
-                </div>
-                <div className={`text-[0.6875rem] text-[var(--text-secondary)] leading-[1.5] ${isMobile ? 'mb-1.5' : 'mb-2'}`}>
-                  {isBn ? opt.descBn : opt.descEn}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span
-                    className="text-[0.625rem] font-medium rounded px-1.5 py-0.5"
-                    style={{ color: opt.statColor, background: `${opt.statColor}15` }}
-                  >
-                    {isBn ? opt.statBn : opt.statEn}
-                  </span>
-                  <ArrowRight size={14} className="text-[var(--text-muted)]" />
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      <QuickAccessGrid
+        items={orderedOptions}
+        isBn={isBn}
+        isMobile={isMobile}
+        isTablet={isTablet}
+        actionId="admission"
+        onSelect={(id) => {
+          const opt = orderedOptions.find((o) => o.id === id)
+          if (opt) navigate(nav(opt.path))
+        }}
+        onReorder={handleReorder}
+      />
     </div>
   )
 }

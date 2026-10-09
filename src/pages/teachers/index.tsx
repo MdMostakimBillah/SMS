@@ -7,7 +7,6 @@ import {
   BookOpen,
   UserCheck,
   Banknote,
-  ArrowRight,
   Layers,
   Briefcase,
 } from 'lucide-react'
@@ -18,22 +17,11 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAppStore } from '@/store/appStore'
 import { useNavPath } from '@/hooks/useNavPath'
 import { usePermission } from '@/hooks/usePermission'
+import { QuickAccessGrid } from '@/components/shared/QuickAccessGrid'
 
 import gsap from 'gsap'
 
 const STATIC_OPTIONS = [
-  {
-    id: 'add',
-    path: '/teachers/add',
-    icon: UserPlus,
-    iconColor: 'var(--teal)',
-    iconBg: 'var(--teal-light)',
-    titleBn: 'নতুন শিক্ষক',
-    titleEn: 'Add Teacher',
-    descBn: 'নতুন শিক্ষক যোগ করুন।',
-    descEn: 'Add a new teacher.',
-    statColor: 'var(--teal)',
-  },
   {
     id: 'all',
     path: '/teachers/all',
@@ -45,6 +33,18 @@ const STATIC_OPTIONS = [
     descBn: 'সকল শিক্ষকের তালিকা।',
     descEn: 'View all teachers.',
     statColor: 'var(--brand)',
+  },
+  {
+    id: 'add',
+    path: '/teachers/add',
+    icon: UserPlus,
+    iconColor: 'var(--teal)',
+    iconBg: 'var(--teal-light)',
+    titleBn: 'নতুন শিক্ষক',
+    titleEn: 'Add Teacher',
+    descBn: 'নতুন শিক্ষক যোগ করুন।',
+    descEn: 'Add a new teacher.',
+    statColor: 'var(--teal)',
   },
   {
     id: 'departments',
@@ -150,8 +150,6 @@ export default function TeachersPage() {
   const { isMobile, isTablet } = useWindowSize()
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
   const { teacherCardsOrder, setTeacherCardsOrder } = useAppStore()
   const { canCreate, canEdit, canView } = usePermission()
 
@@ -161,32 +159,12 @@ export default function TeachersPage() {
     ? [...teacherCardsOrder.filter((id) => defaultCardIds.includes(id)), ...defaultCardIds.filter((id) => !teacherCardsOrder.includes(id))]
     : defaultCardIds
 
-  const handleDragStart = useCallback((e: React.DragEvent, idx: number) => {
-    setDraggedIdx(idx)
-    e.dataTransfer.effectAllowed = 'move'
-  }, [])
-
-  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDragOverIdx(idx)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent, dropIdx: number) => {
-    e.preventDefault()
-    if (draggedIdx === null || draggedIdx === dropIdx) return
+  const handleReorder = useCallback((from: number, to: number) => {
     const newOrder = [...orderedCardIds]
-    const [removed] = newOrder.splice(draggedIdx, 1)
-    newOrder.splice(dropIdx, 0, removed)
+    const [removed] = newOrder.splice(from, 1)
+    newOrder.splice(to, 0, removed)
     setTeacherCardsOrder(newOrder)
-    setDraggedIdx(null)
-    setDragOverIdx(null)
-  }, [draggedIdx, orderedCardIds, setTeacherCardsOrder])
-
-  const handleDragEnd = useCallback(() => {
-    setDraggedIdx(null)
-    setDragOverIdx(null)
-  }, [])
+  }, [orderedCardIds, setTeacherCardsOrder])
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600)
@@ -219,13 +197,13 @@ export default function TeachersPage() {
   const teachersThisMonth = teachers.filter((t) => t.createdAt.startsWith(currentMonth)).length
 
   const getStatForOpt = (opt: typeof STATIC_OPTIONS[number]) => {
-    if (opt.id === 'add') return { statBn: `${toBnNum(teachersThisMonth)} জন এই মাসে`, statEn: `${teachersThisMonth} this month` }
-    if (opt.id === 'all') return { statBn: `${toBnNum(teachers.length)} জন মোট`, statEn: `${teachers.length} total` }
-    if (opt.id === 'departments') return { statBn: `${toBnNum(departments.length)}টি বিভাগ`, statEn: `${departments.length} departments` }
-    if (opt.id === 'subjects') return { statBn: `${toBnNum(subjects.length)}টি বিষয়`, statEn: `${subjects.length} subjects` }
-    if (opt.id === 'designations') return { statBn: `${toBnNum(designations.length)}টি পদবি`, statEn: `${designations.length} designations` }
-    if (opt.id === 'bulk-update') return { statBn: `${toBnNum(teachers.length)} জন+ একসাথে`, statEn: `${teachers.length}+ at once` }
-    return { statBn: '', statEn: '' }
+    if (opt.id === 'add') return { valueBn: toBnNum(teachersThisMonth), valueEn: String(teachersThisMonth), statBn: `${toBnNum(teachersThisMonth)} জন এই মাসে`, statEn: `${teachersThisMonth} added this month` }
+    if (opt.id === 'all') return { valueBn: toBnNum(teachers.length), valueEn: String(teachers.length), statBn: `${toBnNum(teachers.length)} জন মোট`, statEn: `${teachers.length} total` }
+    if (opt.id === 'departments') return { valueBn: toBnNum(departments.length), valueEn: String(departments.length), statBn: `${toBnNum(departments.length)}টি বিভাগ`, statEn: `${departments.length} departments` }
+    if (opt.id === 'subjects') return { valueBn: toBnNum(subjects.length), valueEn: String(subjects.length), statBn: `${toBnNum(subjects.length)}টি বিষয়`, statEn: `${subjects.length} subjects` }
+    if (opt.id === 'designations') return { valueBn: toBnNum(designations.length), valueEn: String(designations.length), statBn: `${toBnNum(designations.length)}টি পদবি`, statEn: `${designations.length} designations` }
+    if (opt.id === 'bulk-update') return { valueBn: toBnNum(teachers.length), valueEn: String(teachers.length), statBn: `${toBnNum(teachers.length)} জন+ একসাথে`, statEn: `${teachers.length}+ at once` }
+    return { valueBn: '0', valueEn: '0', statBn: '', statEn: '' }
   }
 
   const orderedOptions = orderedCardIds.map((id) => {
@@ -377,105 +355,18 @@ export default function TeachersPage() {
       </div>
 
       {/* Option cards */}
-      <div
-        className="gsap-fade-up"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
-          gap: isMobile ? '8px' : '0.75rem',
+      <QuickAccessGrid
+        items={orderedOptions}
+        isBn={isBn}
+        isMobile={isMobile}
+        isTablet={isTablet}
+        actionId="add"
+        onSelect={(id) => {
+          const opt = orderedOptions.find((o) => o.id === id)
+          if (opt) navigate(nav(opt.path))
         }}
-      >
-        {orderedOptions.map((opt, idx) => {
-          const IconComp = opt.icon
-          const isDragging = draggedIdx === idx
-          const isDragOver = dragOverIdx === idx
-          return (
-            <div
-              key={opt.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, idx)}
-              onDragOver={(e) => handleDragOver(e, idx)}
-              onDrop={(e) => handleDrop(e, idx)}
-              onDragEnd={handleDragEnd}
-              onClick={() => {
-                if (draggedIdx !== null) return
-                navigate(nav(opt.path))
-              }}
-              className="glass"
-              style={{
-                borderRadius: '0.75rem',
-                padding: isMobile ? '12px' : '1rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                flexDirection: isMobile ? 'row' : 'column',
-                alignItems: isMobile ? 'center' : 'flex-start',
-                gap: isMobile ? '12px' : '0',
-                opacity: isDragging ? 0.5 : 1,
-                transform: isDragOver ? 'translateY(-2px)' : undefined,
-                boxShadow: isDragOver ? '0 8px 32px rgba(0,0,0,0.12)' : 'none',
-                borderColor: isDragOver ? 'var(--brand)' : undefined,
-              }}
-              onMouseEnter={(e) => {
-                if (draggedIdx !== null) return
-                e.currentTarget.style.transform = 'translateY(-2px)'
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)'
-              }}
-              onMouseLeave={(e) => {
-                if (draggedIdx !== null) return
-                e.currentTarget.style.transform = 'translateY(0)'
-                e.currentTarget.style.boxShadow = 'none'
-              }}
-            >
-              <div
-                style={{
-                  width: isMobile ? '44px' : '2.5rem',
-                  height: isMobile ? '44px' : '2.5rem',
-                  borderRadius: isMobile ? '12px' : '0.625rem',
-                  background: opt.iconBg,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  marginBottom: isMobile ? '0' : '0.625rem',
-                }}
-              >
-                <IconComp size={isMobile ? 21 : 19} style={{ color: opt.iconColor }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: isMobile ? '13px' : '0.875rem',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    marginBottom: isMobile ? '2px' : '0.25rem',
-                  }}
-                >
-                  {isBn ? opt.titleBn : opt.titleEn}
-                </div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: isMobile ? '6px' : '0.5rem' }}>
-                  {isBn ? opt.descBn : opt.descEn}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span
-                    style={{
-                      fontSize: '0.625rem',
-                      color: opt.statColor,
-                      fontWeight: 500,
-                      background: `${opt.statColor}15`,
-                      padding: '2px 6px',
-                      borderRadius: '0.25rem',
-                    }}
-                  >
-                    {isBn ? opt.statBn : opt.statEn}
-                  </span>
-                  <ArrowRight size={14} style={{ color: 'var(--text-muted)' }} />
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+        onReorder={handleReorder}
+      />
     </div>
   )
 }
