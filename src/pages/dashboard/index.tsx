@@ -290,7 +290,7 @@ export default function DashboardPage() {
             {(() => {
               const hour = new Date().getHours()
               const greet = hour < 12 ? (isBn ? 'সুপ্রভাত' : 'Good morning') : hour < 17 ? (isBn ? 'শুভ অপরাহ্ন' : 'Good afternoon') : hour < 21 ? (isBn ? 'শুভ সন্ধ্যা' : 'Good evening') : (isBn ? 'শুভ রাত্রি' : 'Good night')
-              return `${greet}, ${user?.name || (isBn ? 'ব্যবহারকারী' : 'User')} 👋`
+              return `${greet}, ${user?.name || (isBn ? 'ব্যবহারকারী' : 'User')}`
             })()}
           </h1>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.1875rem' }}>
@@ -308,39 +308,6 @@ export default function DashboardPage() {
             </button>
           </div>
         )}
-      </div>
-
-      {/* Alert */}
-      <div
-        className="gsap-fade-up"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          background: 'var(--brand-light)',
-          border: '1px solid rgba(99,102,241,0.12)',
-          borderRadius: '0.5rem',
-          padding: '8px 14px',
-          fontSize: '0.75rem',
-          color: 'var(--brand)',
-          alignSelf: 'flex-start',
-          fontWeight: 500,
-        }}
-      >
-        <span
-          style={{
-            width: '0.375rem',
-            height: '0.375rem',
-            borderRadius: '50%',
-            background: 'var(--brand)',
-            animation: 'pulse 2s infinite',
-            flexShrink: 0,
-          }}
-        />
-        {isBn ? `${pendingStudents}টি ভর্তি আবেদন অপেক্ষমান · পরীক্ষা ২০ মে` : `${pendingStudents} admission pending · Exams May 20`}
-        <span style={{ fontSize: '0.625rem', color: 'var(--brand-2)', marginLeft: '0.25rem' }}>
-          {isBn ? `${approvedStudents} অনুমোদিত` : `${approvedStudents} approved`}
-        </span>
       </div>
 
       {/* Stat Cards */}
