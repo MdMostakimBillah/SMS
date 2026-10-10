@@ -163,6 +163,23 @@ export default function HRPage() {
   const [showPDFModal, setShowPDFModal] = useState<PDFModalType>(null)
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
+  const stripRef = useRef<HTMLDivElement>(null)
+  // Start hidden; revealed once measured (only shows when tabs actually overflow).
+  const [stripAtEnd, setStripAtEnd] = useState(true)
+
+  const handleStripScroll = useCallback(() => {
+    const el = stripRef.current
+    if (!el) return
+    // 4px tolerance to avoid flicker from sub-pixel rounding.
+    setStripAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4)
+  }, [])
+
+  // Recompute overflow on resize (a separate effect below re-runs on tab changes).
+  useEffect(() => {
+    handleStripScroll()
+    window.addEventListener('resize', handleStripScroll)
+    return () => window.removeEventListener('resize', handleStripScroll)
+  }, [handleStripScroll])
 
   useTabSlider({
     activeTab,
@@ -971,6 +988,12 @@ export default function HRPage() {
   ]
   const tabs = useMemo(() => allTabs.filter((t) => canRead('hr', t.id)), [allTabs, canRead])
 
+  // Re-measure strip overflow whenever the visible tab count changes
+  // (tabs are permission-filtered, so the set can shrink/grow per role).
+  useEffect(() => {
+    handleStripScroll()
+  }, [handleStripScroll, tabs.length])
+
   const quickStats = [
     {
       labelBn: 'সক্রিয়',
@@ -1030,7 +1053,11 @@ export default function HRPage() {
 
       {/* Tabs */}
       <div className="relative glass rounded-xl mt-3 mb-3 w-full overflow-hidden">
-        <div className="relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] overflow-x-auto scrollbar-hide">
+        <div
+          ref={stripRef}
+          onScroll={handleStripScroll}
+          className="relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] overflow-x-auto scrollbar-hide"
+        >
           {/* Sliding indicator */}
           <div
             ref={sliderRef}
@@ -1059,6 +1086,13 @@ export default function HRPage() {
             </button>
           ))}
         </div>
+        {/* Right-edge fade: hint that more tabs are scrollable into view */}
+        {!stripAtEnd && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[var(--bg-tertiary)] to-transparent"
+          />
+        )}
       </div>
 
       {/* Tab Content */}

@@ -65,7 +65,12 @@ export function useTabSlider({
         const cRect = container.getBoundingClientRect()
         const aRect = activeEl.getBoundingClientRect()
         if (aRect.left < cRect.left || aRect.right > cRect.right) {
-          activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+          // Scroll only the tab strip (not ancestors like main/window) by
+          // computing the centered offset manually. scrollIntoView() would
+          // also scroll parent scroll containers, which jolts the page.
+          const targetLeft =
+            container.scrollLeft + (aRect.left - cRect.left) - (container.clientWidth - aRect.width) / 2
+          container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' })
         }
       }
     }
