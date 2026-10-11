@@ -178,7 +178,7 @@ export function StaffPermissionsPanel({ isBn, onBack }: Props) {
                       {showPassword[member.id] ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); copyPassword(member.defaultPassword, member.id) }}
+                      onClick={(e) => { e.stopPropagation(); copyPassword(member.defaultPassword || '', member.id) }}
                       className="p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-none"
                     >
                       {copiedId === member.id ? <Check size={14} className="text-[var(--green)]" /> : <Copy size={14} />}
@@ -196,7 +196,7 @@ export function StaffPermissionsPanel({ isBn, onBack }: Props) {
                 {showPassword[member.id] && (
                   <div className="mt-2 px-3 py-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
                     <div className="text-[0.625rem] text-[var(--text-muted)] mb-1">{bn ? 'ডিফল্ট পাসওয়ার্ড' : 'Default Password'}</div>
-                    <code className="text-[0.8125rem] font-mono text-[var(--text-primary)]">{member.defaultPassword}</code>
+                    <code className="text-[0.8125rem] font-mono text-[var(--text-primary)]">{member.defaultPassword || '—'}</code>
                   </div>
                 )}
               </div>

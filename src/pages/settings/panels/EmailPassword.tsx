@@ -58,8 +58,8 @@ export function EmailPasswordPanel({ isBn, onBack }: Props) {
         setError(isBn ? 'বর্তমান পাসওয়ার্ড প্রয়োজন' : 'Current password is required')
         return
       }
-      if (newPassword.length < 6) {
-        setError(isBn ? 'নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষর' : 'New password must be at least 6 characters')
+      if (newPassword.length < 8) {
+        setError(isBn ? 'নতুন পাসওয়ার্ড কমপক্ষে ৮ অক্ষর' : 'New password must be at least 8 characters')
         return
       }
       if (newPassword !== confirmPassword) {

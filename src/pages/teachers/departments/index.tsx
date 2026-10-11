@@ -10,24 +10,38 @@ import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
 import { usePermission } from '@/hooks/usePermission'
+import { useAuth } from '@/contexts/AuthContext'
+import { departmentsApi } from '@/lib/api'
+import { serverDepartmentToDepartment, apiErrorMessage } from '@/lib/teacherMappers'
 import type { Department } from '@/pages/teachers/types'
 
 export default function DepartmentsPage() {
   const navigate = useNavigate()
   const nav = useNavPath()
   const isBn = useBn()
-  const { departments, subjects, teachers, addDepartment, updateDepartment, deleteDepartment } = useTeacherStore(
+  const {
+    departments, legacyDepartments, subjects, teachers,
+    upsertServerDepartment, removeServerDepartment,
+    serverSynced, syncing, syncError, syncFromServer,
+  } = useTeacherStore(
     useShallow((s) => ({
       departments: s.departments,
+      legacyDepartments: s.legacyDepartments,
       subjects: s.subjects,
       teachers: s.teachers,
-      addDepartment: s.addDepartment,
-      updateDepartment: s.updateDepartment,
-      deleteDepartment: s.deleteDepartment,
+      upsertServerDepartment: s.upsertServerDepartment,
+      removeServerDepartment: s.removeServerDepartment,
+      serverSynced: s.serverSynced,
+      syncing: s.syncing,
+      syncError: s.syncError,
+      syncFromServer: s.syncFromServer,
     }))
   )
   const { isMobile } = useWindowSize()
   const { canCreate } = usePermission()
+  const { user } = useAuth()
+  /** Phase 7 RBAC policy: writes are school_admin/hr_admin only — super_admin is read-only. */
+  const canWriteDepartments = user?.role !== 'super_admin'
 
   const { popFromChain, getChain } = useNavChain()
   useNavChainClearOnMount()
@@ -38,6 +52,9 @@ export default function DepartmentsPage() {
   const [newName, setNewName] = useState('')
   const [newNameBn, setNewNameBn] = useState('')
   const [newHead, setNewHead] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [delError, setDelError] = useState('')
   useScrollLock(showAdd || editD !== null || delConfirm !== null)
 
   // Clear nav chain if user navigated directly (not via redirect button)
@@ -52,36 +69,71 @@ export default function DepartmentsPage() {
   const getDeptTeacherCount = (id: string) => teachers.filter((t) => t.departmentId === id).length
   const getDeptSubjectCount = (id: string) => subjects.filter((s) => s.departmentId === id).length
 
-  const handleAdd = () => {
-    if (!newName.trim()) return
-    const now = new Date().toISOString().split('T')[0]
-    addDepartment({
-      id: `DEPT-${String(departments.length + 1).padStart(3, '0')}`,
-      name: newName.trim(),
-      nameBn: newNameBn.trim(),
-      head: newHead.trim(),
-      createdAt: now,
-      updatedAt: now,
-    })
+  const resetForm = () => {
     setNewName('')
     setNewNameBn('')
     setNewHead('')
-    setShowAdd(false)
+    setFormError('')
   }
 
-  const handleEdit = () => {
-    if (!editD || !newName.trim()) return
-    updateDepartment(editD.id, { name: newName.trim(), nameBn: newNameBn.trim(), head: newHead.trim() })
-    setEditD(null)
-    setNewName('')
-    setNewNameBn('')
-    setNewHead('')
+  const handleAdd = async () => {
+    if (!newName.trim() || saving) return
+    setSaving(true)
+    setFormError('')
+    try {
+      // Server derives schoolId from session — never sent from here.
+      const created = await departmentsApi.create({
+        name: newName.trim(),
+        nameBn: newNameBn.trim() || null,
+        head: newHead.trim() || null,
+      })
+      upsertServerDepartment(serverDepartmentToDepartment(created))
+      resetForm()
+      setShowAdd(false)
+    } catch (err) {
+      setFormError(apiErrorMessage(err, isBn))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEdit = async () => {
+    if (!editD || !newName.trim() || saving) return
+    setSaving(true)
+    setFormError('')
+    try {
+      const updated = await departmentsApi.update(editD.id, {
+        name: newName.trim(),
+        nameBn: newNameBn.trim() || null,
+        head: newHead.trim() || null,
+      })
+      upsertServerDepartment(serverDepartmentToDepartment(updated))
+      setEditD(null)
+      resetForm()
+    } catch (err) {
+      setFormError(apiErrorMessage(err, isBn))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    setDelError('')
+    try {
+      await departmentsApi.delete(id)
+      removeServerDepartment(id)
+      setDelConfirm(null)
+    } catch (err) {
+      // Keep the dialog open — never pretend the row was deleted when refused.
+      setDelError(apiErrorMessage(err, isBn))
+    }
   }
 
   const startEdit = (d: Department) => {
     setNewName(d.name)
     setNewNameBn(d.nameBn)
     setNewHead(d.head)
+    setFormError('')
     setEditD(d)
   }
 
@@ -133,25 +185,30 @@ export default function DepartmentsPage() {
                 </select>
               </div>
             </div>
+            {formError && (
+              <div role="alert" className="flex items-center gap-2 bg-[var(--red-light)] border border-[var(--red)] rounded-[0.5rem] p-2.5 mt-3 text-[0.75rem] text-[var(--red)]">
+                <AlertTriangle size={13} className="shrink-0" />
+                {formError}
+              </div>
+            )}
             <div className="flex gap-2 justify-end mt-4">
               <button
                 onClick={() => {
                   setShowAdd(false)
                   setEditD(null)
-                  setNewName('')
-                  setNewNameBn('')
-                  setNewHead('')
+                  resetForm()
                 }}
                 className="py-2 px-[0.875rem] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-xs cursor-pointer font-[inherit]"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canCreate('teachers.departments') && (
+              {canCreate('teachers.departments') && canWriteDepartments && (
                 <button
                   onClick={editD ? handleEdit : handleAdd}
-                  className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit]"
+                  disabled={saving}
+                  className="py-2 px-[0.875rem] rounded-lg bg-[var(--brand)] border-none text-white text-xs font-semibold cursor-pointer font-[inherit] disabled:cursor-default disabled:opacity-60"
                 >
-                  {editD ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
+                  {saving ? '…' : editD ? (isBn ? 'সংরক্ষণ' : 'Save') : isBn ? 'যোগ করুন' : 'Add'}
                 </button>
               )}
             </div>
@@ -172,19 +229,22 @@ export default function DepartmentsPage() {
             <p className="text-[0.8125rem] text-[var(--text-secondary)] mb-4">
               {isBn ? 'এই বিভাগটি স্থায়ীভাবে মুছে ফেলা হবে।' : 'This department will be permanently deleted.'}
             </p>
+            {delError && (
+              <div role="alert" className="flex items-center gap-2 bg-[var(--red-light)] border border-[var(--red)] rounded-[0.5rem] p-2.5 mb-3 text-[0.75rem] text-[var(--red)]">
+                <AlertTriangle size={13} className="shrink-0" />
+                {delError}
+              </div>
+            )}
             <div className="flex gap-2 justify-end">
               <button
-                onClick={() => setDelConfirm(null)}
+                onClick={() => { setDelConfirm(null); setDelError('') }}
                 className="py-2 px-[0.875rem] rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canCreate('teachers.departments') && (
+              {canCreate('teachers.departments') && canWriteDepartments && (
                 <button
-                  onClick={() => {
-                    deleteDepartment(delConfirm)
-                    setDelConfirm(null)
-                  }}
+                  onClick={() => void handleDelete(delConfirm)}
                   className="py-2 px-[0.875rem] rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
                 >
                   {isBn ? 'মুছে ফেলুন' : 'Delete'}
@@ -243,13 +303,11 @@ export default function DepartmentsPage() {
             {isBn ? `মোট ${departments.length} টি বিভাগ` : `${departments.length} departments`}
           </p>
         </div>
-        {canCreate('teachers.departments') && (
+        {canCreate('teachers.departments') && canWriteDepartments && (
           <button
             onClick={() => {
+              resetForm()
               setShowAdd(true)
-              setNewName('')
-              setNewNameBn('')
-              setNewHead('')
             }}
             className="flex items-center gap-[0.3125rem] py-2 px-[0.875rem] rounded-[0.5625rem] bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.8125rem] cursor-pointer font-[inherit] font-medium"
           >
@@ -259,6 +317,35 @@ export default function DepartmentsPage() {
         )}
       </div>
 
+      {!serverSynced ? (
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-10 flex flex-col items-center gap-3 text-center">
+          {syncError ? (
+            <>
+              <AlertTriangle size={26} className="text-[var(--red)]" />
+              <div>
+                <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                  {isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}
+                </div>
+                <div className="text-[0.75rem] text-[var(--text-secondary)] mt-1">{syncError}</div>
+              </div>
+              <button
+                onClick={() => void syncFromServer()}
+                disabled={syncing}
+                className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer disabled:cursor-default disabled:opacity-60"
+              >
+                {syncing ? (isBn ? 'লোড হচ্ছে...' : 'Loading…') : isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-6 h-6 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin" />
+              <span className="text-[0.8125rem] text-[var(--text-muted)]">
+                {isBn ? 'বিভাগ লোড হচ্ছে...' : 'Loading departments from server…'}
+              </span>
+            </>
+          )}
+        </div>
+      ) : (
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
         <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>
           <table className={`w-full border-collapse text-xs ${isMobile ? 'min-w-[37.5rem]' : ''}`}>
@@ -330,7 +417,7 @@ export default function DepartmentsPage() {
                     </td>
                     <td className="py-[0.625rem] px-3 text-center">
                       <div className="flex gap-1 justify-center">
-                        {canCreate('teachers.departments') && (
+                        {canCreate('teachers.departments') && canWriteDepartments && (
                           <button
                             onClick={() => startEdit(d)}
                             title={isBn ? 'এডিট' : 'Edit'}
@@ -339,9 +426,9 @@ export default function DepartmentsPage() {
                             <Edit2 size={12} />
                           </button>
                         )}
-                        {canCreate('teachers.departments') && (
+                        {canCreate('teachers.departments') && canWriteDepartments && (
                           <button
-                            onClick={() => setDelConfirm(d.id)}
+                            onClick={() => { setDelError(''); setDelConfirm(d.id) }}
                             title={isBn ? 'মুছুন' : 'Delete'}
                             className="w-7 h-7 rounded-[0.4375rem] bg-[var(--red-light)] border-none cursor-pointer flex items-center justify-center text-[var(--red)]"
                           >
@@ -357,6 +444,36 @@ export default function DepartmentsPage() {
           </table>
         </div>
       </div>
+      )}
+
+      {legacyDepartments.length > 0 && (
+        <div className="mt-3 bg-[var(--bg-primary)] border border-dashed border-[var(--amber)] rounded-[0.875rem] p-[0.875rem]">
+          <div className="flex items-center gap-2 flex-wrap">
+            <AlertTriangle size={14} className="text-[var(--amber)]" />
+            <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+              {isBn
+                ? `লোকাল বিভাগ (সার্ভারে মাইগ্রেট করা হয়নি) — ${legacyDepartments.length} টি`
+                : `Legacy local departments (not migrated) — ${legacyDepartments.length}`}
+            </span>
+          </div>
+          <p className="text-[0.75rem] text-[var(--text-secondary)] mt-1 mb-2">
+            {isBn
+              ? 'এগুলো সার্ভারে নেই; সংরক্ষিত ব্যাকআপ থেকে দেখানো হচ্ছে — সম্পাদনা/মুছে ফেলা যাবে না। বিষয় পুরোনো বিভাগের নাম দেখাতে এগুলো ব্যবহার করে।'
+              : 'Not on the server; shown from the local backup — read-only. Used so older subjects can still resolve department names.'}
+          </p>
+          <ul className="flex flex-wrap gap-1.5">
+            {legacyDepartments.map((d) => (
+              <li
+                key={d.id}
+                className="font-mono text-[0.6875rem] text-[var(--amber)] bg-[var(--amber-light)] px-1.5 py-0.5 rounded"
+              >
+                {isBn ? d.nameBn || d.name : d.name}
+                {d.head ? ` · ${d.head}` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }

@@ -13,7 +13,6 @@ import { sendVerificationCode } from '@/lib/emailService'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
-import { setAuthToken } from '@/lib/api'
 
 const BASE_URL = 'smsappbd.vercel.app'
 
@@ -282,15 +281,10 @@ export default function InstitutionRegister() {
 
     loadInstitutionData(inst)
 
-    // Auto-login
-    const userData = JSON.stringify({
-      email: inst.email, role: 'admin', name: inst.name,
-      institutionId: inst.id, subdomain: inst.subdomain, slug: inst.slug,
-      loginTimestamp: Date.now(),
-    })
-    localStorage.setItem(`edutech_user_${slug}`, userData)
-    localStorage.setItem('edutech_user', userData)
-    setAuthToken(`auto-${inst.id}`)
+    // Phase 7 — registration never grants a session: no identity keys are
+    // written here. Sign-in happens through the server-authenticated
+    // institution login (server-side registration provisioning = Phase E,
+    // documented, not implemented here).
     setCreated(true)
   }
 
@@ -305,14 +299,16 @@ export default function InstitutionRegister() {
             <Check size={32} className="text-white" />
           </div>
           <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">
-            {isBn ? 'নিবন্ধন সম্পন্ন!' : 'Registration Complete!'}
+            {isBn ? 'নিবন্ধন সংরক্ষিত হয়েছে!' : 'Registration Saved!'}
           </h2>
           <p className="text-sm text-[var(--text-secondary)] mb-6">
-            {isBn ? `${form.name} সফলভাবে তৈরি হয়েছে` : `${form.name} has been created successfully`}
+            {isBn
+              ? `${form.name} তৈরি হয়েছে। সাইন ইন পেজে গিয়ে অ্যাডমিন পরিচয় দিয়ে প্রবেশ করুন।`
+              : `${form.name} has been created. Sign in with the admin credentials to continue.`}
           </p>
-          <button onClick={() => navigate(`/i/${subdomainSlug}/admin/dashboard`)}
+          <button onClick={() => navigate(`/i/${subdomainSlug}/login`)}
             className="w-full py-3 rounded-xl bg-gradient-to-r from-[#6366f1] to-[#818cf8] text-white text-sm font-semibold border-none cursor-pointer">
-            {isBn ? 'ড্যাশবোর্ডে যান' : 'Go to Dashboard'}
+            {isBn ? 'সাইন ইন করুন' : 'Go to Sign In'}
           </button>
         </div>
       </div>
@@ -410,7 +406,7 @@ export default function InstitutionRegister() {
                   <p className="font-medium mb-2">{isBn ? 'আপনার প্রতিষ্ঠানে লগইন করুন:' : 'Login to your institution:'}</p>
                   <ol className="list-decimal list-inside space-y-1">
                     <li>{isBn ? 'আপনার প্রতিষ্ঠানের ইউআরএলে যান' : 'Go to your institution URL'}</li>
-                    <li>{isBn ? 'সেখানে ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন' : 'Enter email & password to login'}</li>
+                    <li>{isBn ? 'সাইন-ইন এখন সার্ভার-ভিত্তিক অ্যাকাউন্টের মাধ্যমে চলে' : 'Sign-in now uses a server-backed account'}</li>
                   </ol>
                   <p className="mt-2 text-[0.6875rem] opacity-60">
                     {isBn ? 'URL পাচ্ছেন না? আপনার প্রতিষ্ঠান প্রশাসকের সাথে যোগাযোগ করুন।' : "Can't find the URL? Contact your institution admin."}

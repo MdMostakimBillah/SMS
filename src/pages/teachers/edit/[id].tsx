@@ -1,12 +1,15 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CheckCircle, Camera, Clock, Users, Save, Briefcase, X, IdCard } from 'lucide-react'
+import { CheckCircle, Camera, Clock, Users, Save, Briefcase, X, IdCard, AlertTriangle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useAuth } from '@/contexts/AuthContext'
 import type { TeacherStatus } from '@/pages/teachers/types'
+import { teachersApi } from '@/lib/api'
+import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
@@ -89,16 +92,22 @@ export default function EditTeacherPage() {
   const { id } = useParams<{ id: string }>()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
-  const { teachers, departments, subjects, designations, updateTeacher } = useTeacherStore(
+  const { teachers, departments, subjects, designations, upsertServerTeacher, serverSynced, syncError, syncFromServer } = useTeacherStore(
     useShallow((s) => ({
       teachers: s.teachers,
       departments: s.departments,
       subjects: s.subjects,
       designations: s.designations,
-      updateTeacher: s.updateTeacher,
+      upsertServerTeacher: s.upsertServerTeacher,
+      serverSynced: s.serverSynced,
+      syncError: s.syncError,
+      syncFromServer: s.syncFromServer,
     }))
   )
   const { canEdit } = usePermission()
+  const { user } = useAuth()
+  /** Phase 7 RBAC policy: writes are school_admin/hr_admin only — super_admin is read-only. */
+  const canWriteTeachers = user?.role !== 'super_admin'
   const fileRef = useRef<HTMLInputElement>(null)
   const signatureRef = useRef<HTMLInputElement>(null)
 
@@ -145,6 +154,8 @@ export default function EditTeacherPage() {
   const [parentAddress, setParentAddress] = useState('')
   const [signature, setSignature] = useState('')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [photoErr, setPhotoErr] = useState('')
 
   useEffect(() => {
@@ -227,53 +238,67 @@ export default function EditTeacherPage() {
     reader.readAsDataURL(file)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
       if (!teacher || !nameEn.trim() || !phone.trim() || !departmentId) {
         alert(isBn ? 'অনুগ্রহ করে প্রয়োজনীয় তথ্য পূরণ করুন' : 'Please fill in required fields')
         return
       }
-      updateTeacher(teacher.id, {
-        photo,
-        nameEn: nameEn.trim(),
-        nameBn: nameBn.trim(),
-        gender,
-        dob,
-        bloodGroup,
-        religion,
-        phone: phone.trim(),
-        email: email.trim(),
-        address: address.trim(),
-        nid: nid.trim(),
-        emergencyPhone: emergencyPhone.trim(),
-        departmentId,
-        subjectIds,
-        designation,
-        category,
-        qualification: qualification.trim(),
-        experience: experience.trim(),
-        joiningDate,
-        salary: Number(salary) || 0,
-        salaryStartDate: salaryStartDate || undefined,
-        overtime: Number(overtime) || 0,
-        status,
-        inTime,
-        outTime,
-        fatherNameEn: fatherNameEn.trim(),
-        fatherNameBn: fatherNameBn.trim(),
-        fatherPhone: fatherPhone.trim(),
-        fatherNid: fatherNid.trim(),
-        motherNameEn: motherNameEn.trim(),
-        motherNameBn: motherNameBn.trim(),
-        motherPhone: motherPhone.trim(),
-        guardianName: guardianName.trim(),
-        guardianPhone: guardianPhone.trim(),
-        guardianRelation: guardianRelation.trim(),
-        parentAddress: parentAddress.trim(),
-        signature,
-      })
-      setSaved(true)
-      setTimeout(() => navigate(nav(`/teachers/all`)), 1200)
+      setSaving(true)
+      setSubmitError('')
+      try {
+        // Server-authoritative update (Phase 7): single API write — no local
+        // duplicate. The response row replaces the store entry.
+        const updated = await teachersApi.update(
+          teacher.id,
+          teacherToPayload({
+            photo,
+            nameEn: nameEn.trim(),
+            nameBn: nameBn.trim(),
+            gender,
+            dob,
+            bloodGroup,
+            religion,
+            phone: phone.trim(),
+            email: email.trim(),
+            address: address.trim(),
+            nid: nid.trim(),
+            emergencyPhone: emergencyPhone.trim(),
+            departmentId,
+            subjectIds,
+            designation,
+            category,
+            qualification: qualification.trim(),
+            experience: experience.trim(),
+            joiningDate,
+            salary: Number(salary) || 0,
+            salaryStartDate: salaryStartDate || undefined,
+            overtime: Number(overtime) || 0,
+            status,
+            inTime,
+            outTime,
+            fatherNameEn: fatherNameEn.trim(),
+            fatherNameBn: fatherNameBn.trim(),
+            fatherPhone: fatherPhone.trim(),
+            fatherNid: fatherNid.trim(),
+            motherNameEn: motherNameEn.trim(),
+            motherNameBn: motherNameBn.trim(),
+            motherPhone: motherPhone.trim(),
+            guardianName: guardianName.trim(),
+            guardianPhone: guardianPhone.trim(),
+            guardianRelation: guardianRelation.trim(),
+            parentAddress: parentAddress.trim(),
+            signature,
+          })
+        )
+        upsertServerTeacher(serverTeacherToTeacher(updated))
+        setSaved(true)
+        setTimeout(() => navigate(nav(`/teachers/all`)), 1200)
+      } catch (err) {
+        setSubmitError(apiErrorMessage(err, isBn))
+      } finally {
+        setSaving(false)
+      }
     }
 
   // ── helpers ──
@@ -292,9 +317,37 @@ export default function EditTeacherPage() {
   )
 
   if (!teacher) {
+    // Not found ≠ same state while server data is still loading or failed.
+    if (!serverSynced) {
+      return (
+        <div className="p-10 text-center flex flex-col items-center gap-3">
+          {syncError ? (
+            <>
+              <AlertTriangle size={26} className="text-[var(--red)]" />
+              <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}</p>
+              <p className="text-xs text-[var(--text-muted)]">{syncError}</p>
+              <button
+                onClick={() => void syncFromServer()}
+                className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer"
+              >
+                {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-6 h-6 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin" />
+              <p className="text-sm text-[var(--text-muted)]">{isBn ? 'লোড হচ্ছে...' : 'Loading…'}</p>
+            </>
+          )}
+        </div>
+      )
+    }
     return (
       <div className="p-10 text-center">
         <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'শিক্ষক পাওয়া যায়নি' : 'Teacher not found'}</p>
+        <p className="text-xs text-[var(--text-muted)] mt-1">
+          {isBn ? 'লোকাল রেকর্ড সম্পাদনা করা যায় না — তারা সার্ভারে নেই।' : 'Local legacy records cannot be edited — they are not on the server.'}
+        </p>
         <button
           onClick={() => navigate(nav('/teachers/all'))}
           className="mt-3 px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer"
@@ -691,6 +744,12 @@ export default function EditTeacherPage() {
       </div>
 
       {/* Submit */}
+      {submitError && (
+        <div role="alert" className="flex items-center gap-2 bg-[var(--red-light)] border border-[var(--red)] rounded-[0.5rem] p-3 mb-[0.625rem] text-[0.8125rem] text-[var(--red)]">
+          <AlertTriangle size={14} className="shrink-0" />
+          {submitError}
+        </div>
+      )}
       <div className="flex gap-[0.625rem] justify-end flex-wrap">
         <button
           type="button"
@@ -699,13 +758,14 @@ export default function EditTeacherPage() {
         >
           {isBn ? 'বাতিল' : 'Cancel'}
         </button>
-        {canEdit('teachers.all') && (
+        {canEdit('teachers.all') && canWriteTeachers && (
           <button
             type="submit"
-            className="flex items-center gap-[0.4375rem] px-6 py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+            disabled={saving}
+            className="flex items-center gap-[0.4375rem] px-6 py-2.5 rounded-[0.5625rem] bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer shadow-[0_4px_14px_rgba(99,102,241,0.35)] disabled:cursor-default disabled:opacity-60"
           >
             <Save size={14} />
-            {isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}
+            {saving ? (isBn ? 'সংরক্ষণ হচ্ছে...' : 'Saving…') : isBn ? 'সংরক্ষণ করুন' : 'Save Changes'}
           </button>
         )}
       </div>

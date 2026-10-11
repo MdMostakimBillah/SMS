@@ -150,9 +150,9 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
               <FileText size={16} className="text-blue-500 shrink-0 mt-0.5" />
               <div className="text-[0.75rem] text-[var(--text-secondary)]">
                 {isBn ? (
-                  <>ইমেইল পরিবর্তন করতে <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">.env</code> ফাইলে <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">VITE_SUPER_ADMIN_EMAIL</code> আপডেট করুন এবং পুনর্নির্মাণ করুন।</>
+                  <>ইমেইল ও পাসওয়ার্ড পরিবর্তন করতে <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">Settings → Email &amp; Password</code> এ যান। পাসওয়ার্ড ডেটাবেসে Argon2id হ্যাশ হিসেবে সংরক্ষিত থাকে।</>
                 ) : (
-                  <>To change email, update <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">VITE_SUPER_ADMIN_EMAIL</code> in <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">.env</code> and rebuild.</>
+                  <>Change email or password from <code className="px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] text-[0.6875rem] font-mono">Settings → Email &amp; Password</code>. The password is stored in the database as an Argon2id hash.</>
                 )}
               </div>
             </div>

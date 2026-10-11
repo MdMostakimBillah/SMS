@@ -15,17 +15,32 @@ import {
   Search,
   Upload,
   Zap,
+  AlertTriangle,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useAuth } from '@/contexts/AuthContext'
+import { teachersApi, type TeacherData } from '@/lib/api'
+import { serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
 type Op = 'salary' | 'phone' | 'photo' | 'department' | 'designation' | 'inTime' | 'outTime'
+
+/** Bulk op ids -> server column names (`department` is stored as `departmentId`). */
+const OP_FIELD: Record<Op, keyof TeacherData> = {
+  photo: 'photo',
+  salary: 'salary',
+  phone: 'phone',
+  department: 'departmentId',
+  designation: 'designation',
+  inTime: 'inTime',
+  outTime: 'outTime',
+}
 
 const OPS: {
   id: Op
@@ -67,15 +82,22 @@ export default function TeacherBulkUpdatePage() {
   const nav = useNavPath()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
-  const { teachers, updateTeacher, departments, designations } = useTeacherStore(
+  const { teachers, departments, designations, upsertServerTeacher, serverSynced, syncing, syncError, syncFromServer } = useTeacherStore(
     useShallow((s) => ({
       teachers: s.teachers,
-      updateTeacher: s.updateTeacher,
       departments: s.departments,
       designations: s.designations,
+      upsertServerTeacher: s.upsertServerTeacher,
+      serverSynced: s.serverSynced,
+      syncing: s.syncing,
+      syncError: s.syncError,
+      syncFromServer: s.syncFromServer,
     }))
   )
   const { canEdit } = usePermission()
+  const { user } = useAuth()
+  /** Phase 7 RBAC policy: writes are school_admin/hr_admin only — super_admin is read-only. */
+  const canWriteTeachers = user?.role !== 'super_admin'
 
   const departmentMap = useMemo(() => new Map(departments.map(d => [d.id, d])), [departments])
 
@@ -87,6 +109,8 @@ export default function TeacherBulkUpdatePage() {
   const [rowEdits, setRowEdits] = useState<Record<string, string>>({})
   const [photoMap, setPhotoMap] = useState<Record<string, string>>({})
   const [applied, setApplied] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [applyError, setApplyError] = useState('')
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const opInfo = OPS.find((x) => x.id === op)!
@@ -135,33 +159,48 @@ export default function TeacherBulkUpdatePage() {
     setRowEdits((p) => ({ ...p, ...edits }))
   }, [batchVal, selected])
 
-  const applyChanges = useCallback(() => {
+  const applyChanges = useCallback(async () => {
+    if (applying) return
     const ids = selected.length > 0 ? selected : filtered.map((t) => t.id)
-    let count = 0
+    const changes: { id: string; payload: Partial<TeacherData> }[] = []
     ids.forEach((id) => {
       if (op === 'photo') {
-        if (photoMap[id]) {
-          updateTeacher(id, { photo: photoMap[id] })
-          count++
-        }
+        if (photoMap[id]) changes.push({ id, payload: { photo: photoMap[id] } })
       } else {
         const val = rowEdits[id]
         if (val) {
-          const update: Record<string, any> = {}
-          if (op === 'salary') update[op] = Number(val) || 0
-          else update[op] = val
-          updateTeacher(id, update)
-          count++
+          const field = OP_FIELD[op]
+          changes.push({
+            id,
+            payload: { [field]: op === 'salary' ? String(Number(val) || 0) : val } as Partial<TeacherData>,
+          })
         }
       }
     })
-    if (count === 0) {
+    if (changes.length === 0) {
       alert(isBn ? 'কোনো পরিবর্তন নেই' : 'No changes to apply')
       return
     }
-    setApplied(true)
-    setTimeout(() => setApplied(false), 3000)
-  }, [selected, filtered, op, photoMap, rowEdits, updateTeacher, isBn])
+    // Sequential API writes — the store is updated only with server responses.
+    setApplying(true)
+    setApplyError('')
+    let done = 0
+    try {
+      for (const c of changes) {
+        const updated = await teachersApi.update(c.id, c.payload)
+        upsertServerTeacher(serverTeacherToTeacher(updated))
+        done++
+      }
+      setApplied(true)
+      setTimeout(() => setApplied(false), 3000)
+    } catch (err) {
+      setApplyError(
+        `${apiErrorMessage(err, isBn)}${done > 0 ? ` (${done}/${changes.length} ${isBn ? 'সফল' : 'saved'})` : ''}`
+      )
+    } finally {
+      setApplying(false)
+    }
+  }, [selected, filtered, op, photoMap, rowEdits, upsertServerTeacher, isBn, applying])
 
   const clearAll = useCallback(() => {
     setRowEdits({})
@@ -174,6 +213,59 @@ export default function TeacherBulkUpdatePage() {
 
   const inpCls =
     'py-[0.4375rem] px-[0.5625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] font-[inherit] cursor-pointer outline-none'
+
+  // Gate on server-authoritative data: local rows must never be presented as
+  // server data while the sync has not succeeded.
+  if (!serverSynced) {
+    return (
+      <div>
+        <div className="flex items-center gap-[0.625rem] mb-[1.125rem] flex-wrap">
+          <button
+            onClick={() => navigate(nav('/teachers'))}
+            className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.75rem] rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0"
+          >
+            <ArrowLeft size={14} />
+            {isBn ? 'ফিরে যান' : 'Back'}
+          </button>
+          <div>
+            <h1 className={`${isMobile ? 'text-[1.125rem]' : 'text-[1.375rem]'} font-semibold text-[var(--text-primary)]`}>
+              {isBn ? 'বাল্ক আপডেট শিক্ষক' : 'Bulk Update Teachers'}
+            </h1>
+            <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
+              {isBn ? 'একসাথে অনেক শিক্ষকের তথ্য পরিবর্তন করুন' : 'Update multiple teachers at once'}
+            </p>
+          </div>
+        </div>
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-10 flex flex-col items-center gap-3 text-center">
+          {syncError ? (
+            <>
+              <AlertTriangle size={26} className="text-[var(--red)]" />
+              <div>
+                <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                  {isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}
+                </div>
+                <div className="text-[0.75rem] text-[var(--text-secondary)] mt-1">{syncError}</div>
+              </div>
+              <button
+                onClick={() => void syncFromServer()}
+                disabled={syncing}
+                className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer disabled:cursor-default disabled:opacity-60"
+              >
+                {syncing ? (isBn ? 'লোড হচ্ছে...' : 'Loading…') : isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-6 h-6 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin" />
+              <span className="text-[0.8125rem] text-[var(--text-muted)]">
+                {isBn ? 'শিক্ষক ডেটা লোড হচ্ছে...' : 'Loading teachers from server…'}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -566,6 +658,12 @@ export default function TeacherBulkUpdatePage() {
               ? 'কোনো পরিবর্তন নেই — উপরে তথ্য দিন'
               : 'No changes yet — add values above'}
         </div>
+        {applyError && (
+          <div role="alert" className="flex items-center gap-2 bg-[var(--red-light)] border border-[var(--red)] rounded-[0.5rem] p-2.5 text-[0.75rem] text-[var(--red)] mb-2">
+            <AlertTriangle size={13} className="shrink-0" />
+            {applyError}
+          </div>
+        )}
         <div className="flex gap-[0.5rem]">
           <button
             onClick={clearAll}
@@ -573,26 +671,30 @@ export default function TeacherBulkUpdatePage() {
           >
             {isBn ? 'পরিষ্কার করুন' : 'Clear All'}
           </button>
-          {canEdit('teachers.bulk-update') && (
+          {canEdit('teachers.bulk-update') && canWriteTeachers && (
             <button
-              onClick={applyChanges}
-              disabled={readyCount === 0}
-              className={`flex items-center gap-[0.4375rem] py-[0.625rem] px-[1.375rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-[inherit] ${readyCount === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+              onClick={() => void applyChanges()}
+              disabled={readyCount === 0 || applying}
+              className={`flex items-center gap-[0.4375rem] py-[0.625rem] px-[1.375rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-[inherit] ${readyCount === 0 || applying ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               style={
                 {
-                  background: readyCount === 0 ? 'var(--border-2)' : opInfo.color,
-                  boxShadow: readyCount > 0 ? `0 4px 14px ${opInfo.color}50` : 'none',
+                  background: readyCount === 0 || applying ? 'var(--border-2)' : opInfo.color,
+                  boxShadow: readyCount > 0 && !applying ? `0 4px 14px ${opInfo.color}50` : 'none',
                 } as React.CSSProperties
               }
             >
               {applied ? <Check size={15} /> : <Save size={15} />}
-              {applied
+              {applying
                 ? isBn
-                  ? '✓ সফলভাবে আপডেট হয়েছে!'
-                  : '✓ Updated Successfully!'
-                : isBn
-                  ? `${readyCount} টি পরিবর্তন সেভ করুন`
-                  : `Save ${readyCount} Changes`}
+                  ? 'আপডেট হচ্ছে...'
+                  : 'Updating…'
+                : applied
+                  ? isBn
+                    ? '✓ সফলভাবে আপডেট হয়েছে!'
+                    : '✓ Updated Successfully!'
+                  : isBn
+                    ? `${readyCount} টি পরিবর্তন সেভ করুন`
+                    : `Save ${readyCount} Changes`}
             </button>
           )}
         </div>

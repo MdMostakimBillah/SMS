@@ -46,7 +46,14 @@ export interface Institution {
   endTime: string
   optionalSubjects: string[]
   sessions: string[]
-  password: string
+  /**
+   * Institution admin password — session-only convenience value so admins can
+   * view/copy it right after creation. NEVER persisted: `partialize` strips it
+   * on every write and `purgeLegacyInstitutionPasswords` removes it from state
+   * persisted by earlier releases. Not a valid login credential: local
+   * password comparison was removed in Phase 6 (fail-closed sign-in).
+   */
+  password?: string
   accessModes: InstitutionAccessModes
   language: 'en' | 'bn'
   theme: 'light' | 'dark'
@@ -114,6 +121,39 @@ interface SuperAdminState {
   stopViewing: () => void
 }
 
+/**
+ * Phase 6 — remove plaintext institution passwords persisted by earlier
+ * releases. Runs once at module load, BEFORE zustand rehydrates, and rewrites
+ * only the confirmed sensitive field: every other persisted institution field
+ * (name, status, branding, package, …) is preserved untouched. The removed
+ * value is never logged or included in any output.
+ */
+function purgeLegacyInstitutionPasswords() {
+  try {
+    const base = 'edutech_super_admin'
+    const keys = Object.keys(localStorage).filter((k) => k === base || k.startsWith(`${base}_`))
+    for (const key of keys) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+      const parsed = JSON.parse(raw)
+      const institutions = parsed?.state?.institutions
+      if (!Array.isArray(institutions)) continue
+      let changed = false
+      for (const inst of institutions) {
+        if (inst && typeof inst === 'object' && 'password' in inst) {
+          delete inst.password
+          changed = true
+        }
+      }
+      if (changed) localStorage.setItem(key, JSON.stringify(parsed))
+    }
+  } catch {
+    // Malformed persisted state — leave it for zustand to handle.
+  }
+}
+
+purgeLegacyInstitutionPasswords()
+
 export const useSuperAdminStore = create<SuperAdminState>()(
   persist(
     (set) => ({
@@ -159,8 +199,16 @@ export const useSuperAdminStore = create<SuperAdminState>()(
     {
       name: 'edutech_super_admin',
       partialize: (state) => {
-        const { viewingInstitutionId, ...rest } = state
-        return rest
+        // `viewingInstitutionId` is session-only UI state and must not
+        // persist. Phase 6 — institution credentials must never persist
+        // either: `undefined` fields are dropped by JSON serialization, so
+        // the key is absent entirely.
+        const rest: Partial<SuperAdminState> = { ...state }
+        delete rest.viewingInstitutionId
+        return {
+          ...rest,
+          institutions: (rest.institutions ?? []).map((i) => ({ ...i, password: undefined })),
+        }
       },
     }
   )

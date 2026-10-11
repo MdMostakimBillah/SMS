@@ -1,17 +1,13 @@
-import { useState, useMemo, useContext, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Building2, Mail, Lock, Eye, EyeOff, LogIn, X, Clock } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
-import { applyThemeColors } from '@/hooks/useThemeColors'
-import { AuthContext } from '@/contexts/AuthContext'
+import { authApi } from '@/lib/api'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark, type ThemeColors } from '@/store/classStore'
-import { nsSet, migrateOldKeys, setSlug, setUserId } from '@/lib/storage'
-import { usePermissionStore } from '@/store/permissionStore'
-import { useTeacherStore } from '@/store/teacherStore'
 import { presets } from '@/components/shared/ColorSettings'
 
 const MAX_ATTEMPTS = 5
@@ -137,9 +133,6 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const storeInstitutions = useSuperAdminStore((s) => s.institutions) ?? []
   const setAppTheme = useAppStore((s) => s.setTheme)
   const setAppLanguage = useAppStore((s) => s.setLanguage)
-  const authCtx = useContext(AuthContext)
-  const setInstitutionUser = authCtx?.setInstitutionUser
-  const teachers = useTeacherStore((s) => s.teachers)
 
   const institution = useMemo(() => {
     if (propInstitution) return propInstitution
@@ -313,121 +306,58 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
 
     setLoading(true)
 
-    setTimeout(() => {
+    setTimeout(async () => {
+      // Super admin credentials live only in the database (Argon2id hash).
+      // Try the API when there is no institution subdomain; never compare
+      // credentials in the browser.
+      let serverRejected = false
       if (!subdomain) {
-        const superAdminEmail = import.meta.env.VITE_SUPER_ADMIN_EMAIL
-        const superAdminPassword = import.meta.env.VITE_SUPER_ADMIN_PASSWORD
-        if (email === superAdminEmail && password === superAdminPassword) {
-          const userData = JSON.stringify({
-            email, role: 'super_admin', name: 'Super Admin', loginTimestamp: Date.now()
-          })
-          localStorage.setItem('edutech_user', userData)
-          localStorage.setItem('edutech_superadmin_user', userData)
-          clearLoginAttempts()
-          navigate('/super-admin/admin/dashboard')
-          setLoading(false)
-          return
-        }
-      }
-
-      if (email === institution.email && password === (institution.password || 'admin123')) {
-        setSlug(institution.slug)
-        sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
-        migrateOldKeys(institution.slug)
-        loadInstitutionData(institution)
-        // Force-apply colors immediately so dashboard renders with correct brand color
-        const isDark = useAppStore.getState().theme === 'dark' || (useAppStore.getState().theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-        const { lightColors, darkColors } = useClassStore.getState().institution
-        applyThemeColors(isDark ? darkColors : lightColors)
-        clearLoginAttempts()
-        // Notify service worker of institution for PWA identity
-        if (navigator.serviceWorker) {
-          navigator.serviceWorker.ready.then((reg) => {
-            reg.active?.postMessage({
-              type: 'SET_INSTITUTION',
-              name: institution.name,
-              brandName: institution.brandName || institution.name,
-              slug: institution.slug,
-              logo: institution.logo || null,
-              brandColor: institution.brandColor || '#6366f1',
-            })
-          })
-        }
-        const adminData = { email, role: 'admin', name: institution.name, institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug, loginTimestamp: Date.now() }
-        if (setInstitutionUser) {
-          setInstitutionUser(email, institution.name, 'admin', institution.id, institution.subdomain, institution.slug, undefined, undefined, institution.name)
-        } else {
-          setUserId(email)
-          nsSet('user', JSON.stringify(adminData))
-          nsSet('institutionId', institution.id)
-          nsSet('institutionSubdomain', institution.subdomain)
-          localStorage.setItem('edutech_current_user', JSON.stringify(adminData))
-        }
-        navigate(`/i/${institution.slug}/admin/dashboard`)
-        setLoading(false)
-        return
-      }
-
-      // Teacher / Staff login — match staffId or email against permission store
-      // First ensure slug is set so permission store loads correct data
-      setSlug(institution.slug)
-      const inputLower = email.trim().toLowerCase()
-      // Read directly from store to get freshly loaded data
-      const currentStaffPermissions = usePermissionStore.getState().staffPermissions || []
-      const matchedStaff = currentStaffPermissions.find(
-        (s) => s.staffId.toLowerCase() === inputLower || s.email.toLowerCase() === inputLower
-      )
-      if (matchedStaff && password === matchedStaff.defaultPassword) {
-        sessionStorage.setItem('edutech_inst_subdomain', institution.subdomain)
-        migrateOldKeys(institution.slug)
-        loadInstitutionData(institution)
-        // Force-apply colors immediately so dashboard renders with correct brand color
-        const isDark2 = useAppStore.getState().theme === 'dark' || (useAppStore.getState().theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-        const { lightColors: lc2, darkColors: dc2 } = useClassStore.getState().institution
-        applyThemeColors(isDark2 ? dc2 : lc2)
-        clearLoginAttempts()
-        if (navigator.serviceWorker) {
-          navigator.serviceWorker.ready.then((reg) => {
-            reg.active?.postMessage({
-              type: 'SET_INSTITUTION',
-              name: institution.name,
-              brandName: institution.brandName || institution.name,
-              slug: institution.slug,
-              logo: institution.logo || null,
-              brandColor: institution.brandColor || '#6366f1',
-            })
-          })
-        }
-        const teacherName = isBn ? matchedStaff.staffNameBn : matchedStaff.staffName
-        const teacherRecord = teachers.find((t) => t.id === matchedStaff.staffId)
-        const teacherData = { email: matchedStaff.email, role: matchedStaff.role || 'teacher', name: teacherName,
-            institutionId: institution.id, subdomain: institution.subdomain, slug: institution.slug,
-            staffId: matchedStaff.staffId, photo: teacherRecord?.photo || null, loginTimestamp: Date.now()
+        try {
+          const res = await authApi.login(email, password)
+          if (res.user.role === 'super_admin') {
+            clearLoginAttempts()
+            navigate('/super-admin/admin/dashboard')
+            setLoading(false)
+            return
           }
-        if (setInstitutionUser) {
-          setInstitutionUser(matchedStaff.email, teacherName, matchedStaff.role || 'teacher', institution.id, institution.subdomain, institution.slug, matchedStaff.staffId, teacherRecord?.photo || null, institution.name)
-        } else {
-          setUserId(matchedStaff.staffId || matchedStaff.email)
-          nsSet('user', JSON.stringify(teacherData))
-          nsSet('institutionId', institution.id)
-          nsSet('institutionSubdomain', institution.subdomain)
-          localStorage.setItem('edutech_current_user', JSON.stringify(teacherData))
+          // A non-superadmin server account has no session on this page —
+          // revoke it and fall through to the fail-closed path below.
+          authApi.logout().catch(() => { /* ignore */ })
+        } catch {
+          // The server rejected the credentials (or is unreachable) — keep
+          // the existing failed-attempt / lockout behavior below.
+          serverRejected = true
         }
-        navigate(`/i/${institution.slug}/admin/dashboard`)
+      }
+
+      if (serverRejected) {
+        // Wrong server-side credentials — preserve the existing
+        // failed-attempt counter and lockout behavior.
+        recordFailedAttempt()
+        const attempts = getLoginAttempts()
+        if (attempts >= MAX_ATTEMPTS) {
+          setIsLockedOut(true)
+          setLockoutRemaining(LOCKOUT_DURATION)
+          setError(isBn ? `অনেক বার ভুল চেষ্টা করা হয়েছে। ৫ মিনিট অপেক্ষা করুন।` : `Too many failed attempts. Locked out for 5 minutes.`)
+        } else {
+          setError(isBn ? `ভুল ইমেইল বা পাসওয়ার্ড। ${MAX_ATTEMPTS - attempts} টি চেষ্টা বাকি।` : `Invalid credentials. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
+        }
         setLoading(false)
         return
       }
 
-      // Wrong credentials
-      recordFailedAttempt()
-      const attempts = getLoginAttempts()
-      if (attempts >= MAX_ATTEMPTS) {
-        setIsLockedOut(true)
-        setLockoutRemaining(LOCKOUT_DURATION)
-        setError(isBn ? `অনেক বার ভুল চেষ্টা করা হয়েছে। ৫ মিনিট অপেক্ষা করুন।` : `Too many failed attempts. Locked out for 5 minutes.`)
-      } else {
-        setError(isBn ? `ভুল ইমেইল বা পাসওয়ার্ড। ${MAX_ATTEMPTS - attempts} টি চেষ্টা বাকি।` : `Invalid credentials. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
-      }
+      // Phase 6 — credential hardening. The local plaintext comparisons
+      // (institution admin + staff) were removed because they required
+      // persisting passwords in browser storage (localStorage / Zustand).
+      // New sign-ins with previously stored passwords fail closed until
+      // server-backed institution accounts are wired up (Phase 7).
+      // Existing active sessions are unaffected: session restore never
+      // involves a password.
+      setError(
+        isBn
+          ? 'প্রতিষ্ঠান ও স্টাফ সাইন-ইন এখন সার্ভার-ভিত্তিক অ্যাকাউন্টের মাধ্যমে চলে। অ্যাক্সেসের জন্য অ্যাডমিনিস্ট্রেটরের সাথে যোগাযোগ করুন।'
+          : 'Institution & staff sign-in now requires a server-backed account. Contact your administrator for access.'
+      )
       setLoading(false)
     }, 1000)
   }

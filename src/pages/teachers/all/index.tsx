@@ -19,12 +19,16 @@ import {
   ChevronsRight,
   ChevronDown,
   MoreVertical,
+  Trash2,
 } from 'lucide-react'
 import { XLSX } from '@/lib/excelExport'
 import { useBn } from '@/hooks/useBn'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
+import { useAuth } from '@/contexts/AuthContext'
+import { teachersApi } from '@/lib/api'
+import { apiErrorMessage } from '@/lib/teacherMappers'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavPath } from '@/hooks/useNavPath'
@@ -46,15 +50,24 @@ export default function AllTeachersPage() {
   const navigate = useNavigate()
   const nav = useNavPath()
   const isBn = useBn()
-  const { teachers, departments, subjects, deleteTeacher } = useTeacherStore(
+  const { teachers, departments, subjects, legacyTeachers, legacyDepartments, serverSynced, syncing, syncError, syncFromServer, removeServerTeacher } = useTeacherStore(
     useShallow((s) => ({
       teachers: s.teachers,
       departments: s.departments,
       subjects: s.subjects,
-      deleteTeacher: s.deleteTeacher,
+      legacyTeachers: s.legacyTeachers,
+      legacyDepartments: s.legacyDepartments,
+      serverSynced: s.serverSynced,
+      syncing: s.syncing,
+      syncError: s.syncError,
+      syncFromServer: s.syncFromServer,
+      removeServerTeacher: s.removeServerTeacher,
     }))
   )
   const { institution } = useClassStore()
+  const { user } = useAuth()
+  /** Phase 7 RBAC policy: writes are school_admin/hr_admin only — super_admin is read-only. */
+  const canWriteTeachers = user?.role !== 'super_admin'
 
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 200)
@@ -69,6 +82,7 @@ export default function AllTeachersPage() {
   const { canView, canCreate, canEdit, canDelete } = usePermission()
   const [viewT, setViewT] = useState<Teacher | null>(null)
   const [delConfirm, setDelConfirm] = useState<string | null>(null)
+  const [delError, setDelError] = useState('')
   const [showPDF, setShowPDF] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
   const [showActionMenu, setShowActionMenu] = useState(false)
@@ -153,9 +167,11 @@ export default function AllTeachersPage() {
 
   const departmentMap = useMemo(() => {
     const map = new Map<string, typeof departments[0]>()
-    for (const d of departments) map.set(d.id, d)
+    // Server departments first; legacy backups keep old references resolvable
+    // for the labeled legacy section only (main rows are server data).
+    for (const d of [...legacyDepartments, ...departments]) map.set(d.id, d)
     return map
-  }, [departments])
+  }, [departments, legacyDepartments])
 
   const getDeptName = (id: string) => {
     const d = departmentMap.get(id)
@@ -173,11 +189,19 @@ export default function AllTeachersPage() {
     )
   }
 
-  const handleDelete = (id: string) => {
-    deleteTeacher(id)
-    setDelConfirm(null)
-    setViewT(null)
-  }
+  const handleDelete = useCallback(async (id: string) => {
+    setDelError('')
+    try {
+      await teachersApi.delete(id) // server is authoritative — no local-only delete
+      removeServerTeacher(id)
+      setDelConfirm(null)
+      setViewT(null)
+    } catch (err) {
+      // Keep the dialog open and surface the refusal (401/403/404) — never
+      // pretend the row was deleted when the server rejected it.
+      setDelError(apiErrorMessage(err, isBn))
+    }
+  }, [removeServerTeacher, isBn])
 
   const statusBadge = (st: TeacherStatus) => {
     const m: Record<TeacherStatus, { b: string; c: string; l: string; lb: string }> = {
@@ -437,7 +461,7 @@ ${photoHtml}
               >
                 {isBn ? 'বন্ধ' : 'Close'}
               </button>
-              {canEdit('teachers.all') && (
+              {canEdit('teachers.all') && canWriteTeachers && (
                 <button
                   onClick={() => {
                     navigate(nav(`/teachers/edit/${viewT.id}`))
@@ -467,14 +491,20 @@ ${photoHtml}
             <p className="text-[0.8125rem] text-[var(--text-secondary)] mb-4">
               {isBn ? 'এই শিক্ষককে স্থায়ীভাবে মুছে ফেলা হবে।' : 'This teacher will be permanently deleted.'}
             </p>
+            {delError && (
+              <div role="alert" className="flex items-center gap-2 bg-[var(--red-light)] border border-[var(--red)] rounded-[0.5rem] p-2.5 mb-3 text-[0.8125rem] text-[var(--red)]">
+                <AlertTriangle size={14} className="shrink-0" />
+                {delError}
+              </div>
+            )}
             <div className="flex gap-2 justify-end">
               <button
-                onClick={() => setDelConfirm(null)}
+                onClick={() => { setDelConfirm(null); setDelError('') }}
                 className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer"
               >
                 {isBn ? 'বাতিল' : 'Cancel'}
               </button>
-              {canDelete('teachers.all') && (
+              {canDelete('teachers.all') && canWriteTeachers && (
                 <button
                   onClick={() => handleDelete(delConfirm)}
                   className="px-3.5 py-2 rounded-lg bg-[var(--red)] border-0 text-white text-[0.8125rem] font-semibold cursor-pointer"
@@ -520,7 +550,7 @@ ${photoHtml}
               ))}
             </div>
           </div>
-          {canCreate('teachers.add') && (
+          {canCreate('teachers.add') && canWriteTeachers && (
             <button
               onClick={() => navigate(nav('/teachers/add'))}
               className="flex items-center gap-[0.3125rem] px-3.5 py-2 rounded-[0.5625rem] bg-[var(--teal-light)] border border-[var(--teal)] text-[var(--teal)] text-[0.8125rem] cursor-pointer font-medium"
@@ -744,7 +774,38 @@ ${photoHtml}
         </div>
       </div>
 
-      {/* Table */}
+      {!serverSynced ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mt-1 p-6 text-center">
+          {syncError ? (
+            <>
+              <AlertTriangle size={26} className="text-[var(--red)]" />
+              <div>
+                <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                  {isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}
+                </div>
+                <div className="text-[0.75rem] text-[var(--text-secondary)] mt-1">{syncError}</div>
+                <div className="text-[0.6875rem] text-[var(--text-muted)] mt-1">
+                  {isBn ? 'লোকাল ডেটা সার্ভার হিসেবে দেখানো হবে না।' : 'Local data is not shown as server data.'}
+                </div>
+              </div>
+              <button
+                onClick={() => void syncFromServer()}
+                disabled={syncing}
+                className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer disabled:cursor-default disabled:opacity-60"
+              >
+                {syncing ? (isBn ? 'লোড হচ্ছে...' : 'Loading…') : isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-6 h-6 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin" />
+              <span className="text-[0.8125rem] text-[var(--text-muted)]">
+                {isBn ? 'শিক্ষক ডেটা লোড হচ্ছে...' : 'Loading teachers from server…'}
+              </span>
+            </>
+          )}
+        </div>
+      ) : (
       <div className="flex-1 overflow-hidden flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mt-1">
         <div className={`flex-1 overflow-y-auto ${isMobile ? 'max-h-[50vh]' : ''}`}>
           <table className="w-full border-collapse text-xs">
@@ -852,13 +913,22 @@ ${photoHtml}
                             <Eye size={12} />
                           </button>
                         )}
-                        {canEdit('teachers.all') && (
+                        {canEdit('teachers.all') && canWriteTeachers && (
                           <button
                             onClick={() => navigate(nav(`/teachers/edit/${t.id}`))}
                             title="Edit"
                             className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--amber-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--amber)]"
                           >
                             <Edit2 size={12} />
+                          </button>
+                        )}
+                        {canDelete('teachers.all') && canWriteTeachers && (
+                          <button
+                            onClick={() => { setDelError(''); setDelConfirm(t.id) }}
+                            title="Delete"
+                            className="w-[1.625rem] h-[1.625rem] rounded-[0.375rem] bg-[var(--red-light)] border-0 cursor-pointer flex items-center justify-center text-[var(--red)]"
+                          >
+                            <Trash2 size={12} />
                           </button>
                         )}
                       </div>
@@ -920,6 +990,40 @@ ${photoHtml}
           </div>
         </div>
       </div>
+      )}
+
+      {legacyTeachers.length > 0 && (
+        <div className="mt-3 bg-[var(--bg-primary)] border border-dashed border-[var(--amber)] rounded-[0.875rem] p-[0.875rem]">
+          <div className="flex items-center gap-2 flex-wrap">
+            <AlertTriangle size={14} className="text-[var(--amber)]" />
+            <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+              {isBn
+                ? `লোকাল রেকর্ড (সার্ভারে মাইগ্রেট করা হয়নি) — ${legacyTeachers.length} টি`
+                : `Legacy local records (not migrated) — ${legacyTeachers.length}`}
+            </span>
+          </div>
+          <p className="text-[0.75rem] text-[var(--text-secondary)] mt-1 mb-2">
+            {isBn
+              ? 'এই রেকর্ডগুলো সার্ভারে নেই; নিচে সংরক্ষিত ব্যাকআপ থেকে দেখানো হচ্ছে — এগুলো সম্পাদনা বা মুছে ফেলা যাবে না।'
+              : 'These records do not exist on the server; shown from the local backup — they cannot be edited or deleted here.'}
+          </p>
+          <ul className="flex flex-col gap-1">
+            {legacyTeachers.slice(0, 100).map((t) => (
+              <li key={t.id} className="flex items-center gap-2 text-[0.75rem] text-[var(--text-secondary)] flex-wrap">
+                <span className="font-mono text-[0.6875rem] text-[var(--amber)] bg-[var(--amber-light)] px-1.5 py-0.5 rounded">{t.id}</span>
+                <span className="font-medium text-[var(--text-primary)]">{isBn ? t.nameBn || t.nameEn : t.nameEn}</span>
+                <span>{t.phone || '—'}</span>
+                {statusBadge(t.status)}
+              </li>
+            ))}
+          </ul>
+          {legacyTeachers.length > 100 && (
+            <p className="text-[0.6875rem] text-[var(--text-muted)] mt-2">
+              {isBn ? `…আরও ${legacyTeachers.length - 100} টি` : `…and ${legacyTeachers.length - 100} more`}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }

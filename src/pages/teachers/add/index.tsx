@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle, Camera, Clock, Users, Send, Briefcase, X, IdCard, MessageSquare, FileText, ChevronRight, ChevronLeft } from 'lucide-react'
+import { CheckCircle, Camera, Clock, Users, Send, Briefcase, X, IdCard, MessageSquare, FileText, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
@@ -8,12 +8,12 @@ import { useNavChain } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
-import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
+import type { TeacherStatus } from '@/pages/teachers/types'
+import { teachersApi } from '@/lib/api'
+import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
 import { usePermission } from '@/hooks/usePermission'
-import { useAuth } from '@/contexts/AuthContext'
-import { getAuditUser } from '@/lib/auditUser'
 import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
 
 const INPUT_BASE = 'w-full py-[0.625rem] px-3 rounded-[0.5rem] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none transition-colors duration-200 box-border'
@@ -79,17 +79,18 @@ export default function AddTeacherPage() {
   const nav = useNavPath()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
-  const { departments, subjects, designations, addTeacher, getNextTeacherId } = useTeacherStore(
+  const { departments, subjects, designations, upsertServerTeacher, serverSynced, syncError, syncFromServer } = useTeacherStore(
     useShallow((s) => ({
       departments: s.departments,
       subjects: s.subjects,
       designations: s.designations,
-      addTeacher: s.addTeacher,
-      getNextTeacherId: s.getNextTeacherId,
+      upsertServerTeacher: s.upsertServerTeacher,
+      serverSynced: s.serverSynced,
+      syncError: s.syncError,
+      syncFromServer: s.syncFromServer,
     }))
   )
   const { canCreate } = usePermission()
-  const { user } = useAuth()
   const departmentMap = useMemo(() => new Map(departments.map(d => [d.id, d])), [departments])
   const subjectMap = useMemo(() => new Map(subjects.map(s => [s.id, s])), [subjects])
   const fileRef = useRef<HTMLInputElement>(null)
@@ -97,6 +98,7 @@ export default function AddTeacherPage() {
 
   const [form, setForm] = useState<FormData>(initForm)
   const [saving, setSaving] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [done, setDone] = useState(false)
   const [doneId, setDoneId] = useState('')
   const [photoErr, setPhotoErr] = useState('')
@@ -162,36 +164,43 @@ export default function AddTeacherPage() {
     reader.readAsDataURL(file)
   }
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     setSaving(true)
-    const now = new Date().toISOString().split('T')[0]
-    const teacherId = getNextTeacherId()
-    const teacher: Teacher = {
-      id: teacherId, createdAt: now, updatedAt: now, status: form.status,
-      photo: form.photo, nameEn: form.nameEn.trim(), nameBn: form.nameBn.trim(),
-      gender: form.gender, dob: form.dob, bloodGroup: form.bloodGroup, religion: form.religion,
-      phone: form.phone.trim(), email: form.email.trim(), address: form.address.trim(),
-      nid: form.nid.trim(), emergencyPhone: form.emergencyPhone.trim(),
-      departmentId: form.departmentId, subjectIds: form.subjectIds,
-      designation: form.designation, category: form.category,
-      qualification: form.qualification.trim(), experience: form.experience.trim(),
-      joiningDate: form.joiningDate, salary: Number(form.salary) || 0,
-      salaryStartDate: form.salaryStartDate || undefined, overtime: Number(form.overtime) || 0,
-      inTime: form.inTime, outTime: form.outTime,
-      fatherNameEn: form.fatherNameEn.trim(), fatherNameBn: form.fatherNameBn.trim(),
-      fatherPhone: form.fatherPhone.trim(), fatherNid: form.fatherNid.trim(),
-      motherNameEn: form.motherNameEn.trim(), motherNameBn: form.motherNameBn.trim(),
-      motherPhone: form.motherPhone.trim(),
-      guardianName: form.guardianName.trim(), guardianPhone: form.guardianPhone.trim(),
-      guardianRelation: form.guardianRelation.trim(), parentAddress: form.parentAddress.trim(),
-      signature: form.signature,
-      createdBy: getAuditUser(user),
+    setSubmitError('')
+    try {
+      // Server-authoritative create (Phase 7): no local id generation, no
+      // duplicate local write — the API response is the only new record.
+      const payload = teacherToPayload({
+        status: form.status,
+        photo: form.photo,
+        nameEn: form.nameEn.trim(), nameBn: form.nameBn.trim(),
+        gender: form.gender, dob: form.dob, bloodGroup: form.bloodGroup, religion: form.religion,
+        phone: form.phone.trim(), email: form.email.trim(), address: form.address.trim(),
+        nid: form.nid.trim(), emergencyPhone: form.emergencyPhone.trim(),
+        departmentId: form.departmentId, subjectIds: form.subjectIds,
+        designation: form.designation, category: form.category,
+        qualification: form.qualification.trim(), experience: form.experience.trim(),
+        joiningDate: form.joiningDate, salary: Number(form.salary) || 0,
+        salaryStartDate: form.salaryStartDate || undefined, overtime: Number(form.overtime) || 0,
+        inTime: form.inTime, outTime: form.outTime,
+        fatherNameEn: form.fatherNameEn.trim(), fatherNameBn: form.fatherNameBn.trim(),
+        fatherPhone: form.fatherPhone.trim(), fatherNid: form.fatherNid.trim(),
+        motherNameEn: form.motherNameEn.trim(), motherNameBn: form.motherNameBn.trim(),
+        motherPhone: form.motherPhone.trim(),
+        guardianName: form.guardianName.trim(), guardianPhone: form.guardianPhone.trim(),
+        guardianRelation: form.guardianRelation.trim(), parentAddress: form.parentAddress.trim(),
+        signature: form.signature,
+      })
+      const created = await teachersApi.create(payload)
+      upsertServerTeacher(serverTeacherToTeacher(created))
+      setDoneId(created.id)
+      setDone(true)
+    } catch (err) {
+      setSubmitError(apiErrorMessage(err, isBn))
+    } finally {
+      setSaving(false)
     }
-    addTeacher(teacher)
-    setSaving(false)
-    setDoneId(teacherId)
-    setDone(true)
-  }, [form, getNextTeacherId, addTeacher])
+  }, [form, upsertServerTeacher, isBn])
 
   const tabKeys = tabs.map((t) => t.key)
   const currentIdx = tabKeys.indexOf(activeTab)
@@ -288,8 +297,8 @@ export default function AddTeacherPage() {
             <IdCard size={15} style={{ color: 'var(--brand)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{getNextTeacherId()}</div>
-            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{isBn ? 'স্বয়ংক্রিয় শিক্ষক আইডি' : 'Auto Teacher ID'}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{'\u2014'}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{isBn ? 'সার্ভার কর্তৃক নির্ধারিত' : 'Assigned by server'}</div>
           </div>
         </div>
       </div>
@@ -384,6 +393,13 @@ export default function AddTeacherPage() {
         </div>
       </div>
 
+      {submitError && (
+        <div role="alert" className="flex items-center gap-2 bg-[var(--red-light)] border border-[var(--red)] rounded-[0.5rem] p-3 mb-[0.625rem] text-[0.8125rem] text-[var(--red)]">
+          <AlertTriangle size={14} className="shrink-0" />
+          {submitError}
+        </div>
+      )}
+
       <div className="flex gap-[0.625rem] justify-between flex-wrap">
         <div className="flex gap-[0.625rem]">
           <button type="button" onClick={() => setShowReview(false)} className="flex items-center gap-1 py-[0.625rem] px-4 rounded-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]">
@@ -426,11 +442,21 @@ export default function AddTeacherPage() {
             <IdCard size={15} style={{ color: 'var(--brand)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{getNextTeacherId()}</div>
-            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{isBn ? 'স্বয়ংক্রিয় শিক্ষক আইডি' : 'Auto Teacher ID'}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{'\u2014'}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{isBn ? 'সার্ভার কর্তৃক নির্ধারিত' : 'Assigned by server'}</div>
           </div>
         </div>
       </div>
+
+      {syncError && !serverSynced && (
+        <div role="alert" className="flex items-center gap-2 bg-[var(--red-light)] border border-[var(--red)] rounded-[0.5rem] p-3 mb-[0.625rem] text-[0.8125rem] text-[var(--red)]">
+          <AlertTriangle size={14} className="shrink-0" />
+          <span>{isBn ? 'সার্ভার ডেটা লোড করা যায়নি — বিভাগ নির্বাচন করা যাবে না।' : `Server data failed to load (${syncError}) — departments are unavailable.`}</span>
+          <button type="button" onClick={() => void syncFromServer()} className="ml-auto px-2.5 py-1 rounded-md bg-[var(--bg-primary)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] cursor-pointer">
+            {isBn ? 'আবার চেষ্টা' : 'Retry'}
+          </button>
+        </div>
+      )}
 
       <div className={'relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] w-full mb-4 ' + (isMobile ? 'flex-wrap' : 'flex-nowrap')}>
         <div ref={sliderRef} className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out]" style={{ background: 'var(--brand)', boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)', zIndex: 0 }} />

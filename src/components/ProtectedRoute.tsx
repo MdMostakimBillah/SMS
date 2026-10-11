@@ -1,10 +1,12 @@
-import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { usePermission } from '@/hooks/usePermission'
+import { useServerDataSync } from '@/hooks/useServerDataSync'
 import { LOGIN_PATH } from '@/lib/constants'
 import { INSTITUTION_ROLES, type InstitutionRole } from '@/lib/navUtils'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
+import { ConnectionErrorScreen } from '@/components/ui/ConnectionErrorScreen'
 
 const ROUTE_TO_PERMISSION: Record<string, string> = {
   dashboard: 'dashboard',
@@ -39,14 +41,31 @@ function getLoginRedirect(slug?: string): string {
 }
 
 export function ProtectedRoute() {
-  const { user, loading } = useAuth()
+  const { user, loading, restoreFailed, retryRestore } = useAuth()
   const { role, slug } = useParams<{ role: string; slug: string }>()
   const location = useLocation()
+  const navigate = useNavigate()
   const { canRead, isAdmin } = usePermission()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
+  // Server-authoritative teacher/department data (Phase 7) — starts once per
+  // verified server session; the store dedupes and rate-limits the fetches.
+  useServerDataSync(!loading && !!user)
+
   if (loading) return <BrandLoadingScreen />
-  if (!user) return <Navigate to={getLoginRedirect(slug)} replace />
+  if (!user) {
+    // Server unreachable ≠ not signed in: offer a retry instead of implying
+    // the session ended (and never trust cached localStorage identity).
+    if (restoreFailed) {
+      return (
+        <ConnectionErrorScreen
+          onRetry={retryRestore}
+          onSignIn={() => navigate(getLoginRedirect(slug), { replace: true })}
+        />
+      )
+    }
+    return <Navigate to={getLoginRedirect(slug)} replace />
+  }
 
   const isViewing = user.role === 'super_admin' && (!!viewingInstitutionId || !!sessionStorage.getItem('edutech_viewing_id'))
 
@@ -84,11 +103,17 @@ export function ProtectedRoute() {
 }
 
 export function ViewingRoute() {
-  const { user, loading } = useAuth()
+  const { user, loading, restoreFailed, retryRestore } = useAuth()
+  const navigate = useNavigate()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
   if (loading) return <BrandLoadingScreen />
-  if (!user) return <Navigate to={getLoginRedirect()} replace />
+  if (!user) {
+    if (restoreFailed) {
+      return <ConnectionErrorScreen onRetry={retryRestore} onSignIn={() => navigate(getLoginRedirect(), { replace: true })} />
+    }
+    return <Navigate to={getLoginRedirect()} replace />
+  }
   if (user.role !== 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />
   if (!viewingInstitutionId && !sessionStorage.getItem('edutech_viewing_id')) return <Navigate to="/super-admin/schools" replace />
 
@@ -96,10 +121,16 @@ export function ViewingRoute() {
 }
 
 export function RoleProtectedRoute({ allowedRoles }: { allowedRoles: string[] }) {
-  const { user, loading } = useAuth()
+  const { user, loading, restoreFailed, retryRestore } = useAuth()
+  const navigate = useNavigate()
 
   if (loading) return <BrandLoadingScreen />
-  if (!user) return <Navigate to="/register" replace />
+  if (!user) {
+    if (restoreFailed) {
+      return <ConnectionErrorScreen onRetry={retryRestore} onSignIn={() => navigate(getLoginRedirect(), { replace: true })} />
+    }
+    return <Navigate to="/register" replace />
+  }
   if (!allowedRoles.includes(user.role)) {
     const slug = sessionStorage.getItem('edutech_inst_slug')
     if (user.role === 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />

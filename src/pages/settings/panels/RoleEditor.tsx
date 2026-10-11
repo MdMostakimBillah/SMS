@@ -824,7 +824,7 @@ export function RoleEditor({ isBn, roleId, onBack, onCreated }: Props) {
 }
 
 function StaffMemberCard({ member, teacher, bn, onRemove, onPasswordChange }: {
-  member: { id: string; staffId: string; staffName: string; staffNameBn: string; email: string; defaultPassword: string }
+  member: { id: string; staffId: string; staffName: string; staffNameBn: string; email: string; defaultPassword?: string }
   teacher: { photo?: string } | undefined
   bn: boolean
   onRemove: () => void
@@ -832,11 +832,11 @@ function StaffMemberCard({ member, teacher, bn, onRemove, onPasswordChange }: {
 }) {
   const { canManage } = usePermission()
   const [editing, setEditing] = useState(false)
-  const [pw, setPw] = useState(member.defaultPassword)
+  const [pw, setPw] = useState(member.defaultPassword || '')
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(member.email + ' / ' + member.defaultPassword)
+    navigator.clipboard.writeText(member.email + ' / ' + (member.defaultPassword || ''))
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
@@ -887,7 +887,7 @@ function StaffMemberCard({ member, teacher, bn, onRemove, onPasswordChange }: {
                     <Check size={10} />
                   </button>
                   <button
-                    onClick={() => { setEditing(false); setPw(member.defaultPassword) }}
+                    onClick={() => { setEditing(false); setPw(member.defaultPassword || '') }}
                     className="p-0.5 rounded bg-[var(--red)]/10 text-[var(--red)] border-none cursor-pointer"
                   >
                     <X size={10} />
@@ -898,7 +898,7 @@ function StaffMemberCard({ member, teacher, bn, onRemove, onPasswordChange }: {
                   className="text-[0.6875rem] text-[var(--text-muted)] cursor-pointer hover:text-[var(--brand)]"
                   onClick={() => setEditing(true)}
                 >
-                  {bn ? 'পাসওয়ার্ড' : 'Password'}: {member.defaultPassword}
+                  {bn ? 'পাসওয়ার্ড' : 'Password'}: {member.defaultPassword || '—'}
                 </span>
               )}
             </div>

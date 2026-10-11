@@ -178,9 +178,11 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 
 function PasswordRow({ label, value }: { label: string; value?: string }) {
   const [copied, setCopied] = useState(false)
-  const password = value || 'admin123'
+  // Phase 6 — credentials are never persisted, so after a reload this value is
+  // absent and the row shows a placeholder instead of a fake default password.
   const handleCopy = () => {
-    navigator.clipboard.writeText(password)
+    if (!value) return
+    navigator.clipboard.writeText(value)
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
@@ -188,14 +190,18 @@ function PasswordRow({ label, value }: { label: string; value?: string }) {
     <div className="flex items-center gap-2.5 py-1.5">
       <span className="text-[var(--text-muted)] shrink-0"><Lock size={13} /></span>
       <span className="text-[0.6875rem] text-[var(--text-muted)] shrink-0 w-16">{label}</span>
-      <span className="text-[0.75rem] text-[var(--text-primary)] font-mono font-medium truncate">{password}</span>
-      <button
-        onClick={handleCopy}
-        className="ml-1 p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
-        title={copied ? 'Copied!' : 'Copy password'}
-      >
-        {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} className="text-[var(--text-muted)]" />}
-      </button>
+      <span className={`text-[0.75rem] font-mono font-medium truncate ${value ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+        {value || '—'}
+      </span>
+      {value && (
+        <button
+          onClick={handleCopy}
+          className="ml-1 p-1 rounded-md hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
+          title={copied ? 'Copied!' : 'Copy password'}
+        >
+          {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} className="text-[var(--text-muted)]" />}
+        </button>
+      )}
     </div>
   )
 }

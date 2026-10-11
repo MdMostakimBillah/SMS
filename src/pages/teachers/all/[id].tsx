@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, User, FileText, AlertCircle } from 'lucide-react'
+import { ArrowLeft, User, FileText, AlertCircle, AlertTriangle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
@@ -13,11 +13,15 @@ export default function TeacherDetailPage() {
   const nav = useNavPath()
   const { id } = useParams<{ id: string }>()
   const isBn = useBn()
-  const { teachers, departments, subjects } = useTeacherStore(
+  const { teachers, departments, subjects, legacyDepartments, serverSynced, syncError, syncFromServer } = useTeacherStore(
     useShallow((s) => ({
       teachers: s.teachers,
       departments: s.departments,
       subjects: s.subjects,
+      legacyDepartments: s.legacyDepartments,
+      serverSynced: s.serverSynced,
+      syncError: s.syncError,
+      syncFromServer: s.syncFromServer,
     }))
   )
 
@@ -25,9 +29,10 @@ export default function TeacherDetailPage() {
 
   const departmentMap = useMemo(() => {
     const map = new Map<string, typeof departments[0]>()
-    for (const d of departments) map.set(d.id, d)
+    // Server departments first; legacy backups resolve older references.
+    for (const d of [...legacyDepartments, ...departments]) map.set(d.id, d)
     return map
-  }, [departments])
+  }, [departments, legacyDepartments])
 
   const getDeptName = (deptId: string) => {
     const d = departmentMap.get(deptId)
@@ -102,10 +107,38 @@ ${photoHtml}
   }
 
   if (!teacher) {
+    // Distinguish loading/failed sync from a genuinely missing record.
+    if (!serverSynced) {
+      return (
+        <div className="p-10 text-center flex flex-col items-center gap-3">
+          {syncError ? (
+            <>
+              <AlertTriangle size={26} className="text-[var(--red)]" />
+              <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}</p>
+              <p className="text-xs text-[var(--text-muted)]">{syncError}</p>
+              <button
+                onClick={() => void syncFromServer()}
+                className="mt-1 py-2 px-4 rounded-lg bg-[var(--brand)] border-none text-white text-[0.8125rem] cursor-pointer"
+              >
+                {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-6 h-6 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin" />
+              <p className="text-sm text-[var(--text-muted)]">{isBn ? 'লোড হচ্ছে...' : 'Loading…'}</p>
+            </>
+          )}
+        </div>
+      )
+    }
     return (
       <div className="p-10 text-center">
         <AlertCircle size={40} className="text-[var(--text-muted)] mb-3" />
         <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'শিক্ষক পাওয়া যায়নি' : 'Teacher not found'}</p>
+        <p className="text-xs text-[var(--text-muted)] mt-1">
+          {isBn ? 'লোকাল রেকর্ড সার্ভারে নেই — তাই দেখানো যাচ্ছে না।' : 'Local legacy records are not on the server — see the list page.'}
+        </p>
         <button
           onClick={() => navigate(nav('/teachers/all'))}
           className="mt-3 py-2 px-4 rounded-lg bg-[var(--border)] border-none text-white text-[0.8125rem] cursor-pointer font-inherit"

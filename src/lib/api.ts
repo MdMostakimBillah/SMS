@@ -1,13 +1,9 @@
 export const API_BASE = import.meta.env.VITE_API_URL || ''
 
-let authToken: string | null = null
-
-export function setAuthToken(token: string | null) {
-  authToken = token
-}
-
-export function getAuthToken(): string | null {
-  return authToken
+/** Reads the readable double-submit CSRF cookie set by the backend. */
+function getCsrfToken(): string | null {
+  const match = document.cookie.match(/(?:^|;\s*)edutech_csrf=([^;]*)/)
+  return match ? decodeURIComponent(match[1]) : null
 }
 
 interface ApiOptions {
@@ -31,6 +27,8 @@ export async function apiRequest<T = unknown>(
   options: ApiOptions = {}
 ): Promise<T> {
   const { method = 'GET', body, headers = {}, timeout = 15000 } = options
+  const isMutating = method !== 'GET'
+  const csrfToken = isMutating ? getCsrfToken() : null
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeout)
@@ -38,9 +36,10 @@ export async function apiRequest<T = unknown>(
   try {
     const res = await fetch(`${API_BASE}${path}`, {
       method,
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
         ...headers,
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -56,24 +55,25 @@ export async function apiRequest<T = unknown>(
       throw new ApiError(errorMsg, res.status)
     }
 
-    const data = await res.json()
-    return data as T
+    const text = await res.text()
+    return (text ? JSON.parse(text) : undefined) as T
   } finally {
     clearTimeout(timer)
   }
 }
 
+export interface SessionUser {
+  id: string
+  email: string
+  name: string | null
+  role: string
+  schoolId: string | null
+  schoolName: string | null
+  avatar: string | null
+}
+
 export interface AuthResponse {
-  token: string
-  user: {
-    id: string
-    email: string
-    name: string | null
-    role: string
-    schoolId: string | null
-    schoolName: string | null
-    avatar: string | null
-  }
+  user: SessionUser
 }
 
 export interface AccountInfo {
@@ -93,10 +93,17 @@ export const authApi = {
       body: { email, password },
     }),
 
-  register: (email: string, password: string, name: string, role?: string, schoolId?: string) =>
+  /** Restore the current session from the HttpOnly cookie after a page reload. */
+  me: () => apiRequest<AuthResponse>('/api/auth/me'),
+
+  /** Revokes the server-side session and clears cookies. */
+  logout: () => apiRequest<{ success: boolean }>('/api/auth/logout', { method: 'POST' }),
+
+  /** Disabled server-side; kept so callers receive a clear 403 error. */
+  register: (email: string, password: string, name: string, role?: string) =>
     apiRequest<AuthResponse>('/api/auth/register', {
       method: 'POST',
-      body: { email, password, name, role, schoolId },
+      body: { email, password, name, role },
     }),
 
   accounts: () => apiRequest<AccountInfo[]>('/api/auth/accounts'),
@@ -104,16 +111,10 @@ export const authApi = {
   getSuperAdmin: () =>
     apiRequest<{ email: string; hasCustomPassword: boolean }>('/api/auth/super-admin'),
 
-  updateSuperAdmin: (data: { email?: string; password?: string }) =>
+  updateSuperAdmin: (data: { email?: string; password?: string; currentPassword?: string }) =>
     apiRequest<{ success: boolean }>('/api/auth/super-admin', {
       method: 'PUT',
       body: data,
-    }),
-
-  verifySuperAdmin: (email: string, password: string) =>
-    apiRequest<{ valid: boolean }>('/api/auth/verify-super-admin', {
-      method: 'POST',
-      body: { email, password },
     }),
 }
 
@@ -186,4 +187,38 @@ export const teachersApi = {
 
   delete: (id: string) =>
     apiRequest<{ success: boolean }>(`/api/teachers/${id}`, { method: 'DELETE' }),
+}
+
+export interface DepartmentData {
+  id: string
+  schoolId: string
+  name: string
+  nameBn: string | null
+  head: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PaginatedDepartments {
+  data: DepartmentData[]
+  total: number
+}
+
+/**
+ * Department CRUD against the secured API (Phase 7).
+ *
+ * The server derives `schoolId` from the authenticated session — it is never
+ * sent from the client, so no client-supplied tenant value can influence scope.
+ */
+export const departmentsApi = {
+  list: () => apiRequest<PaginatedDepartments>('/api/departments'),
+
+  create: (data: { name: string; nameBn?: string | null; head?: string | null }) =>
+    apiRequest<DepartmentData>('/api/departments', { method: 'POST', body: data }),
+
+  update: (id: string, data: { name?: string; nameBn?: string | null; head?: string | null }) =>
+    apiRequest<DepartmentData>(`/api/departments/${id}`, { method: 'PUT', body: data }),
+
+  delete: (id: string) =>
+    apiRequest<{ success: boolean }>(`/api/departments/${id}`, { method: 'DELETE' }),
 }

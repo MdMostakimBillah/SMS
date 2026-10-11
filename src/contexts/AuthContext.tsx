@@ -1,11 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
-import { authApi, setAuthToken, ApiError, API_BASE } from '@/lib/api'
-import { createSuperAdminToken, createSuperAdminUser } from '@/lib/adminAuth'
-import { nsGet, nsSet, nsRemove, setSlug, setUserId, clearUserId } from '@/lib/storage'
-
-const VITE_EMAIL = (import.meta.env.VITE_SUPER_ADMIN_EMAIL as string) || 'admin@edutech.com'
-const VITE_PASSWORD = (import.meta.env.VITE_SUPER_ADMIN_PASSWORD as string) || 'Admin@123456'
-const HAS_BACKEND = API_BASE !== ''
+import { authApi, ApiError, type SessionUser } from '@/lib/api'
+import { nsRemove, setUserId, clearUserId, clearSlug } from '@/lib/storage'
 
 interface User {
   id: string
@@ -22,11 +17,13 @@ interface User {
 
 interface AuthContextType {
   user: User | null
-  token: string | null
   loading: boolean
+  /** True when the last /me check failed for a non-401 reason (server unreachable). */
+  restoreFailed: boolean
+  /** Re-runs the server session check (used by the connection-error screen). */
+  retryRestore: () => void
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, name: string, role?: string) => Promise<void>
-  setInstitutionUser: (email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string, staffId?: string, photo?: string | null, schoolName?: string) => void
   logout: () => void
   error: string | null
   clearError: () => void
@@ -36,10 +33,14 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null)
 
-const ATTEMPTS_KEY = 'edutech_login_attempts'
-const LOCKOUT_KEY = 'edutech_lockout_until'
+// Client-side throttling hints (UX only — the server rate-limits authoritatively).
+// Keys are namespaced "api" to avoid colliding with InstitutionLogin's own counters.
+const ATTEMPTS_KEY = 'edutech_api_login_attempts'
+const LOCKOUT_KEY = 'edutech_api_lockout_until'
 const MAX_ATTEMPTS = 3
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
+const SERVER_LOCKOUT_DURATION = 60 * 1000 // matches server rate-limit window
+const SESSION_CHECK_INTERVAL = 5 * 60 * 1000
 
 function getAttempts(): number {
   return Number(localStorage.getItem(ATTEMPTS_KEY) || '0')
@@ -66,20 +67,69 @@ function recordFailedAttempt(): void {
   }
 }
 
+function recordServerLockout(): void {
+  localStorage.setItem(LOCKOUT_KEY, String(Date.now() + SERVER_LOCKOUT_DURATION))
+}
+
 function clearLoginAttempts(): void {
   localStorage.removeItem(ATTEMPTS_KEY)
   localStorage.removeItem(LOCKOUT_KEY)
 }
 
+function applyError(err: unknown, fallback: string, onLockoutState: (locked: boolean, remaining: number) => void): string {
+  if (err instanceof ApiError && err.status === 429) {
+    recordServerLockout()
+    onLockoutState(true, SERVER_LOCKOUT_DURATION)
+    return err.message
+  }
+  recordFailedAttempt()
+  const attempts = getAttempts()
+  if (attempts >= MAX_ATTEMPTS) {
+    onLockoutState(true, LOCKOUT_DURATION)
+    return 'Too many failed attempts. Locked out for 5 minutes.'
+  }
+  const base = err instanceof ApiError ? err.message : fallback
+  return `${base}. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`
+}
+
+/** Removes every legacy identity key so a logout can never resurrect a session. */
+function clearAllIdentityKeys(): void {
+  const legacyKeys = ['edutech_current_user', 'edutech_user', 'edutech_superadmin_user']
+  for (const key of legacyKeys) {
+    localStorage.removeItem(key)
+  }
+  for (const key of Object.keys(localStorage)) {
+    if (key.startsWith('edutech_user_') || key.startsWith('edutech_institutionId')) {
+      localStorage.removeItem(key)
+    }
+  }
+  sessionStorage.removeItem('edutech_viewing_id')
+  sessionStorage.removeItem('edutech_user_id')
+}
+
+function serverUserToUser(u: SessionUser): User {
+  return {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    role: u.role,
+    schoolId: u.schoolId,
+    schoolName: u.schoolName,
+    avatar: u.avatar,
+    subdomain: null,
+    photo: u.avatar,
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isLockedOut, setIsLockedOut] = useState(isCurrentlyLockedOut)
   const [lockoutRemaining, setLockoutRemaining] = useState(getLockoutRemaining)
+  const [sessionSource, setSessionSource] = useState<'server' | null>(null)
+  const [restoreFailed, setRestoreFailed] = useState(false)
   const loginTimestampRef = useRef<number | null>(null)
-  const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 
   // Lockout countdown timer
   useEffect(() => {
@@ -100,108 +150,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isLockedOut])
 
   const logout = useCallback(() => {
-    setAuthToken(null)
-    setToken(null)
+    // Revoke the server-side session (fire and forget)
+    authApi.logout().catch(() => { /* already gone */ })
     setUser(null)
     loginTimestampRef.current = null
+    setSessionSource(null)
+    setRestoreFailed(false)
     nsRemove('user')
     nsRemove('institutionId')
     nsRemove('institutionSubdomain')
-    localStorage.removeItem('edutech_current_user')
+    clearAllIdentityKeys()
     clearUserId()
+    clearSlug() // resets all institution stores via storage.ts listeners
   }, [])
 
-  // Restore user from localStorage (set by InstitutionLogin)
-  useEffect(() => {
+  /**
+   * Phase 7 — restore ONLY from the server session (HttpOnly cookie + /me).
+   * Legacy localStorage identity is never consulted: a 401 is clean
+   * "not signed in", and any other failure (server unreachable) is surfaced
+   * as `restoreFailed` so the UI can offer a retry instead of trusting a
+   * cached role/school or spinning forever.
+   */
+  const runRestore = useCallback(async () => {
+    setLoading(true)
+    setRestoreFailed(false)
     try {
-      const slug = sessionStorage.getItem('edutech_inst_slug')
-      const userId = sessionStorage.getItem('edutech_user_id')
-      const isViewing = !!sessionStorage.getItem('edutech_viewing_id')
-
-      let stored: string | null = null
-      if (isViewing) {
-        stored = localStorage.getItem('edutech_superadmin_user')
-        if (!stored) stored = localStorage.getItem('edutech_user')
-      } else {
-        // Primary: namespaced key with slug + userId
-        if (slug && userId) {
-          stored = localStorage.getItem(`edutech_user_${slug}_${userId}`)
-        }
-        // Fallback: backup key (simple non-namespaced, always works)
-        if (!stored) {
-          stored = localStorage.getItem('edutech_current_user')
-        }
-        // Fallback: key without userId
-        if (!stored && slug) {
-          stored = localStorage.getItem(`edutech_user_${slug}`)
-        }
-        // Fallback: base key
-        if (!stored) {
-          stored = localStorage.getItem('edutech_user')
-        }
+      const res = await authApi.me()
+      setUser(serverUserToUser(res.user))
+      setSessionSource('server')
+      loginTimestampRef.current = Date.now()
+      setUserId(res.user.email)
+    } catch (err) {
+      setUser(null)
+      setSessionSource(null)
+      if (!(err instanceof ApiError && err.status === 401)) {
+        setRestoreFailed(true)
       }
-
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (parsed?.email && parsed?.role) {
-          const subdomain = parsed.subdomain || nsGet('institutionSubdomain') || null
-          setUser({
-            id: parsed.institutionId || 'super-admin',
-            email: parsed.email,
-            name: parsed.name || null,
-            role: parsed.role,
-            schoolId: parsed.institutionId || null,
-            schoolName: parsed.name || null,
-            avatar: parsed.photo || null,
-            subdomain,
-            staffId: parsed.staffId || undefined,
-            photo: parsed.photo || null,
-          })
-          loginTimestampRef.current = parsed.loginTimestamp || Date.now()
-          if (!isViewing) {
-            setUserId(parsed.staffId || parsed.email)
-          }
-          // Ensure correct namespaced key exists for future reads
-          if (!isViewing && slug) {
-            const uid = parsed.staffId || parsed.email
-            if (uid) {
-              const correctKey = `edutech_user_${slug}_${uid}`
-              if (!localStorage.getItem(correctKey)) {
-                localStorage.setItem(correctKey, stored)
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.error('[Auth] initializeAuth failed:', e)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
-  // Auto-logout timer
   useEffect(() => {
-    if (!user || !loginTimestampRef.current) return
+    void runRestore()
+  }, [runRestore])
 
-    const elapsed = Date.now() - loginTimestampRef.current
-    const remaining = SESSION_DURATION - elapsed
+  const retryRestore = useCallback(() => {
+    void runRestore()
+  }, [runRestore])
 
-    if (remaining <= 0) {
-      logout()
-      return
-    }
+  // Server sessions: validate periodically so an expired/revoked session
+  // actually ends the UI session instead of persisting until reload.
+  useEffect(() => {
+    if (sessionSource !== 'server') return
 
-    const timer = setTimeout(() => {
-      logout()
-    }, remaining)
+    const id = setInterval(() => {
+      authApi
+        .me()
+        .then((res) => setUser(serverUserToUser(res.user)))
+        .catch((err) => {
+          if (err instanceof ApiError && err.status === 401) {
+            logout()
+          }
+        })
+    }, SESSION_CHECK_INTERVAL)
 
-    return () => clearTimeout(timer)
-  }, [user, logout, SESSION_DURATION])
+    return () => clearInterval(id)
+  }, [sessionSource, logout])
+
+  const setLockoutState = useCallback((locked: boolean, remaining: number) => {
+    setIsLockedOut(locked)
+    setLockoutRemaining(remaining)
+  }, [])
 
   const login = useCallback(async (email: string, password: string) => {
     setError(null)
 
-    // Check lockout
     if (isCurrentlyLockedOut()) {
       setIsLockedOut(true)
       setLockoutRemaining(getLockoutRemaining())
@@ -209,91 +233,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    // When no backend is deployed, use client-side credentials directly
-    if (!HAS_BACKEND) {
-      if (email === VITE_EMAIL && password === VITE_PASSWORD) {
-        const token = await createSuperAdminToken(password)
-        const user = createSuperAdminUser()
-        user.email = email
-        setAuthToken(token)
-        setToken(token)
-        setUser(user)
-        loginTimestampRef.current = Date.now()
-        const userData = JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() })
-        nsSet('user', userData)
-        localStorage.setItem('edutech_superadmin_user', userData)
-        setUserId(email)
-        clearLoginAttempts()
-        return
-      }
-      // Wrong credentials
-      recordFailedAttempt()
-      const attempts = getAttempts()
-      if (attempts >= MAX_ATTEMPTS) {
-        setIsLockedOut(true)
-        setLockoutRemaining(LOCKOUT_DURATION)
-        setError(`Too many failed attempts. Locked out for 5 minutes.`)
-      } else {
-        setError(`Invalid credentials. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
-      }
-      throw new Error('Invalid credentials')
-    }
-
-    // Backend is deployed — try API verification first
-    try {
-      const result = await authApi.verifySuperAdmin(email, password)
-      if (result.valid) {
-        const token = await createSuperAdminToken(password)
-        const user = createSuperAdminUser()
-        user.email = email
-        setAuthToken(token)
-        setToken(token)
-        setUser(user)
-        loginTimestampRef.current = Date.now()
-        const userData2 = JSON.stringify({ email, role: user.role, name: user.name, loginTimestamp: Date.now() })
-        nsSet('user', userData2)
-        localStorage.setItem('edutech_superadmin_user', userData2)
-        setUserId(email)
-        clearLoginAttempts()
-        return
-      }
-    } catch {
-      // API not available
-    }
-
-    // Try regular API login
     try {
       const res = await authApi.login(email, password)
-      setAuthToken(res.token)
-      setToken(res.token)
-      setUser({ ...res.user, subdomain: (res.user as any).subdomain || null })
+      setUser(serverUserToUser(res.user))
+      setSessionSource('server')
       loginTimestampRef.current = Date.now()
-      setUserId((res.user as any).staffId || email)
+      setUserId(res.user.email)
       clearLoginAttempts()
-      return
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : 'Invalid credentials'
-      recordFailedAttempt()
-      const attempts = getAttempts()
-      if (attempts >= MAX_ATTEMPTS) {
-        setIsLockedOut(true)
-        setLockoutRemaining(LOCKOUT_DURATION)
-        setError(`Too many failed attempts. Locked out for 5 minutes.`)
-      } else {
-        setError(`${msg}. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
-      }
+      const msg = applyError(err, 'Invalid credentials', setLockoutState)
+      setError(msg)
       throw err
     }
-  }, [])
+  }, [setLockoutState])
 
   const register = useCallback(async (email: string, password: string, name: string, role?: string) => {
     setError(null)
     try {
       const res = await authApi.register(email, password, name, role)
-      setAuthToken(res.token)
-      setToken(res.token)
-      setUser({ ...res.user, subdomain: (res.user as any).subdomain || null })
+      setUser(serverUserToUser(res.user))
+      setSessionSource('server')
       loginTimestampRef.current = Date.now()
+      clearLoginAttempts()
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'Registration failed'
       setError(msg)
@@ -303,37 +264,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
-  const setInstitutionUser = useCallback((email: string, name: string, role: string, institutionId: string, subdomain: string, slug?: string, staffId?: string, photo?: string | null, schoolName?: string) => {
-    // Set userId BEFORE setSlug so loadAllStores() rehydrates with correct keys
-    setUserId(staffId || email)
-    if (slug) {
-      setSlug(slug)
-    }
-    const userData = { email, role, name, institutionId, subdomain, slug, staffId, photo, schoolName: schoolName || name, loginTimestamp: Date.now() }
-    setUser({
-      id: institutionId,
-      email,
-      name,
-      role,
-      schoolId: institutionId,
-      schoolName: schoolName || name,
-      avatar: photo || null,
-      subdomain,
-      staffId,
-      photo: photo || null,
-    })
-    // Write to namespaced key (slug + userId)
-    nsSet('user', JSON.stringify(userData))
-    nsSet('institutionId', institutionId)
-    nsSet('institutionSubdomain', subdomain)
-    sessionStorage.setItem('edutech_inst_subdomain', subdomain)
-    // Backup key: simple non-namespaced key for reliable restore on reload
-    localStorage.setItem('edutech_current_user', JSON.stringify(userData))
-  }, [])
-
   const ctxValue = useMemo(() => ({
-    user, token, loading, login, register, setInstitutionUser, logout, error, clearError, isLockedOut, lockoutRemaining
-  }), [user, token, loading, login, register, setInstitutionUser, logout, error, clearError, isLockedOut, lockoutRemaining])
+    user, loading, restoreFailed, retryRestore, login, register, logout, error, clearError, isLockedOut, lockoutRemaining
+  }), [user, loading, restoreFailed, retryRestore, login, register, logout, error, clearError, isLockedOut, lockoutRemaining])
 
   return (
     <AuthContext.Provider value={ctxValue}>

@@ -31,7 +31,14 @@ export interface StaffPerm {
   roleId: string
   role?: string
   email: string
-  defaultPassword: string
+  /**
+   * Staff default password — session-only convenience value so admins can
+   * view/copy it after setting it. NEVER persisted: `partialize` strips it on
+   * every write and `purgeLegacyStaffPasswords` removes it from state
+   * persisted by earlier releases. Not a valid login credential: local staff
+   * password comparison was removed in Phase 6 (fail-closed sign-in).
+   */
+  defaultPassword?: string
   overrides: PermissionEntry[]
   dataScope?: DataScope
 }
@@ -164,6 +171,42 @@ interface PermissionState {
   getPagePerm: (staffId: string, pageKey: string) => PagePerm
   getTabPerm: (staffId: string, pageKey: string, tabKey: string) => TabPerm
 }
+
+/**
+ * Phase 6 — remove plaintext staff default passwords persisted by earlier
+ * releases. Runs once at module load, BEFORE zustand rehydrates, and rewrites
+ * only the confirmed sensitive field: roles, staff records, overrides and
+ * every other persisted field are preserved untouched. The removed value is
+ * never logged or included in any output.
+ *
+ * Covers the base key and slug-scoped variants (`<base>_<slug>`), matching
+ * `createNamespacedStorage`'s key resolution.
+ */
+function purgeLegacyStaffPasswords() {
+  try {
+    const base = 'edutech-staff-permissions'
+    const keys = Object.keys(localStorage).filter((k) => k === base || k.startsWith(`${base}_`))
+    for (const key of keys) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+      const parsed = JSON.parse(raw)
+      const staff = parsed?.state?.staffPermissions
+      if (!Array.isArray(staff)) continue
+      let changed = false
+      for (const member of staff) {
+        if (member && typeof member === 'object' && 'defaultPassword' in member) {
+          delete member.defaultPassword
+          changed = true
+        }
+      }
+      if (changed) localStorage.setItem(key, JSON.stringify(parsed))
+    }
+  } catch {
+    // Malformed persisted state — leave it for zustand to handle.
+  }
+}
+
+purgeLegacyStaffPasswords()
 
 export const usePermissionStore = create<PermissionState>()(
   persist(
@@ -504,6 +547,12 @@ export const usePermissionStore = create<PermissionState>()(
     {
       name: 'edutech-staff-permissions',
       storage: createNamespacedStorage('edutech-staff-permissions'),
+      // Phase 6 — staff default passwords never persist. `undefined` fields
+      // are dropped by JSON serialization, so the key is absent entirely.
+      partialize: (state) => ({
+        ...state,
+        staffPermissions: state.staffPermissions.map((m) => ({ ...m, defaultPassword: undefined })),
+      }),
     }
   )
 )

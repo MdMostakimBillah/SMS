@@ -18,10 +18,11 @@ export default function SubjectsPage() {
   const navigate = useNavigate()
   const nav = useNavPath()
   const isBn = useBn()
-  const { subjects, departments, teachers, addSubject, updateSubject, deleteSubject } = useTeacherStore(
+  const { subjects, departments, legacyDepartments, teachers, addSubject, updateSubject, deleteSubject } = useTeacherStore(
     useShallow((s) => ({
       subjects: s.subjects,
       departments: s.departments,
+      legacyDepartments: s.legacyDepartments,
       teachers: s.teachers,
       addSubject: s.addSubject,
       updateSubject: s.updateSubject,
@@ -29,6 +30,12 @@ export default function SubjectsPage() {
     }))
   )
   const { canCreate } = usePermission()
+
+  /** Server departments + local legacy backups so older subjects still resolve names. */
+  const allDepartments = useMemo(
+    () => [...departments, ...legacyDepartments.filter((l) => !departments.some((d) => d.id === l.id))],
+    [departments, legacyDepartments]
+  )
 
   const { pushToChain, popFromChain, getChain, setRedirectTimestamp } = useNavChain()
   useNavChainClearOnMount()
@@ -46,7 +53,7 @@ export default function SubjectsPage() {
   )
 
   const getDeptName = (id: string) => {
-    const d = departments.find((x) => x.id === id)
+    const d = allDepartments.find((x) => x.id === id)
     return d ? (isBn ? d.nameBn : d.name) : '—'
   }
 
@@ -130,7 +137,7 @@ export default function SubjectsPage() {
                   {isBn ? 'বিভাগ * (একাধিক নির্বাচন করতে পারেন)' : 'Departments * (select multiple)'}
                 </label>
                 <div className="flex flex-wrap gap-2 p-2 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg min-h-[2.5rem]">
-                  {departments.map((d) => (
+                  {allDepartments.map((d) => (
                     <label
                       key={d.id}
                       className={`flex items-center gap-[0.3125rem] cursor-pointer py-1 px-2 rounded-md text-xs transition-all ${newDeptIds.includes(d.id) ? 'bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]'}`}
@@ -278,7 +285,7 @@ export default function SubjectsPage() {
             {isBn ? 'নতুন যোগ করুন' : 'Add Subject'}
           </button>
         )}
-        {departments.length === 0 && canCreate('teachers.departments') && (
+        {allDepartments.length === 0 && canCreate('teachers.departments') && (
           <button
             onClick={() => {
               pushToChain({ path: nav('/teachers/subjects'), label: isBn ? 'বিষয়' : 'Subjects' })
@@ -300,7 +307,7 @@ export default function SubjectsPage() {
           <Filter size={14} className="text-[var(--text-muted)]" />
           <select value={fDept} onChange={(e) => setFDept(e.target.value)} className={sel}>
             <option value="">{isBn ? 'সব বিভাগ' : 'All Departments'}</option>
-            {departments.map((d) => (
+            {allDepartments.map((d) => (
               <option key={d.id} value={d.id}>
                 {isBn ? d.nameBn : d.name}
               </option>
@@ -347,7 +354,7 @@ export default function SubjectsPage() {
                   <td colSpan={6} className="p-10 text-center text-[var(--text-muted)]">
                     <BookOpen size={28} className="block mx-auto mb-2 opacity-30" />
                     {isBn ? 'কোনো বিষয় পাওয়া যায়নি' : 'No subjects found'}
-                    {departments.length === 0 && (
+                    {allDepartments.length === 0 && (
                       <div className="mt-3">
                         <p className="text-[0.75rem] text-[var(--text-secondary)] mb-2">
                           {isBn ? 'প্রথমে বিভাগ তৈরি করুন' : 'Create departments first'}
