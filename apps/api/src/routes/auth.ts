@@ -14,6 +14,7 @@ import {
   SESSION_MAX_AGE_SECONDS,
 } from '../middleware/auth.js'
 import { requireRole } from '../middleware/rbac.js'
+import { requireTrustedOrigin } from '../middleware/origin.js'
 
 const loginSchema = z.object({
   email: z.string().email().max(254),
@@ -62,7 +63,12 @@ function isCookieSecure(): boolean {
   return process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production'
 }
 
-export function authRouter(prisma: PrismaClient, jwtSecret: string) {
+/** Database-level email uniqueness is authoritative under concurrency (P2002). */
+function isUniqueViolation(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && 'code' in err && (err as { code?: unknown }).code === 'P2002'
+}
+
+export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: string) {
   const router = Router()
 
   const loginLimiter = rateLimit({
@@ -90,7 +96,7 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
   }
 
   /** Login — server-authoritative. Never reveals whether the account exists. */
-  router.post('/login', loginLimiter, async (req: Request, res: Response) => {
+  router.post('/login', requireTrustedOrigin(corsOrigin), loginLimiter, async (req: Request, res: Response) => {
     try {
       const parsed = loginSchema.safeParse(req.body)
       if (!parsed.success) {
@@ -210,7 +216,11 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(404).json({ error: 'Super admin not configured' })
       }
 
-      if (password !== undefined) {
+      // Any credential change — password OR email — requires re-authentication
+      // with the current password (verified once below).
+      const wantsPassword = password !== undefined
+      const wantsEmail = email !== undefined && email.toLowerCase() !== superAdmin.email
+      if (wantsPassword || wantsEmail) {
         if (!currentPassword) {
           return res.status(400).json({ error: 'Current password is required' })
         }
@@ -218,22 +228,50 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
         if (!valid) {
           return res.status(403).json({ error: 'Current password is incorrect' })
         }
-        const newHash = await hash(password, ARGON2_OPTIONS)
-        await prisma.user.update({ where: { id: superAdmin.id }, data: { passwordHash: newHash } })
-        // Revoke every other session; the caller stays logged in
-        await prisma.session.updateMany({
-          where: { userId: superAdmin.id, id: { not: req.sessionId ?? '' } },
-          data: { revokedAt: new Date() },
-        })
       }
 
-      if (email !== undefined && email.toLowerCase() !== superAdmin.email) {
-        const target = email.trim().toLowerCase()
+      // Email conflict is detected before any write (fail fast for the
+      // common case) — but the pre-check alone is NOT relied upon to prevent
+      // races: the database unique constraint remains authoritative inside
+      // the transaction below (P2002 → 409 with full rollback).
+      let target: string | null = null
+      if (wantsEmail) {
+        target = email!.trim().toLowerCase()
         const clash = await prisma.user.findUnique({ where: { email: target } })
         if (clash && clash.id !== superAdmin.id) {
           return res.status(409).json({ error: 'Email already in use' })
         }
-        await prisma.user.update({ where: { id: superAdmin.id }, data: { email: target } })
+      }
+
+      // Argon2 hashing stays outside the transaction (expensive pure compute).
+      const newHash = wantsPassword ? await hash(password!, ARGON2_OPTIONS) : null
+
+      // Every credential write is one database transaction: the password
+      // change, the email change and the session revocations either all
+      // commit or none do. There are no non-database side effects in this
+      // handler, so a conflict (409) can no longer leave a half-applied
+      // credential change behind.
+      try {
+        await prisma.$transaction(async (tx) => {
+          if (newHash) {
+            await tx.user.update({ where: { id: superAdmin.id }, data: { passwordHash: newHash } })
+            // Revoke every other session; the caller stays logged in
+            await tx.session.updateMany({
+              where: { userId: superAdmin.id, id: { not: req.sessionId ?? '' } },
+              data: { revokedAt: new Date() },
+            })
+          }
+          if (target !== null) {
+            await tx.user.update({ where: { id: superAdmin.id }, data: { email: target } })
+          }
+        })
+      } catch (err) {
+        // Concurrent email claim between the pre-check and commit → the
+        // unique constraint fires and the whole transaction rolls back.
+        if (isUniqueViolation(err)) {
+          return res.status(409).json({ error: 'Email already in use' })
+        }
+        throw err
       }
 
       res.json({ success: true })

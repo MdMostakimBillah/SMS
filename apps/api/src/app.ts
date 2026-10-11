@@ -41,7 +41,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin }: AppOptions): Expres
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
   })
 
-  app.use('/api/auth', authRouter(prisma, jwtSecret))
+  app.use('/api/auth', authRouter(prisma, jwtSecret, corsOrigin))
   app.use('/api/teachers', teacherRouter(prisma, jwtSecret))
   app.use('/api/departments', departmentRouter(prisma, jwtSecret))
 
