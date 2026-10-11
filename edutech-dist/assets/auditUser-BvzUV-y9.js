@@ -1,1 +1,0 @@
-function e(e){if(!e)return`Unknown`;let t=e.name||e.email||`Unknown`;return e.staffId?`${t} (${e.staffId})`:t}export{e as t};
