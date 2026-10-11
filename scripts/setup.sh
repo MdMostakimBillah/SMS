@@ -14,13 +14,18 @@ if [ ! -f .env ]; then
     JWT_SECRET=$(openssl rand -hex 32)
     DB_PASSWORD=$(openssl rand -hex 16)
     FACE_KEY=$(openssl rand -base64 32)
+    SUPER_ADMIN_PASSWORD="EduTech-$(openssl rand -hex 12)"
     cat > .env << EOF
 JWT_SECRET=${JWT_SECRET}
 DB_PASSWORD=${DB_PASSWORD}
 FACE_ENCRYPTION_KEY=${FACE_KEY}
 CORS_ORIGIN=http://localhost:5173
+SUPER_ADMIN_EMAIL=admin@edutech.local
+SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD}
+COOKIE_SECURE=false
 EOF
     echo "[OK] Created .env with generated secrets"
+    echo "[OK] Super admin bootstrap password (shown ONCE, also stored in .env): ${SUPER_ADMIN_PASSWORD}"
 fi
 
 echo ""
@@ -32,8 +37,12 @@ echo "Waiting for PostgreSQL..."
 sleep 5
 
 echo ""
-echo "Running Prisma migrations..."
-${COMPOSE_CMD} exec api npx prisma migrate dev --name init || true
+echo "Running Prisma migrations (fails the setup if they fail)..."
+${COMPOSE_CMD} exec -T api npx prisma migrate deploy
+
+echo ""
+echo "Seeding super administrator account (Argon2id hash)..."
+${COMPOSE_CMD} exec -T api npm run seed
 
 echo ""
 echo "=== Setup Complete ==="

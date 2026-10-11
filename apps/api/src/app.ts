@@ -1,0 +1,63 @@
+import express, { type Express, type Request, type Response, type NextFunction } from 'express'
+import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
+import cookieParser from 'cookie-parser'
+import type { PrismaClient } from '@prisma/client'
+import { authRouter } from './routes/auth.js'
+import { teacherRouter } from './routes/teachers.js'
+import { departmentRouter } from './routes/departments.js'
+import { csrfProtection } from './middleware/csrf.js'
+
+export interface AppOptions {
+  prisma: PrismaClient
+  jwtSecret: string
+  corsOrigin: string
+}
+
+export function createApp({ prisma, jwtSecret, corsOrigin }: AppOptions): Express {
+  const app = express()
+
+  app.use(helmet())
+  app.use(cors({ origin: corsOrigin, credentials: true }))
+  app.use(express.json({ limit: '10mb' }))
+  app.use(cookieParser())
+
+  app.set('trust proxy', 1)
+  app.use(
+    rateLimit({
+      windowMs: 60 * 1000,
+      limit: 300,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: 'Too many requests, please try again later' },
+    })
+  )
+
+  // Cookie-session CSRF protection for every mutating /api request
+  app.use('/api', csrfProtection)
+
+  app.get('/health', (_req: Request, res: Response) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  })
+
+  app.use('/api/auth', authRouter(prisma, jwtSecret))
+  app.use('/api/teachers', teacherRouter(prisma, jwtSecret))
+  app.use('/api/departments', departmentRouter(prisma, jwtSecret))
+
+  // JSON 404 for unknown API paths
+  app.use('/api', (_req: Request, res: Response) => {
+    res.status(404).json({ error: 'Not found' })
+  })
+
+  // Centralized error handler — no stack traces or internals leak to clients
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Express identifies error handlers by the 4-arg signature
+  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    console.error('[api] unhandled error:', err instanceof Error ? err.message : err)
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error' })
+    }
+  })
+
+  return app
+}

@@ -1,115 +1,169 @@
 import { Router, type Request, type Response } from 'express'
-import type { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcrypt'
+import type { PrismaClient, User } from '@prisma/client'
+import { randomBytes, randomUUID } from 'node:crypto'
 import jwt from 'jsonwebtoken'
-import { createHash, timingSafeEqual } from 'crypto'
+import { hash, verify } from '@node-rs/argon2'
+import { rateLimit } from 'express-rate-limit'
 import { z } from 'zod'
-import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
+import {
+  requireAuth,
+  type AuthenticatedRequest,
+  SESSION_COOKIE,
+  CSRF_COOKIE,
+  buildCookieOptions,
+  SESSION_MAX_AGE_SECONDS,
+} from '../middleware/auth.js'
+import { requireRole } from '../middleware/rbac.js'
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email: z.string().email().max(254),
+  password: z.string().min(1).max(128),
 })
+
+const superAdminUpdateSchema = z.object({
+  email: z.string().email().max(254).optional(),
+  password: z.string().min(8).max(128).optional(),
+  currentPassword: z.string().min(1).max(128).optional(),
+})
+
+const ARGON2_OPTIONS = {
+  algorithm: 2, // Argon2id
+  memoryCost: 64 * 1024, // 64 MB
+  timeCost: 3,
+  parallelism: 1,
+} as const
+
+/** Precomputed hash used to equalize timing when an account does not exist. */
+const DUMMY_PASSWORD_HASH = await hash(randomBytes(16), ARGON2_OPTIONS)
+
+export interface PublicUser {
+  id: string
+  email: string
+  name: string | null
+  role: string
+  schoolId: string | null
+  schoolName: string | null
+  avatar: string | null
+}
+
+function toPublicUser(user: User & { school?: { name: string } | null }): PublicUser {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    schoolId: user.schoolId,
+    schoolName: user.school?.name ?? null,
+    avatar: user.avatar,
+  }
+}
+
+function isCookieSecure(): boolean {
+  return process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production'
+}
 
 export function authRouter(prisma: PrismaClient, jwtSecret: string) {
   const router = Router()
 
-  router.post('/login', async (req: Request, res: Response) => {
+  const loginLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many login attempts, please try again later' },
+  })
+
+  async function issueSession(res: Response, user: User): Promise<void> {
+    const jti = randomUUID()
+    const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000)
+    await prisma.session.create({ data: { id: jti, userId: user.id, expiresAt } })
+
+    const token = jwt.sign(
+      { jti, userId: user.id, schoolId: user.schoolId, role: user.role },
+      jwtSecret,
+      { expiresIn: SESSION_MAX_AGE_SECONDS }
+    )
+
+    const secure = isCookieSecure()
+    res.cookie(SESSION_COOKIE, token, buildCookieOptions(true, secure))
+    res.cookie(CSRF_COOKIE, randomBytes(32).toString('hex'), buildCookieOptions(false, secure))
+  }
+
+  /** Login — server-authoritative. Never reveals whether the account exists. */
+  router.post('/login', loginLimiter, async (req: Request, res: Response) => {
     try {
-      const body = loginSchema.parse(req.body)
+      const parsed = loginSchema.safeParse(req.body)
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
+      }
+      const email = parsed.data.email.trim().toLowerCase()
+
       const user = await prisma.user.findUnique({
-        where: { email: body.email },
+        where: { email },
+        include: { school: true },
+      })
+
+      // Always run a verification to avoid a timing side channel on account existence
+      const passwordValid = await verify(user?.passwordHash ?? DUMMY_PASSWORD_HASH, parsed.data.password)
+
+      if (!user || !user.isActive || !passwordValid) {
+        return res.status(401).json({ error: 'Invalid credentials' })
+      }
+
+      await issueSession(res, user)
+      res.json({ user: toPublicUser(user) })
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Validation failed', details: err.errors })
+      }
+      console.error('[auth] login failed:', err instanceof Error ? err.message : err)
+      res.status(500).json({ error: 'Internal server error' })
+    }
+  })
+
+  /** Current session — used by the frontend to restore state after reload. */
+  router.get('/me', requireAuth(prisma, jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId! },
         include: { school: true },
       })
       if (!user || !user.isActive) {
-        return res.status(401).json({ error: 'Invalid credentials' })
+        return res.status(401).json({ error: 'Authentication required' })
       }
-      const valid = await bcrypt.compare(body.password, user.passwordHash)
-      if (!valid) {
-        return res.status(401).json({ error: 'Invalid credentials' })
-      }
-      const token = jwt.sign(
-        { userId: user.id, schoolId: user.schoolId, role: user.role },
-        jwtSecret,
-        { expiresIn: '24h' }
-      )
-      res.json({
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          schoolId: user.schoolId,
-          schoolName: user.school?.name,
-          avatar: user.avatar,
-        },
-      })
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ error: 'Validation failed', details: err.errors })
-      }
+      res.json({ user: toPublicUser(user) })
+    } catch {
       res.status(500).json({ error: 'Internal server error' })
     }
   })
 
-  router.post('/register', async (req: Request, res: Response) => {
+  /** Logout — revokes the server-side session and clears cookies. */
+  router.post('/logout', requireAuth(prisma, jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const body = z.object({
-        email: z.string().email(),
-        password: z.string().min(8),
-        name: z.string().min(1),
-        role: z.enum(['school_admin', 'teacher', 'student', 'hr_admin']).optional(),
-        schoolId: z.string().uuid().optional(),
-      }).parse(req.body)
-
-      const existing = await prisma.user.findUnique({
-        where: { email: body.email },
-      })
-      if (existing) {
-        return res.status(409).json({ error: 'User with this email already exists' })
-      }
-      const passwordHash = await bcrypt.hash(body.password, 12)
-      const user = await prisma.user.create({
-        data: {
-          email: body.email,
-          passwordHash,
-          name: body.name,
-          role: body.role || 'teacher',
-          schoolId: body.schoolId || null,
-        },
-        include: { school: true },
-      })
-      const token = jwt.sign(
-        { userId: user.id, schoolId: user.schoolId, role: user.role },
-        jwtSecret,
-        { expiresIn: '24h' }
-      )
-      res.status(201).json({
-        token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          schoolId: user.schoolId,
-          schoolName: user.school?.name,
-          avatar: user.avatar,
-        },
+      await prisma.session.updateMany({
+        where: { id: req.sessionId },
+        data: { revokedAt: new Date() },
       })
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ error: 'Validation failed', details: err.errors })
-      }
-      res.status(500).json({ error: 'Internal server error' })
+      console.error('[auth] logout revoke failed:', err instanceof Error ? err.message : err)
     }
+    const secure = isCookieSecure()
+    res.clearCookie(SESSION_COOKIE, { path: '/', secure, sameSite: 'lax', httpOnly: true })
+    res.clearCookie(CSRF_COOKIE, { path: '/', secure, sameSite: 'lax' })
+    res.json({ success: true })
   })
 
-  // Only super_admin can list accounts
-  router.get('/accounts', requireAuth(jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
-    if (req.userRole !== 'super_admin') {
-      return res.status(403).json({ error: 'Forbidden: super_admin only' })
-    }
+  /**
+   * Self-registration is disabled: users must be provisioned by an
+   * administrator. This endpoint previously accepted arbitrary role + schoolId
+   * from anonymous callers (cross-tenant privilege escalation).
+   */
+  router.post('/register', (_req: Request, res: Response) => {
+    res.status(403).json({ error: 'Registration is disabled. Contact your administrator.' })
+  })
+
+  // Only super_admin can list accounts (centralized deny-by-default check)
+  router.get('/accounts', requireAuth(prisma, jwtSecret), requireRole('super_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const users = await prisma.user.findMany({
         select: {
@@ -129,51 +183,57 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  // Get super admin credentials
-  router.get('/super-admin', requireAuth(jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
-    if (req.userRole !== 'super_admin') {
-      return res.status(403).json({ error: 'Forbidden' })
-    }
+  // Get super admin email (never returns password material)
+  router.get('/super-admin', requireAuth(prisma, jwtSecret), requireRole('super_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const [emailConfig, passwordConfig] = await Promise.all([
-        prisma.systemConfig.findUnique({ where: { key: 'super_admin_email' } }),
-        prisma.systemConfig.findUnique({ where: { key: 'super_admin_password' } }),
-      ])
-      res.json({
-        email: emailConfig?.value || process.env.VITE_SUPER_ADMIN_EMAIL || 'admin@edutech.com',
-        hasCustomPassword: !!passwordConfig,
-      })
+      const superAdmin = await prisma.user.findFirst({ where: { role: 'super_admin' } })
+      if (!superAdmin) {
+        return res.status(404).json({ error: 'Super admin not configured' })
+      }
+      res.json({ email: superAdmin.email, hasCustomPassword: true })
     } catch {
       res.status(500).json({ error: 'Internal server error' })
     }
   })
 
-  // Update super admin credentials
-  router.put('/super-admin', requireAuth(jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
-    if (req.userRole !== 'super_admin') {
-      return res.status(403).json({ error: 'Forbidden' })
-    }
+  // Update super admin email/password (verifies current password first)
+  router.put('/super-admin', requireAuth(prisma, jwtSecret), requireRole('super_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const body = z.object({
-        email: z.string().email().optional(),
-        password: z.string().min(6).optional(),
-      }).parse(req.body)
+      const parsed = superAdminUpdateSchema.safeParse(req.body)
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
+      }
+      const { email, password, currentPassword } = parsed.data
 
-      if (body.email) {
-        await prisma.systemConfig.upsert({
-          where: { key: 'super_admin_email' },
-          update: { value: body.email },
-          create: { key: 'super_admin_email', value: body.email },
+      const superAdmin = await prisma.user.findFirst({ where: { role: 'super_admin' } })
+      if (!superAdmin) {
+        return res.status(404).json({ error: 'Super admin not configured' })
+      }
+
+      if (password !== undefined) {
+        if (!currentPassword) {
+          return res.status(400).json({ error: 'Current password is required' })
+        }
+        const valid = await verify(superAdmin.passwordHash, currentPassword)
+        if (!valid) {
+          return res.status(403).json({ error: 'Current password is incorrect' })
+        }
+        const newHash = await hash(password, ARGON2_OPTIONS)
+        await prisma.user.update({ where: { id: superAdmin.id }, data: { passwordHash: newHash } })
+        // Revoke every other session; the caller stays logged in
+        await prisma.session.updateMany({
+          where: { userId: superAdmin.id, id: { not: req.sessionId ?? '' } },
+          data: { revokedAt: new Date() },
         })
       }
 
-      if (body.password) {
-        const hashed = await bcrypt.hash(body.password, 12)
-        await prisma.systemConfig.upsert({
-          where: { key: 'super_admin_password' },
-          update: { value: hashed },
-          create: { key: 'super_admin_password', value: hashed },
-        })
+      if (email !== undefined && email.toLowerCase() !== superAdmin.email) {
+        const target = email.trim().toLowerCase()
+        const clash = await prisma.user.findUnique({ where: { email: target } })
+        if (clash && clash.id !== superAdmin.id) {
+          return res.status(409).json({ error: 'Email already in use' })
+        }
+        await prisma.user.update({ where: { id: superAdmin.id }, data: { email: target } })
       }
 
       res.json({ success: true })
@@ -181,40 +241,7 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation failed', details: err.errors })
       }
-      res.status(500).json({ error: 'Internal server error' })
-    }
-  })
-
-  // Verify super admin password (for login)
-  router.post('/verify-super-admin', async (req: Request, res: Response) => {
-    try {
-      const body = z.object({ email: z.string().email(), password: z.string() }).parse(req.body)
-
-      // Check database first
-      const [emailConfig, passwordConfig] = await Promise.all([
-        prisma.systemConfig.findUnique({ where: { key: 'super_admin_email' } }),
-        prisma.systemConfig.findUnique({ where: { key: 'super_admin_password' } }),
-      ])
-
-      const storedEmail = emailConfig?.value || process.env.VITE_SUPER_ADMIN_EMAIL || 'admin@edutech.com'
-      const storedPasswordHash = passwordConfig?.value
-
-      if (body.email !== storedEmail) {
-        return res.json({ valid: false })
-      }
-
-      // If custom password exists in DB, verify against it
-      if (storedPasswordHash) {
-        const valid = await bcrypt.compare(body.password, storedPasswordHash)
-        return res.json({ valid })
-      }
-
-      // Fallback to .env password (timing-safe comparison)
-      const envPassword = process.env.VITE_SUPER_ADMIN_PASSWORD || 'Admin@123456'
-      const submitted = createHash('sha256').update(body.password).digest()
-      const expected = createHash('sha256').update(envPassword).digest()
-      res.json({ valid: timingSafeEqual(submitted, expected) })
-    } catch {
+      console.error('[auth] super-admin update failed:', err instanceof Error ? err.message : err)
       res.status(500).json({ error: 'Internal server error' })
     }
   })

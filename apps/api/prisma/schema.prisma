@@ -54,6 +54,8 @@ model User {
 
   school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
 
+  sessions Session[]
+
   @@index([schoolId])
   @@map("users")
 }
@@ -187,6 +189,19 @@ model Student {
   @@index([schoolId])
   @@index([schoolId, class, section])
   @@map("students")
+}
+
+model Session {
+  id        String    @id
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
 }
 
 model SystemConfig {

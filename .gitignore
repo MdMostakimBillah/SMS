@@ -40,3 +40,7 @@ face-models/
 
 # Auto-generated version file
 public/version.txt
+
+# Build artifacts & local backups
+edutech-dist/
+backups/
