@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { usePermission } from '@/hooks/usePermission'
 import { useServerDataSync } from '@/hooks/useServerDataSync'
-import { LOGIN_PATH } from '@/lib/constants'
+import { LOGIN_ROUTE } from '@/lib/constants'
 import { INSTITUTION_ROLES, type InstitutionRole } from '@/lib/navUtils'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
 import { ConnectionErrorScreen } from '@/components/ui/ConnectionErrorScreen'
@@ -34,10 +34,10 @@ const ROUTE_TO_PERMISSION: Record<string, string> = {
   settings: 'settings',
 }
 
-function getLoginRedirect(slug?: string): string {
+export function getLoginRedirect(slug?: string): string {
   const s = slug || sessionStorage.getItem('edutech_inst_slug')
   if (s) return `/i/${s}`
-  return LOGIN_PATH ? `${LOGIN_PATH}/login` : '/register'
+  return LOGIN_ROUTE
 }
 
 export function ProtectedRoute() {

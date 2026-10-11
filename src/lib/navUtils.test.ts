@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { getDashboardPath, type DashboardSession } from './navUtils'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { getDashboardPath, getLogoutRedirect, type DashboardSession } from './navUtils'
+import { LOGIN_ROUTE } from './constants'
 
 const session = (over: Partial<DashboardSession> = {}): DashboardSession => ({
   slug: null,
@@ -34,5 +35,40 @@ describe('getDashboardPath', () => {
 
   it('falls back to the public home for a non-super-admin with no institution', () => {
     expect(getDashboardPath({ role: 'teacher' }, session())).toBe('/')
+  })
+})
+
+describe('getLogoutRedirect (Phase 15 — server-role-only logout redirect)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+
+  it('sends an institution admin back to their institution landing page', () => {
+    expect(getLogoutRedirect('admin', 'sunrise')).toBe('/i/sunrise')
+  })
+
+  it('sends every other role to the configured login route', () => {
+    // Boolean-safe comparisons: a failure reports true/false, never the
+    // configured VITE_LOGIN_PATH value, in test output.
+    expect(getLogoutRedirect('school_admin', 'sunrise') === LOGIN_ROUTE).toBe(true)
+    expect(getLogoutRedirect('teacher', null) === LOGIN_ROUTE).toBe(true)
+    expect(getLogoutRedirect(null, null) === LOGIN_ROUTE).toBe(true)
+  })
+
+  it('ignores legacy localStorage identity: a stale "admin" claim changes nothing', () => {
+    localStorage.setItem(
+      'edutech_user',
+      JSON.stringify({ role: 'admin', email: 'legacy-admin@old.local' })
+    )
+    expect(getLogoutRedirect(null, 'somewhere') === LOGIN_ROUTE).toBe(true)
+    expect(getLogoutRedirect(null, 'somewhere')).not.toBe('/i/somewhere')
+  })
+
+  it('never reads web storage at all (pure function of its arguments)', () => {
+    const spy = vi.spyOn(Storage.prototype, 'getItem')
+    getLogoutRedirect('teacher', 'slug')
+    expect(spy).not.toHaveBeenCalled()
+    spy.mockRestore()
   })
 })

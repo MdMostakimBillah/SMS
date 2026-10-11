@@ -1,4 +1,5 @@
 import type { ResolvedInstitution } from '@/hooks/useSubdomain'
+import { LOGIN_ROUTE } from '@/lib/constants'
 
 export const INSTITUTION_ROLES = ['admin', 'manager', 'teacher', 'supervisor', 'guardian', 'student', 'staff'] as const
 export type InstitutionRole = typeof INSTITUTION_ROLES[number]
@@ -88,4 +89,19 @@ export function getRoleFromPath(pathname: string): InstitutionRole | null {
   }
 
   return null
+}
+
+/**
+ * Where to send someone after they log out.
+ *
+ * Takes the role from the *server-restored* session user only — it is a pure
+ * function of its arguments and never reads localStorage/sessionStorage for
+ * identity, so a stale `edutech_user` value can neither grant a redirect nor
+ * alter it. Institution admins go back to their institution landing page;
+ * everyone else goes to the configured login route (an obscurity entry
+ * point — see LOGIN_ROUTE in constants.ts).
+ */
+export function getLogoutRedirect(role?: string | null, slug?: string | null): string {
+  if (role === 'admin' && slug) return `/i/${slug}`
+  return LOGIN_ROUTE
 }

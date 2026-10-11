@@ -5,6 +5,18 @@
 export const LOGIN_PATH = import.meta.env.VITE_LOGIN_PATH || ''
 
 /**
+ * The route the login form is mounted on: `${LOGIN_PATH}/login` when a
+ * custom path is configured, otherwise the public `/register` entry.
+ *
+ * SECURITY: `VITE_LOGIN_PATH` is a build-time frontend value and is visible
+ * to anyone who reads the bundle. It is an obscurity/UI-entry layer only —
+ * never an authentication or authorization control. The API always
+ * authenticates at `/api/auth/login`, independently of this route.
+ * See docs/security/super-admin-login-path.md for the rotation procedure.
+ */
+export const LOGIN_ROUTE = LOGIN_PATH ? `${LOGIN_PATH}/login` : '/register'
+
+/**
  * Hard ceiling for every image upload in the app, in KB.
  *
  * One limit, shared by every image input — photo, signature, logo, banner and

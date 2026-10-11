@@ -32,8 +32,7 @@ import { ROLE_LABELS, type InstitutionRole } from '@/lib/navUtils'
 import { usePermissionStore } from '@/store/permissionStore'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
-import { getNavBase, getSuperAdminViewNavBase } from '@/lib/navUtils'
-import { LOGIN_PATH } from '@/lib/constants'
+import { getNavBase, getSuperAdminViewNavBase, getLogoutRedirect } from '@/lib/navUtils'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 import type { Theme, Language } from '@/types'
@@ -967,23 +966,12 @@ export default React.memo(function Topbar() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   onClick={() => {
-                    let role = user?.role
+                    // Logout redirect derives from the server-restored user
+                    // only (getLogoutRedirect is a pure function) — legacy
+                    // localStorage identity is never consulted.
                     const slug = sessionStorage.getItem('edutech_inst_slug')
-                    if (!role) {
-                      try {
-                        const stored = localStorage.getItem('edutech_user')
-                        if (stored) {
-                          const parsed = JSON.parse(stored)
-                          role = role || parsed?.role
-                        }
-                      } catch { /* ignore */ }
-                    }
                     logout()
-                    if (role === 'admin' && slug) {
-                      navigate(`/i/${slug}`)
-                    } else {
-                      navigate(LOGIN_PATH ? `${LOGIN_PATH}/login` : '/register')
-                    }
+                    navigate(getLogoutRedirect(user?.role, slug))
                   }}
                 >
                   <LogOut size={14} />
