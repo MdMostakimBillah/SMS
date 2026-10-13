@@ -120,7 +120,8 @@ export function NotFoundArt() {
           cx={s.cx}
           cy={s.cy}
           r={s.r}
-          fill="#ffffff"
+          fill="var(--brand)"
+          opacity={0.55}
           style={{ animationDelay: `${s.delay - LOOP / 2}s` }}
         />
       ))}
@@ -154,7 +155,7 @@ export function NotFoundArt() {
         rx={104}
         ry={64}
         fill="none"
-        stroke="rgba(255, 255, 255, 0.35)"
+        stroke="var(--text-muted)"
         strokeWidth={1.5}
         strokeDasharray="5 7"
         opacity={0.5}
