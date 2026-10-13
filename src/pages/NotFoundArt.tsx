@@ -74,6 +74,7 @@ export function NotFoundArt() {
           text-anchor: middle;
           stroke-width: 3;
           stroke-dasharray: 1200;
+          filter: drop-shadow(0 0 1.125rem rgba(99, 102, 241, 0.45));
           animation: ${unq('digit')} ${LOOP}s ease-in-out infinite;
         }
         @keyframes ${unq('twinkle')} {
@@ -119,7 +120,7 @@ export function NotFoundArt() {
           cx={s.cx}
           cy={s.cy}
           r={s.r}
-          fill="var(--brand)"
+          fill="#ffffff"
           style={{ animationDelay: `${s.delay - LOOP / 2}s` }}
         />
       ))}
@@ -153,7 +154,7 @@ export function NotFoundArt() {
         rx={104}
         ry={64}
         fill="none"
-        stroke="var(--text-muted)"
+        stroke="rgba(255, 255, 255, 0.35)"
         strokeWidth={1.5}
         strokeDasharray="5 7"
         opacity={0.5}
