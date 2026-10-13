@@ -30,9 +30,9 @@ const STARS: Star[] = [
 ]
 
 const DIGITS = [
-  { value: '4', x: 128, color: 'var(--brand)', stagger: 0 },
-  { value: '0', x: 300, color: 'var(--teal)', stagger: 0.4 },
-  { value: '4', x: 472, color: 'var(--purple)', stagger: 0.8 },
+  { value: '4', x: 128, stagger: 0 },
+  { value: '0', x: 300, stagger: 0.4 },
+  { value: '4', x: 472, stagger: 0.8 },
 ]
 
 /**
@@ -74,7 +74,6 @@ export function NotFoundArt() {
           text-anchor: middle;
           stroke-width: 3;
           stroke-dasharray: 1200;
-          filter: drop-shadow(0 0 1.125rem rgba(99, 102, 241, 0.45));
           animation: ${unq('digit')} ${LOOP}s ease-in-out infinite;
         }
         @keyframes ${unq('twinkle')} {
@@ -173,8 +172,8 @@ export function NotFoundArt() {
           className="digit"
           x={d.x}
           y={218}
-          fill={d.color}
-          stroke={d.color}
+          fill="var(--brand)"
+          stroke="var(--brand)"
           style={{ animationDelay: `${d.stagger + settledDelay}s` }}
         >
           {d.value}
