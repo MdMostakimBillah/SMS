@@ -15,9 +15,9 @@ function renderAt(path: string) {
 }
 
 describe('NotFoundPage', () => {
-  it('renders the 404 heading and navigation actions', () => {
+  it('renders the animated 404 artwork and navigation actions', () => {
     renderAt('/no/such/page')
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('404')
+    expect(screen.getByRole('img', { name: /404/i })).toBeDefined()
     expect(screen.getByRole('button', { name: /dashboard/i })).toBeDefined()
     expect(screen.getByRole('button', { name: /go back/i })).toBeDefined()
   })

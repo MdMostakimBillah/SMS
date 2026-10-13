@@ -3,6 +3,7 @@ import { ArrowLeft, Compass, LayoutDashboard, Rocket, Sparkles } from 'lucide-re
 import { useBn } from '@/hooks/useBn'
 import { getDashboardPath } from '@/lib/navUtils'
 import { useAuth } from '@/contexts/AuthContext'
+import { NotFoundArt } from './NotFoundArt'
 
 const FLOATERS = [
   { Icon: Rocket, className: 'left-[8%] top-[18%]', delay: '0s', duration: '7s' },
@@ -18,29 +19,15 @@ export default function NotFoundPage() {
   const { user } = useAuth()
 
   return (
-    <div className="relative flex items-center justify-center min-h-[70vh] overflow-hidden px-6 py-12">
+    <div className="relative flex items-center justify-center min-h-[100dvh] overflow-hidden px-6 py-12">
       <style>{`
-        @keyframes notfound-sheen {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
         @keyframes notfound-bob {
           0%, 100% { transform: translateY(0) rotate(-4deg); }
           50% { transform: translateY(-0.75rem) rotate(4deg); }
         }
-        .notfound-title {
-          background: linear-gradient(100deg, var(--brand), var(--teal), var(--purple), var(--brand));
-          background-size: 220% 220%;
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          animation: notfound-sheen 7s ease-in-out infinite;
-          filter: drop-shadow(0 0.5rem 1.5rem rgba(99, 102, 241, 0.28));
-        }
         .notfound-enter { opacity: 0; animation: slideUp 0.55s ease-out forwards; }
         @media (prefers-reduced-motion: reduce) {
-          .notfound-title, .notfound-enter, .notfound-blob, .notfound-floater { animation: none !important; opacity: 1 !important; }
+          .notfound-enter, .notfound-blob, .notfound-floater { animation: none !important; opacity: 1 !important; }
         }
       `}</style>
 
@@ -61,19 +48,18 @@ export default function NotFoundPage() {
         </div>
       ))}
 
-      <div className="relative text-center max-w-md w-full">
+      <div className="relative text-center max-w-xl w-full">
         <p
-          className="notfound-enter text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2"
+          className="notfound-enter text-[0.75rem] font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-4"
           style={{ animationDelay: '0.05s' }}
         >
-          {isBn ? 'ওহো! পথ হারিয়েছেন?' : 'Oops! Lost in space?'}
+          {isBn ? 'ওহো! মহাশূন্যে হারিয়ে গেছেন?' : 'Oops! Lost in space?'}
         </p>
-        <h1
-          className="notfound-enter notfound-title text-[5.5rem] leading-none font-extrabold mb-3"
-          style={{ animationDelay: '0.12s' }}
-        >
-          404
-        </h1>
+
+        <div className="notfound-enter flex justify-center mb-2" style={{ animationDelay: '0.12s' }}>
+          <NotFoundArt />
+        </div>
+
         <p
           className="notfound-enter text-[1.0625rem] font-semibold text-[var(--text-primary)] mb-2"
           style={{ animationDelay: '0.2s' }}
