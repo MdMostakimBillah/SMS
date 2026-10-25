@@ -7,6 +7,7 @@ function isUniqueViolation(err: unknown): boolean {
 }
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 import { requireRole, requireSchool, resolveTenantReadScope } from '../middleware/rbac.js'
+import { audit } from '../audit.js'
 
 const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -112,6 +113,17 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
       ])
 
       res.json({ data: teachers, total, page: query.page, pageSize: query.pageSize })
+      if (req.userRole === 'super_admin' && query.schoolId) {
+        // Privileged cross-tenant read — always audited.
+        audit({
+          action: 'teacher.list.cross_tenant',
+          actorId: req.userId,
+          actorRole: req.userRole,
+          schoolId: query.schoolId,
+          outcome: 'success',
+          detail: { total },
+        })
+      }
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation failed', details: err.errors })
@@ -129,6 +141,16 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
       // Tenant scope lives inside the query itself: a foreign ID yields 404,
       // never another school's data.
       const teacher = await prisma.teacher.findFirst({ where: { id, ...scope.where } })
+      if (req.userRole === 'super_admin') {
+        audit({
+          action: 'teacher.read',
+          actorId: req.userId,
+          actorRole: req.userRole,
+          schoolId: teacher?.schoolId ?? null,
+          resourceId: id,
+          outcome: teacher ? 'success' : 'not_found',
+        })
+      }
       if (!teacher) return res.status(404).json({ error: 'Teacher not found' })
       res.json(teacher)
     } catch {
@@ -142,6 +164,14 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
       const body = createTeacherSchema.parse(req.body)
 
       if (body.departmentId && !(await departmentInSchool(prisma, body.departmentId, schoolId))) {
+        audit({
+          action: 'teacher.create',
+          actorId: req.userId,
+          actorRole: req.userRole,
+          schoolId,
+          outcome: 'denied',
+          detail: { reason: 'foreign_department' },
+        })
         return res.status(400).json({ error: 'Invalid departmentId' })
       }
 
@@ -191,6 +221,7 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
           applySalaryRule: body.applySalaryRule ?? false,
         },
       })
+      audit({ action: 'teacher.create', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: teacher.id, outcome: 'success' })
       res.status(201).json(teacher)
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -210,6 +241,14 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
 
       const body = updateTeacherSchema.parse(req.body)
       if (body.departmentId && !(await departmentInSchool(prisma, body.departmentId, schoolId))) {
+        audit({
+          action: 'teacher.update',
+          actorId: req.userId,
+          actorRole: req.userRole,
+          schoolId,
+          outcome: 'denied',
+          detail: { reason: 'foreign_department' },
+        })
         return res.status(400).json({ error: 'Invalid departmentId' })
       }
 
@@ -261,11 +300,18 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
         // one statement, closing the find-then-write (TOCTOU) window. A foreign
         // ID matches zero rows -> 404, indistinguishable from "does not exist".
         const { count } = await prisma.teacher.updateMany({ where: { id, schoolId }, data })
-        if (count === 0) return res.status(404).json({ error: 'Teacher not found' })
+        if (count === 0) {
+          audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+          return res.status(404).json({ error: 'Teacher not found' })
+        }
       }
 
       const teacher = await prisma.teacher.findFirst({ where: { id, schoolId } })
-      if (!teacher) return res.status(404).json({ error: 'Teacher not found' })
+      if (!teacher) {
+        audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        return res.status(404).json({ error: 'Teacher not found' })
+      }
+      audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
       res.json(teacher)
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -285,7 +331,11 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
 
       // Atomic tenant-scoped delete (see PUT). Cross-tenant IDs -> 404.
       const { count } = await prisma.teacher.deleteMany({ where: { id, schoolId } })
-      if (count === 0) return res.status(404).json({ error: 'Teacher not found' })
+      if (count === 0) {
+        audit({ action: 'teacher.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        return res.status(404).json({ error: 'Teacher not found' })
+      }
+      audit({ action: 'teacher.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
       res.json({ success: true })
     } catch {
       res.status(500).json({ error: 'Internal server error' })

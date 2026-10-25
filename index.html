@@ -15,6 +15,60 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <title>EduTech SMS</title>
+    <style>
+      /* Pre-paint theme: applied before React/CSS load so the splash screen
+         and first paint already match the user's saved theme (no white flash
+         in dark mode). The blocking script below sets data-theme from the
+         persisted app settings. */
+      html { background: #ffffff; }
+      html[data-theme='dark'] { background: #0f0f0f; }
+      html[data-theme='dark'] #splash { background: #0f0f0f !important; }
+    </style>
+    <script>
+      // Read the persisted theme synchronously and apply it before first
+      // paint. Mirrors src/lib/storage.ts getStorageKey('edutech-settings'):
+      // base, base_slug, or base_slug_userId (zustand {state:{theme}} envelope).
+      (function () {
+        try {
+          var theme = null;
+          var slug = null, userId = null;
+          try {
+            slug = sessionStorage.getItem('edutech_inst_slug');
+            userId = sessionStorage.getItem('edutech_user_id');
+          } catch (e) { /* storage unavailable */ }
+          var keys = ['edutech-settings'];
+          if (slug && userId) keys.unshift('edutech-settings_' + slug + '_' + userId);
+          if (slug) keys.unshift('edutech-settings_' + slug);
+          for (var i = 0; i < keys.length; i++) {
+            try {
+              var raw = localStorage.getItem(keys[i]);
+              if (!raw) continue;
+              var parsed = JSON.parse(raw);
+              var t = (parsed && parsed.state && parsed.state.theme) || parsed.theme;
+              if (t === 'light' || t === 'dark' || t === 'system') { theme = t; break; }
+            } catch (e) { /* try next key */ }
+          }
+          // Fallback: any other namespaced copy (older migrations).
+          if (!theme) {
+            try {
+              for (var j = 0; j < localStorage.length; j++) {
+                var k = localStorage.key(j);
+                if (!k || k.indexOf('edutech-settings') !== 0) continue;
+                var p = JSON.parse(localStorage.getItem(k) || 'null');
+                var t2 = (p && p.state && p.state.theme) || (p && p.theme);
+                if (t2 === 'light' || t2 === 'dark' || t2 === 'system') { theme = t2; break; }
+              }
+            } catch (e) { /* ignore */ }
+          }
+          var dark = theme === 'dark' || (theme !== 'light' && window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+          try { document.documentElement.style.colorScheme = dark ? 'dark' : 'light'; } catch (e) {}
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta && dark) meta.setAttribute('content', '#0f0f0f');
+        } catch (e) { /* never break boot for theming */ }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -30,8 +84,11 @@
         </svg>
         <div style="margin-top:16px;font-family:'Inter',system-ui,sans-serif;font-size:13px;letter-spacing:0.5px;color:#94a3b8">Loading…</div>
         <style>
-          #splash svg { animation: splash-pulse 1.6s ease-in-out infinite; }
+          #splash svg { width: 6rem; height: 6rem; animation: splash-pulse 1.6s ease-in-out infinite; }
           @keyframes splash-pulse { 0%,100% { opacity:0.55; transform:scale(0.96);} 50% { opacity:1; transform:scale(1);} }
+          @media (max-width: 40rem) {
+            #splash svg { width: 3.5rem; height: 3.5rem; }
+          }
           @media (prefers-reduced-motion: reduce) { #splash svg { animation:none; opacity:1; } }
         </style>
       </div>

@@ -222,3 +222,82 @@ export const departmentsApi = {
   delete: (id: string) =>
     apiRequest<{ success: boolean }>(`/api/departments/${id}`, { method: 'DELETE' }),
 }
+
+export interface NoticeData {
+  id: string
+  schoolId: string
+  title: string
+  titleBn: string | null
+  content: string
+  contentBn: string | null
+  author: string | null
+  authorBn: string | null
+  target: string
+  priority: string
+  category: string
+  pinned: boolean
+  isActive: boolean
+  publishedAt: string
+  expiresAt: string | null
+  storage: string | null
+  localId: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface NoticeInput {
+  title: string
+  titleBn?: string | null
+  content: string
+  contentBn?: string | null
+  author?: string | null
+  authorBn?: string | null
+  target: string
+  priority: string
+  category: string
+  pinned: boolean
+  isActive: boolean
+  publishedAt: string
+  expiresAt?: string | null
+  storage?: string | null
+}
+
+export interface NoticeImportResult {
+  imported: number
+  skipped: number
+  conflicts: Array<{ localId: string; title: string; reason: string }>
+}
+
+/**
+ * Notices API (first localStorage→API domain migration).
+ *
+ * Tenant scope is always derived server-side from the authenticated session;
+ * no institution id is ever sent by the client. `importLocal` is the one-time
+ * migration path: each legacy record carries its old local id as `localId`,
+ * which the server uses as a per-tenant idempotency key (re-imports skip,
+ * conflicts are reported — nothing is overwritten or duplicated).
+ */
+export const noticesApi = {
+  list: () => apiRequest<{ data: NoticeData[]; total: number }>('/api/notices'),
+
+  create: (data: NoticeInput) => apiRequest<NoticeData>('/api/notices', { method: 'POST', body: data }),
+
+  update: (id: string, data: Partial<NoticeInput>) =>
+    apiRequest<NoticeData>(`/api/notices/${id}`, { method: 'PUT', body: data }),
+
+  remove: (id: string) => apiRequest<{ success: boolean }>(`/api/notices/${id}`, { method: 'DELETE' }),
+
+  importLocal: (items: Array<NoticeInput & { localId: string }>) =>
+    apiRequest<NoticeImportResult>('/api/notices/import', { method: 'POST', body: { items } }),
+
+  categories: () => apiRequest<{ data: string[] }>('/api/notices/categories'),
+
+  addCategory: (name: string) =>
+    apiRequest<{ name: string }>('/api/notices/categories', { method: 'POST', body: { name } }),
+
+  removeCategory: (name: string) =>
+    apiRequest<{ success: boolean; reassigned: number }>(
+      `/api/notices/categories/${encodeURIComponent(name)}`,
+      { method: 'DELETE' }
+    ),
+}

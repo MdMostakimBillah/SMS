@@ -71,6 +71,8 @@ if ('serviceWorker' in navigator) {
           if ((e.target as ServiceWorker).state === 'activated') onSWReady()
         })
       }
+    }).catch((err) => {
+      console.warn('ServiceWorker registration deferred (local dev SSL):', err)
     })
   })
 }

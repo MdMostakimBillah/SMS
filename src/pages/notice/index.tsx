@@ -1,11 +1,12 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
-import { Plus, Megaphone, Pin, Search, AlertTriangle, Tag, Trash2, Calendar, Users, ChevronDown } from 'lucide-react'
+import { useState, useMemo, useRef } from 'react'
+import { Plus, Megaphone, Pin, Search, AlertTriangle, Tag, Trash2, Calendar, Users, ChevronDown, UploadCloud } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
-import { useNoticeStore, type Notice, noticeId } from '@/store/noticeStore'
+import { useNotices } from '@/hooks/useNotices'
+import type { Notice } from '@/store/noticeStore'
 import { useClassStore } from '@/store/classStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { BrandLogo } from '@/components/ui/BrandLogo'
@@ -35,14 +36,13 @@ export default function NoticeBoardPage() {
   const bn = useBn()
   const { canCreate, canEdit, canDelete } = usePermission()
   const { isMobile } = useWindowSize()
-  const notices = useNoticeStore((s) => s.notices)
-  const categories = useNoticeStore((s) => s.categories)
-  const addNotice = useNoticeStore((s) => s.addNotice)
-  const updateNotice = useNoticeStore((s) => s.updateNotice)
-  const deleteNotice = useNoticeStore((s) => s.deleteNotice)
-  const togglePin = useNoticeStore((s) => s.togglePin)
-  const addCategory = useNoticeStore((s) => s.addCategory)
-  const removeCategory = useNoticeStore((s) => s.removeCategory)
+  // Server-backed module state (API/PostgreSQL is authoritative; the legacy
+  // local store is kept untouched as the rollback artifact).
+  const {
+    status, notices, categories, error, retry,
+    save, remove, togglePin, addCategory, removeCategory,
+    importLocal, dismissImport, importCandidate, importing,
+  } = useNotices()
   const institution = useClassStore((s) => s.institution)
   const logo = institution.logo
   const schoolName = institution.name || 'EduTech'
@@ -56,16 +56,10 @@ export default function NoticeBoardPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [newCategory, setNewCategory] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(null)
   const sliderRef = useRef<HTMLDivElement>(null)
   useTabSlider({ activeTab, tabRefs, sliderRef })
-
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 400)
-    return () => clearTimeout(t)
-  }, [])
 
   const isExpired = (n: Notice) => n.expiresAt && new Date(n.expiresAt) < new Date()
 
@@ -101,34 +95,75 @@ export default function NoticeBoardPage() {
     }))
   }, [bn, filtered.length, pinnedCount, expiredCount])
 
+  const reportError = (err: unknown, actionBn: string, actionEn: string) => {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    window.alert(`${bn ? actionBn : actionEn}: ${message}`)
+  }
+
   const handleSave = (data: Omit<Notice, 'id'>) => {
-    if (editItem) {
-      updateNotice(editItem.id, data)
-    } else {
-      addNotice({ ...data, id: noticeId() })
-    }
-    setShowModal(false)
-    setEditItem(null)
+    save(data, editItem?.id)
+      .then(() => {
+        setShowModal(false)
+        setEditItem(null)
+      })
+      .catch((err) => reportError(err, 'সংরক্ষণ ব্যর্থ', 'Save failed'))
   }
 
   const handleAddCategory = () => {
     if (!newCategory.trim()) return
     addCategory(newCategory.trim())
-    setNewCategory('')
+      .then(() => setNewCategory(''))
+      .catch((err) => reportError(err, 'ক্যাটাগরি যোগ ব্যর্থ', 'Adding category failed'))
   }
 
   const handleRemoveCategory = (cat: string) => {
     if (window.confirm(bn ? `'${cat}' ক্যাটাগরি মুছে ফেলতে চান?` : `Delete category '${cat}'?`)) {
-      removeCategory(cat)
+      removeCategory(cat).catch((err) => reportError(err, 'ক্যাটাগরি মুছে ফেলা যায়নি', 'Could not delete category'))
     }
   }
 
-  if (isLoading) {
+  const handleImport = () => {
+    importLocal()
+      .then((r) => {
+        const conflictNote =
+          r.conflicts.length > 0
+            ? bn
+              ? ` · ${r.conflicts.length}টি দ্ব্যর্থক/আগে আমদানি করা (${r.conflicts.slice(0, 3).map((c) => c.title).join(', ')}${r.conflicts.length > 3 ? '…' : ''})`
+              : ` · ${r.conflicts.length} conflicting/already imported (${r.conflicts.slice(0, 3).map((c) => c.title).join(', ')}${r.conflicts.length > 3 ? '…' : ''})`
+            : ''
+        window.alert(
+          bn
+            ? `আমদানি সম্পন্ন: ${r.imported}টি নতুন, ${r.skipped}টি আগে থেকেই আছে${conflictNote}`
+            : `Import complete: ${r.imported} new, ${r.skipped} already present${conflictNote}`
+        )
+      })
+      .catch((err) => reportError(err, 'আমদানি ব্যর্থ', 'Import failed'))
+  }
+
+  if (status === 'loading') {
     return (
       <div className="p-4 space-y-4">
         <div className="skeleton h-8 w-48 rounded-lg" />
         <div className="skeleton h-10 w-full rounded-xl" />
         <div className="space-y-2">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}</div>
+      </div>
+    )
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)]">
+        <AlertTriangle size={48} className="mb-3 opacity-30" />
+        <p className="text-[0.9375rem]">{bn ? 'নোটিশ লোড করা যায়নি' : 'Could not load notices'}</p>
+        <p className="text-[0.75rem] mt-1">{error}</p>
+        <button
+          type="button"
+          onClick={retry}
+          className="mt-4 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-colors"
+          style={{ background: 'var(--brand)' }}
+        >
+          {bn ? 'আবার চেষ্টা করুন' : 'Retry'}
+        </button>
       </div>
     )
   }
@@ -139,8 +174,14 @@ export default function NoticeBoardPage() {
         notice={viewNotice}
         onBack={() => setViewNotice(null)}
         onEdit={(n) => { setEditItem(n); setShowModal(true); setViewNotice(null) }}
-        onDelete={(id) => { deleteNotice(id); setViewNotice(null) }}
-        onTogglePin={togglePin}
+        onDelete={(id) => {
+          remove(id)
+            .catch((err) => reportError(err, 'মুছে ফেলা যায়নি', 'Could not delete'))
+          setViewNotice(null)
+        }}
+        onTogglePin={(id) => {
+          togglePin(id).catch((err) => reportError(err, 'পিন পরিবর্তন ব্যর্থ', 'Could not toggle pin'))
+        }}
         canEdit={canEdit('notice')}
         canDelete={canDelete('notice')}
         bn={bn}
@@ -187,6 +228,36 @@ export default function NoticeBoardPage() {
           )}
         </div>
       </div>
+
+      {/* One-time local-data import offer (legacy localStorage → server) */}
+      {importCandidate && (
+        <div className="flex items-center justify-between gap-3 mb-4 px-4 py-3 rounded-xl border flex-wrap" style={{ borderColor: 'var(--brand)', background: 'var(--bg-secondary)' }}>
+          <p className="text-[0.75rem] text-[var(--text-secondary)] flex items-center gap-1.5">
+            <UploadCloud size={15} className="text-[var(--brand)] shrink-0" />
+            {bn
+              ? 'এই ডিভাইসে পুরনো নোটিশ পাওয়া গেছে — সার্ভারে এককালীন আমদানি করবেন? (স্থানীয় কপি মুছে ফেলা হবে না)'
+              : 'Older notices found on this device — import them to the server? (Your local copy is kept)'}
+          </p>
+          <div className="flex gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={importing}
+              className="px-3 py-1.5 rounded-lg text-[0.75rem] font-medium text-white transition-opacity disabled:opacity-50"
+              style={{ background: 'var(--brand)' }}
+            >
+              {importing ? (bn ? 'আমদানি হচ্ছে…' : 'Importing…') : bn ? 'আমদানি করুন' : 'Import'}
+            </button>
+            <button
+              type="button"
+              onClick={dismissImport}
+              className="px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+            >
+              {bn ? 'পরে' : 'Later'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="relative mb-4">
@@ -284,7 +355,9 @@ export default function NoticeBoardPage() {
                   <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                     {canEdit('notice') && (
                       <button
-                        onClick={() => togglePin(notice.id)}
+                        onClick={() => {
+                          togglePin(notice.id).catch((err) => reportError(err, 'পিন পরিবর্তন ব্যর্থ', 'Could not toggle pin'))
+                        }}
                         className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] transition-colors"
                         title={notice.pinned ? (bn ? 'পিন সরান' : 'Unpin') : (bn ? 'পিন করুন' : 'Pin')}
                       >
@@ -389,7 +462,11 @@ export default function NoticeBoardPage() {
       {/* Delete Confirmation */}
       {deleteTarget && (
         <DeleteConfirmDialog
-          onConfirm={() => { deleteNotice(deleteTarget); setDeleteTarget(null) }}
+          onConfirm={() => {
+            remove(deleteTarget)
+              .catch((err) => reportError(err, 'মুছে ফেলা যায়নি', 'Could not delete'))
+            setDeleteTarget(null)
+          }}
           onCancel={() => setDeleteTarget(null)}
           title={bn ? 'নোটিশ মুছুন' : 'Delete Notice'}
           message={bn ? 'আপনি কি নিশ্চিত এই নোটিশ মুছে ফেলতে চান?' : 'Are you sure you want to delete this notice?'}

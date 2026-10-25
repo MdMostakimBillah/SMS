@@ -75,7 +75,19 @@ describe('InstitutionLogin credential handling (Phase 6)', () => {
     currentPath = ''
   })
 
-  it('institution context fails closed without calling the API and writes no credentials', async () => {
+  it('institution context logs in through the backend API and writes no credentials to storage', async () => {
+    vi.mocked(authApi.login).mockResolvedValue({
+      user: {
+        id: 'u-inst-1',
+        email: 'admin@demo.bd',
+        name: 'School Admin',
+        role: 'school_admin',
+        schoolId: 'inst-1',
+        schoolName: 'Demo School',
+        avatar: null,
+      },
+    })
+
     const { container } = render(
       <MemoryRouter initialEntries={['/i/testschool/login']}>
         <LocationProbe />
@@ -85,14 +97,36 @@ describe('InstitutionLogin credential handling (Phase 6)', () => {
 
     fillAndSubmit(container)
 
-    // Fail-closed message replaces the removed local password comparison.
-    await screen.findByText(/now requires a server-backed account/i, {}, { timeout: 4000 })
-
-    // No browser-side credential check happened…
-    expect(authApi.login).not.toHaveBeenCalled()
-    // …and no password was written to any browser storage.
+    await waitFor(() => expect(currentPath).toBe('/i/testschool/admin/dashboard'), { timeout: 4000 })
+    expect(authApi.login).toHaveBeenCalledTimes(1)
     expect(browserStorageDump()).not.toContain(SECRET)
-    expect(currentPath).toBe('/i/testschool/login')
+  })
+
+  it('role-based teacher login navigates to teacher dashboard via backend', async () => {
+    vi.mocked(authApi.login).mockResolvedValue({
+      user: {
+        id: 'u-teacher-1',
+        email: 'teacher@demo.bd',
+        name: 'Teacher Demo',
+        role: 'teacher',
+        schoolId: 'inst-1',
+        schoolName: 'Demo School',
+        avatar: null,
+      },
+    })
+
+    const { container } = render(
+      <MemoryRouter initialEntries={['/i/testschool/login']}>
+        <LocationProbe />
+        <InstitutionLogin subdomain="testschool" institution={makeInstitution()} />
+      </MemoryRouter>
+    )
+
+    fillAndSubmit(container)
+
+    await waitFor(() => expect(currentPath).toBe('/i/testschool/teacher/dashboard'), { timeout: 4000 })
+    expect(authApi.login).toHaveBeenCalledTimes(1)
+    expect(browserStorageDump()).not.toContain(SECRET)
   })
 
   it('server-side rejection keeps the invalid-credentials message and attempt counter', async () => {

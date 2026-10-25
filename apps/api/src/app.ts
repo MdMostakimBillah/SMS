@@ -7,15 +7,20 @@ import type { PrismaClient } from '@prisma/client'
 import { authRouter } from './routes/auth.js'
 import { teacherRouter } from './routes/teachers.js'
 import { departmentRouter } from './routes/departments.js'
+import { noticeRouter } from './routes/notices.js'
+import { mediaRouter } from './routes/media.js'
 import { csrfProtection } from './middleware/csrf.js'
+import type { MediaStorage } from './storage.js'
 
 export interface AppOptions {
   prisma: PrismaClient
   jwtSecret: string
   corsOrigin: string
+  /** R2-backed media storage; null (media routes answer 503) when unconfigured. */
+  storage?: MediaStorage | null
 }
 
-export function createApp({ prisma, jwtSecret, corsOrigin }: AppOptions): Express {
+export function createApp({ prisma, jwtSecret, corsOrigin, storage = null }: AppOptions): Express {
   const app = express()
 
   app.use(helmet())
@@ -44,6 +49,8 @@ export function createApp({ prisma, jwtSecret, corsOrigin }: AppOptions): Expres
   app.use('/api/auth', authRouter(prisma, jwtSecret, corsOrigin))
   app.use('/api/teachers', teacherRouter(prisma, jwtSecret))
   app.use('/api/departments', departmentRouter(prisma, jwtSecret))
+  app.use('/api/notices', noticeRouter(prisma, jwtSecret))
+  app.use('/api/media', mediaRouter(prisma, jwtSecret, storage))
 
   // JSON 404 for unknown API paths
   app.use('/api', (_req: Request, res: Response) => {

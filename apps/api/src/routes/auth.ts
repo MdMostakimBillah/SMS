@@ -15,6 +15,7 @@ import {
 } from '../middleware/auth.js'
 import { requireRole } from '../middleware/rbac.js'
 import { requireTrustedOrigin } from '../middleware/origin.js'
+import { audit } from '../audit.js'
 
 const loginSchema = z.object({
   email: z.string().email().max(254),
@@ -183,6 +184,13 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         },
         orderBy: { createdAt: 'desc' },
       })
+      audit({
+        action: 'auth.accounts.list',
+        actorId: req.userId,
+        actorRole: req.userRole,
+        outcome: 'success',
+        detail: { count: users.length },
+      })
       res.json(users)
     } catch {
       res.status(500).json({ error: 'Internal server error' })
@@ -196,6 +204,7 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
       if (!superAdmin) {
         return res.status(404).json({ error: 'Super admin not configured' })
       }
+      audit({ action: 'auth.super_admin.read', actorId: req.userId, actorRole: req.userRole, outcome: 'success' })
       res.json({ email: superAdmin.email, hasCustomPassword: true })
     } catch {
       res.status(500).json({ error: 'Internal server error' })
@@ -226,6 +235,13 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         }
         const valid = await verify(superAdmin.passwordHash, currentPassword)
         if (!valid) {
+          audit({
+            action: 'auth.super_admin.update',
+            actorId: req.userId,
+            actorRole: req.userRole,
+            outcome: 'failure',
+            detail: { reason: 'current_password_invalid' },
+          })
           return res.status(403).json({ error: 'Current password is incorrect' })
         }
       }
@@ -239,6 +255,13 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         target = email!.trim().toLowerCase()
         const clash = await prisma.user.findUnique({ where: { email: target } })
         if (clash && clash.id !== superAdmin.id) {
+          audit({
+            action: 'auth.super_admin.update',
+            actorId: req.userId,
+            actorRole: req.userRole,
+            outcome: 'failure',
+            detail: { reason: 'email_in_use' },
+          })
           return res.status(409).json({ error: 'Email already in use' })
         }
       }
@@ -269,11 +292,25 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         // Concurrent email claim between the pre-check and commit → the
         // unique constraint fires and the whole transaction rolls back.
         if (isUniqueViolation(err)) {
+          audit({
+            action: 'auth.super_admin.update',
+            actorId: req.userId,
+            actorRole: req.userRole,
+            outcome: 'failure',
+            detail: { reason: 'email_in_use' },
+          })
           return res.status(409).json({ error: 'Email already in use' })
         }
         throw err
       }
 
+      audit({
+        action: 'auth.super_admin.update',
+        actorId: req.userId,
+        actorRole: req.userRole,
+        outcome: 'success',
+        detail: { emailChanged: wantsEmail, passwordChanged: wantsPassword },
+      })
       res.json({ success: true })
     } catch (err) {
       if (err instanceof z.ZodError) {

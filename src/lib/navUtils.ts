@@ -17,7 +17,7 @@ export const ROLE_LABELS: Record<InstitutionRole, { en: string; bn: string }> = 
 export function getNavBase(user: { role: string } | null, resolved: ResolvedInstitution | null): string {
   if (!user || !resolved) return ''
   const { mode, slug } = resolved
-  const role = user.role === 'super_admin' ? 'admin' : user.role
+  const role = (user.role === 'super_admin' || user.role === 'school_admin') ? 'admin' : user.role
   if (mode === 'path') return `/i/${slug}/${role}`
   return `/${role}`
 }
@@ -66,7 +66,10 @@ export function getDashboardPath(
 ): string {
   if (!user) return '/'
   if (session.viewingId) return '/super-admin/viewing/admin/dashboard'
-  if (session.slug) return `/i/${session.slug}/${user.role}/dashboard`
+  if (session.slug) {
+    const role = (user.role === 'super_admin' || user.role === 'school_admin') ? 'admin' : user.role
+    return `/i/${session.slug}/${role}/dashboard`
+  }
   if (user.role === 'super_admin') return '/super-admin/admin/dashboard'
   return '/'
 }

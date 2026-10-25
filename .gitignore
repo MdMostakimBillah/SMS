@@ -33,6 +33,7 @@ apps/face-service/models
 apps/face-service/__pycache__
 .env
 .env.production
+staging.env
 
 # Docker
 pgdata/
@@ -43,4 +44,5 @@ public/version.txt
 
 # Build artifacts & local backups
 edutech-dist/
+dist-staging/
 backups/

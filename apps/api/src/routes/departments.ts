@@ -7,6 +7,7 @@ function isUniqueViolation(err: unknown): boolean {
 }
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 import { requireRole, requireSchool, resolveTenantReadScope } from '../middleware/rbac.js'
+import { audit } from '../audit.js'
 
 /**
  * Departments router (Phase 7, approved with the teacher-write migration).
@@ -54,6 +55,17 @@ export function departmentRouter(prisma: PrismaClient, jwtSecret: string) {
         orderBy: { createdAt: 'asc' },
       })
       res.json({ data: departments, total: departments.length })
+      if (req.userRole === 'super_admin' && query.schoolId) {
+        // Privileged cross-tenant read — always audited.
+        audit({
+          action: 'department.list.cross_tenant',
+          actorId: req.userId,
+          actorRole: req.userRole,
+          schoolId: query.schoolId,
+          outcome: 'success',
+          detail: { total: departments.length },
+        })
+      }
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation failed', details: err.errors })
@@ -75,6 +87,7 @@ export function departmentRouter(prisma: PrismaClient, jwtSecret: string) {
           head: body.head ?? null,
         },
       })
+      audit({ action: 'department.create', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: department.id, outcome: 'success' })
       res.status(201).json(department)
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -101,11 +114,18 @@ export function departmentRouter(prisma: PrismaClient, jwtSecret: string) {
       if (Object.keys(data).length > 0) {
         // Atomic tenant-scoped write (same TOCTOU-closing pattern as teachers).
         const { count } = await prisma.department.updateMany({ where: { id, schoolId }, data })
-        if (count === 0) return res.status(404).json({ error: 'Department not found' })
+        if (count === 0) {
+          audit({ action: 'department.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+          return res.status(404).json({ error: 'Department not found' })
+        }
       }
 
       const department = await prisma.department.findFirst({ where: { id, schoolId } })
-      if (!department) return res.status(404).json({ error: 'Department not found' })
+      if (!department) {
+        audit({ action: 'department.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        return res.status(404).json({ error: 'Department not found' })
+      }
+      audit({ action: 'department.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
       res.json(department)
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -126,7 +146,11 @@ export function departmentRouter(prisma: PrismaClient, jwtSecret: string) {
       // `departmentId` on teachers/subjects is a soft reference (no FK), so a
       // plain tenant-scoped delete matches the previous local semantics.
       const { count } = await prisma.department.deleteMany({ where: { id, schoolId } })
-      if (count === 0) return res.status(404).json({ error: 'Department not found' })
+      if (count === 0) {
+        audit({ action: 'department.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        return res.status(404).json({ error: 'Department not found' })
+      }
+      audit({ action: 'department.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
       res.json({ success: true })
     } catch {
       res.status(500).json({ error: 'Internal server error' })

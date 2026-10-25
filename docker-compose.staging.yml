@@ -1,0 +1,88 @@
+name: edutech-staging   # explicit project name — never derived from directory
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    labels:
+      edutech-staging: "true"
+    environment:
+      # Bootstrap superuser — container-local only (socket), one-time role/DB
+      # creation step. Never referenced by any other service.
+      POSTGRES_USER: edutech_staging_admin
+      POSTGRES_PASSWORD: ${STAGING_DB_BOOTSTRAP_PASSWORD:?set in staging.env}
+      # Deliberately NOT the app DB: edutech_staging is created later with
+      # OWNER = migration role.
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data          # → edutech-staging_pgdata (fresh)
+    # NO published ports
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edutech_staging_admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    labels:
+      edutech-staging: "true"
+    # NO published ports, NO password (production parity; staging network only)
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    # No build: section on purpose — the image is pre-built from `git archive
+    # 957f8a0` (gate G5); compose can only consume the exact tagged image and
+    # can never rebuild from the worktree.
+    image: edutech-api:staging-957f8a0
+    labels:
+      edutech-staging: "true"
+    environment:
+      # The ONLY database credential in the API container — runtime app role.
+      DATABASE_URL: ${STAGING_DB_APP_URL:?set in staging.env}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${STAGING_JWT_SECRET:?set in staging.env}
+      CORS_ORIGIN: ${STAGING_CORS_ORIGIN:?set in staging.env}
+      SUPER_ADMIN_EMAIL: ${STAGING_SUPER_ADMIN_EMAIL:?set in staging.env}
+      SUPER_ADMIN_PASSWORD: ${STAGING_SUPER_ADMIN_PASSWORD:?set in staging.env}
+      COOKIE_SECURE: "true"                      # literal — cannot drift
+      PORT: "3001"                               # literal
+      # NOTE: bootstrap/migrator credentials are NOT referenced here and can
+      # therefore never enter this container's environment.
+    ports:
+      - "127.0.0.1:3002:3001"                    # loopback-only
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    labels:
+      edutech-staging: "true"
+    ports:
+      - "127.0.0.1:8081:80"                       # staging-only web ports
+      - "127.0.0.1:8443:443"
+    volumes:
+      - ./dist-staging:/usr/share/nginx/html:ro  # staging build (never ./dist)
+      - ./nginx.staging.conf:/etc/nginx/nginx.conf:ro   # staging-only config
+      - ./cert.pem:/etc/nginx/ssl/cert.pem:ro    # shared cert, read-only
+      - ./key.pem:/etc/nginx/ssl/key.pem:ro      # shared key, read-only
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:                                         # → edutech-staging_pgdata (fresh)
+
+networks:
+  default:
+    name: edutech-staging-internal                # explicit; no external: refs
+    driver: bridge

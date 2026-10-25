@@ -307,32 +307,28 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
     setLoading(true)
 
     setTimeout(async () => {
-      // Super admin credentials live only in the database (Argon2id hash).
-      // Try the API when there is no institution subdomain; never compare
-      // credentials in the browser.
-      let serverRejected = false
-      if (!subdomain) {
-        try {
-          const res = await authApi.login(email, password)
-          if (res.user.role === 'super_admin') {
-            clearLoginAttempts()
-            navigate('/super-admin/admin/dashboard')
-            setLoading(false)
-            return
-          }
-          // A non-superadmin server account has no session on this page —
-          // revoke it and fall through to the fail-closed path below.
-          authApi.logout().catch(() => { /* ignore */ })
-        } catch {
-          // The server rejected the credentials (or is unreachable) — keep
-          // the existing failed-attempt / lockout behavior below.
-          serverRejected = true
-        }
-      }
+      try {
+        const res = await authApi.login(email, password)
+        clearLoginAttempts()
 
-      if (serverRejected) {
-        // Wrong server-side credentials — preserve the existing
-        // failed-attempt counter and lockout behavior.
+        const u = res.user
+        const targetRole = u.role === 'school_admin' ? 'admin' : u.role
+        const targetSlug = institution?.slug || subdomain || (u.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : 'school')
+
+        if (targetSlug) {
+          sessionStorage.setItem('edutech_inst_slug', targetSlug)
+          localStorage.setItem('edutech_inst_slug', targetSlug)
+        }
+
+        if (u.role === 'super_admin') {
+          navigate('/super-admin/admin/dashboard')
+          setLoading(false)
+          return
+        }
+
+        navigate(`/i/${targetSlug}/${targetRole}/dashboard`)
+        setLoading(false)
+      } catch {
         recordFailedAttempt()
         const attempts = getLoginAttempts()
         if (attempts >= MAX_ATTEMPTS) {
@@ -343,22 +339,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           setError(isBn ? `ভুল ইমেইল বা পাসওয়ার্ড। ${MAX_ATTEMPTS - attempts} টি চেষ্টা বাকি।` : `Invalid credentials. ${MAX_ATTEMPTS - attempts} attempt(s) remaining.`)
         }
         setLoading(false)
-        return
       }
-
-      // Phase 6 — credential hardening. The local plaintext comparisons
-      // (institution admin + staff) were removed because they required
-      // persisting passwords in browser storage (localStorage / Zustand).
-      // New sign-ins with previously stored passwords fail closed until
-      // server-backed institution accounts are wired up (Phase 7).
-      // Existing active sessions are unaffected: session restore never
-      // involves a password.
-      setError(
-        isBn
-          ? 'প্রতিষ্ঠান ও স্টাফ সাইন-ইন এখন সার্ভার-ভিত্তিক অ্যাকাউন্টের মাধ্যমে চলে। অ্যাক্সেসের জন্য অ্যাডমিনিস্ট্রেটরের সাথে যোগাযোগ করুন।'
-          : 'Institution & staff sign-in now requires a server-backed account. Contact your administrator for access.'
-      )
-      setLoading(false)
     }, 1000)
   }
 

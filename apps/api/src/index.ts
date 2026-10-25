@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { createApp } from './app.js'
+import { createStorageFromEnv } from './storage.js'
 
 const PORT = process.env.PORT || 3001
 
@@ -21,7 +22,11 @@ if (JWT_SECRET.length < 32) {
 }
 
 const prisma = new PrismaClient()
-const app = createApp({ prisma, jwtSecret: JWT_SECRET, corsOrigin: CORS_ORIGIN })
+const storage = createStorageFromEnv()
+if (!storage) {
+  console.warn('[API] R2 media storage NOT configured — /api/media endpoints will answer 503')
+}
+const app = createApp({ prisma, jwtSecret: JWT_SECRET, corsOrigin: CORS_ORIGIN, storage })
 
 const server = app.listen(PORT, () => {
   console.log(`[API] Server running on http://localhost:${PORT}`)

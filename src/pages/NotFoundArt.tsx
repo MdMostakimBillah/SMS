@@ -3,43 +3,44 @@ import { useId } from 'react'
 /** Full animation cycle in seconds (matches the brand-logo loop). */
 const LOOP = 12
 
-interface Star {
+interface Twinkle {
   cx: number
   cy: number
   r: number
   delay: number
 }
 
-const STARS: Star[] = [
-  { cx: 40, cy: 40, r: 2.2, delay: 0 },
-  { cx: 95, cy: 90, r: 1.4, delay: 1.8 },
-  { cx: 150, cy: 35, r: 1.8, delay: 3.1 },
-  { cx: 210, cy: 70, r: 1.2, delay: 0.9 },
-  { cx: 268, cy: 30, r: 2, delay: 2.4 },
-  { cx: 330, cy: 62, r: 1.3, delay: 4.2 },
-  { cx: 392, cy: 34, r: 1.7, delay: 1.1 },
-  { cx: 448, cy: 78, r: 1.2, delay: 3.7 },
-  { cx: 505, cy: 40, r: 2.1, delay: 0.5 },
-  { cx: 560, cy: 88, r: 1.5, delay: 2.8 },
-  { cx: 585, cy: 150, r: 1.3, delay: 4.8 },
-  { cx: 20, cy: 160, r: 1.4, delay: 3.4 },
-  { cx: 60, cy: 230, r: 1.8, delay: 1.5 },
-  { cx: 540, cy: 235, r: 1.6, delay: 0.2 },
-  { cx: 470, cy: 262, r: 1.2, delay: 2.1 },
-  { cx: 130, cy: 262, r: 1.3, delay: 4.5 },
+const RIM_LIGHTS: Twinkle[] = [
+  { cx: 216, cy: 116, r: 5, delay: 0 },
+  { cx: 244, cy: 122, r: 5, delay: 0.7 },
+  { cx: 272, cy: 126, r: 5, delay: 1.4 },
+  { cx: 300, cy: 128, r: 5, delay: 2.1 },
+  { cx: 328, cy: 126, r: 5, delay: 2.8 },
+  { cx: 356, cy: 122, r: 5, delay: 3.5 },
+  { cx: 384, cy: 116, r: 5, delay: 4.2 },
+]
+
+const SPARKS = [
+  { x: 120, y: 60, s: 1, delay: 0.4 },
+  { x: 168, y: 150, s: 0.8, delay: 1.9 },
+  { x: 452, y: 70, s: 1, delay: 1.1 },
+  { x: 492, y: 170, s: 0.8, delay: 2.6 },
+  { x: 108, y: 250, s: 0.9, delay: 3.2 },
+  { x: 500, y: 258, s: 0.9, delay: 0.8 },
 ]
 
 const DIGITS = [
-  { value: '4', x: 128, stagger: 0 },
-  { value: '0', x: 300, stagger: 0.4 },
-  { value: '4', x: 472, stagger: 0.8 },
+  { value: '4', x: 243, y: 272, rotate: -12, stagger: 0 },
+  { value: '0', x: 300, y: 232, rotate: 0, stagger: 0.4 },
+  { value: '4', x: 357, y: 272, rotate: 12, stagger: 0.8 },
 ]
 
 /**
- * Thematic "lost in space" SVG scene: the 404 digits draw themselves on with
- * a stroke, fade in their fill, hold, then reverse-hide and redraw — the same
- * loop language as the brand logo. A twinkling starfield, a ringed planet and
- * an orbiting satellite complete the scene.
+ * Thematic UFO-abduction SVG scene: a saucer hovers with twinkling rim
+ * lights, shining a tractor beam that lifts the 404 digits. The digits draw
+ * themselves on with a stroke, fade in their fill, hold, then reverse-hide
+ * and redraw — the same loop language as the brand logo. Single-hue artwork
+ * (brand + white) to stay minimal.
  *
  * Animation ids and `@keyframes` are namespaced per instance (via `useId`),
  * and `prefers-reduced-motion` renders the settled artwork with no motion.
@@ -52,133 +53,131 @@ export function NotFoundArt() {
 
   return (
     <svg
-      viewBox="0 0 600 300"
+      viewBox="0 0 600 360"
       className={root}
       role="img"
       aria-label="404 page not found illustration"
-      style={{ width: '100%', height: 'auto', maxWidth: '34rem' }}
+      style={{ width: '100%', height: 'auto', maxWidth: '22rem' }}
     >
       <style>{`
         @keyframes ${unq('digit')} {
-          0% { stroke-dashoffset: 1200; fill-opacity: 0; }
+          0% { stroke-dashoffset: 700; fill-opacity: 0; }
           14% { stroke-dashoffset: 0; fill-opacity: 0; }
           22% { stroke-dashoffset: 0; fill-opacity: 1; }
           68% { stroke-dashoffset: 0; fill-opacity: 1; }
           76% { stroke-dashoffset: 0; fill-opacity: 0; }
-          88% { stroke-dashoffset: 1200; fill-opacity: 0; }
-          100% { stroke-dashoffset: 1200; fill-opacity: 0; }
+          88% { stroke-dashoffset: 700; fill-opacity: 0; }
+          100% { stroke-dashoffset: 700; fill-opacity: 0; }
         }
         .${root} .digit {
-          font-size: 10.9375rem;
+          font-size: 4.75rem;
           font-weight: 800;
           text-anchor: middle;
-          stroke-width: 3;
-          stroke-dasharray: 1200;
+          stroke-width: 2.5;
+          stroke-dasharray: 700;
           animation: ${unq('digit')} ${LOOP}s ease-in-out infinite;
         }
+        @keyframes ${unq('bob')} {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-0.625rem); }
+        }
+        .${root} .ufo-bob { animation: ${unq('bob')} 6s ease-in-out infinite; }
+        .${root} .lift { animation: ${unq('bob')} 5s ease-in-out infinite; }
         @keyframes ${unq('twinkle')} {
-          0%, 100% { opacity: 0.15; }
-          50% { opacity: 0.9; }
+          0%, 100% { opacity: 0.25; }
+          50% { opacity: 1; }
         }
-        .${root} .star { animation: ${unq('twinkle')} 3.6s ease-in-out infinite; }
-        @keyframes ${unq('orbit')} {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        .${root} .tw { animation: ${unq('twinkle')} 3.2s ease-in-out infinite; }
+        @keyframes ${unq('beam')} {
+          0%, 100% { opacity: 0.75; }
+          50% { opacity: 1; }
         }
-        .${root} .sat-orbit {
-          transform-origin: 300px 128px;
-          animation: ${unq('orbit')} 9s linear infinite;
-        }
-        @keyframes ${unq('comet')} {
-          0%, 58% { transform: translate(0, 0); opacity: 0; }
-          62% { opacity: 1; }
-          74% { transform: translate(-13rem, 7.5rem); opacity: 0; }
-          100% { transform: translate(-13rem, 7.5rem); opacity: 0; }
-        }
-        .${root} .comet { animation: ${unq('comet')} ${LOOP}s ease-in infinite; }
+        .${root} .beam { animation: ${unq('beam')} 4.5s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) {
           .${root} * { animation: none !important; }
           .${root} .digit { stroke-dashoffset: 0; fill-opacity: 1; }
-          .${root} .star { opacity: 0.7; }
-          .${root} .comet { opacity: 0; }
+          .${root} .tw { opacity: 0.8; }
         }
       `}</style>
 
       <defs>
-        <linearGradient id={unq('tail')} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="var(--teal)" stopOpacity="0" />
-          <stop offset="1" stopColor="var(--teal)" />
+        <linearGradient id={unq('beamGrad')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="var(--brand)" stopOpacity="0.32" />
+          <stop offset="1" stopColor="var(--brand)" stopOpacity="0.03" />
         </linearGradient>
       </defs>
 
-      {/* Starfield */}
-      {STARS.map((s, i) => (
-        <circle
+      {/* Sparkles */}
+      {SPARKS.map((s, i) => (
+        <path
           key={i}
-          className="star"
-          cx={s.cx}
-          cy={s.cy}
-          r={s.r}
-          fill="var(--brand)"
-          opacity={0.55}
+          className="tw"
+          d={`M ${s.x} ${s.y - 7 * s.s} L ${s.x} ${s.y + 7 * s.s} M ${s.x - 7 * s.s} ${s.y} L ${s.x + 7 * s.s} ${s.y}`}
+          stroke="var(--brand)"
+          strokeWidth={2.5 * s.s}
+          strokeLinecap="round"
+          opacity={0.6}
           style={{ animationDelay: `${s.delay - LOOP / 2}s` }}
         />
       ))}
 
-      {/* Ringed planet, upper right */}
-      <g opacity={0.9}>
-        <circle cx={512} cy={196} r={20} fill="var(--purple)" opacity={0.25} />
-        <ellipse
-          cx={512}
-          cy={196}
-          rx={36}
-          ry={11}
-          fill="none"
-          stroke="var(--purple)"
-          strokeWidth={2.5}
-          opacity={0.55}
-          transform="rotate(-18 512 196)"
-        />
-      </g>
-
-      {/* Comet streak (once per loop) */}
-      <g className="comet" opacity={0}>
-        <line x1={468} y1={44} x2={516} y2={44} stroke={`url(#${unq('tail')})`} strokeWidth={3} strokeLinecap="round" />
-        <circle cx={520} cy={44} r={3.5} fill="var(--teal)" />
-      </g>
-
-      {/* Faint orbit path around the middle digit */}
-      <ellipse
-        cx={300}
-        cy={128}
-        rx={104}
-        ry={64}
-        fill="none"
-        stroke="var(--text-muted)"
-        strokeWidth={1.5}
-        strokeDasharray="5 7"
-        opacity={0.5}
+      {/* Tractor beam */}
+      <polygon
+        className="beam"
+        points="252,122 348,122 432,332 168,332"
+        fill={`url(#${unq('beamGrad')})`}
       />
-      {/* Orbiting satellite */}
-      <g className="sat-orbit">
-        <circle cx={300} cy={64} r={6} fill="var(--teal)" />
-        <circle cx={300} cy={64} r={10.5} fill="none" stroke="var(--teal)" strokeWidth={1.5} opacity={0.5} />
+
+      {/* Abducted digits riding the beam */}
+      <g className="lift">
+        {DIGITS.map((d) => (
+          <text
+            key={d.x}
+            className="digit"
+            x={d.x}
+            y={d.y}
+            fill="var(--brand)"
+            stroke="var(--brand)"
+            transform={`rotate(${d.rotate} ${d.x} ${d.y - 26})`}
+            style={{ animationDelay: `${d.stagger + settledDelay}s` }}
+          >
+            {d.value}
+          </text>
+        ))}
       </g>
 
-      {/* The animated 404 */}
-      {DIGITS.map((d) => (
-        <text
-          key={d.x}
-          className="digit"
-          x={d.x}
-          y={218}
-          fill="var(--brand)"
+      {/* UFO (gentle hover) */}
+      <g className="ufo-bob">
+        {/* Antennae */}
+        <line x1={272} y1={52} x2={258} y2={22} stroke="var(--brand)" strokeWidth={4} strokeLinecap="round" />
+        <line x1={328} y1={52} x2={342} y2={22} stroke="var(--brand)" strokeWidth={4} strokeLinecap="round" />
+        <circle cx={258} cy={20} r={5} fill="var(--brand)" />
+        <circle cx={342} cy={20} r={5} fill="var(--brand)" />
+        {/* Dome */}
+        <path d="M 250 92 A 50 44 0 0 1 350 92 Z" fill="var(--brand)" opacity={0.3} />
+        <path
+          d="M 250 92 A 50 44 0 0 1 350 92"
+          fill="none"
           stroke="var(--brand)"
-          style={{ animationDelay: `${d.stagger + settledDelay}s` }}
-        >
-          {d.value}
-        </text>
-      ))}
+          strokeWidth={4}
+          strokeLinecap="round"
+        />
+        {/* Saucer body */}
+        <ellipse cx={300} cy={102} rx={112} ry={30} fill="var(--brand)" />
+        <ellipse cx={300} cy={110} rx={112} ry={24} fill="var(--brand)" opacity={0.55} />
+        {/* Twinkling rim lights */}
+        {RIM_LIGHTS.map((l, i) => (
+          <circle
+            key={i}
+            className="tw"
+            cx={l.cx}
+            cy={l.cy}
+            r={l.r}
+            fill="#ffffff"
+            style={{ animationDelay: `${l.delay - LOOP / 2}s` }}
+          />
+        ))}
+      </g>
     </svg>
   )
 }

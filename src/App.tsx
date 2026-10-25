@@ -11,6 +11,7 @@ import { DashboardRoute } from '@/components/DashboardRoute'
 import { LOGIN_PATH, LOGIN_ROUTE } from '@/lib/constants'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
+import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
 
 const LoginPage = lazyWithRetry(() => import('@/pages/auth/LoginPage'))
 const InstitutionRegister = lazyWithRetry(() => import('@/pages/auth/InstitutionRegister'))
@@ -67,7 +68,7 @@ function P({ name }: { name: string }) {
 }
 
 const F = ({ children }: { children: React.ReactNode }) => (
-  <ErrorBoundary><Suspense fallback={null}>{children}</Suspense></ErrorBoundary>
+  <ErrorBoundary><Suspense fallback={<BrandLoadingScreen />}>{children}</Suspense></ErrorBoundary>
 )
 
 function AppContent() {

@@ -88,7 +88,7 @@ describe('App login-route registration (VITE_LOGIN_PATH wiring)', () => {
         <App />
       </MemoryRouter>
     )
-    expect(await screen.findByText(/404/)).toBeInTheDocument()
+    expect(await screen.findByText(/Page not found/i)).toBeInTheDocument()
     expect(screen.queryByPlaceholderText('admin@example.com')).not.toBeInTheDocument()
   })
 })
