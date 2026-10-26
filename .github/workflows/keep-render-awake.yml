@@ -1,7 +1,7 @@
 name: Render Server Keep-Alive
 on:
   schedule:
-    - cron: '*/10 * * * *' # Ping every 10 minutes (prevents 15-min Render sleep)
+    - cron: '*/14 * * * *' # Ping every 14 minutes (prevents 15-min Render sleep)
   workflow_dispatch:
 
 jobs:

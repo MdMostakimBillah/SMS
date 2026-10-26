@@ -74,7 +74,7 @@ sessionCleanup.unref()
 // Keep-alive self-ping: prevents free hosting tiers (e.g. Render) from sleeping after 15 mins
 const externalUrl = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_API_URL || 'https://edutech-api-86tl.onrender.com'
 if (process.env.NODE_ENV === 'production' || process.env.RENDER || Boolean(process.env.RENDER_EXTERNAL_URL)) {
-  const KEEP_ALIVE_INTERVAL = 10 * 60 * 1000 // every 10 minutes
+  const KEEP_ALIVE_INTERVAL = 14 * 60 * 1000 // every 14 minutes (just before 15 min idle sleep)
   const keepAlive = setInterval(async () => {
     try {
       const res = await fetch(`${externalUrl}/health`)
