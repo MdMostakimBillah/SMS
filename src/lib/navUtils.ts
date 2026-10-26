@@ -66,11 +66,11 @@ export function getDashboardPath(
 ): string {
   if (!user) return '/'
   if (session.viewingId) return '/super-admin/viewing/admin/dashboard'
+  if (user.role === 'super_admin') return '/super-admin/admin/dashboard'
   if (session.slug) {
     const role = (user.role === 'super_admin' || user.role === 'school_admin') ? 'admin' : user.role
     return `/i/${session.slug}/${role}/dashboard`
   }
-  if (user.role === 'super_admin') return '/super-admin/admin/dashboard'
   return '/'
 }
 

@@ -36,6 +36,18 @@ interface SettingsState {
     push: boolean
     security: boolean
   }
+  telegramBackup?: {
+    botToken: string
+    chatId: string
+    autoBackup: boolean
+    lastBackupAt?: string
+    lastBackupStatus?: string
+  }
+  storageSettings?: {
+    mode: 'cloud' | 'local_computer' | 'local_server'
+    serverUrl?: string
+    folderName?: string
+  }
 }
 
 interface AppState {
@@ -108,6 +120,16 @@ export const useAppStore = create<AppState>()(
           sms: false,
           push: true,
           security: true,
+        },
+        telegramBackup: {
+          botToken: '',
+          chatId: '',
+          autoBackup: false,
+        },
+        storageSettings: {
+          mode: 'cloud',
+          serverUrl: '',
+          folderName: '',
         },
       },
 

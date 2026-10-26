@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
@@ -27,6 +28,9 @@ model School {
   timezone  String   @default("Asia/Dhaka")
   startTime String   @default("07:30") @map("start_time")
   endTime   String   @default("14:30") @map("end_time")
+  storageMode String? @default("cloud") @map("storage_mode")
+  serverUrl   String? @default("") @map("server_url")
+  folderName  String? @default("") @map("folder_name")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

@@ -115,6 +115,7 @@ interface SuperAdminState {
   setPackageFilter: (p: string) => void
   updateInstitution: (id: string, data: Partial<Institution>) => void
   addInstitution: (inst: Institution) => void
+  setInstitutions: (institutions: Institution[]) => void
   deleteInstitution: (id: string) => void
   toggleStatus: (id: string) => void
   startViewing: (id: string) => void
@@ -183,6 +184,7 @@ export const useSuperAdminStore = create<SuperAdminState>()(
         })),
       addInstitution: (inst) =>
         set((state) => ({ institutions: [...state.institutions, inst] })),
+      setInstitutions: (institutions) => set({ institutions }),
       deleteInstitution: (id) =>
         set((state) => ({
           institutions: state.institutions.filter((i) => i.id !== id),

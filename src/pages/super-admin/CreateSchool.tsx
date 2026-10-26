@@ -264,18 +264,20 @@ export default function CreateSchool() {
         nameBn: form.nameBn?.trim() || undefined,
         brandName: form.brandName?.trim() || undefined,
         subdomain: slug,
+        slug,
+        package: form.package.name,
         email: form.email?.trim() || undefined,
         phone: form.phone?.trim() || undefined,
         address: form.address?.trim() || undefined,
         logo: form.logo || undefined,
         brandColor: form.brandColor || undefined,
-        adminEmail: (form.adminEmail || form.email).trim().toLowerCase(),
+        adminEmail: (form.adminEmail || form.email || `admin@${slug}.local`).trim().toLowerCase(),
         adminPassword: form.adminPassword || 'Admin@123456',
         startTime: form.startTime || '07:30',
         endTime: form.endTime || '14:30',
       })
-      if (res.school?.id) {
-        serverSchoolId = res.school.id
+      if (res.id || res.school?.id) {
+        serverSchoolId = res.id || res.school?.id || null
       }
     } catch {
       // Backend error or offline — still save to local store

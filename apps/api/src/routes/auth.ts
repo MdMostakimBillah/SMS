@@ -30,7 +30,14 @@ const registerInstitutionSchema = z.object({
     .string()
     .min(2, 'Subdomain is required')
     .max(100)
-    .regex(/^[a-z0-9-]+$/, 'Subdomain must contain only lowercase alphanumeric characters and hyphens'),
+    .regex(/^[a-z0-9-]+$/, 'Subdomain must contain only lowercase alphanumeric characters and hyphens')
+    .optional(),
+  slug: z
+    .string()
+    .min(2, 'Slug is required')
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase alphanumeric characters and hyphens')
+    .optional(),
   email: z.string().email('Invalid email address').max(254).optional().or(z.literal('')).nullable(),
   phone: z.string().max(50).optional().or(z.literal('')).nullable(),
   address: z.string().max(500).optional().or(z.literal('')).nullable(),
@@ -193,7 +200,10 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
       }
 
-      const subdomain = parsed.data.subdomain.trim().toLowerCase()
+      const subdomain = (parsed.data.slug || parsed.data.subdomain || '').trim().toLowerCase()
+      if (!subdomain) {
+        return res.status(400).json({ error: 'Subdomain or slug is required' })
+      }
       const adminEmail = parsed.data.adminEmail.trim().toLowerCase()
 
       // Check subdomain uniqueness
@@ -253,6 +263,10 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
 
       res.status(201).json({
         success: true,
+        id: result.school.id,
+        name: result.school.name,
+        slug: result.school.domain,
+        domain: result.school.domain,
         school: {
           id: result.school.id,
           name: result.school.name,

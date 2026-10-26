@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Building2, Mail, Lock, Eye, EyeOff, LogIn, X, Clock } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
+import { AuthContext } from '@/contexts/AuthContext'
 import { authApi } from '@/lib/api'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { useSuperAdminStore, type Institution } from '@/store/superAdminStore'
@@ -130,6 +131,7 @@ export { loadInstitutionData }
 export default function InstitutionLogin({ subdomain, institution: propInstitution }: { subdomain?: string; institution?: Institution }) {
   const isBn = useBn()
   const navigate = useNavigate()
+  const authCtx = useContext(AuthContext)
   const storeInstitutions = useSuperAdminStore((s) => s.institutions) ?? []
   const setAppTheme = useAppStore((s) => s.setTheme)
   const setAppLanguage = useAppStore((s) => s.setLanguage)
@@ -137,7 +139,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const institution = useMemo(() => {
     if (propInstitution) return propInstitution
     if (!subdomain) return null
-    return storeInstitutions.find((i) => i.subdomain === subdomain) || null
+    return storeInstitutions.find((i) => i.subdomain === subdomain || i.slug === subdomain || i.id === subdomain) || null
   }, [propInstitution, subdomain, storeInstitutions])
 
   const [email, setEmail] = useState('')
@@ -308,19 +310,31 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
 
     setTimeout(async () => {
       try {
-        const res = await authApi.login(email, password)
+        let u: any
+        if (authCtx?.login) {
+          u = await authCtx.login(email, password)
+        } else {
+          const res = await authApi.login(email, password)
+          u = res?.user
+        }
         clearLoginAttempts()
 
-        const u = res.user
-        const targetRole = u.role === 'school_admin' ? 'admin' : u.role
-        const targetSlug = institution?.slug || subdomain || u.schoolDomain || (u.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : 'school')
+        const userRole = u?.role || 'admin'
+        const targetRole = userRole === 'school_admin' ? 'admin' : userRole
+        const targetSlug =
+          institution?.slug ||
+          institution?.subdomain ||
+          u?.schoolDomain ||
+          u?.subdomain ||
+          subdomain ||
+          (u?.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : 'school')
 
         if (targetSlug) {
           sessionStorage.setItem('edutech_inst_slug', targetSlug)
           localStorage.setItem('edutech_inst_slug', targetSlug)
         }
 
-        if (u.role === 'super_admin') {
+        if (userRole === 'super_admin') {
           navigate('/super-admin/admin/dashboard')
           setLoading(false)
           return

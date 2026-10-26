@@ -22,7 +22,7 @@ interface AuthContextType {
   restoreFailed: boolean
   /** Re-runs the server session check (used by the connection-error screen). */
   retryRestore: () => void
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<User | void>
   register: (email: string, password: string, name: string, role?: string) => Promise<void>
   logout: () => void
   error: string | null
@@ -116,7 +116,7 @@ function serverUserToUser(u: SessionUser): User {
     schoolId: u.schoolId,
     schoolName: u.schoolName,
     avatar: u.avatar,
-    subdomain: null,
+    subdomain: u.schoolDomain || null,
     photo: u.avatar,
   }
 }
@@ -235,11 +235,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const res = await authApi.login(email, password)
-      setUser(serverUserToUser(res.user))
+      const userObj = serverUserToUser(res.user)
+      setUser(userObj)
       setSessionSource('server')
       loginTimestampRef.current = Date.now()
       setUserId(res.user.email)
       clearLoginAttempts()
+      return userObj
     } catch (err) {
       const msg = applyError(err, 'Invalid credentials', setLockoutState)
       setError(msg)

@@ -42,6 +42,8 @@ function normalizeOrigin(value: string): string | null {
  * security goal is "the page was served by this server", which is fully
  * expressed by the Host match.
  */
+export const LAN_OR_LOCAL_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(?:1[6-9]|2\d|3[01])\.\d+\.\d+)(?::\d+)?$/i
+
 export function requireTrustedOrigin(corsOrigin: string) {
   const trusted = new Set(
     corsOrigin
@@ -60,7 +62,7 @@ export function requireTrustedOrigin(corsOrigin: string) {
     if (!normalized) {
       return res.status(403).json({ error: 'Invalid request origin' })
     }
-    if (trusted.has(normalized)) {
+    if (trusted.has(normalized) || LAN_OR_LOCAL_ORIGIN_RE.test(normalized)) {
       return next()
     }
 

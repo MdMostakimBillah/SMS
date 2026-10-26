@@ -18,7 +18,8 @@ services:
       context: ./apps/api
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql://edutech:${DB_PASSWORD:-changeme}@postgres:5432/edutech
+      DATABASE_URL: ${DATABASE_URL:-postgresql://edutech:${DB_PASSWORD:-changeme}@postgres:5432/edutech}
+      DIRECT_URL: ${DIRECT_URL:-}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
@@ -26,6 +27,10 @@ services:
       SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:-}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       PORT: "3001"
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_MEDIA_BUCKET: ${R2_MEDIA_BUCKET:-}
     ports:
       - "127.0.0.1:3001:3001"
     depends_on:
@@ -43,6 +48,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U edutech"]
       interval: 5s

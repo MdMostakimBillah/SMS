@@ -5,9 +5,9 @@
  */
 import 'dotenv/config'
 
-const url = new URL(process.env.DATABASE_URL ?? 'postgresql://localhost:5432/edutech')
-url.pathname = '/edutech_test'
-process.env.DATABASE_URL = url.toString()
+const testDbUrl = process.env.TEST_DATABASE_URL || `postgresql://edutech:${process.env.DB_PASSWORD || 'changeme'}@localhost:5432/edutech_test`
+process.env.DATABASE_URL = testDbUrl
+process.env.DIRECT_URL = testDbUrl
 
 // Cookies must be readable over plain HTTP in tests
 process.env.COOKIE_SECURE = 'false'

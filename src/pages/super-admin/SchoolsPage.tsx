@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Building2, Search, Filter, ChevronDown, ChevronUp,
@@ -6,9 +6,10 @@ import {
   MapPin, CheckCircle, XCircle, Pause, Clock,
   CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check, Plus,
 } from 'lucide-react'
-import { useSuperAdminStore, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
+import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { setSlug } from '@/lib/storage'
+import { authApi } from '@/lib/api'
 
 function statusConfig(status: InstitutionStatus, isBn: boolean) {
   const map: Record<InstitutionStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -135,9 +136,14 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
             </button>
             <button
               className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-red-500/10 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer border-none"
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation()
                 useSuperAdminStore.getState().deleteInstitution(inst.id)
+                try {
+                  await authApi.deleteSchool(inst.id)
+                } catch {
+                  /* ignore backend error */
+                }
               }}
             >
               <Trash2 size={13} />
@@ -216,6 +222,72 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
   } = useSuperAdminStore()
 
   const [showFilters, setShowFilters] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    const fetchSchools = async () => {
+      try {
+        const dbSchools = await authApi.getSchools()
+        if (!mounted || !Array.isArray(dbSchools)) return
+        if (dbSchools.length > 0) {
+          const currentInsts = useSuperAdminStore.getState().institutions || []
+          const mapped: Institution[] = dbSchools.map((item) => {
+            const existing = currentInsts.find(
+              (i) => i.id === item.id || i.slug === item.slug || i.subdomain === item.domain
+            )
+            const pkgName = (item as any).package || 'Basic'
+            const pkg =
+              PACKAGES.find((p) => p.name.toLowerCase() === pkgName.toLowerCase()) || PACKAGES[0]
+            const sName = item.name || 'School'
+            const sSlug = item.slug || item.domain || sName.toLowerCase().replace(/[^a-z0-9]/g, '-')
+            return {
+              id: item.id,
+              name: sName,
+              nameBn: existing?.nameBn || item.nameBn || sName,
+              email: existing?.email || item.email || '',
+              phone: existing?.phone || item.phone || '',
+              address: existing?.address || item.address || '',
+              addressBn: existing?.addressBn || item.address || '',
+              eiin: existing?.eiin || '',
+              website: existing?.website || `smsappbd.vercel.app/i/${sSlug}`,
+              subdomain: sSlug,
+              slug: sSlug,
+              status: ((item as any).status as InstitutionStatus) || existing?.status || 'active',
+              package: pkg,
+              createdAt: (item as any).createdAt
+                ? (item as any).createdAt.split('T')[0]
+                : existing?.createdAt || new Date().toISOString().split('T')[0],
+              lastLogin: existing?.lastLogin || '-',
+              logo: item.logo || existing?.logo || '',
+              banner: existing?.banner || '',
+              brandColor: (item as any).brandColor || existing?.brandColor || '#6366f1',
+              brandName: (item as any).brandName || existing?.brandName || sName,
+              motto: existing?.motto || '',
+              mottoBn: existing?.mottoBn || '',
+              startTime: item.startTime || existing?.startTime || '07:30',
+              endTime: item.endTime || existing?.endTime || '14:30',
+              optionalSubjects: existing?.optionalSubjects || [],
+              sessions: existing?.sessions || ['2025-26'],
+              accessModes: existing?.accessModes || {
+                pathBased: true,
+                subdomainBased: true,
+                customDomain: '',
+              },
+              language: existing?.language || 'en',
+              theme: existing?.theme || 'light',
+            }
+          })
+          useSuperAdminStore.getState().setInstitutions(mapped)
+        }
+      } catch (err) {
+        console.error('Failed to load schools from backend:', err)
+      }
+    }
+    fetchSchools()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   const openInstitution = (inst: Institution) => {
     if (user) {

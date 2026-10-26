@@ -255,6 +255,8 @@ export default function InstitutionRegister() {
         nameBn: form.nameBn.trim() || undefined,
         brandName: form.brandName.trim() || undefined,
         subdomain: subdomainSlug,
+        slug: subdomainSlug,
+        package: form.package.name,
         email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
         address: form.address.trim() || undefined,
@@ -265,8 +267,8 @@ export default function InstitutionRegister() {
         startTime: '07:30',
         endTime: '14:30',
       })
-      if (res.school?.id) {
-        serverSchoolId = res.school.id
+      if (res.id || res.school?.id) {
+        serverSchoolId = res.id || res.school?.id || null
       }
     } catch (err: unknown) {
       const msg =

@@ -1,0 +1,16 @@
+name: Supabase Keep-Alive
+on:
+  schedule:
+    - cron: '0 0 */2 * *' # Every 2 days at midnight
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase Database & REST API
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://bbswdxerlqnvtlzxukxk.supabase.co/rest/v1/" \
+            -H "apikey: sb_publishable_N1T0P5bNNOB9Fz9lL7MTxQ_Yi9W0l42")
+          echo "Supabase response code: $STATUS"

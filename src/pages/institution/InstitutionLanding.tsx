@@ -6,8 +6,10 @@ import {
 } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useBn } from '@/hooks/useBn'
-import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useSuperAdminStore, PACKAGES, type Institution } from '@/store/superAdminStore'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
+import { authApi } from '@/lib/api'
+import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
 
 function getInitialTheme(): 'light' | 'dark' {
   try {
@@ -31,8 +33,69 @@ export default function InstitutionLanding() {
   const isDark = theme === 'dark'
 
   const institution = useMemo(() => {
-    return institutions.find((i) => i.slug === slug) || null
+    return institutions.find((i) => i.slug === slug || i.subdomain === slug || i.id === slug) || null
   }, [slug, institutions])
+
+  const [loadingSchool, setLoadingSchool] = useState(!institution && !!slug)
+
+  useEffect(() => {
+    let mounted = true
+    if (slug && !institution) {
+      setLoadingSchool(true)
+      authApi
+        .getPublicSchool(slug)
+        .then((res) => {
+          if (!mounted) return
+          if (res?.school) {
+            const s = res.school
+            const domainSlug = s.slug || s.domain || slug
+            const pkg = PACKAGES.find((p) => p.name.toLowerCase() === (s.package || 'basic').toLowerCase()) || PACKAGES[0]
+            const inst: Institution = {
+              id: s.id || `INST-${domainSlug}`,
+              name: s.name,
+              nameBn: s.nameBn || s.name,
+              email: s.email || '',
+              phone: s.phone || '',
+              address: s.address || '',
+              addressBn: s.address || '',
+              eiin: '',
+              website: `smsappbd.vercel.app/i/${domainSlug}`,
+              subdomain: domainSlug,
+              slug: domainSlug,
+              status: (s.status as any) || 'active',
+              package: pkg,
+              createdAt: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+              lastLogin: '-',
+              logo: s.logo || '',
+              banner: '',
+              brandColor: s.brandColor || '#6366f1',
+              brandName: s.brandName || s.name,
+              motto: '',
+              mottoBn: '',
+              startTime: s.startTime || '07:30',
+              endTime: s.endTime || '14:30',
+              optionalSubjects: [],
+              sessions: ['2025-26'],
+              accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
+              language: 'en',
+              theme: 'light',
+            }
+            useSuperAdminStore.getState().addInstitution(inst)
+          }
+        })
+        .catch(() => {
+          /* school not found */
+        })
+        .finally(() => {
+          if (mounted) setLoadingSchool(false)
+        })
+    } else {
+      setLoadingSchool(false)
+    }
+    return () => {
+      mounted = false
+    }
+  }, [slug, institution])
 
   const toggleTheme = () => {
     const next = isDark ? 'light' : 'dark'
@@ -72,6 +135,10 @@ export default function InstitutionLanding() {
       if (link) link.href = '/favicon.svg'
     }
   }, [institution, isBn])
+
+  if (loadingSchool && !institution) {
+    return <BrandLoadingScreen />
+  }
 
   if (!institution) {
     return (

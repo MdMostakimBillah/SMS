@@ -10,7 +10,10 @@ import { departmentRouter } from './routes/departments.js'
 import { noticeRouter } from './routes/notices.js'
 import { mediaRouter } from './routes/media.js'
 import { schoolRouter } from './routes/schools.js'
+import { studentRouter } from './routes/students.js'
+import { backupRouter } from './routes/backup.js'
 import { csrfProtection } from './middleware/csrf.js'
+import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
 
 export interface AppOptions {
@@ -24,8 +27,18 @@ export interface AppOptions {
 export function createApp({ prisma, jwtSecret, corsOrigin, storage = null }: AppOptions): Express {
   const app = express()
 
+  const allowedOrigins = corsOrigin.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+  const corsDelegate = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) return callback(null, true)
+    const o = origin.toLowerCase()
+    if (allowedOrigins.includes(o) || LAN_OR_LOCAL_ORIGIN_RE.test(o)) {
+      return callback(null, true)
+    }
+    callback(null, false)
+  }
+
   app.use(helmet())
-  app.use(cors({ origin: corsOrigin, credentials: true }))
+  app.use(cors({ origin: corsDelegate, credentials: true }))
   app.use(express.json({ limit: '10mb' }))
   app.use(cookieParser())
 
@@ -49,10 +62,19 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null }: App
 
   app.use('/api/auth', authRouter(prisma, jwtSecret, corsOrigin))
   app.use('/api/teachers', teacherRouter(prisma, jwtSecret))
+  app.use('/api/students', studentRouter(prisma, jwtSecret))
   app.use('/api/departments', departmentRouter(prisma, jwtSecret))
   app.use('/api/notices', noticeRouter(prisma, jwtSecret))
   app.use('/api/media', mediaRouter(prisma, jwtSecret, storage))
-  app.use('/api/schools', schoolRouter(prisma, jwtSecret))
+  app.use('/api/backup', backupRouter(prisma, jwtSecret))
+
+  const sRouter = schoolRouter(prisma, jwtSecret)
+  app.use('/api/schools', sRouter)
+  app.use('/api/institutions', sRouter)
+  app.use('/api/public/schools', sRouter)
+  app.use('/api/public/institutions', sRouter)
+  app.use('/api/superadmin/schools', sRouter)
+  app.use('/api/superadmin/institutions', sRouter)
 
   // JSON 404 for unknown API paths
   app.use('/api', (_req: Request, res: Response) => {

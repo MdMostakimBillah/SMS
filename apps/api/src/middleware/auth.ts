@@ -24,7 +24,7 @@ export const SESSION_MAX_AGE_SECONDS = 24 * 60 * 60 // 24h
 export interface CookieOptionsInput {
   httpOnly: boolean
   secure: boolean
-  sameSite: 'lax'
+  sameSite: 'lax' | 'none'
   path: string
   maxAge: number
 }
@@ -33,7 +33,7 @@ export function buildCookieOptions(httpOnly: boolean, secure: boolean): CookieOp
   return {
     httpOnly,
     secure,
-    sameSite: 'lax',
+    sameSite: secure ? 'none' : 'lax',
     path: '/',
     maxAge: SESSION_MAX_AGE_SECONDS * 1000,
   }

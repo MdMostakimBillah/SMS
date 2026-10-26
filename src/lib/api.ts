@@ -81,21 +81,32 @@ export interface RegisterInstitutionPayload {
   name: string
   nameBn?: string
   brandName?: string
-  subdomain: string
+  subdomain?: string
+  slug?: string
+  motto?: string
+  mottoBn?: string
   email?: string
   phone?: string
   address?: string
+  addressBn?: string
+  eiin?: string
   logo?: string
   brandColor?: string
+  package?: 'Basic' | 'Standard' | 'Premium' | 'Enterprise' | string
   adminEmail: string
   adminPassword: string
   startTime?: string
   endTime?: string
+  sessions?: string[]
+  optionalSubjects?: string[]
 }
 
 export interface RegisterInstitutionResponse {
-  success: boolean
-  school: {
+  success?: boolean
+  id?: string
+  name?: string
+  slug?: string
+  school?: {
     id: string
     name: string
     nameBn: string | null
@@ -105,7 +116,8 @@ export interface RegisterInstitutionResponse {
     address: string | null
     logo: string | null
   }
-  user: SessionUser
+  user?: SessionUser
+  admin?: { id: string; email: string; role: string }
 }
 
 export interface PublicSchool {
@@ -113,6 +125,12 @@ export interface PublicSchool {
   name: string
   nameBn: string | null
   domain: string
+  slug?: string
+  brandName?: string | null
+  brandColor?: string | null
+  package?: string
+  status?: string
+  createdAt?: string
   email: string | null
   phone: string | null
   address: string | null
@@ -162,17 +180,110 @@ export const authApi = {
       body: data,
     }),
 
-  registerInstitution: (data: RegisterInstitutionPayload) =>
-    apiRequest<RegisterInstitutionResponse>('/api/auth/register-institution', {
+  registerInstitution: (data: RegisterInstitutionPayload) => {
+    const s = (data.slug || data.subdomain || '').trim().toLowerCase()
+    const payload = {
+      ...data,
+      slug: s,
+      subdomain: s,
+      package: data.package || 'Basic',
+    }
+    return apiRequest<RegisterInstitutionResponse>('/api/auth/register-institution', {
       method: 'POST',
-      body: data,
-    }),
+      body: payload,
+    })
+  },
 
-  getPublicSchool: (slug: string) =>
-    apiRequest<{ school: PublicSchool | null }>(`/api/schools/public/${encodeURIComponent(slug)}`),
+  getPublicSchool: async (slug: string) => {
+    try {
+      const res = await apiRequest<any>(`/api/schools/public/${encodeURIComponent(slug)}`)
+      const raw = res?.school || (res?.name ? res : null)
+      if (raw) {
+        return {
+          school: {
+            id: raw.id || `INST-${slug}`,
+            name: raw.name,
+            nameBn: raw.nameBn || null,
+            brandName: raw.brandName || null,
+            brandColor: raw.brandColor || null,
+            package: raw.package || 'Basic',
+            status: raw.status || 'active',
+            domain: raw.domain || raw.slug || slug,
+            slug: raw.slug || raw.domain || slug,
+            email: raw.email || null,
+            phone: raw.phone || null,
+            address: raw.address || null,
+            logo: raw.logo || null,
+            startTime: raw.startTime || '07:30',
+            endTime: raw.endTime || '14:30',
+          } as PublicSchool,
+        }
+      }
+    } catch {
+      try {
+        const res2 = await apiRequest<any>(`/api/institutions/${encodeURIComponent(slug)}`)
+        const raw2 = res2?.school || (res2?.name ? res2 : null)
+        if (raw2) {
+          return {
+            school: {
+              id: raw2.id || `INST-${slug}`,
+              name: raw2.name,
+              nameBn: raw2.nameBn || null,
+              brandName: raw2.brandName || null,
+              brandColor: raw2.brandColor || null,
+              package: raw2.package || 'Basic',
+              status: raw2.status || 'active',
+              domain: raw2.domain || raw2.slug || slug,
+              slug: raw2.slug || raw2.domain || slug,
+              email: raw2.email || null,
+              phone: raw2.phone || null,
+              address: raw2.address || null,
+              logo: raw2.logo || null,
+              startTime: raw2.startTime || '07:30',
+              endTime: raw2.endTime || '14:30',
+            } as PublicSchool,
+          }
+        }
+      } catch {
+        /* not found */
+      }
+    }
+    return { school: null }
+  },
 
-  getSchools: () =>
-    apiRequest<Array<PublicSchool & { _count?: { users: number; teachers: number; students: number } }>>('/api/schools'),
+  getSchools: async () => {
+    try {
+      const res = await apiRequest<any>('/api/schools')
+      const list = Array.isArray(res) ? res : res?.items || []
+      return list.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        nameBn: item.nameBn || null,
+        domain: item.domain || item.slug || '',
+        slug: item.slug || item.domain || '',
+        email: item.email || null,
+        phone: item.phone || null,
+        address: item.address || null,
+        logo: item.logo || null,
+        brandName: item.brandName || null,
+        brandColor: item.brandColor || null,
+        package: item.package || 'Basic',
+        status: item.status || 'active',
+        createdAt: item.createdAt || new Date().toISOString(),
+        startTime: item.startTime || '07:30',
+        endTime: item.endTime || '14:30',
+        _count: item._count,
+      })) as Array<PublicSchool & { _count?: { users: number; teachers: number; students: number } }>
+    } catch {
+      return []
+    }
+  },
+
+  deleteSchool: async (id: string) => {
+    return apiRequest<{ success: boolean; id?: string; name?: string }>(`/api/schools/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    })
+  },
 }
 
 export interface TeacherData {
@@ -358,3 +469,102 @@ export const noticesApi = {
       { method: 'DELETE' }
     ),
 }
+
+export interface StudentRecord {
+  id: string
+  schoolId: string
+  nameEn: string
+  nameBn: string | null
+  phone: string | null
+  email: string | null
+  photo: string | null
+  class: string | null
+  section: string | null
+  admissionDate: string | null
+  status: string
+  fatherNameEn: string | null
+  fatherPhone: string | null
+  motherNameEn: string | null
+  motherPhone: string | null
+  district: string | null
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export const studentsApi = {
+  list: (params?: { page?: number; pageSize?: number; class?: string; section?: string; status?: string; search?: string }) => {
+    const qs = new URLSearchParams()
+    if (params?.page) qs.set('page', String(params.page))
+    if (params?.pageSize) qs.set('pageSize', String(params.pageSize))
+    if (params?.class) qs.set('class', params.class)
+    if (params?.section) qs.set('section', params.section)
+    if (params?.status) qs.set('status', params.status)
+    if (params?.search) qs.set('search', params.search)
+    const qStr = qs.toString()
+    return apiRequest<{ students: StudentRecord[]; total: number; page: number; pageSize: number; totalPages: number }>(
+      `/api/students${qStr ? `?${qStr}` : ''}`
+    )
+  },
+  get: (id: string) => apiRequest<{ student: StudentRecord }>(`/api/students/${encodeURIComponent(id)}`),
+  create: (data: Partial<StudentRecord>) => apiRequest<{ student: StudentRecord }>('/api/students', { method: 'POST', body: data }),
+  update: (id: string, data: Partial<StudentRecord>) => apiRequest<{ student: StudentRecord }>(`/api/students/${encodeURIComponent(id)}`, { method: 'PUT', body: data }),
+  delete: (id: string) => apiRequest<{ success: boolean }>(`/api/students/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+}
+
+export interface BackupStatusResponse {
+  database: string
+  timestamp: string
+  telegramConfigured: boolean
+  counts: {
+    schools: number
+    teachers: number
+    students: number
+    departments: number
+    notices: number
+  }
+}
+
+export interface TelegramTestResponse {
+  success: boolean
+  message: string
+  bot?: {
+    username: string
+    name: string
+  }
+  error?: string
+}
+
+export interface TelegramBackupResponse {
+  success: boolean
+  message: string
+  filename?: string
+  size?: string
+  sha256?: string
+  timestamp?: string
+  error?: string
+}
+
+export const backupApi = {
+  getStatus: () => apiRequest<BackupStatusResponse>('/api/backup/status'),
+  testTelegram: (data: { botToken?: string; chatId?: string }) =>
+    apiRequest<TelegramTestResponse>('/api/backup/telegram/test', {
+      method: 'POST',
+      body: data,
+    }),
+  sendTelegramBackup: (data: {
+    botToken?: string
+    chatId?: string
+    schoolId?: string
+    schoolSlug?: string
+    schoolName?: string
+    clientData?: Record<string, any>
+  }) =>
+    apiRequest<TelegramBackupResponse>('/api/backup/telegram/send', {
+      method: 'POST',
+      body: data,
+    }),
+  getExportUrl: (schoolId?: string) =>
+    `/api/backup/export${schoolId ? `?schoolId=${encodeURIComponent(schoolId)}` : ''}`,
+}
+
