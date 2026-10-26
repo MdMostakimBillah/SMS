@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
+import { hash } from '@node-rs/argon2'
 import { createApp } from './app.js'
 import { createStorageFromEnv } from './storage.js'
 
@@ -21,7 +22,37 @@ if (JWT_SECRET.length < 32) {
   process.exit(1)
 }
 
+async function ensureSuperAdmin(prisma: PrismaClient) {
+  const email = (process.env.SUPER_ADMIN_EMAIL || 'admin@edutech.local').toLowerCase()
+  const password = process.env.SUPER_ADMIN_PASSWORD || 'EduAdm!65fd6a1ecb74a0bd6f'
+  try {
+    const existing = await prisma.user.findFirst({ where: { role: 'super_admin' } })
+    if (!existing) {
+      console.log(`[bootstrap] Creating default encrypted super admin: ${email}`)
+      const passwordHash = await hash(password, {
+        algorithm: 2, // Argon2id
+        memoryCost: 64 * 1024,
+        timeCost: 3,
+        parallelism: 1,
+      })
+      await prisma.user.create({
+        data: {
+          email,
+          passwordHash,
+          role: 'super_admin',
+          name: 'Super Administrator',
+          isActive: true,
+        },
+      })
+      console.log(`[bootstrap] Super admin created successfully with Argon2id encryption.`)
+    }
+  } catch (err) {
+    console.error('[bootstrap] Failed to verify super admin account:', err instanceof Error ? err.message : err)
+  }
+}
+
 const prisma = new PrismaClient()
+void ensureSuperAdmin(prisma)
 const storage = createStorageFromEnv()
 if (!storage) {
   console.warn('[API] R2 media storage NOT configured — /api/media endpoints will answer 503')
