@@ -71,6 +71,21 @@ const sessionCleanup = setInterval(() => {
 }, 60 * 60 * 1000)
 sessionCleanup.unref()
 
+// Keep-alive self-ping: prevents free hosting tiers (e.g. Render) from sleeping after 15 mins
+const externalUrl = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_API_URL || 'https://edutech-api-86tl.onrender.com'
+if (process.env.NODE_ENV === 'production' || process.env.RENDER || Boolean(process.env.RENDER_EXTERNAL_URL)) {
+  const KEEP_ALIVE_INTERVAL = 10 * 60 * 1000 // every 10 minutes
+  const keepAlive = setInterval(async () => {
+    try {
+      const res = await fetch(`${externalUrl}/health`)
+      console.log(`[keep-alive] Render self-ping: ${res.status}`)
+    } catch (err) {
+      console.warn('[keep-alive] Ping failed:', err instanceof Error ? err.message : err)
+    }
+  }, KEEP_ALIVE_INTERVAL)
+  keepAlive.unref()
+}
+
 let shuttingDown = false
 async function shutdown(signal: string) {
   if (shuttingDown) return

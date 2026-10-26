@@ -1,0 +1,17 @@
+name: Render Server Keep-Alive
+on:
+  schedule:
+    - cron: '*/10 * * * *' # Ping every 10 minutes (prevents 15-min Render sleep)
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Backend Health Endpoint
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://edutech-api-86tl.onrender.com/health")
+          echo "Render Backend /health status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "::warning ::Render backend returned non-200 status: $HTTP_STATUS"
+          fi
