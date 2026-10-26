@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://edutech-api-86tl.onrender.com/api/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://edutech-api-86tl.onrender.com/health"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
