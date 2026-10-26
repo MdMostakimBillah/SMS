@@ -313,7 +313,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
 
         const u = res.user
         const targetRole = u.role === 'school_admin' ? 'admin' : u.role
-        const targetSlug = institution?.slug || subdomain || (u.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : 'school')
+        const targetSlug = institution?.slug || subdomain || u.schoolDomain || (u.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : 'school')
 
         if (targetSlug) {
           sessionStorage.setItem('edutech_inst_slug', targetSlug)

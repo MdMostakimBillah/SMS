@@ -69,11 +69,56 @@ export interface SessionUser {
   role: string
   schoolId: string | null
   schoolName: string | null
+  schoolDomain?: string | null
   avatar: string | null
 }
 
 export interface AuthResponse {
   user: SessionUser
+}
+
+export interface RegisterInstitutionPayload {
+  name: string
+  nameBn?: string
+  brandName?: string
+  subdomain: string
+  email?: string
+  phone?: string
+  address?: string
+  logo?: string
+  brandColor?: string
+  adminEmail: string
+  adminPassword: string
+  startTime?: string
+  endTime?: string
+}
+
+export interface RegisterInstitutionResponse {
+  success: boolean
+  school: {
+    id: string
+    name: string
+    nameBn: string | null
+    domain: string
+    email: string | null
+    phone: string | null
+    address: string | null
+    logo: string | null
+  }
+  user: SessionUser
+}
+
+export interface PublicSchool {
+  id: string
+  name: string
+  nameBn: string | null
+  domain: string
+  email: string | null
+  phone: string | null
+  address: string | null
+  logo: string | null
+  startTime: string
+  endTime: string
 }
 
 export interface AccountInfo {
@@ -116,6 +161,18 @@ export const authApi = {
       method: 'PUT',
       body: data,
     }),
+
+  registerInstitution: (data: RegisterInstitutionPayload) =>
+    apiRequest<RegisterInstitutionResponse>('/api/auth/register-institution', {
+      method: 'POST',
+      body: data,
+    }),
+
+  getPublicSchool: (slug: string) =>
+    apiRequest<{ school: PublicSchool | null }>(`/api/schools/public/${encodeURIComponent(slug)}`),
+
+  getSchools: () =>
+    apiRequest<Array<PublicSchool & { _count?: { users: number; teachers: number; students: number } }>>('/api/schools'),
 }
 
 export interface TeacherData {

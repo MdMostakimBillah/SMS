@@ -68,12 +68,6 @@ describe('App login-route registration (VITE_LOGIN_PATH wiring)', () => {
   })
 
   it('mounts the login form on the configured LOGIN_ROUTE', async () => {
-    if (!LOGIN_PATH) {
-      // Route is intentionally not registered without VITE_LOGIN_PATH —
-      // nothing to assert, and no configured value appears in output.
-      expect(LOGIN_ROUTE).toBe('/register')
-      return
-    }
     render(
       <MemoryRouter initialEntries={[LOGIN_ROUTE]}>
         <App />

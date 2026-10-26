@@ -13,6 +13,7 @@ import { sendVerificationCode } from '@/lib/emailService'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
+import { authApi, ApiError } from '@/lib/api'
 
 const BASE_URL = 'smsappbd.vercel.app'
 
@@ -138,6 +139,8 @@ export default function InstitutionRegister() {
   const [resendTimer, setResendTimer] = useState(0)
 
   const [created, setCreated] = useState(false)
+  const [createSubmitting, setCreateSubmitting] = useState(false)
+  const [createError, setCreateError] = useState('')
 
   const set = <K extends keyof RegForm>(key: K, val: RegForm[K]) => setForm((f) => ({ ...f, [key]: val }))
 
@@ -240,9 +243,45 @@ export default function InstitutionRegister() {
     }
   }, [emailCodeInput, emailVerified, emailSent, emailCode, isBn])
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
+    setCreateSubmitting(true)
+    setCreateError('')
+
+    let serverSchoolId: string | null = null
+
+    try {
+      const res = await authApi.registerInstitution({
+        name: form.name.trim(),
+        nameBn: form.nameBn.trim() || undefined,
+        brandName: form.brandName.trim() || undefined,
+        subdomain: subdomainSlug,
+        email: form.email.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        address: form.address.trim() || undefined,
+        logo: form.logo || undefined,
+        brandColor: form.brandColor || undefined,
+        adminEmail: form.adminEmail.trim().toLowerCase(),
+        adminPassword: form.adminPassword,
+        startTime: '07:30',
+        endTime: '14:30',
+      })
+      if (res.school?.id) {
+        serverSchoolId = res.school.id
+      }
+    } catch (err: unknown) {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : isBn
+          ? 'নিবন্ধন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।'
+          : 'Registration failed. Please check your network or try again.'
+      setCreateError(msg)
+      setCreateSubmitting(false)
+      return
+    }
+
     const inst: Institution = {
-      id: `INST-${Date.now()}`,
+      id: serverSchoolId || `INST-${Date.now()}`,
       name: form.name,
       nameBn: form.nameBn || form.name,
       email: form.adminEmail,
@@ -281,10 +320,7 @@ export default function InstitutionRegister() {
 
     loadInstitutionData(inst)
 
-    // Phase 7 — registration never grants a session: no identity keys are
-    // written here. Sign-in happens through the server-authenticated
-    // institution login (server-side registration provisioning = Phase E,
-    // documented, not implemented here).
+    setCreateSubmitting(false)
     setCreated(true)
   }
 
@@ -679,14 +715,20 @@ export default function InstitutionRegister() {
                       ))}
                     </div>
                   )}
+
+                  {createError && (
+                    <div className="mt-3 p-3 rounded-xl bg-[var(--red)]/10 border border-[var(--red)]/20 text-[0.8125rem] text-[var(--red)] text-center font-medium">
+                      {createError}
+                    </div>
+                  )}
                 </>
               )}
             </div>
 
           {/* Footer Buttons */}
           <div className="flex items-center justify-between mt-6">
-            <button onClick={() => step === 0 ? setStarted(false) : setStep((s) => s - 1)}
-              className={`w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer border transition-all ${isDark ? 'border-white/10 bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'}`}>
+            <button onClick={() => step === 0 ? setStarted(false) : setStep((s) => s - 1)} disabled={createSubmitting}
+              className={`w-11 h-11 rounded-xl flex items-center justify-center cursor-pointer border transition-all ${isDark ? 'border-white/10 bg-white/5 text-white/40 hover:text-white/70 hover:bg-white/10' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]'} disabled:opacity-50 disabled:cursor-not-allowed`}>
               <ChevronLeft size={18} />
             </button>
 
@@ -698,11 +740,11 @@ export default function InstitutionRegister() {
                 <ChevronRight size={15} />
               </button>
             ) : (
-              <button onClick={handleCreate} disabled={!canNext}
+              <button onClick={handleCreate} disabled={!canNext || createSubmitting}
                 className="h-11 px-6 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer flex items-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: canNext ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', color: canNext ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>
+                style={{ background: canNext && !createSubmitting ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', color: canNext && !createSubmitting ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }}>
                 <Check size={15} />
-                {isBn ? 'তৈরি করুন' : 'Create'}
+                {createSubmitting ? (isBn ? 'তৈরি হচ্ছে...' : 'Creating...') : isBn ? 'তৈরি করুন' : 'Create'}
               </button>
             )}
           </div>

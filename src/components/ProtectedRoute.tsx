@@ -129,7 +129,7 @@ export function RoleProtectedRoute({ allowedRoles }: { allowedRoles: string[] })
     if (restoreFailed) {
       return <ConnectionErrorScreen onRetry={retryRestore} onSignIn={() => navigate(getLoginRedirect(), { replace: true })} />
     }
-    return <Navigate to="/register" replace />
+    return <Navigate to={LOGIN_ROUTE} replace />
   }
   if (!allowedRoles.includes(user.role)) {
     const slug = sessionStorage.getItem('edutech_inst_slug')

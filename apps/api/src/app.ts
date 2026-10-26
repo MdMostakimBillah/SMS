@@ -9,6 +9,7 @@ import { teacherRouter } from './routes/teachers.js'
 import { departmentRouter } from './routes/departments.js'
 import { noticeRouter } from './routes/notices.js'
 import { mediaRouter } from './routes/media.js'
+import { schoolRouter } from './routes/schools.js'
 import { csrfProtection } from './middleware/csrf.js'
 import type { MediaStorage } from './storage.js'
 
@@ -51,6 +52,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null }: App
   app.use('/api/departments', departmentRouter(prisma, jwtSecret))
   app.use('/api/notices', noticeRouter(prisma, jwtSecret))
   app.use('/api/media', mediaRouter(prisma, jwtSecret, storage))
+  app.use('/api/schools', schoolRouter(prisma, jwtSecret))
 
   // JSON 404 for unknown API paths
   app.use('/api', (_req: Request, res: Response) => {

@@ -14,6 +14,7 @@ import { sendVerificationCode } from '@/lib/emailService'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 import { withSlug } from '@/lib/storage'
+import { authApi } from '@/lib/api'
 
 const btnBounce = `animate-[btnBounce_0.35s_cubic-bezier(0.34,1.56,0.64,1)]`
 
@@ -252,10 +253,36 @@ export default function CreateSchool() {
     }
   }, [])
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     const subdomain = form.subdomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
+    const slug = subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
+
+    let serverSchoolId: string | null = null
+    try {
+      const res = await authApi.registerInstitution({
+        name: form.name.trim(),
+        nameBn: form.nameBn?.trim() || undefined,
+        brandName: form.brandName?.trim() || undefined,
+        subdomain: slug,
+        email: form.email?.trim() || undefined,
+        phone: form.phone?.trim() || undefined,
+        address: form.address?.trim() || undefined,
+        logo: form.logo || undefined,
+        brandColor: form.brandColor || undefined,
+        adminEmail: (form.adminEmail || form.email).trim().toLowerCase(),
+        adminPassword: form.adminPassword || 'Admin@123456',
+        startTime: form.startTime || '07:30',
+        endTime: form.endTime || '14:30',
+      })
+      if (res.school?.id) {
+        serverSchoolId = res.school.id
+      }
+    } catch {
+      // Backend error or offline — still save to local store
+    }
+
     const inst: Institution = {
-      id: `INST-${Date.now()}`,
+      id: serverSchoolId || `INST-${Date.now()}`,
       name: form.name,
       nameBn: form.nameBn || form.name,
       email: form.adminEmail || form.email,
@@ -264,8 +291,8 @@ export default function CreateSchool() {
       addressBn: form.addressBn || form.address,
       eiin: form.eiin,
       website: subdomain ? `${BASE_URL}/i/${subdomain}` : BASE_URL,
-      subdomain: subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-      slug: subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      subdomain: slug,
+      slug: slug,
       status: 'active',
       package: form.package,
       createdAt: new Date().toISOString().split('T')[0],

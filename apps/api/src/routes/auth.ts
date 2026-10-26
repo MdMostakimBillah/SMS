@@ -22,6 +22,26 @@ const loginSchema = z.object({
   password: z.string().min(1).max(128),
 })
 
+const registerInstitutionSchema = z.object({
+  name: z.string().min(1, 'Institution name is required').max(200),
+  nameBn: z.string().max(200).optional().nullable(),
+  brandName: z.string().max(200).optional().nullable(),
+  subdomain: z
+    .string()
+    .min(2, 'Subdomain is required')
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'Subdomain must contain only lowercase alphanumeric characters and hyphens'),
+  email: z.string().email('Invalid email address').max(254).optional().or(z.literal('')).nullable(),
+  phone: z.string().max(50).optional().or(z.literal('')).nullable(),
+  address: z.string().max(500).optional().or(z.literal('')).nullable(),
+  logo: z.string().optional().or(z.literal('')).nullable(),
+  brandColor: z.string().max(30).optional().nullable(),
+  adminEmail: z.string().email('Invalid admin email').max(254),
+  adminPassword: z.string().min(8, 'Password must be at least 8 characters').max(128),
+  startTime: z.string().max(20).optional().nullable(),
+  endTime: z.string().max(20).optional().nullable(),
+})
+
 const superAdminUpdateSchema = z.object({
   email: z.string().email().max(254).optional(),
   password: z.string().min(8).max(128).optional(),
@@ -45,10 +65,11 @@ export interface PublicUser {
   role: string
   schoolId: string | null
   schoolName: string | null
+  schoolDomain?: string | null
   avatar: string | null
 }
 
-function toPublicUser(user: User & { school?: { name: string } | null }): PublicUser {
+function toPublicUser(user: User & { school?: { name: string; domain?: string | null } | null }): PublicUser {
   return {
     id: user.id,
     email: user.email,
@@ -56,6 +77,7 @@ function toPublicUser(user: User & { school?: { name: string } | null }): Public
     role: user.role,
     schoolId: user.schoolId,
     schoolName: user.school?.name ?? null,
+    schoolDomain: user.school?.domain ?? null,
     avatar: user.avatar,
   }
 }
@@ -158,6 +180,98 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
     res.clearCookie(SESSION_COOKIE, { path: '/', secure, sameSite: 'lax', httpOnly: true })
     res.clearCookie(CSRF_COOKIE, { path: '/', secure, sameSite: 'lax' })
     res.json({ success: true })
+  })
+
+  /**
+   * Institution Registration — creates a new School tenant and its primary
+   * School Admin user atomically in the database.
+   */
+  router.post('/register-institution', requireTrustedOrigin(corsOrigin), loginLimiter, async (req: Request, res: Response) => {
+    try {
+      const parsed = registerInstitutionSchema.safeParse(req.body)
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
+      }
+
+      const subdomain = parsed.data.subdomain.trim().toLowerCase()
+      const adminEmail = parsed.data.adminEmail.trim().toLowerCase()
+
+      // Check subdomain uniqueness
+      const existingSchool = await prisma.school.findFirst({
+        where: { domain: subdomain },
+      })
+      if (existingSchool) {
+        return res.status(409).json({ error: 'Institution subdomain is already taken' })
+      }
+
+      // Check admin email uniqueness
+      const existingUser = await prisma.user.findUnique({
+        where: { email: adminEmail },
+      })
+      if (existingUser) {
+        return res.status(409).json({ error: 'Admin email is already registered' })
+      }
+
+      const passwordHash = await hash(parsed.data.adminPassword, ARGON2_OPTIONS)
+
+      const result = await prisma.$transaction(async (tx) => {
+        const school = await tx.school.create({
+          data: {
+            name: parsed.data.name.trim(),
+            nameBn: parsed.data.nameBn?.trim() || null,
+            domain: subdomain,
+            email: parsed.data.email?.trim() || null,
+            phone: parsed.data.phone?.trim() || null,
+            address: parsed.data.address?.trim() || null,
+            logo: parsed.data.logo || null,
+            startTime: parsed.data.startTime?.trim() || '07:30',
+            endTime: parsed.data.endTime?.trim() || '14:30',
+          },
+        })
+
+        const user = await tx.user.create({
+          data: {
+            email: adminEmail,
+            passwordHash,
+            name: `${parsed.data.name.trim()} Admin`,
+            role: 'school_admin',
+            schoolId: school.id,
+            isActive: true,
+          },
+        })
+
+        return { school, user }
+      })
+
+      audit({
+        action: 'institution.register',
+        actorId: result.user.id,
+        actorRole: 'school_admin',
+        outcome: 'success',
+        detail: { schoolId: result.school.id, domain: result.school.domain },
+      })
+
+      res.status(201).json({
+        success: true,
+        school: {
+          id: result.school.id,
+          name: result.school.name,
+          nameBn: result.school.nameBn,
+          domain: result.school.domain,
+          email: result.school.email,
+          phone: result.school.phone,
+          address: result.school.address,
+          logo: result.school.logo,
+        },
+        user: toPublicUser({ ...result.user, school: result.school }),
+      })
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        return res.status(409).json({ error: 'Subdomain or admin email already in use' })
+      }
+      console.error('[auth] register-institution failed:', err instanceof Error ? err.message : err)
+      res.status(500).json({ error: 'Internal server error' })
+    }
   })
 
   /**
