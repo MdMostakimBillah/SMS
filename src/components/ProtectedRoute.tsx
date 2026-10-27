@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { usePermission } from '@/hooks/usePermission'
 import { useServerDataSync } from '@/hooks/useServerDataSync'
-import { LOGIN_ROUTE } from '@/lib/constants'
+import { getLoginRoute } from '@/lib/loginPath'
 import { INSTITUTION_ROLES, type InstitutionRole } from '@/lib/navUtils'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
 import { ConnectionErrorScreen } from '@/components/ui/ConnectionErrorScreen'
@@ -37,7 +37,7 @@ const ROUTE_TO_PERMISSION: Record<string, string> = {
 export function getLoginRedirect(slug?: string): string {
   const s = slug || sessionStorage.getItem('edutech_inst_slug')
   if (s) return `/i/${s}`
-  return LOGIN_ROUTE
+  return getLoginRoute()
 }
 
 export function ProtectedRoute() {
@@ -129,7 +129,7 @@ export function RoleProtectedRoute({ allowedRoles }: { allowedRoles: string[] })
     if (restoreFailed) {
       return <ConnectionErrorScreen onRetry={retryRestore} onSignIn={() => navigate(getLoginRedirect(), { replace: true })} />
     }
-    return <Navigate to={LOGIN_ROUTE} replace />
+    return <Navigate to={getLoginRoute()} replace />
   }
   if (!allowedRoles.includes(user.role)) {
     const slug = sessionStorage.getItem('edutech_inst_slug')

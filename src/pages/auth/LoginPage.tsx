@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock, ChevronRight } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { getDashboardPath } from '@/lib/navUtils'
+import { getLoginSecret } from '@/lib/loginPath'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 
 function getInitialTheme(): 'light' | 'dark' {
@@ -21,8 +22,15 @@ function getInitialTheme(): 'light' | 'dark' {
 }
 
 export default function LoginPage() {
-  const { login, error, clearError, isLockedOut, lockoutRemaining, user } = useAuth()
+  const { user, login, error, clearError, isLockedOut, lockoutRemaining } = useAuth()
   const navigate = useNavigate()
+  const { loginSecret } = useParams<{ loginSecret: string }>()
+
+  useEffect(() => {
+    const active = getLoginSecret()
+    const allowed = active ? loginSecret === active : loginSecret === undefined
+    if (!allowed) navigate('/', { replace: true })
+  }, [loginSecret, navigate])
 
   useEffect(() => {
     if (user) navigate(getDashboardPath(user), { replace: true })

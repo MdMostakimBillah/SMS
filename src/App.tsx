@@ -8,7 +8,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
 import { DashboardRoute } from '@/components/DashboardRoute'
-import { LOGIN_PATH } from '@/lib/constants'
+import { getLoginRoute, getLoginSecret } from '@/lib/loginPath'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
@@ -145,21 +145,19 @@ function AppContent() {
         </Route>
 
         <Route element={<AuthRoute />}>
-          <Route path="/super-admin/login" element={<F><LoginPage /></F>} />
-          <Route path="/superadmin/login" element={<Navigate to="/super-admin/login" replace />} />
-          <Route path="/superadmin" element={<Navigate to="/super-admin/login" replace />} />
+          {/* Super-admin login is served only on the active secret path.
+              When no secret is configured, fall back to /super-admin/login. */}
+          {!getLoginSecret() && (
+            <Route path="/super-admin/login" element={<F><LoginPage /></F>} />
+          )}
+          {/* Dynamic secret login route: /{secret}/login. LoginPage validates
+              the path segment against the active secret, so any other segment
+              renders a 404 instead of the login form. */}
+          <Route path="/:loginSecret/login" element={<F><LoginPage /></F>} />
+          <Route path="/superadmin/login" element={<Navigate to={getLoginRoute()} replace />} />
+          <Route path="/superadmin" element={<Navigate to={getLoginRoute()} replace />} />
           <Route path="/login" element={<F><LoginPage /></F>} />
           <Route path="/admin/login" element={<F><LoginPage /></F>} />
-          {/* Secret login path support (both with and without /login) */}
-          {LOGIN_PATH && (
-            <>
-              <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />
-              <Route path={`${LOGIN_PATH}/login`} element={<F><LoginPage /></F>} />
-            </>
-          )}
-          {/* Historical secret paths fallback so secret URL always works */}
-          <Route path="/k7m2x9pGKcj57PFE8oBj" element={<F><LoginPage /></F>} />
-          <Route path="/k7m2x9pGKcj57PFE8oBj/login" element={<F><LoginPage /></F>} />
           <Route path="/register" element={<F><InstitutionRegister /></F>} />
           <Route path="/" element={<Navigate to="/register" replace />} />
           <Route path="/dashboard" element={<DashboardRoute />} />
