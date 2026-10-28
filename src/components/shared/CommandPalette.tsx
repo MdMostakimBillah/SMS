@@ -38,6 +38,7 @@ import {
 import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
+import { useAuth } from '@/contexts/AuthContext'
 
 const iconMap: Record<string, LucideIcon> = {
   'layout-dashboard': LayoutDashboard,
@@ -311,6 +312,7 @@ export default function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen, theme, setTheme, language, setLanguage } = useAppStore()
   const isBn = useBn()
   const { canRead } = usePermission()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -324,15 +326,26 @@ export default function CommandPalette() {
     // /i/:slug/:role/...
     const instMatch = path.match(/^\/i\/([^/]+)\/([^/]+)/)
     if (instMatch) return `/i/${instMatch[1]}/${instMatch[2]}`
-    // /super-admin/admin/...
-    if (path.startsWith('/super-admin/admin')) return '/super-admin/admin'
-    // /super-admin/viewing/:role/...
-    const viewingMatch = path.match(/^\/super-admin\/viewing\/([^/]+)/)
-    if (viewingMatch) return `/super-admin/viewing/${viewingMatch[1]}`
-    // /super-admin/...
-    if (path.startsWith('/super-admin')) return '/super-admin'
+    if (user?.role === 'super_admin') {
+      // /super-admin/admin/...
+      if (path.startsWith('/super-admin/admin')) return '/super-admin/admin'
+      // /super-admin/viewing/:role/...
+      const viewingMatch = path.match(/^\/super-admin\/viewing\/([^/]+)/)
+      if (viewingMatch) return `/super-admin/viewing/${viewingMatch[1]}`
+      // /super-admin/...
+      if (path.startsWith('/super-admin')) return '/super-admin'
+    }
+    const slug =
+      sessionStorage.getItem('edutech_inst_slug') ||
+      localStorage.getItem('edutech_inst_slug') ||
+      user?.subdomain ||
+      (user as any)?.schoolDomain
+    if (slug) {
+      const role = (user?.role === 'school_admin' || user?.role === 'super_admin') ? 'admin' : (user?.role || 'admin')
+      return `/i/${slug}/${role}`
+    }
     return ''
-  }, [])
+  }, [user])
 
 
   const quickActions: QuickAction[] = useMemo(() => [
@@ -354,10 +367,11 @@ export default function CommandPalette() {
 
   const permittedItems = useMemo(() => {
     return items.filter((item) => {
+      if (item.id === 'super-admin' && user?.role !== 'super_admin') return false
       if (!item.permissionKey) return true
       return canRead(item.permissionKey)
     })
-  }, [canRead])
+  }, [canRead, user?.role])
 
   const filteredItems = useMemo(() => {
     if (!query.trim()) return permittedItems
@@ -439,9 +453,11 @@ export default function CommandPalette() {
       }
     } else {
       const item = result.item as SearchItem
-      // Super admin link always goes to /super-admin/admin/dashboard
+      // Super admin link always goes to /super-admin/admin/dashboard (super admin only)
       if (item.id === 'super-admin') {
-        navigate('/super-admin/admin/dashboard')
+        if (user?.role === 'super_admin') {
+          navigate('/super-admin/admin/dashboard')
+        }
       } else {
         const base = getNavBase()
         if (base) {
@@ -452,7 +468,7 @@ export default function CommandPalette() {
       }
     }
     handleClose()
-  }, [navigate, theme, language, setTheme, setLanguage, handleClose, getNavBase])
+  }, [navigate, theme, language, setTheme, setLanguage, handleClose, getNavBase, user])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

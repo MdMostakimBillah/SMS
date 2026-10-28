@@ -14,12 +14,24 @@ export const ROLE_LABELS: Record<InstitutionRole, { en: string; bn: string }> = 
   staff: { en: 'Staff', bn: 'কর্মচারী' },
 }
 
-export function getNavBase(user: { role: string } | null, resolved: ResolvedInstitution | null): string {
-  if (!user || !resolved) return ''
-  const { mode, slug } = resolved
+export function getNavBase(
+  user: { role: string; subdomain?: string | null; schoolDomain?: string | null } | null,
+  resolved: ResolvedInstitution | null
+): string {
+  if (!user) return ''
   const role = (user.role === 'super_admin' || user.role === 'school_admin') ? 'admin' : user.role
-  if (mode === 'path') return `/i/${slug}/${role}`
-  return `/${role}`
+  if (resolved) {
+    const { mode, slug } = resolved
+    if (mode === 'path') return `/i/${slug}/${role}`
+    return `/${role}`
+  }
+  const slug =
+    sessionStorage.getItem('edutech_inst_slug') ||
+    localStorage.getItem('edutech_inst_slug') ||
+    (user as any).subdomain ||
+    (user as any).schoolDomain
+  if (slug) return `/i/${slug}/${role}`
+  return ''
 }
 
 export function getSuperAdminViewNavBase(user: { role: string } | null, role?: string): string {
@@ -61,15 +73,23 @@ function readDashboardSession(): DashboardSession {
  * Signed-out visitors get `/`, where `AuthRoute` shows the public landing page.
  */
 export function getDashboardPath(
-  user: { role: string } | null,
+  user: { role: string; subdomain?: string | null; schoolDomain?: string | null } | null,
   session: DashboardSession = readDashboardSession()
 ): string {
   if (!user) return '/'
-  if (session.viewingId) return '/super-admin/viewing/admin/dashboard'
-  if (user.role === 'super_admin') return '/super-admin/admin/dashboard'
-  if (session.slug) {
+  if (user.role === 'super_admin') {
+    if (session.viewingId) return '/super-admin/viewing/admin/dashboard'
+    return '/super-admin/admin/dashboard'
+  }
+  const slug =
+    session.slug ||
+    (user as any).subdomain ||
+    (user as any).schoolDomain ||
+    sessionStorage.getItem('edutech_inst_slug') ||
+    localStorage.getItem('edutech_inst_slug')
+  if (slug) {
     const role = (user.role === 'super_admin' || user.role === 'school_admin') ? 'admin' : user.role
-    return `/i/${session.slug}/${role}/dashboard`
+    return `/i/${slug}/${role}/dashboard`
   }
   return '/'
 }

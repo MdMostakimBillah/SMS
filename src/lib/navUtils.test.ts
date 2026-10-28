@@ -27,6 +27,24 @@ describe('getDashboardPath', () => {
     )
   })
 
+  it('maps school_admin to admin in dashboard path', () => {
+    expect(getDashboardPath({ role: 'school_admin' }, session({ slug: 'sunrise' }))).toBe(
+      '/i/sunrise/admin/dashboard'
+    )
+  })
+
+  it('never sends a non-super-admin to super-admin viewing dashboard even if viewingId is present', () => {
+    expect(
+      getDashboardPath({ role: 'school_admin' }, session({ slug: 'sunrise', viewingId: 'inst_7' }))
+    ).toBe('/i/sunrise/admin/dashboard')
+  })
+
+  it('resolves slug from user.subdomain when session slug is absent', () => {
+    expect(
+      getDashboardPath({ role: 'teacher', subdomain: 'greenwood' } as any, session())
+    ).toBe('/i/greenwood/teacher/dashboard')
+  })
+
   it('prefers the institution a super admin is currently viewing', () => {
     expect(getDashboardPath({ role: 'super_admin' }, session({ viewingId: 'inst_7' }))).toBe(
       '/super-admin/viewing/admin/dashboard'
