@@ -8,7 +8,6 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
 import { DashboardRoute } from '@/components/DashboardRoute'
-import { getLoginRoute } from '@/lib/loginPath'
 import { UnknownRoute } from '@/components/UnknownRoute'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
@@ -145,16 +144,14 @@ function AppContent() {
         </Route>
 
         <Route element={<AuthRoute />}>
-          {/* Super-admin login is served ONLY on the active secret path.
-              No /super-admin/login fallback exists. */}
-          {/* Dynamic secret login route: /{secret}/login. LoginPage validates
-              the path segment against the active secret, so any other segment
-              renders a 404 instead of the login form. */}
+          {/* Only the active secret path serves the super-admin login form.
+              Any other login-ish URL is not a super-admin entry point. */}
           <Route path="/:loginSecret/login" element={<F><LoginPage /></F>} />
-          <Route path="/superadmin/login" element={<Navigate to={getLoginRoute()} replace />} />
-          <Route path="/superadmin" element={<Navigate to={getLoginRoute()} replace />} />
-          <Route path="/login" element={<Navigate to={getLoginRoute()} replace />} />
-          <Route path="/admin/login" element={<Navigate to={getLoginRoute()} replace />} />
+          <Route path="/super-admin/login" element={<Navigate to="/register" replace />} />
+          <Route path="/superadmin/login" element={<Navigate to="/register" replace />} />
+          <Route path="/superadmin" element={<Navigate to="/register" replace />} />
+          <Route path="/login" element={<Navigate to="/register" replace />} />
+          <Route path="/admin/login" element={<Navigate to="/register" replace />} />
           <Route path="/register" element={<F><InstitutionRegister /></F>} />
           <Route path="/" element={<Navigate to="/register" replace />} />
           <Route path="/dashboard" element={<DashboardRoute />} />
