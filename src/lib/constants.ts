@@ -2,7 +2,8 @@
  * Application-wide constants: dropdown options, grade scales, and default institution config.
  * All bilingual options use `{ value, labelEn, labelBn }` shape.
  */
-export const LOGIN_PATH = import.meta.env.VITE_LOGIN_PATH || ''
+const rawLoginPath = (import.meta.env.VITE_LOGIN_PATH || '').trim()
+export const LOGIN_PATH = rawLoginPath ? `/${rawLoginPath.replace(/^\/+|\/+$/g, '')}` : ''
 
 /**
  * The route the login form is mounted on: `${LOGIN_PATH}/login` when a

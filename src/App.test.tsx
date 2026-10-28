@@ -76,6 +76,15 @@ describe('App login-route registration (VITE_LOGIN_PATH wiring)', () => {
     expect(await screen.findByPlaceholderText('admin@example.com')).toBeInTheDocument()
   })
 
+  it('mounts the login form directly on the secret LOGIN_PATH', async () => {
+    render(
+      <MemoryRouter initialEntries={[LOGIN_PATH]}>
+        <App />
+      </MemoryRouter>
+    )
+    expect(await screen.findByPlaceholderText('admin@example.com')).toBeInTheDocument()
+  })
+
   it('redirects unauthenticated users to /register on unknown path', async () => {
     render(
       <MemoryRouter initialEntries={['/definitely-not-a-login-route']}>

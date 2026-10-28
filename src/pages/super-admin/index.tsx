@@ -1,14 +1,16 @@
+import { useState } from 'react'
 import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
   Crown, Building2, Users, Mail, Lock,
   CheckCircle, Plus, Database, CreditCard, MessageSquare, FileText, Globe,
-  Bell,
+  Bell, KeyRound, Copy, Check,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCardReveal } from '@/hooks/useCardReveal'
 import { SUPER_ADMIN_ROUTES, SUPER_ADMIN_PATH_MAP, SUPER_ADMIN_REVERSE_MAP } from '@/lib/superAdminRoutes'
 import { Placeholder } from '@/components/shared/Placeholder'
+import { getLoginSecret } from '@/lib/loginPath'
 import SchoolsPage from './SchoolsPage'
 import CreateSchool from './CreateSchool'
 
@@ -120,9 +122,55 @@ export default function SuperAdminPage() {
 
 function AccountSettings({ isBn }: { isBn: boolean }) {
   const { user } = useAuth()
+  const [copied, setCopied] = useState(false)
+  const secret = getLoginSecret()
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://edutech.pro.bd'
+  const fullSecretUrl = secret ? `${origin}/${secret}` : `${origin}/super-admin/login`
+
+  const handleCopy = () => {
+    navigator.clipboard?.writeText(fullSecretUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <div className="max-w-xl mx-auto space-y-4">
+      {/* Secret Login URL Card */}
+      <div className="anim-card glass rounded-[0.75rem] overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--glass-border)] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#ec489915', color: '#ec4899' }}>
+              <KeyRound size={17} />
+            </div>
+            <div>
+              <h2 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+                {isBn ? 'গোপন লগইন লিংক' : 'Secret Super Admin Login URL'}
+              </h2>
+              <p className="text-[0.6875rem] text-[var(--text-muted)]">
+                {isBn ? 'এই ইউআরএলটি গোপন রাখুন' : 'Keep this URL secure'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium transition-all cursor-pointer bg-[var(--brand)] text-white hover:opacity-90 active:scale-95 border-none"
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            <span>{copied ? (isBn ? 'কপি করা হয়েছে' : 'Copied!') : (isBn ? 'কপি লিংক' : 'Copy URL')}</span>
+          </button>
+        </div>
+        <div className="p-5 space-y-3">
+          <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] font-mono text-[0.8125rem] text-[var(--text-primary)] break-all select-all">
+            {fullSecretUrl}
+          </div>
+          <p className="text-[0.6875rem] text-[var(--text-muted)]">
+            {isBn
+              ? 'এই গোপন পথে ঢুকলে সরাসরি সুপার অ্যাডমিন লগইন পেজ প্রদর্শিত হবে।'
+              : 'Connecting to this secret path directly displays the Super Admin login page.'}
+          </p>
+        </div>
+      </div>
+
       <div className="anim-card glass rounded-[0.75rem] overflow-hidden">
         <div className="px-5 py-4 border-b border-[var(--glass-border)] flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#6366f115', color: '#6366f1' }}>

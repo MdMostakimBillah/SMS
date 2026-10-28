@@ -13,25 +13,27 @@
 const STORAGE_KEY = 'edutech_login_secret'
 
 /**
- * Returns the active login secret path (without trailing /login).
+ * Returns the active login secret path (normalized: trimmed, without leading or trailing slashes).
  * Checks localStorage first, then VITE_LOGIN_PATH env, then empty string.
  */
 export function getLoginSecret(): string {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) return stored
+    if (stored) return stored.trim().replace(/^\/+|\/+$/g, '')
   } catch { /* ignore */ }
-  return import.meta.env.VITE_LOGIN_PATH || ''
+  const envVal = import.meta.env.VITE_LOGIN_PATH || ''
+  return envVal.trim().replace(/^\/+|\/+$/g, '')
 }
 
 /**
  * Persist a new login secret path to localStorage. Returns the path set.
  */
 export function setLoginSecret(path: string): string {
+  const clean = path.trim().replace(/^\/+|\/+$/g, '')
   try {
-    localStorage.setItem(STORAGE_KEY, path)
+    localStorage.setItem(STORAGE_KEY, clean)
   } catch { /* ignore */ }
-  return path
+  return clean
 }
 
 /**
@@ -55,10 +57,19 @@ export function clearLoginSecret(): void {
 }
 
 /**
- * Returns the full login route: `${secret}/login` when a secret is active,
+ * Returns the full login route: `/${secret}/login` when a secret is active,
  * otherwise `/super-admin/login`.
  */
 export function getLoginRoute(): string {
   const secret = getLoginSecret()
-  return secret ? `${secret}/login` : '/super-admin/login'
+  return secret ? `/${secret}/login` : '/super-admin/login'
+}
+
+/**
+ * Returns the direct secret path: `/${secret}` when a secret is active,
+ * otherwise `/super-admin/login`.
+ */
+export function getSecretPath(): string {
+  const secret = getLoginSecret()
+  return secret ? `/${secret}` : '/super-admin/login'
 }

@@ -26,15 +26,22 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { loginSecret } = useParams<{ loginSecret: string }>()
 
+  const active = getLoginSecret()
+  const cleanActive = (active || '').trim().replace(/^\/+|\/+$/g, '')
+  const cleanSecret = (loginSecret || '').trim().replace(/^\/+|\/+$/g, '')
+  const isAllowed = cleanActive ? cleanSecret === cleanActive : true
+
   useEffect(() => {
-    const active = getLoginSecret()
-    const allowed = active ? loginSecret === active : loginSecret === undefined
-    if (!allowed) navigate('/', { replace: true })
-  }, [loginSecret, navigate])
+    if (!isAllowed) {
+      navigate('/', { replace: true })
+    }
+  }, [isAllowed, navigate])
 
   useEffect(() => {
     if (user) navigate(getDashboardPath(user), { replace: true })
   }, [user, navigate])
+
+  if (!isAllowed) return null
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -105,11 +112,11 @@ export default function LoginPage() {
           <BrandLogo size={104} className="mx-auto mb-5" />
           <h1 className="text-[2rem] font-bold mb-3 tracking-tight text-white">EduTech SMS</h1>
           <p className="text-[1rem] max-w-[280px] mx-auto leading-relaxed text-white/50">
-            {isBn ? 'স্কুল ম্যানেজমেন্ট সিস্টেম' : 'School Management System'}
+            {isBn ? 'সুপার অ্যাডমিন পোর্টাল' : 'Super Admin Portal'}
           </p>
           <div className="mt-8 flex items-center justify-center gap-2 text-[0.75rem] text-white/30">
             <Lock size={12} />
-            <span>{isBn ? 'নিরাপদ অ্যাডমিন অ্যাক্সেস' : 'Secure Admin Access'}</span>
+            <span>{isBn ? 'নিরাপদ সুপার অ্যাডমিন অ্যাক্সেস' : 'Secure Super Admin Access'}</span>
           </div>
         </div>
       </div>
@@ -122,14 +129,21 @@ export default function LoginPage() {
           <div className="lg:hidden text-center mb-8">
             <BrandLogo size={64} className="mx-auto mb-4" />
             <h1 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>EduTech SMS</h1>
+            <p className="text-[0.8125rem] text-[var(--brand)] font-medium mt-1">
+              {isBn ? 'সুপার অ্যাডমিন পোর্টাল' : 'Super Admin Portal'}
+            </p>
           </div>
 
           <div className="mb-6">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--brand)]/10 text-[var(--brand)] text-[0.75rem] font-semibold mb-3">
+              <Lock size={12} />
+              <span>{isBn ? 'সুপার অ্যাডমিন' : 'Super Admin'}</span>
+            </div>
             <h2 className={`text-[1.5rem] font-bold mb-2 ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>
-              {isBn ? 'স্বাগতম' : 'Welcome Back'}
+              {isBn ? 'সুপার অ্যাডমিন লগইন' : 'Super Admin Login'}
             </h2>
             <p className={`text-[0.875rem] ${isDark ? 'text-white/40' : 'text-[var(--text-secondary)]'}`}>
-              {isBn ? 'অ্যাডমিন প্যানেলে সাইন ইন করুন' : 'Sign in to admin panel'}
+              {isBn ? 'সিস্টেম অ্যাডমিন পোর্টালে সাইন ইন করুন' : 'Sign in to super admin portal'}
             </p>
           </div>
 

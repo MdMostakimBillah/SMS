@@ -146,6 +146,7 @@ function AppContent() {
         <Route element={<AuthRoute />}>
           {/* Only the active secret path serves the super-admin login form.
               Any other login-ish URL is not a super-admin entry point. */}
+          <Route path="/:loginSecret" element={<F><LoginPage /></F>} />
           <Route path="/:loginSecret/login" element={<F><LoginPage /></F>} />
           <Route path="/super-admin/login" element={<Navigate to="/register" replace />} />
           <Route path="/superadmin/login" element={<Navigate to="/register" replace />} />
