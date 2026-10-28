@@ -283,6 +283,7 @@ export default function CreateSchool() {
         adminPassword: form.adminPassword || 'Admin@123456',
         startTime: form.startTime || '07:30',
         endTime: form.endTime || '14:30',
+        sessions: form.sessions?.length ? form.sessions : ['2025-26'],
       })
       if (res.id || res.school?.id) {
         serverSchoolId = res.id || res.school?.id || null

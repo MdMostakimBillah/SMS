@@ -267,6 +267,7 @@ export default function InstitutionRegister() {
         adminPassword: form.adminPassword,
         startTime: '07:30',
         endTime: '14:30',
+        sessions: ['2025-26'],
       })
       if (res.id || res.school?.id) {
         serverSchoolId = res.id || res.school?.id || null

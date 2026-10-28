@@ -55,6 +55,17 @@ const registerInstitutionSchema = z.object({
   adminEmail: z.string().email('Invalid admin email').max(254),
   adminPassword: z.string().min(8, 'Password must be at least 8 characters').max(128),
   package: z.string().max(50).optional().nullable(),
+  status: z.string().max(50).optional().nullable(),
+  plan: z.string().max(50).optional().nullable(),
+  sessions: z.union([z.array(z.string()), z.string()]).optional().nullable(),
+  breaks: z.union([z.array(z.any()), z.string()]).optional().nullable(),
+  storageMode: z.string().max(50).optional().nullable(),
+  serverUrl: z.string().max(200).optional().nullable(),
+  folderName: z.string().max(100).optional().nullable(),
+  maxStudents: z.coerce.number().optional().nullable(),
+  maxTeachers: z.coerce.number().optional().nullable(),
+  billingCycle: z.string().max(50).optional().nullable(),
+  paymentStatus: z.string().max(50).optional().nullable(),
   startTime: z.string().max(20).optional().nullable(),
   endTime: z.string().max(20).optional().nullable(),
 })
@@ -275,15 +286,6 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
       const passwordHash = await hash(parsed.data.adminPassword, ARGON2_OPTIONS)
       const schoolId = randomUUID()
 
-      let uploadedLogo = parsed.data.logo || null
-      if (uploadedLogo && uploadedLogo.startsWith('data:image/')) {
-        uploadedLogo = await uploadBase64Media(storage, prisma, schoolId, 'institution_logo', uploadedLogo)
-      }
-      let uploadedBanner = parsed.data.banner || null
-      if (uploadedBanner && uploadedBanner.startsWith('data:image/')) {
-        uploadedBanner = await uploadBase64Media(storage, prisma, schoolId, 'institution_banner', uploadedBanner)
-      }
-
       const result = await prisma.$transaction(async (tx) => {
         const school = await tx.school.create({
           data: {
@@ -292,8 +294,8 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
             nameBn: parsed.data.nameBn?.trim() || null,
             brandName: parsed.data.brandName?.trim() || parsed.data.name.trim(),
             brandColor: parsed.data.brandColor?.trim() || '#6366f1',
-            logo: uploadedLogo,
-            banner: uploadedBanner,
+            logo: parsed.data.logo && !parsed.data.logo.startsWith('data:image/') ? parsed.data.logo : null,
+            banner: parsed.data.banner && !parsed.data.banner.startsWith('data:image/') ? parsed.data.banner : null,
             bannerPosition: parsed.data.bannerPosition || '{"x":0,"y":0}',
             motto: parsed.data.motto?.trim() || null,
             mottoBn: parsed.data.mottoBn?.trim() || null,
@@ -306,8 +308,21 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
             address: parsed.data.address?.trim() || null,
             startTime: parsed.data.startTime?.trim() || '07:30',
             endTime: parsed.data.endTime?.trim() || '14:30',
-            status: 'trial',
-            plan: parsed.data.package?.toLowerCase() || 'basic',
+            status: parsed.data.status?.trim() || 'trial',
+            plan: parsed.data.plan?.trim() || parsed.data.package?.toLowerCase() || 'basic',
+            sessions: parsed.data.sessions
+              ? (typeof parsed.data.sessions === 'string' ? parsed.data.sessions : JSON.stringify(parsed.data.sessions))
+              : '["2025-26"]',
+            breaks: parsed.data.breaks
+              ? (typeof parsed.data.breaks === 'string' ? parsed.data.breaks : JSON.stringify(parsed.data.breaks))
+              : '[]',
+            storageMode: parsed.data.storageMode?.trim() || 'cloud',
+            serverUrl: parsed.data.serverUrl?.trim() || null,
+            folderName: parsed.data.folderName?.trim() || null,
+            maxStudents: parsed.data.maxStudents || 500,
+            maxTeachers: parsed.data.maxTeachers || 50,
+            billingCycle: parsed.data.billingCycle?.trim() || 'monthly',
+            paymentStatus: parsed.data.paymentStatus?.trim() || 'unpaid',
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30-day initial trial
           },
         })
@@ -325,6 +340,26 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
 
         return { school, user }
       })
+
+      // Upload base64 media to Cloudflare R2 and persist MediaObject in Supabase DB
+      let finalLogo = result.school.logo
+      let finalBanner = result.school.banner
+      if (parsed.data.logo && parsed.data.logo.startsWith('data:image/')) {
+        finalLogo = await uploadBase64Media(storage, prisma, result.school.id, 'institution_logo', parsed.data.logo)
+      }
+      if (parsed.data.banner && parsed.data.banner.startsWith('data:image/')) {
+        finalBanner = await uploadBase64Media(storage, prisma, result.school.id, 'institution_banner', parsed.data.banner)
+      }
+
+      if (finalLogo !== result.school.logo || finalBanner !== result.school.banner) {
+        result.school = await prisma.school.update({
+          where: { id: result.school.id },
+          data: {
+            logo: finalLogo,
+            banner: finalBanner,
+          },
+        })
+      }
 
       audit({
         action: 'institution.register',
@@ -345,10 +380,36 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
           name: result.school.name,
           nameBn: result.school.nameBn,
           domain: result.school.domain,
+          slug: result.school.domain,
+          brandName: result.school.brandName,
+          brandColor: result.school.brandColor,
+          logo: result.school.logo,
+          banner: result.school.banner,
+          bannerPosition: result.school.bannerPosition,
+          motto: result.school.motto,
+          mottoBn: result.school.mottoBn,
+          eiin: result.school.eiin,
+          website: result.school.website,
           email: result.school.email,
           phone: result.school.phone,
           address: result.school.address,
-          logo: result.school.logo,
+          addressBn: result.school.addressBn,
+          startTime: result.school.startTime,
+          endTime: result.school.endTime,
+          sessions: result.school.sessions,
+          breaks: result.school.breaks,
+          status: result.school.status,
+          plan: result.school.plan,
+          package: result.school.plan,
+          storageMode: result.school.storageMode,
+          serverUrl: result.school.serverUrl,
+          folderName: result.school.folderName,
+          maxStudents: result.school.maxStudents,
+          maxTeachers: result.school.maxTeachers,
+          billingCycle: result.school.billingCycle,
+          paymentStatus: result.school.paymentStatus,
+          expiresAt: result.school.expiresAt ? result.school.expiresAt.toISOString() : null,
+          createdAt: result.school.createdAt.toISOString(),
         },
         user: toPublicUser({ ...result.user, school: result.school }),
       })
