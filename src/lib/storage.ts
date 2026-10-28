@@ -93,6 +93,8 @@ export function cleanupOrphanedBaseKeys(): void {
 }
 
 import type { PersistStorage, StorageValue } from 'zustand/middleware/persist'
+import { isWriteAllowed } from './writeGuard'
+import { notifyVaultWrite, notifyVaultRemove, registerReloadRequester } from './vault/bridge'
 
 type SlugChangeCallback = (slug: string | null) => void
 const slugListeners: SlugChangeCallback[] = []
@@ -123,6 +125,10 @@ function resetAllStores(): void {
 function loadAllStores(): void {
   loadFns.forEach((fn) => fn())
 }
+
+// Let the Local Data Vault ask every store to re-read storage after a
+// vault JSON file changed on disk (see src/lib/vault/vault.ts).
+registerReloadRequester(loadAllStores)
 
 export function setSlug(slug: string): void {
   sessionStorage.setItem('edutech_inst_slug', slug)
@@ -204,8 +210,10 @@ export function createNamespacedStorage<T>(base: string, fallback?: string, opts
         scheduleWrite(key, value)
         return
       }
+      if (!isWriteAllowed()) return
       try {
         localStorage.setItem(key, JSON.stringify(value))
+        notifyVaultWrite(key, JSON.stringify(value))
       } catch {
         // Quota exceeded — drop the write rather than breaking the UI.
       }
@@ -214,9 +222,11 @@ export function createNamespacedStorage<T>(base: string, fallback?: string, opts
       const slug = getSlug()
       const key = resolveKey(slug)
       cancelWrite(key)
+      if (!isWriteAllowed()) return
       try {
         localStorage.removeItem(key)
       } catch { /* ignore */ }
+      notifyVaultRemove(key)
     },
   }
 }
@@ -230,8 +240,10 @@ function scheduleWrite(key: string, value: unknown): void {
   if (existing) clearTimeout(existing.timer)
   const timer = setTimeout(() => {
     pendingWrites.delete(key)
+    if (!isWriteAllowed()) return
     try {
       localStorage.setItem(key, json)
+      notifyVaultWrite(key, json)
     } catch {
       // Quota exceeded — drop the write rather than breaking the UI.
     }
@@ -250,8 +262,10 @@ function cancelWrite(key: string): void {
 function flushPendingWrites(): void {
   pendingWrites.forEach((entry, key) => {
     clearTimeout(entry.timer)
+    if (!isWriteAllowed()) return
     try {
       localStorage.setItem(key, entry.value)
+      notifyVaultWrite(key, entry.value)
     } catch {
       // Quota exceeded — drop the write.
     }

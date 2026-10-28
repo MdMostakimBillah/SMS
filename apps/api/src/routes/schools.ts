@@ -31,6 +31,13 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string) {
         storageMode: true,
         serverUrl: true,
         folderName: true,
+        status: true,
+        plan: true,
+        expiresAt: true,
+        maxStudents: true,
+        maxTeachers: true,
+        paymentStatus: true,
+        billingCycle: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -81,6 +88,16 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string) {
           logo: true,
           startTime: true,
           endTime: true,
+          storageMode: true,
+          serverUrl: true,
+          folderName: true,
+          status: true,
+          plan: true,
+          expiresAt: true,
+          maxStudents: true,
+          maxTeachers: true,
+          paymentStatus: true,
+          billingCycle: true,
           createdAt: true,
           updatedAt: true,
           _count: {
@@ -121,11 +138,79 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string) {
   })
 
   /**
+   * Super Admin only: Update institution subscription / license / metadata.
+   */
+  router.patch('/:id', requireAuth(prisma, jwtSecret), requireRole('super_admin'), async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = req.params.id as string
+      const {
+        name,
+        nameBn,
+        status,
+        plan,
+        expiresAt,
+        maxStudents,
+        maxTeachers,
+        paymentStatus,
+        billingCycle,
+        storageMode,
+        serverUrl,
+        folderName,
+        phone,
+        email,
+        address,
+        startTime,
+        endTime,
+      } = req.body
+
+      const dataToUpdate: any = {}
+      if (name !== undefined) dataToUpdate.name = String(name)
+      if (nameBn !== undefined) dataToUpdate.nameBn = String(nameBn)
+      if (status !== undefined) dataToUpdate.status = String(status)
+      if (plan !== undefined) dataToUpdate.plan = String(plan)
+      if (expiresAt !== undefined) {
+        dataToUpdate.expiresAt = expiresAt ? new Date(expiresAt) : null
+      }
+      if (maxStudents !== undefined) dataToUpdate.maxStudents = Number(maxStudents)
+      if (maxTeachers !== undefined) dataToUpdate.maxTeachers = Number(maxTeachers)
+      if (paymentStatus !== undefined) dataToUpdate.paymentStatus = String(paymentStatus)
+      if (billingCycle !== undefined) dataToUpdate.billingCycle = String(billingCycle)
+      if (storageMode !== undefined) dataToUpdate.storageMode = String(storageMode)
+      if (serverUrl !== undefined) dataToUpdate.serverUrl = String(serverUrl)
+      if (folderName !== undefined) dataToUpdate.folderName = String(folderName)
+      if (phone !== undefined) dataToUpdate.phone = String(phone)
+      if (email !== undefined) dataToUpdate.email = String(email)
+      if (address !== undefined) dataToUpdate.address = String(address)
+      if (startTime !== undefined) dataToUpdate.startTime = String(startTime)
+      if (endTime !== undefined) dataToUpdate.endTime = String(endTime)
+
+      const updated = await prisma.school.update({
+        where: { id },
+        data: dataToUpdate,
+      })
+      res.json({ success: true, school: updated })
+    } catch (err) {
+      console.error('[schools] patch failed:', err instanceof Error ? err.message : err)
+      res.status(500).json({ error: 'Failed to update institution' })
+    }
+  })
+
+  /**
    * Super Admin only: Delete a school.
+   * Safety guard: Institutions with a super_admin user cannot be deleted.
    */
   router.delete('/:id', requireAuth(prisma, jwtSecret), requireRole('super_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = req.params.id as string
+
+      // Prevent deletion of institutions linked to super_admin users
+      const hasSuperAdmin = await prisma.user.findFirst({
+        where: { schoolId: id, role: 'super_admin' },
+      })
+      if (hasSuperAdmin) {
+        return res.status(403).json({ error: 'Super Admin institution cannot be deleted' })
+      }
+
       await prisma.school.delete({
         where: { id },
       })

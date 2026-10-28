@@ -9,6 +9,8 @@ interface Props {
   botToken: string
   chatId: string
   autoBackup: boolean
+  /** true = call Telegram directly from the browser (local-computer mode). */
+  direct: boolean
   onBotTokenChange: (token: string) => void
   onChatIdChange: (id: string) => void
   onAutoBackupChange: (enabled: boolean) => void
@@ -21,6 +23,7 @@ export const TelegramBackupSection: React.FC<Props> = ({
   botToken,
   chatId,
   autoBackup,
+  direct,
   onBotTokenChange,
   onChatIdChange,
   onAutoBackupChange,
@@ -46,7 +49,7 @@ export const TelegramBackupSection: React.FC<Props> = ({
     setTesting(true)
     setStatusMessage(null)
     try {
-      const res = await testTelegram(botToken.trim(), chatId.trim())
+      const res = await testTelegram(botToken.trim(), chatId.trim(), direct ? 'browser' : 'server')
       if (res.success) {
         setBotInfo(res.bot || null)
         setStatusMessage({
@@ -89,6 +92,7 @@ export const TelegramBackupSection: React.FC<Props> = ({
         schoolSlug,
         schoolName,
         includeLocalStores: true,
+        via: direct ? 'browser' : 'server',
       })
 
       if (res.success) {

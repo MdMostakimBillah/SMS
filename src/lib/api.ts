@@ -130,6 +130,15 @@ export interface PublicSchool {
   brandColor?: string | null
   package?: string
   status?: string
+  plan?: string
+  expiresAt?: string | null
+  maxStudents?: number
+  maxTeachers?: number
+  paymentStatus?: string
+  billingCycle?: string
+  storageMode?: string | null
+  serverUrl?: string | null
+  folderName?: string | null
   createdAt?: string
   email: string | null
   phone: string | null
@@ -267,8 +276,17 @@ export const authApi = {
         logo: item.logo || null,
         brandName: item.brandName || null,
         brandColor: item.brandColor || null,
-        package: item.package || 'Basic',
+        package: item.package || item.plan || 'Basic',
+        plan: item.plan || item.package || 'basic',
         status: item.status || 'active',
+        expiresAt: item.expiresAt || null,
+        maxStudents: item.maxStudents,
+        maxTeachers: item.maxTeachers,
+        paymentStatus: item.paymentStatus || 'paid',
+        billingCycle: item.billingCycle || 'monthly',
+        storageMode: item.storageMode || 'cloud',
+        serverUrl: item.serverUrl || '',
+        folderName: item.folderName || '',
         createdAt: item.createdAt || new Date().toISOString(),
         startTime: item.startTime || '07:30',
         endTime: item.endTime || '14:30',
@@ -277,6 +295,13 @@ export const authApi = {
     } catch {
       return []
     }
+  },
+
+  updateSchool: async (id: string, data: Partial<PublicSchool> & Record<string, any>) => {
+    return apiRequest<{ success: boolean; school?: any }>(`/api/schools/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
   },
 
   deleteSchool: async (id: string) => {

@@ -3,6 +3,7 @@ import { SettingsPanel } from '../components/SettingsPanel'
 import { useAppStore } from '@/store/appStore'
 import { useClassStore } from '@/store/classStore'
 import { StorageModeSection } from './backup/StorageModeSection'
+import { LocalVaultSection } from './backup/LocalVaultSection'
 import { LocalBackupSection } from './backup/LocalBackupSection'
 import { TelegramBackupSection } from './backup/TelegramBackupSection'
 
@@ -101,6 +102,9 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
           onFolderNameChange={handleFolderNameChange}
         />
 
+        {/* 1b. Local Data Vault (JSON files in a chosen folder) */}
+        {storageMode === 'local_computer' && <LocalVaultSection isBn={isBn} />}
+
         {/* 2. Local Computer Backup Fetcher */}
         <LocalBackupSection
           isBn={isBn}
@@ -116,6 +120,7 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
           botToken={botToken}
           chatId={chatId}
           autoBackup={autoBackup}
+          direct={storageMode === 'local_computer'}
           onBotTokenChange={handleBotTokenChange}
           onChatIdChange={handleChatIdChange}
           onAutoBackupChange={handleAutoBackupChange}

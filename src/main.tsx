@@ -7,9 +7,17 @@ import { TopLoadingBar } from './components/ui/TopLoadingBar'
 import './index.css'
 import './styles/premium-theme.css'
 import { cleanupOrphanedBaseKeys } from '@/lib/storage'
+import { vaultInit } from '@/lib/vault/vault'
+import { startAutoBackupScheduler } from '@/lib/vault/autoBackup'
+import { startLicenseHeartbeat } from '@/lib/licenseHeartbeat'
 import App from './App'
 
 cleanupOrphanedBaseKeys()
+// Reconnect the Local Data Vault (JSON folder) without blocking first render.
+void vaultInit()
+startAutoBackupScheduler()
+// Online license heartbeat (only when VITE_LICENSE_HEARTBEAT_URL is set).
+void startLicenseHeartbeat()
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN
 if (sentryDsn) {

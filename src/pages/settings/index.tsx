@@ -33,6 +33,7 @@ import { ActivityLogPanel } from './panels/ActivityLog'
 import { StaffPermissionsPanel } from './panels/StaffPermissions'
 import { RolesList } from './panels/RolesList'
 import { RoleEditor } from './panels/RoleEditor'
+import { LicensePanel } from './panels/LicensePanel'
 
 export default function Page() {
   const { user } = useAuth()
@@ -103,6 +104,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       { key: 'session-mgmt', icon: Calendar, iconBg: '#8b5cf615', iconColor: '#8b5cf6', title: 'Session Management', titleBn: 'সেশন ব্যবস্থাপনা', description: 'Manage academic sessions', descriptionBn: 'শৈক্ষিক সেশন পরিচালনা করুন' },
       { key: 'roles-permissions', icon: Shield, iconBg: '#6366f115', iconColor: '#6366f1', title: 'Roles & Permissions', titleBn: 'ভূমিকা ও অনুমতি', description: 'Manage roles and permission templates', descriptionBn: 'ভূমিকা ও অনুমতির টেমপ্লেট পরিচালনা করুন' },
       { key: 'staff-permissions', icon: Users, iconBg: '#10b98115', iconColor: '#10b981', title: 'Staff Access', titleBn: 'স্টাফ অ্যাক্সেস', description: 'Assign roles to teachers and staff', descriptionBn: 'শিক্ষক ও স্টাফকে ভূমিকা নির্ধারণ করুন' },
+      { key: 'license', icon: Key, iconBg: '#a855f715', iconColor: '#a855f7', title: 'License', titleBn: 'লাইসেন্স', description: 'Activate signed license key and manage expiry', descriptionBn: 'সইন করা লাইসেন্স কী সক্রিয় করুন ও মেয়াদ পরিচালনা করুন' },
     ],
   }
 
@@ -166,6 +168,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       case 'session-mgmt': return <SessionManagementPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'roles-permissions': return <RolesList isBn={isBn} onBack={() => setActivePanel(null)} onCreateRole={() => { setActivePanel(null); setCreatingRole(true) }} onEditRole={(id) => { setActivePanel(null); setEditingRoleId(id) }} />
       case 'staff-permissions': return <StaffPermissionsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
+      case 'license': return <LicensePanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'email-password': return <EmailPasswordPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'danger-zone': return <DangerZonePanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'bookmarks': return <BookmarkSettingsPanel isBn={isBn} onBack={() => setActivePanel(null)} />

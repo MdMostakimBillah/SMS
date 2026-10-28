@@ -4,12 +4,13 @@ import {
   Building2, Search, Filter, ChevronDown, ChevronUp,
   Users, GraduationCap, Calendar, Mail, Phone, Globe,
   MapPin, CheckCircle, XCircle, Pause, Clock,
-  CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check, Plus,
+  CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check, Plus, HardDrive,
 } from 'lucide-react'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { setSlug } from '@/lib/storage'
 import { authApi } from '@/lib/api'
+import { LicenseModal } from './modals/LicenseModal'
 
 function statusConfig(status: InstitutionStatus, isBn: boolean) {
   const map: Record<InstitutionStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -21,14 +22,18 @@ function statusConfig(status: InstitutionStatus, isBn: boolean) {
   return map[status]
 }
 
-function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
+function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLicense }: {
   inst: Institution
   isBn: boolean
   isSelected: boolean
   onToggle: () => void
   onOpen: () => void
+  onManageLicense: () => void
 }) {
   const status = statusConfig(inst.status, isBn)
+  const isExpired = inst.expiresAt ? new Date(inst.expiresAt).getTime() < Date.now() : false
+  const daysRemaining = inst.expiresAt ? Math.ceil((new Date(inst.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
+  const isSuperAdminSchool = inst.email === 'admin@edutech.local' || inst.slug === 'main' || inst.slug === 'superadmin'
 
   return (
     <div
@@ -53,7 +58,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">
               {isBn ? inst.nameBn : inst.name}
             </span>
@@ -64,6 +69,17 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
               {status.icon}
               {status.label}
             </span>
+            {inst.expiresAt && (
+              <span className={`px-1.5 py-0.5 rounded text-[0.625rem] font-semibold shrink-0 ${
+                isExpired
+                  ? 'bg-red-500/10 text-red-500'
+                  : daysRemaining !== null && daysRemaining <= 15
+                  ? 'bg-amber-500/10 text-amber-500'
+                  : 'bg-blue-500/10 text-blue-500'
+              }`}>
+                {isExpired ? (isBn ? 'মেয়াদ শেষ' : 'Expired') : `${daysRemaining}${isBn ? ' দিন বাকি' : 'd left'}`}
+              </span>
+            )}
           </div>
           <div className="text-[0.75rem] text-[var(--text-muted)] mt-0.5 truncate">{inst.email}</div>
         </div>
@@ -105,14 +121,24 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
             <InfoRow icon={<MapPin size={13} />} label={isBn ? 'ঠিকানা' : 'Address'} value={isBn ? inst.addressBn : inst.address} />
             <InfoRow icon={<Globe size={13} />} label={isBn ? 'ওয়েবসাইট' : 'Website'} value={`smsappbd.vercel.app/i/${inst.subdomain}`} />
             <InfoRow icon={<Shield size={13} />} label="EIIN" value={inst.eiin} />
+            <InfoRow
+              icon={<Clock size={13} />}
+              label={isBn ? 'মেয়াদ' : 'Expires'}
+              value={inst.expiresAt ? `${inst.expiresAt} (${daysRemaining !== null ? (isExpired ? (isBn ? 'মেয়াদ উত্তীর্ণ' : 'Expired') : `${daysRemaining} ${isBn ? 'দিন' : 'days'}`) : ''})` : (isBn ? 'লাইফটাইম' : 'Lifetime')}
+            />
+            <InfoRow
+              icon={<HardDrive size={13} />}
+              label={isBn ? 'স্টোরেজ' : 'Storage'}
+              value={inst.storageMode === 'local_computer' ? (isBn ? 'লোকাল পিসি' : 'Local Computer') : inst.storageMode === 'local_server' ? (isBn ? 'নিজস্ব সার্ভার' : 'Custom Server') : (isBn ? 'ক্লাউড' : 'EduTech Cloud')}
+            />
             <InfoRow icon={<CreditCard size={13} />} label={isBn ? 'মূল্য' : 'Price'} value={inst.package.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${inst.package.price}/${isBn ? 'মাস' : 'mo'}`} />
             <InfoRow icon={<Calendar size={13} />} label={isBn ? 'নিবন্ধন' : 'Created'} value={inst.createdAt} />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2 pt-1 flex-wrap">
             <button
-              className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-[var(--brand)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
+              className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-[var(--brand)] text-white hover:opacity-90 transition-all cursor-pointer border-none"
               onClick={(e) => {
                 e.stopPropagation()
                 onOpen()
@@ -122,32 +148,61 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen }: {
               {isBn ? 'ওপেন করুন' : 'Open Institution'}
             </button>
             <button
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-[var(--surface)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] border border-[var(--border)] transition-all cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation()
+                onManageLicense()
+              }}
+              title={isBn ? 'লাইসেন্স ও সাবস্ক্রিপশন নিয়ন্ত্রণ' : 'Manage License'}
+            >
+              <Shield size={13} className="text-[var(--brand)]" />
+              {isBn ? 'লাইসেন্স' : 'License'}
+            </button>
+            <button
               className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold transition-all cursor-pointer border-none ${
                 inst.status === 'active'
                   ? 'bg-red-500/10 text-red-500 hover:bg-red-500/15'
                   : 'bg-green-500/10 text-green-500 hover:bg-green-500/15'
               }`}
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation()
+                const nextStatus = inst.status === 'active' ? 'suspended' : 'active'
                 useSuperAdminStore.getState().toggleStatus(inst.id)
+                try {
+                  await authApi.updateSchool(inst.id, { status: nextStatus })
+                } catch {
+                  /* ignore */
+                }
               }}
+              title={inst.status === 'active' ? (isBn ? 'বন্ধ করুন' : 'Suspend') : (isBn ? 'সক্রিয় করুন' : 'Activate')}
             >
               {inst.status === 'active' ? <><Pause size={13} /></> : <><CheckCircle size={13} /></>}
             </button>
-            <button
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-red-500/10 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer border-none"
-              onClick={async (e) => {
-                e.stopPropagation()
-                useSuperAdminStore.getState().deleteInstitution(inst.id)
-                try {
-                  await authApi.deleteSchool(inst.id)
-                } catch {
-                  /* ignore backend error */
-                }
-              }}
-            >
-              <Trash2 size={13} />
-            </button>
+            {isSuperAdminSchool ? (
+              <div
+                className="flex items-center justify-center px-3 py-2.5 rounded-xl text-[0.75rem] bg-gray-500/10 text-gray-400 cursor-not-allowed"
+                title={isBn ? 'সুপার অ্যাডমিন ডিলিট করা সম্ভব নয়' : 'Super Admin institution cannot be deleted'}
+              >
+                <Lock size={13} />
+              </div>
+            ) : (
+              <button
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-red-500/10 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer border-none"
+                onClick={async (e) => {
+                  e.stopPropagation()
+                  if (confirm(isBn ? 'আপনি কি এই প্রতিষ্ঠানটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this institution?')) {
+                    useSuperAdminStore.getState().deleteInstitution(inst.id)
+                    try {
+                      await authApi.deleteSchool(inst.id)
+                    } catch {
+                      /* ignore backend error */
+                    }
+                  }
+                }}
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -222,6 +277,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
   } = useSuperAdminStore()
 
   const [showFilters, setShowFilters] = useState(false)
+  const [managingLicenseInst, setManagingLicenseInst] = useState<Institution | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -254,6 +310,10 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
               slug: sSlug,
               status: ((item as any).status as InstitutionStatus) || existing?.status || 'active',
               package: pkg,
+              expiresAt: item.expiresAt ? (item.expiresAt as string).split('T')[0] : existing?.expiresAt || null,
+              storageMode: item.storageMode || existing?.storageMode || 'cloud',
+              serverUrl: item.serverUrl || existing?.serverUrl || '',
+              folderName: item.folderName || existing?.folderName || '',
               createdAt: (item as any).createdAt
                 ? (item as any).createdAt.split('T')[0]
                 : existing?.createdAt || new Date().toISOString().split('T')[0],
@@ -422,10 +482,23 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
               isSelected={selectedId === inst.id}
               onToggle={() => setSelectedId(selectedId === inst.id ? null : inst.id)}
               onOpen={() => openInstitution(inst)}
+              onManageLicense={() => setManagingLicenseInst(inst)}
             />
           ))
         )}
       </div>
+
+      {managingLicenseInst && (
+        <LicenseModal
+          isOpen={true}
+          onClose={() => setManagingLicenseInst(null)}
+          inst={managingLicenseInst}
+          isBn={isBn}
+          onSaved={(updated) => {
+            useSuperAdminStore.getState().updateInstitution(managingLicenseInst.id, updated)
+          }}
+        />
+      )}
     </div>
   )
 }

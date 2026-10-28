@@ -12,6 +12,7 @@ import { mediaRouter } from './routes/media.js'
 import { schoolRouter } from './routes/schools.js'
 import { studentRouter } from './routes/students.js'
 import { backupRouter } from './routes/backup.js'
+import { licenseRouter } from './routes/license.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
@@ -22,9 +23,11 @@ export interface AppOptions {
   corsOrigin: string
   /** R2-backed media storage; null (media routes answer 503) when unconfigured. */
   storage?: MediaStorage | null
+  /** Secret used to verify signed license keys; empty string disables licensing. */
+  licenseSecret?: string
 }
 
-export function createApp({ prisma, jwtSecret, corsOrigin, storage = null }: AppOptions): Express {
+export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licenseSecret = '' }: AppOptions): Express {
   const app = express()
 
   const allowedOrigins = corsOrigin.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
@@ -67,6 +70,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null }: App
   app.use('/api/notices', noticeRouter(prisma, jwtSecret))
   app.use('/api/media', mediaRouter(prisma, jwtSecret, storage))
   app.use('/api/backup', backupRouter(prisma, jwtSecret))
+  app.use('/api/license', licenseRouter(licenseSecret))
 
   const sRouter = schoolRouter(prisma, jwtSecret)
   app.use('/api/schools', sRouter)

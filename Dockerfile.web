@@ -1,0 +1,28 @@
+# Frontend build for the Mode B self-host package.
+# Builds the Vite app with the license secret + heartbeat URL baked in, then
+# serves the static dist via nginx. Baked at build time (Vite inlines VITE_ vars),
+# so VITE_LICENSE_SECRET must be supplied as a build arg.
+
+FROM node:22-slim AS build
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+COPY . .
+
+ARG VITE_LOGIN_PATH=/login
+ARG VITE_LICENSE_SECRET=
+ARG VITE_LICENSE_HEARTBEAT_URL=/api/license/heartbeat
+ARG VITE_SENTRY_DSN=
+ENV VITE_LOGIN_PATH=${VITE_LOGIN_PATH} \
+    VITE_LICENSE_SECRET=${VITE_LICENSE_SECRET} \
+    VITE_LICENSE_HEARTBEAT_URL=${VITE_LICENSE_HEARTBEAT_URL} \
+    VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
+
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.selfhost.conf /etc/nginx/nginx.conf
+EXPOSE 80

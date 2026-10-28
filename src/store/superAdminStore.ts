@@ -34,6 +34,10 @@ export interface Institution {
   slug: string
   status: InstitutionStatus
   package: InstitutionPackage
+  expiresAt?: string | null
+  storageMode?: string
+  serverUrl?: string
+  folderName?: string
   createdAt: string
   lastLogin: string
   logo: string

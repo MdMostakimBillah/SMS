@@ -45,6 +45,7 @@ const registerInstitutionSchema = z.object({
   brandColor: z.string().max(30).optional().nullable(),
   adminEmail: z.string().email('Invalid admin email').max(254),
   adminPassword: z.string().min(8, 'Password must be at least 8 characters').max(128),
+  package: z.string().max(50).optional().nullable(),
   startTime: z.string().max(20).optional().nullable(),
   endTime: z.string().max(20).optional().nullable(),
 })
@@ -73,10 +74,13 @@ export interface PublicUser {
   schoolId: string | null
   schoolName: string | null
   schoolDomain?: string | null
+  schoolStatus?: string | null
+  schoolPlan?: string | null
+  schoolExpiresAt?: Date | null
   avatar: string | null
 }
 
-function toPublicUser(user: User & { school?: { name: string; domain?: string | null } | null }): PublicUser {
+function toPublicUser(user: User & { school?: { name: string; domain?: string | null; status?: string | null; plan?: string | null; expiresAt?: Date | null } | null }): PublicUser {
   return {
     id: user.id,
     email: user.email,
@@ -85,6 +89,9 @@ function toPublicUser(user: User & { school?: { name: string; domain?: string | 
     schoolId: user.schoolId,
     schoolName: user.school?.name ?? null,
     schoolDomain: user.school?.domain ?? null,
+    schoolStatus: user.school?.status ?? null,
+    schoolPlan: user.school?.plan ?? null,
+    schoolExpiresAt: user.school?.expiresAt ?? null,
     avatar: user.avatar,
   }
 }
@@ -146,6 +153,30 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         return res.status(401).json({ error: 'Invalid credentials' })
       }
 
+      // Check institution status and license validity (Super Admins bypass)
+      if (user.role !== 'super_admin' && user.school) {
+        if (user.school.status === 'suspended') {
+          return res.status(403).json({
+            error: 'This institution has been suspended by the Super Administrator. Please contact support.',
+            code: 'INSTITUTION_SUSPENDED',
+          })
+        }
+        if (user.school.status === 'inactive') {
+          return res.status(403).json({
+            error: 'This institution account is inactive. Please contact support.',
+            code: 'INSTITUTION_INACTIVE',
+          })
+        }
+        if (user.school.expiresAt && new Date(user.school.expiresAt).getTime() < Date.now()) {
+          const expDate = new Date(user.school.expiresAt).toISOString().split('T')[0]
+          return res.status(403).json({
+            error: `Subscription expired on ${expDate}. Please contact administrator to renew your license.`,
+            code: 'SUBSCRIPTION_EXPIRED',
+            expiresAt: user.school.expiresAt,
+          })
+        }
+      }
+
       await issueSession(res, user)
       res.json({ user: toPublicUser(user) })
     } catch (err) {
@@ -166,6 +197,14 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
       })
       if (!user || !user.isActive) {
         return res.status(401).json({ error: 'Authentication required' })
+      }
+      if (user.role !== 'super_admin' && user.school) {
+        if (user.school.status === 'suspended' || user.school.status === 'inactive') {
+          return res.status(403).json({ error: 'Institution is inactive or suspended', code: user.school.status })
+        }
+        if (user.school.expiresAt && new Date(user.school.expiresAt).getTime() < Date.now()) {
+          return res.status(403).json({ error: 'Institution subscription has expired', code: 'SUBSCRIPTION_EXPIRED' })
+        }
       }
       res.json({ user: toPublicUser(user) })
     } catch {
@@ -236,6 +275,9 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
             logo: parsed.data.logo || null,
             startTime: parsed.data.startTime?.trim() || '07:30',
             endTime: parsed.data.endTime?.trim() || '14:30',
+            status: 'trial',
+            plan: parsed.data.package?.toLowerCase() || 'basic',
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30-day initial trial
           },
         })
 

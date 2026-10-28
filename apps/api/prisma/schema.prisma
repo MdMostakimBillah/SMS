@@ -31,6 +31,13 @@ model School {
   storageMode String? @default("cloud") @map("storage_mode")
   serverUrl   String? @default("") @map("server_url")
   folderName  String? @default("") @map("folder_name")
+  status      String   @default("active")
+  plan        String   @default("basic")
+  expiresAt   DateTime? @map("expires_at")
+  maxStudents Int      @default(500) @map("max_students")
+  maxTeachers Int      @default(50) @map("max_teachers")
+  paymentStatus String @default("paid") @map("payment_status")
+  billingCycle  String @default("monthly") @map("billing_cycle")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

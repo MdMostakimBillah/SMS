@@ -1,4 +1,5 @@
 import { backupApi } from './api'
+import { telegramGetMe, sendBundleToTelegram } from './vault/telegram'
 
 export interface BackupMetadata {
   app: string
@@ -207,10 +208,16 @@ export function restoreLocalStores(bundle: BackupBundle, targetSlug?: string): v
   }
 }
 
+/** Transport used for Telegram calls: through the API server, or browser → Telegram directly. */
+export type TelegramTransport = 'server' | 'browser'
+
 /**
  * Test Telegram bot connection.
+ * - 'server': via the EduTech API (default)
+ * - 'browser': direct Bot API call — required when running fully local
  */
-export async function testTelegram(botToken?: string, chatId?: string) {
+export async function testTelegram(botToken?: string, chatId?: string, via: TelegramTransport = 'server') {
+  if (via === 'browser') return telegramGetMe(botToken || '')
   return backupApi.testTelegram({ botToken, chatId })
 }
 
@@ -224,8 +231,21 @@ export async function sendTelegramBackupNow(opts: {
   schoolName?: string
   schoolId?: string
   includeLocalStores?: boolean
+  via?: TelegramTransport
 }) {
   const localStores = opts.includeLocalStores !== false ? collectLocalStores(opts.schoolSlug) : undefined
+
+  if (opts.via === 'browser') {
+    if (!localStores) {
+      return { success: false as const, error: 'Local data bundle is required for browser-direct backup.' }
+    }
+    return sendBundleToTelegram({
+      botToken: opts.botToken,
+      chatId: opts.chatId,
+      bundle: localStores,
+      institutionName: opts.schoolName,
+    })
+  }
 
   return backupApi.sendTelegramBackup({
     botToken: opts.botToken,

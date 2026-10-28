@@ -1,0 +1,71 @@
+# Mode B — self-host package for an institution's VPS.
+#
+#   cp .env.selfhost.example .env   # then edit
+#   docker compose -f docker-compose.selfhost.yml up -d --build
+#
+# Builds the frontend (with the license secret + heartbeat URL baked in) and the
+# API, plus Postgres + Redis. Serves the app on :80. See SELF_HOST.md.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        VITE_LOGIN_PATH: ${VITE_LOGIN_PATH:-/login}
+        VITE_LICENSE_SECRET: ${LICENSE_SECRET:-}
+        VITE_LICENSE_HEARTBEAT_URL: /api/license/heartbeat
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql://edutech:${DB_PASSWORD:-changeme}@postgres:5432/edutech
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:-}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      LICENSE_SECRET: ${LICENSE_SECRET:-}
+      PORT: "3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: edutech
+      POSTGRES_USER: edutech
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edutech"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:

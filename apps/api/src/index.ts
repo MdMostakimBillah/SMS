@@ -21,6 +21,8 @@ if (JWT_SECRET.length < 32) {
   console.error('[FATAL] JWT_SECRET must be at least 32 characters')
   process.exit(1)
 }
+// License signing secret; empty string disables licensing enforcement.
+const LICENSE_SECRET = process.env.LICENSE_SECRET || process.env.VITE_LICENSE_SECRET || ''
 
 async function ensureSuperAdmin(prisma: PrismaClient) {
   const email = (process.env.SUPER_ADMIN_EMAIL || 'admin@edutech.local').toLowerCase()
@@ -57,7 +59,7 @@ const storage = createStorageFromEnv()
 if (!storage) {
   console.warn('[API] R2 media storage NOT configured — /api/media endpoints will answer 503')
 }
-const app = createApp({ prisma, jwtSecret: JWT_SECRET, corsOrigin: CORS_ORIGIN, storage })
+const app = createApp({ prisma, jwtSecret: JWT_SECRET, corsOrigin: CORS_ORIGIN, storage, licenseSecret: LICENSE_SECRET })
 
 const server = app.listen(PORT, () => {
   console.log(`[API] Server running on http://localhost:${PORT}`)
