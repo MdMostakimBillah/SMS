@@ -8,7 +8,8 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute, RoleProtectedRoute, ViewingRoute } from '@/components/ProtectedRoute'
 import { AuthRoute } from '@/components/AuthRoute'
 import { DashboardRoute } from '@/components/DashboardRoute'
-import { getLoginRoute, getLoginSecret } from '@/lib/loginPath'
+import { getLoginRoute } from '@/lib/loginPath'
+import { UnknownRoute } from '@/components/UnknownRoute'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
@@ -60,7 +61,6 @@ const AccountingReportPage = lazyWithRetry(() => import('@/pages/accounting-repo
 const MessagesPage = lazyWithRetry(() => import('@/pages/messages'))
 const NoticeBoardPage = lazyWithRetry(() => import('@/pages/notice'))
 const NotificationsPage = lazyWithRetry(() => import('@/pages/notifications'))
-const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFound'))
 const SettingsPage = lazyWithRetry(() => import('@/pages/settings'))
 
 function P({ name }: { name: string }) {
@@ -145,19 +145,16 @@ function AppContent() {
         </Route>
 
         <Route element={<AuthRoute />}>
-          {/* Super-admin login is served only on the active secret path.
-              When no secret is configured, fall back to /super-admin/login. */}
-          {!getLoginSecret() && (
-            <Route path="/super-admin/login" element={<F><LoginPage /></F>} />
-          )}
+          {/* Super-admin login is served ONLY on the active secret path.
+              No /super-admin/login fallback exists. */}
           {/* Dynamic secret login route: /{secret}/login. LoginPage validates
               the path segment against the active secret, so any other segment
               renders a 404 instead of the login form. */}
           <Route path="/:loginSecret/login" element={<F><LoginPage /></F>} />
           <Route path="/superadmin/login" element={<Navigate to={getLoginRoute()} replace />} />
           <Route path="/superadmin" element={<Navigate to={getLoginRoute()} replace />} />
-          <Route path="/login" element={<F><LoginPage /></F>} />
-          <Route path="/admin/login" element={<F><LoginPage /></F>} />
+          <Route path="/login" element={<Navigate to={getLoginRoute()} replace />} />
+          <Route path="/admin/login" element={<Navigate to={getLoginRoute()} replace />} />
           <Route path="/register" element={<F><InstitutionRegister /></F>} />
           <Route path="/" element={<Navigate to="/register" replace />} />
           <Route path="/dashboard" element={<DashboardRoute />} />
@@ -274,7 +271,7 @@ function AppContent() {
           </Route>
         </Route>
 
-        <Route path="*" element={<F><NotFoundPage /></F>} />
+        <Route path="*" element={<F><UnknownRoute /></F>} />
       </Routes>
     </AuthProvider>
   )

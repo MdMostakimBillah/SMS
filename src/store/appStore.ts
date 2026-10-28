@@ -1,7 +1,20 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Theme, Language } from '@/types'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getStorageKey } from '@/lib/storage'
+import {
+  createNamespacedStorage,
+  registerStoreReset,
+  registerStoreLoad,
+  getStorageKey,
+} from '@/lib/storage'
+import {
+  parseLicenseKey,
+  licenseStatus,
+  isEnforcementReadOnly,
+  type LicenseStatus,
+  GRACE_PERIOD_MS,
+} from '@/lib/license'
+import { registerWriteGuard } from '@/lib/writeGuard'
 
 interface PageVisit {
   path: string
@@ -48,6 +61,13 @@ interface SettingsState {
     serverUrl?: string
     folderName?: string
   }
+  licenseKey: string
+  licenseStatus: LicenseStatus
+  licenseExpiresAt?: string
+  graceEndsAt?: string
+  lastHeartbeatAt?: string
+  heartbeatStatus?: string
+  readOnly: boolean
 }
 
 interface AppState {
@@ -82,6 +102,12 @@ interface AppState {
   setQuickAccessCardsOrder: (order: string[]) => void
   updateSettings: (partial: Partial<SettingsState>) => void
   setTwoFactorEnabled: (enabled: boolean) => void
+  /** Activate a signed license key and recompute enforcement status. */
+  setLicenseKey: (key: string) => void
+  /** Re-validate the current license key (signature + expiry + grace). */
+  validateLicense: () => void
+  /** Called by the license heartbeat when a server is reachable. */
+  setLicenseHeartbeat: (status: string, payload?: { expiresAt?: string; graceEndsAt?: string }) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -131,6 +157,9 @@ export const useAppStore = create<AppState>()(
           serverUrl: '',
           folderName: '',
         },
+        licenseKey: '',
+        licenseStatus: 'unlicensed',
+        readOnly: false,
       },
 
       setTheme: (theme) => {
@@ -205,6 +234,38 @@ export const useAppStore = create<AppState>()(
 
       setTwoFactorEnabled: (enabled) =>
         set((state) => ({ settings: { ...state.settings, twoFactorEnabled: enabled } })),
+
+      /** Activate a signed license key and recompute enforcement status. */
+      setLicenseKey: (key: string) => {
+        set((state) => ({
+          settings: { ...state.settings, licenseKey: key, readOnly: false },
+        }))
+        void validateLicenseState(key)
+      },
+
+      /** Re-validate the current license key (signature + expiry + grace). */
+      validateLicense: () => void validateLicenseState(useAppStore.getState().settings.licenseKey),
+
+      /** Called by the license heartbeat when a server is reachable. */
+      setLicenseHeartbeat: (status: string, payload?: { expiresAt?: string; graceEndsAt?: string }) =>
+        set((state) => {
+          const s = state.settings
+          const next: LicenseStatus =
+            status === 'valid' || status === 'grace' || status === 'expired'
+              ? status
+              : s.licenseStatus
+          return {
+            settings: {
+              ...s,
+              licenseStatus: next,
+              lastHeartbeatAt: new Date().toISOString(),
+              heartbeatStatus: status,
+              ...(payload?.expiresAt ? { licenseExpiresAt: payload.expiresAt } : {}),
+              ...(payload?.graceEndsAt ? { graceEndsAt: payload.graceEndsAt } : {}),
+              readOnly: isEnforcementReadOnly(next),
+            },
+          }
+        }),
     }),
     {
       name: 'edutech-settings',
@@ -227,6 +288,48 @@ export const useAppStore = create<AppState>()(
     }
   )
 )
+
+/**
+ * Validate the active license key and persist enforcement status.
+ * Runs on activation and on every app start so an expired license enforces
+ * read-only even without a server heartbeat.
+ */
+function validateLicenseState(key: string): void {
+  const { settings } = useAppStore.getState()
+  if (!key || !key.trim()) {
+    useAppStore.setState({
+      settings: {
+        ...settings,
+        licenseStatus: 'unlicensed',
+        licenseExpiresAt: undefined,
+        graceEndsAt: undefined,
+        readOnly: false,
+      },
+    })
+    return
+  }
+  const { signatureValid, payload } = parseLicenseKey(key)
+  if (!signatureValid || !payload) {
+    useAppStore.setState({
+      settings: {
+        ...settings,
+        licenseStatus: 'expired',
+        readOnly: true,
+      },
+    })
+    return
+  }
+  const status = licenseStatus(payload)
+  useAppStore.setState({
+    settings: {
+      ...settings,
+      licenseStatus: status,
+      licenseExpiresAt: new Date(payload.expiresAt).toISOString(),
+      graceEndsAt: new Date(payload.expiresAt + GRACE_PERIOD_MS).toISOString(),
+      readOnly: isEnforcementReadOnly(status),
+    },
+  })
+}
 
 registerStoreReset(() => {
   useAppStore.setState({ sidebarOpen: false })
@@ -254,3 +357,11 @@ registerStoreLoad(() => {
     }
   } catch { /* ignore */ }
 })
+
+// Block localStorage writes once the license expires past its grace period.
+registerWriteGuard(() => !useAppStore.getState().settings.readOnly)
+
+// Re-validate any persisted license on startup so read-only enforcement works
+// even for institutions that never reach a heartbeat server.
+const initialLicenseKey = useAppStore.getState().settings.licenseKey
+if (initialLicenseKey) validateLicenseState(initialLicenseKey)

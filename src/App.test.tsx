@@ -76,13 +76,13 @@ describe('App login-route registration (VITE_LOGIN_PATH wiring)', () => {
     expect(await screen.findByPlaceholderText('admin@example.com')).toBeInTheDocument()
   })
 
-  it('does not mount the login form on an unrelated path (wildcard → 404 page)', async () => {
+  it('redirects unauthenticated users to /register on unknown path', async () => {
     render(
       <MemoryRouter initialEntries={['/definitely-not-a-login-route']}>
         <App />
       </MemoryRouter>
     )
-    expect(await screen.findByText(/Page not found/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Page not found/i)).not.toBeInTheDocument()
     expect(screen.queryByPlaceholderText('admin@example.com')).not.toBeInTheDocument()
   })
 })
