@@ -151,16 +151,56 @@ export default function InstitutionRegister() {
   const isPasswordValid = form.adminPassword.length > 0 && passwordValidation.every((r) => r.met)
 
   const subdomainSlug = form.subdomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
-  const subdomainTaken = institutions.some((i) => i.subdomain === subdomainSlug && subdomainSlug.length > 0)
+  const [dbSubdomainTaken, setDbSubdomainTaken] = useState(false)
+  const [isCheckingSubdomain, setIsCheckingSubdomain] = useState(false)
+
+  useEffect(() => {
+    if (!subdomainSlug || subdomainSlug.length < 2) {
+      setDbSubdomainTaken(false)
+      setIsCheckingSubdomain(false)
+      return
+    }
+
+    if (institutions.some((i) => (i.subdomain === subdomainSlug || i.slug === subdomainSlug) && subdomainSlug.length > 0)) {
+      setDbSubdomainTaken(true)
+      setIsCheckingSubdomain(false)
+      return
+    }
+
+    let active = true
+    setIsCheckingSubdomain(true)
+    const timer = setTimeout(() => {
+      authApi
+        .checkSubdomain(subdomainSlug)
+        .then((available) => {
+          if (!active) return
+          setDbSubdomainTaken(!available)
+          setIsCheckingSubdomain(false)
+        })
+        .catch(() => {
+          if (!active) return
+          setIsCheckingSubdomain(false)
+        })
+    }, 300)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [subdomainSlug, institutions])
+
+  const subdomainTaken =
+    dbSubdomainTaken ||
+    institutions.some((i) => (i.subdomain === subdomainSlug || i.slug === subdomainSlug) && subdomainSlug.length > 0)
 
   const canNext = useMemo(() => {
     switch (STEPS[step]?.key) {
       case 'name': return form.name.trim().length > 0 && !hasEmoji(form.name)
-      case 'url': return subdomainSlug.length >= 3 && !subdomainTaken
+      case 'url': return subdomainSlug.length >= 2 && !subdomainTaken && !isCheckingSubdomain
       case 'admin': return form.adminEmail.includes('@') && emailVerified && isPasswordValid
       default: return true
     }
-  }, [step, form, subdomainSlug, subdomainTaken, emailVerified, isPasswordValid])
+  }, [step, form, subdomainSlug, subdomainTaken, isCheckingSubdomain, emailVerified, isPasswordValid])
 
   const toggleTheme = () => {
     const next = isDark ? 'light' : 'dark'
@@ -557,12 +597,39 @@ export default function InstitutionRegister() {
                       isDark={isDark}
                       isBn={isBn}
                       taken={subdomainTaken}
+                      isChecking={isCheckingSubdomain}
                     />
-                    {form.subdomain && (
-                      <p className={`text-[0.75rem] mt-2.5 ml-1 ${subdomainTaken ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
-                        {subdomainTaken
-                          ? (isBn ? 'এই সাবডোমেইন ইতিমধ্যে ব্যবহৃত' : 'This subdomain is already taken')
-                          : (isBn ? 'ব্যবহারযোগ্য' : 'Available')}
+                    {form.subdomain.length > 0 && (
+                      <p className={`text-[0.75rem] mt-2.5 ml-1 flex items-center gap-1.5 ${
+                        isCheckingSubdomain
+                          ? 'text-[var(--text-muted)]'
+                          : subdomainSlug.length < 2
+                          ? 'text-[var(--red)]'
+                          : subdomainTaken
+                          ? 'text-[var(--red)]'
+                          : 'text-[var(--green)]'
+                      }`}>
+                        {isCheckingSubdomain ? (
+                          <>
+                            <span className="w-2.5 h-2.5 rounded-full border-2 border-current border-t-transparent animate-spin shrink-0" />
+                            <span>{isBn ? 'ডাটাবেজে যাচাই করা হচ্ছে...' : 'Checking database availability...'}</span>
+                          </>
+                        ) : subdomainSlug.length < 2 ? (
+                          <>
+                            <span>✕</span>
+                            <span>{isBn ? 'সাবডোমেইন কমপক্ষে ২ অক্ষরের হতে হবে' : 'Subdomain must be at least 2 characters'}</span>
+                          </>
+                        ) : subdomainTaken ? (
+                          <>
+                            <span>✕</span>
+                            <span>{isBn ? 'এই সাবডোমেইন ইতিমধ্যে ব্যবহৃত' : 'This subdomain is already taken in database'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>✓</span>
+                            <span>{isBn ? 'ব্যবহারযোগ্য' : 'Available'}</span>
+                          </>
+                        )}
                       </p>
                     )}
                   </div>
@@ -760,8 +827,8 @@ export default function InstitutionRegister() {
 }
 
 /* ─── Subdomain Input (floating label with suffix) ─── */
-function SubdomainInput({ value, onChange, isDark, isBn, taken }: {
-  value: string; onChange: (v: string) => void; isDark: boolean; isBn: boolean; taken: boolean
+function SubdomainInput({ value, onChange, isDark, isBn, taken, isChecking }: {
+  value: string; onChange: (v: string) => void; isDark: boolean; isBn: boolean; taken: boolean; isChecking?: boolean
 }) {
   const [focused, setFocused] = useState(false)
 
@@ -784,6 +851,11 @@ function SubdomainInput({ value, onChange, isDark, isBn, taken }: {
           onBlur={() => setFocused(false)}
           className={`flex-1 min-w-0 h-full px-3.5 bg-transparent border-none outline-none text-[0.875rem] ${isDark ? 'text-white placeholder:text-white/20' : 'text-[var(--text-primary)] placeholder:text-[var(--text-muted)]'}`}
         />
+        {isChecking && (
+          <span className="pr-3 flex items-center shrink-0">
+            <span className="w-4 h-4 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
+          </span>
+        )}
       </div>
     </div>
   )

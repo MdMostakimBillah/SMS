@@ -939,14 +939,39 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
   const [slug, setSlug] = useState(value)
   const [available, setAvailable] = useState<boolean | null>(null)
   const [copied, setCopied] = useState(false)
+  const checkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const checkAvailability = (v: string) => {
     setSlug(v)
     onChange(v)
-    if (!v.trim()) { setAvailable(null); return }
-    const taken = institutions.some((inst) => inst.subdomain === v.toLowerCase())
-    setAvailable(!taken)
+    if (!v.trim() || v.trim().length < 2) {
+      setAvailable(null)
+      return
+    }
+    const taken = institutions.some((inst) => inst.subdomain === v.toLowerCase() || inst.slug === v.toLowerCase())
+    if (taken) {
+      setAvailable(false)
+      return
+    }
+    setAvailable(null)
+    if (checkTimerRef.current) clearTimeout(checkTimerRef.current)
+    checkTimerRef.current = setTimeout(() => {
+      authApi
+        .checkSubdomain(v.toLowerCase())
+        .then((isAvail) => {
+          setAvailable(isAvail)
+        })
+        .catch(() => {
+          setAvailable(true)
+        })
+    }, 300)
   }
+
+  useEffect(() => {
+    return () => {
+      if (checkTimerRef.current) clearTimeout(checkTimerRef.current)
+    }
+  }, [])
 
   const displayUrl = slug ? `${BASE_URL}/i/${slug}` : `${BASE_URL}`
 

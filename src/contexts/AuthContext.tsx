@@ -11,6 +11,8 @@ interface User {
   schoolName: string | null
   avatar: string | null
   subdomain: string | null
+  schoolDomain?: string | null
+  school?: any
   staffId?: string
   photo?: string | null
 }
@@ -117,6 +119,8 @@ function serverUserToUser(u: SessionUser): User {
     schoolName: u.schoolName,
     avatar: u.avatar,
     subdomain: u.schoolDomain || null,
+    schoolDomain: u.schoolDomain || null,
+    school: u.school || null,
     photo: u.avatar,
   }
 }

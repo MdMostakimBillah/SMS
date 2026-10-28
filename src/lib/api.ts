@@ -71,6 +71,7 @@ export interface SessionUser {
   schoolName: string | null
   schoolDomain?: string | null
   avatar: string | null
+  school?: any
 }
 
 export interface AuthResponse {
@@ -309,6 +310,22 @@ export const authApi = {
       }
     }
     return { school: null }
+  },
+
+  checkSubdomain: async (slug: string): Promise<boolean> => {
+    const clean = slug.trim().toLowerCase()
+    if (!clean || clean.length < 2) return false
+    try {
+      const res = await apiRequest<{ available: boolean }>(`/api/schools/check-subdomain/${encodeURIComponent(clean)}`)
+      return !!res?.available
+    } catch {
+      try {
+        const res = await authApi.getPublicSchool(clean)
+        return !res?.school
+      } catch {
+        return true
+      }
+    }
   },
 
   getSchools: async () => {

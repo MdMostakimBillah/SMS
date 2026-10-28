@@ -83,6 +83,28 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
   })
 
   /**
+   * Check if a subdomain / slug is available in the database.
+   */
+  router.get('/check-subdomain/:slug', async (req: Request, res: Response) => {
+    try {
+      const rawSlug = req.params.slug
+      const str = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug
+      const slug = (str || '').trim().toLowerCase()
+      if (!slug || slug.length < 2) {
+        return res.status(400).json({ available: false, error: 'Subdomain must be at least 2 characters' })
+      }
+      const existing = await prisma.school.findFirst({
+        where: { domain: slug },
+        select: { id: true },
+      })
+      res.json({ available: !existing })
+    } catch (err) {
+      console.error('[schools] check-subdomain failed:', err instanceof Error ? err.message : err)
+      res.status(500).json({ available: false, error: 'Internal server error' })
+    }
+  })
+
+  /**
    * List all schools in the system.
    * Accessible by Super Admin with authentication, or returns public school directory.
    */
