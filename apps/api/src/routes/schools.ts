@@ -311,8 +311,17 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         return res.status(403).json({ error: 'Super Admin institution cannot be deleted' })
       }
 
-      await prisma.school.delete({
-        where: { id },
+      await prisma.$transaction(async (tx) => {
+        // Cascade delete users belonging to this school (except super_admin)
+        await tx.session.deleteMany({
+          where: { user: { schoolId: id, role: { not: 'super_admin' } } },
+        })
+        await tx.user.deleteMany({
+          where: { schoolId: id, role: { not: 'super_admin' } },
+        })
+        await tx.school.delete({
+          where: { id },
+        })
       })
       res.json({ success: true })
     } catch (err) {

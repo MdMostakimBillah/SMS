@@ -135,7 +135,6 @@ export default function InstitutionRegister() {
   const [emailCodeInput, setEmailCodeInput] = useState('')
   const [sendingCode, setSendingCode] = useState(false)
   const [emailError, setEmailError] = useState('')
-  const [simulated, setSimulated] = useState(false)
   const [resendTimer, setResendTimer] = useState(0)
 
   const [created, setCreated] = useState(false)
@@ -242,22 +241,46 @@ export default function InstitutionRegister() {
   }
 
   const sendOtp = async () => {
-    if (!form.adminEmail.includes('@')) return
+    const email = form.adminEmail.trim().toLowerCase()
+    if (!email || !email.includes('@')) {
+      setEmailError(isBn ? 'অনুগ্রহ করে সঠিক ইমেইল ঠিকানা দিন' : 'Please enter a valid email address')
+      return
+    }
     setSendingCode(true)
     setEmailError('')
+
+    // Check if email already exists in the database
+    try {
+      const check = await authApi.checkEmail(email)
+      if (!check.available) {
+        setSendingCode(false)
+        setEmailError(
+          check.error ||
+          (isBn ? 'এই ইমেইলটি ইতিমধ্যে নিবন্ধিত রয়েছে। অনুগ্রহ করে অন্য ইমেইল ব্যবহার করুন।' : 'This email is already registered. Please use another email.')
+        )
+        return
+      }
+    } catch {
+      // Continue if network check fails
+    }
+
     const code = Array.from({ length: 6 }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]).join('')
     setEmailCode(code)
-    const result = await sendVerificationCode(form.adminEmail, code)
+    const result = await sendVerificationCode(email, code)
     setSendingCode(false)
-    if (result.success) {
-      setSimulated(result.simulated)
+    if (result.success && !result.simulated) {
       setEmailSent(true)
-      setResendTimer(300)
+      setResendTimer(60)
+      setEmailError('')
     } else {
-      // Email failed — show code on screen as fallback so user can proceed
-      setSimulated(true)
-      setEmailSent(true)
+      // Email not sent — do not expose demo code
+      setEmailSent(false)
+      setEmailCode('')
       setResendTimer(0)
+      setEmailError(
+        result.error ||
+        (isBn ? 'যাচাইকরণ ইমেইল পাঠানো সম্ভব হয়নি। অনুগ্রহ করে পুনরায় চেষ্টা করুন।' : 'Failed to send verification email. Please try again.')
+      )
     }
   }
 
@@ -742,21 +765,25 @@ export default function InstitutionRegister() {
                       {!emailVerified && (
                         <button onClick={sendOtp} disabled={sendingCode || !form.adminEmail.includes('@') || (emailSent && resendTimer > 0)}
                           className="h-12 px-5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-none cursor-pointer disabled:opacity-50 whitespace-nowrap transition-all hover:opacity-90 flex items-center justify-center">
-                          {emailSent && resendTimer > 0
-                            ? `${Math.floor(resendTimer / 60)}:${String(resendTimer % 60).padStart(2, '0')}`
-                            : isBn ? 'কোড পাঠান' : 'Send Code'}
+                          {sendingCode
+                            ? (isBn ? 'পাঠানো হচ্ছে...' : 'Sending...')
+                            : emailSent && resendTimer > 0
+                              ? `${Math.floor(resendTimer / 60)}:${String(resendTimer % 60).padStart(2, '0')}`
+                              : emailSent
+                                ? (isBn ? 'পুনরায় পাঠান' : 'Resend Code')
+                                : (isBn ? 'কোড পাঠান' : 'Send Code')}
                         </button>
                       )}
                     </div>
+                    {emailError && (
+                      <p className="text-[0.75rem] text-[var(--red)] mt-2">{emailError}</p>
+                    )}
                     {emailSent && !emailVerified && (
                       <div className="mt-4 space-y-3">
-                        {simulated && (
-                          <div className="px-3 py-2 rounded-lg bg-[var(--brand)]/5 border border-[var(--brand)]/10 text-[0.75rem] text-[var(--brand)]">
-                            {isBn ? 'ডেমো মোড: কোড হলো' : 'Demo mode: Your code is'} <strong>{emailCode}</strong>
-                          </div>
-                        )}
+                        <p className="text-[0.75rem] text-[var(--text-muted)] text-center">
+                          {isBn ? `${form.adminEmail}-এ ৬ ডিজিট কোড পাঠানো হয়েছে` : `A 6-digit code was sent to ${form.adminEmail}`}
+                        </p>
                         <OtpInput length={6} value={emailCodeInput} onChange={setEmailCodeInput} isDark={isDark} />
-                        {emailError && <p className="text-[0.75rem] text-[var(--red)] text-center">{emailError}</p>}
                         {emailCodeInput.length < 6 && (
                           <p className="text-[0.75rem] text-[var(--text-muted)] text-center">
                             {isBn ? '৬ ডিজিট কোড লিখুন' : 'Enter 6-digit code to verify'}

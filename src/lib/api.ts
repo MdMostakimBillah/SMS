@@ -330,6 +330,17 @@ export const authApi = {
     }
   },
 
+  checkEmail: async (email: string): Promise<{ available: boolean; error?: string }> => {
+    const clean = email.trim().toLowerCase()
+    if (!clean || !clean.includes('@')) return { available: false, error: 'Invalid email' }
+    try {
+      const res = await apiRequest<{ available: boolean; error?: string }>(`/api/auth/check-email?email=${encodeURIComponent(clean)}`)
+      return { available: !!res?.available, error: res?.error }
+    } catch (err: any) {
+      return { available: false, error: err?.message || 'Email check failed' }
+    }
+  },
+
   getSchools: async () => {
     try {
       const res = await apiRequest<any>('/api/schools')

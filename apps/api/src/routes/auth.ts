@@ -251,6 +251,47 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
   })
 
   /**
+   * Check if an admin email is available in the database before sending OTP.
+   */
+  router.get('/check-email', async (req: Request, res: Response) => {
+    try {
+      const email = ((req.query.email as string) || '').trim().toLowerCase()
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ available: false, error: 'Valid email address is required' })
+      }
+
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true, role: true, schoolId: true },
+      })
+
+      if (!existingUser) {
+        return res.json({ available: true })
+      }
+
+      if (existingUser.role === 'super_admin') {
+        return res.json({ available: false, error: 'This email is reserved for system administration' })
+      }
+
+      if (existingUser.schoolId) {
+        const activeSchool = await prisma.school.findUnique({
+          where: { id: existingUser.schoolId },
+          select: { id: true, name: true },
+        })
+        if (activeSchool) {
+          return res.json({ available: false, error: 'Admin email is already registered to an institution' })
+        }
+      }
+
+      // Orphan user without an active school -> available for re-registration
+      return res.json({ available: true })
+    } catch (err) {
+      console.error('[auth] check-email failed:', err instanceof Error ? err.message : err)
+      res.status(500).json({ available: false, error: 'Internal server error' })
+    }
+  })
+
+  /**
    * Institution Registration — creates a new School tenant and its primary
    * School Admin user atomically in the database.
    */
@@ -280,7 +321,21 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         where: { email: adminEmail },
       })
       if (existingUser) {
-        return res.status(409).json({ error: 'Admin email is already registered' })
+        if (existingUser.role === 'super_admin') {
+          return res.status(409).json({ error: 'This email is reserved for system administration' })
+        }
+        if (existingUser.schoolId) {
+          const activeSchool = await prisma.school.findUnique({
+            where: { id: existingUser.schoolId },
+            select: { id: true },
+          })
+          if (activeSchool) {
+            return res.status(409).json({ error: 'Admin email is already registered' })
+          }
+        }
+        // Orphan user from a previously deleted school -> clean up to allow registration
+        await prisma.session.deleteMany({ where: { userId: existingUser.id } })
+        await prisma.user.delete({ where: { id: existingUser.id } })
       }
 
       const passwordHash = await hash(parsed.data.adminPassword, ARGON2_OPTIONS)
