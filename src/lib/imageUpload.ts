@@ -63,11 +63,12 @@ export function dataUrlBytes(dataUrl: string): number {
  */
 export async function compressImageWithinLimit(
   file: File,
-  opts: { maxDim?: number } = {}
+  opts: { maxDim?: number; maxBytes?: number } = {}
 ): Promise<CompressResult> {
+  const limit = opts.maxBytes ?? MAX_IMAGE_BYTES
   // Already inside the cap — keep the original bytes, since re-encoding a file
   // that already fits can only lose quality.
-  if (file.size <= MAX_IMAGE_BYTES) {
+  if (file.size <= limit) {
     return { ok: true, dataUrl: await readAsDataURL(file), bytes: file.size }
   }
 
@@ -86,7 +87,7 @@ export async function compressImageWithinLimit(
     for (const [type, quality] of attempts) {
       const dataUrl = canvas.toDataURL(type, quality)
       const bytes = dataUrlBytes(dataUrl)
-      if (bytes <= MAX_IMAGE_BYTES) return { ok: true, dataUrl, bytes }
+      if (bytes <= limit) return { ok: true, dataUrl, bytes }
     }
   }
 

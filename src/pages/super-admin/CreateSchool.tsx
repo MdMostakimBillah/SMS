@@ -11,10 +11,10 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
-import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
+import { compressImageWithinLimit } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 import { withSlug } from '@/lib/storage'
-import { authApi } from '@/lib/api'
+import { authApi, ApiError } from '@/lib/api'
 
 const btnBounce = `animate-[btnBounce_0.35s_cubic-bezier(0.34,1.56,0.64,1)]`
 
@@ -148,6 +148,9 @@ export default function CreateSchool() {
   const [newSession, setNewSession] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [created, setCreated] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [createError, setCreateError] = useState('')
+  const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(null)
   const [exiting, setExiting] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [emailCode, setEmailCode] = useState('')
@@ -191,12 +194,12 @@ export default function CreateSchool() {
   const canNext = useMemo(() => {
     if (!currentSection) return true
     switch (currentSection.key) {
-      case 'basic': return form.name.trim().length > 0 && !hasEmoji(form.name) && form.subdomain.trim().length > 0
+      case 'basic': return form.name.trim().length > 0 && !hasEmoji(form.name) && form.subdomain.trim().length >= 2 && subdomainAvailable === true
       case 'academic': return form.sessions.length > 0
       case 'admin': return form.adminEmail.trim().length > 0 && emailVerified && isPasswordValid
       default: return true
     }
-  }, [currentSection, form, emailVerified, isPasswordValid])
+  }, [currentSection, form, emailVerified, isPasswordValid, subdomainAvailable])
 
   useEffect(() => {
     const t = setTimeout(() => inputRef.current?.focus(), 150)
@@ -254,6 +257,9 @@ export default function CreateSchool() {
   }, [])
 
   const handleCreate = async () => {
+    setSubmitting(true)
+    setCreateError('')
+
     const subdomain = form.subdomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
     const slug = subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
 
@@ -268,6 +274,8 @@ export default function CreateSchool() {
         subdomain: slug,
         slug,
         package: form.package.name,
+        plan: form.package.name.toLowerCase(),
+        status: 'active',
         email: form.email?.trim() || undefined,
         phone: form.phone?.trim() || undefined,
         address: form.address?.trim() || undefined,
@@ -290,8 +298,16 @@ export default function CreateSchool() {
         serverLogo = res.school?.logo || null
         serverBanner = res.school?.banner || null
       }
-    } catch {
-      // Backend error or offline — still save to local store
+    } catch (err: unknown) {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : isBn
+          ? 'নিবন্ধন ব্যর্থ হয়েছে। অনুগ্রহ করে তথ্য যাচাই করে আবার চেষ্টা করুন।'
+          : 'Registration failed. Please check the details and try again.'
+      setCreateError(msg)
+      setSubmitting(false)
+      return
     }
 
     const inst: Institution = {
@@ -335,6 +351,7 @@ export default function CreateSchool() {
     // sessions and start time as well.
     withSlug(inst.slug, () => loadInstitutionData(inst, { fresh: true }))
 
+    setSubmitting(false)
     setCreated(true)
     setTimeout(() => navigate('/super-admin/schools'), 1500)
   }
@@ -422,7 +439,13 @@ export default function CreateSchool() {
                     <FieldInput label={isBn ? 'বাংলায় নাম' : 'Bengali Name'} value={form.nameBn} onChange={(v) => set('nameBn', hasEmoji(v) ? v.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '') : v)} placeholder={isBn ? 'যেমন: সানরাইজ একাডেমি' : 'e.g. সানরাইজ একাডেমি'} hint={isBn ? 'বাংলা লিপিতে স্কুলের নাম' : 'School name in Bengali script'} />
                     <FieldInput label={isBn ? 'ব্র্যান্ড নাম' : 'Brand Name'} value={form.brandName} onChange={(v) => set('brandName', hasEmoji(v) ? v.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, '') : v)} placeholder={isBn ? 'যেমন: EduTech' : 'e.g. EduTech'} hint={isBn ? 'সিস্টেমের জন্য ছোট ব্র্যান্ড নাম' : 'Short brand name for the system'} />
                     <FieldInput label="EIIN" value={form.eiin} onChange={(v) => set('eiin', v)} placeholder="123456" hint={isBn ? 'শিক্ষা প্রতিষ্ঠান শনাক্তকরণ নম্বর' : 'Education Institution Identification Number'} />
-                    <SubdomainInput value={form.subdomain} onChange={(v) => set('subdomain', v)} institutions={institutions} isBn={isBn} />
+                    <SubdomainInput
+                      value={form.subdomain}
+                      onChange={(v) => set('subdomain', v)}
+                      onAvailabilityChange={setSubdomainAvailable}
+                      institutions={institutions}
+                      isBn={isBn}
+                    />
                   </>
                 )}
                 {currentSection?.key === 'contact' && (
@@ -466,34 +489,51 @@ export default function CreateSchool() {
                           className="flex-1 px-3.5 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 transition-all disabled:opacity-50"
                         />
                          {!emailVerified && (
-                           <button
-                             onClick={async () => {
-                               if (form.adminEmail.includes('@')) {
-                                 setSendingCode(true)
-                                 setEmailError('')
-                                 const code = Math.random().toString(36).slice(-6).toUpperCase()
-                                 const result = await sendVerificationCode(form.adminEmail, code)
-                                 if (result.success || result.simulated) {
-                                   setEmailCode(code)
-                                   setEmailSent(true)
-                                   setSimulated(result.simulated)
-                                   setResendTimer(300) // 5 minute cooldown
-                                 } else {
-                                   // Email failed — still show code as fallback
-                                   setEmailCode(code)
-                                   setEmailSent(true)
-                                   setSimulated(false)
-                                   setEmailError(result.error || (isBn ? 'ইমেইল পাঠানো যায়নি। নিচের কোড ব্যবহার করুন।' : 'Email could not be sent. Use the code shown below.'))
-                                   setResendTimer(300)
+                           <div className="flex gap-1.5 shrink-0">
+                             <button
+                               type="button"
+                               onClick={() => {
+                                 if (form.adminEmail.includes('@')) {
+                                   setEmailVerified(true)
+                                   setEmailError('')
                                  }
-                                 setSendingCode(false)
-                               }
-                             }}
-                             disabled={!form.adminEmail.includes('@') || sendingCode || (emailSent && resendTimer > 0)}
-                             className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-                           >
-                             {sendingCode ? (isBn ? 'পাঠানো হচ্ছে...' : 'Sending...') : emailSent && resendTimer > 0 ? (isBn ? `পুনঃ পাঠান (${resendTimer}s)` : `Resend (${resendTimer}s)`) : emailSent ? (isBn ? 'পুনঃ পাঠান' : 'Resend') : (isBn ? 'কোড পাঠান' : 'Send Code')}
-                           </button>
+                               }}
+                               disabled={!form.adminEmail.includes('@')}
+                               className="px-3 py-2.5 rounded-xl bg-[var(--green)]/10 hover:bg-[var(--green)]/20 text-[var(--green)] text-xs font-semibold cursor-pointer border border-[var(--green)]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                               title={isBn ? 'সরাসরি অনুমোদন করুন' : 'Verify directly without OTP'}
+                             >
+                               {isBn ? 'অনুমোদন' : 'Verify'}
+                             </button>
+                             <button
+                               type="button"
+                               onClick={async () => {
+                                 if (form.adminEmail.includes('@')) {
+                                   setSendingCode(true)
+                                   setEmailError('')
+                                   const code = Math.random().toString(36).slice(-6).toUpperCase()
+                                   const result = await sendVerificationCode(form.adminEmail, code)
+                                   if (result.success || result.simulated) {
+                                     setEmailCode(code)
+                                     setEmailSent(true)
+                                     setSimulated(result.simulated)
+                                     setResendTimer(300) // 5 minute cooldown
+                                   } else {
+                                     // Email failed — still show code as fallback
+                                     setEmailCode(code)
+                                     setEmailSent(true)
+                                     setSimulated(false)
+                                     setEmailError(result.error || (isBn ? 'ইমেইল পাঠানো যায়নি। নিচের কোড ব্যবহার করুন।' : 'Email could not be sent. Use the code shown below.'))
+                                     setResendTimer(300)
+                                   }
+                                   setSendingCode(false)
+                                 }
+                               }}
+                               disabled={!form.adminEmail.includes('@') || sendingCode || (emailSent && resendTimer > 0)}
+                               className="px-4 py-2.5 rounded-xl bg-[var(--brand)] text-white text-xs font-semibold cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                             >
+                               {sendingCode ? (isBn ? 'পাঠানো হচ্ছে...' : 'Sending...') : emailSent && resendTimer > 0 ? (isBn ? `পুনঃ পাঠান (${resendTimer}s)` : `Resend (${resendTimer}s)`) : emailSent ? (isBn ? 'পুনঃ পাঠান' : 'Resend') : (isBn ? 'কোড পাঠান' : 'Send Code')}
+                             </button>
+                           </div>
                          )}
                          {emailVerified && (
                            <div className="px-3 py-2.5 rounded-xl bg-[var(--green)]/10 text-[var(--green)] text-xs font-semibold flex items-center gap-1.5 shrink-0">
@@ -580,6 +620,11 @@ export default function CreateSchool() {
                         ))}
                       </div>
                     )}
+                    {createError && (
+                      <div className="p-3 rounded-xl bg-[var(--red)]/10 border border-[var(--red)]/20 text-[var(--red)] text-xs font-semibold">
+                        {createError}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -590,7 +635,7 @@ export default function CreateSchool() {
           <div className="px-8 py-4 border-t border-[var(--border)] flex items-center gap-3 shrink-0">
             <button
               onClick={() => bounceClick('back', () => animateStep(step - 1, 'prev'))}
-              disabled={step === 0}
+              disabled={step === 0 || submitting}
               className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer border border-[var(--border)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors hover:bg-[var(--bg-tertiary)] ${bounceBtn === 'back' ? btnBounce : ''}`}
             >
               <ChevronLeft size={13} />
@@ -600,11 +645,20 @@ export default function CreateSchool() {
             {isLastStep ? (
               <button
                 onClick={handleCreate}
-                disabled={!canNext}
+                disabled={!canNext || submitting}
                 className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--green)] text-white cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
               >
-                <Check size={13} />
-                {isBn ? 'তৈরি করুন' : 'Create'}
+                {submitting ? (
+                  <>
+                    <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin shrink-0" />
+                    <span>{isBn ? 'সংরক্ষণ করা হচ্ছে...' : 'Registering...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={13} />
+                    <span>{isBn ? 'তৈরি করুন' : 'Create'}</span>
+                  </>
+                )}
               </button>
             ) : (
               <button
@@ -849,9 +903,12 @@ function FileUpload({ label, value, onChange, accept, isBn, aspect = 'logo' }: {
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const result = await compressImageWithinLimit(file, { maxDim: aspect === 'banner' ? 1600 : 512 })
+    const result = await compressImageWithinLimit(file, {
+      maxDim: aspect === 'banner' ? 1600 : 512,
+      maxBytes: 250 * 1024,
+    })
     if (!result.ok) {
-      alert(result.reason === 'too-large' ? imageTooLargeMessage(isBn) : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
+      alert(result.reason === 'too-large' ? (isBn ? 'ছবির সাইজ সর্বোচ্চ ২৫০ KB হতে হবে' : 'Image must be under 250KB') : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
       e.target.value = ''
       return
     }
@@ -864,7 +921,7 @@ function FileUpload({ label, value, onChange, accept, isBn, aspect = 'logo' }: {
   return (
     <div>
       <label className="block text-xs font-semibold text-[var(--text-primary)] mb-1">{label}</label>
-      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ফাইল থেকে ছবি নির্বাচন করুন' : 'Select image from file'}</p>
+      <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ফাইল থেকে ছবি নির্বাচন করুন (সর্বোচ্চ ২৫০ KB)' : 'Select image from file (max 250KB)'}</p>
       <input ref={fileRef} type="file" accept={accept} onChange={handleFile} className="hidden" />
       <div
         onClick={() => fileRef.current?.click()}
@@ -933,11 +990,12 @@ function hasEmoji(str: string): boolean {
   return emojiRegex.test(str)
 }
 
-function SubdomainInput({ value, onChange, institutions, isBn }: {
-  value: string; onChange: (v: string) => void; institutions: Institution[]; isBn: boolean
+function SubdomainInput({ value, onChange, institutions, isBn, onAvailabilityChange }: {
+  value: string; onChange: (v: string) => void; institutions: Institution[]; isBn: boolean; onAvailabilityChange?: (avail: boolean | null) => void
 }) {
   const [slug, setSlug] = useState(value)
   const [available, setAvailable] = useState<boolean | null>(null)
+  const [isChecking, setIsChecking] = useState(false)
   const [copied, setCopied] = useState(false)
   const checkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -946,23 +1004,33 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
     onChange(v)
     if (!v.trim() || v.trim().length < 2) {
       setAvailable(null)
+      setIsChecking(false)
+      onAvailabilityChange?.(null)
       return
     }
     const taken = institutions.some((inst) => inst.subdomain === v.toLowerCase() || inst.slug === v.toLowerCase())
     if (taken) {
       setAvailable(false)
+      setIsChecking(false)
+      onAvailabilityChange?.(false)
       return
     }
     setAvailable(null)
+    setIsChecking(true)
+    onAvailabilityChange?.(null)
     if (checkTimerRef.current) clearTimeout(checkTimerRef.current)
     checkTimerRef.current = setTimeout(() => {
       authApi
         .checkSubdomain(v.toLowerCase())
         .then((isAvail) => {
           setAvailable(isAvail)
+          setIsChecking(false)
+          onAvailabilityChange?.(isAvail)
         })
         .catch(() => {
           setAvailable(true)
+          setIsChecking(false)
+          onAvailabilityChange?.(true)
         })
     }, 300)
   }
@@ -981,7 +1049,8 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
         {isBn ? 'ইনস্টিটিউশন লগইন URL' : 'Institution Login URL'} <span className="text-[var(--red)]">*</span>
       </label>
       <p className="text-[0.625rem] text-[var(--text-muted)] mb-1.5">{isBn ? 'ইন্সটিটিউশনের ইউনিক পাথ (বাধ্যতামূলক)' : 'Unique path for this institution (required)'}</p>
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand)]/10 transition-all overflow-hidden">
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand)]/10 transition-all overflow-hidden"
+        style={{ borderColor: available === false ? 'var(--red)' : available === true ? 'var(--green)' : undefined }}>
         <div className="flex items-center">
           <span className="px-3.5 py-2.5 text-xs text-[var(--text-muted)] bg-[var(--bg-primary)] border-r border-[var(--border)] shrink-0">{BASE_URL}/i/</span>
           <input
@@ -991,7 +1060,13 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
             placeholder={isBn ? 'বাধ্যতামূলক' : 'required'}
             className="flex-1 min-w-0 px-3.5 py-2.5 bg-transparent text-sm text-[var(--text-primary)] outline-none"
           />
+          {isChecking && (
+            <span className="pr-3 flex items-center shrink-0">
+              <span className="w-3.5 h-3.5 rounded-full border-2 border-[var(--brand)] border-t-transparent animate-spin" />
+            </span>
+          )}
           <button
+            type="button"
             onClick={() => { navigator.clipboard.writeText(displayUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
             className="px-3 py-2.5 bg-[var(--bg-primary)] border-l border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--brand)] cursor-pointer border-none transition-colors"
             title={isBn ? 'কপি করুন' : 'Copy URL'}
@@ -1006,10 +1081,23 @@ function SubdomainInput({ value, onChange, institutions, isBn }: {
         )}
       </div>
       {slug && (
-        <p className={`text-[0.625rem] mt-1.5 ${available === false ? 'text-[var(--red)]' : available === true ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>
-          {available === false ? (isBn ? 'এই URL ইতিমধ্যে ব্যবহৃত' : 'This URL is already taken') :
-           available === true ? (isBn ? 'URL পাওয়া যাচ্ছে' : 'URL is available') :
-           (isBn ? 'URL চেক করা হচ্ছে...' : 'Checking availability...')}
+        <p className={`text-[0.625rem] mt-1.5 flex items-center gap-1.5 ${available === false ? 'text-[var(--red)]' : available === true ? 'text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>
+          {isChecking ? (
+            <>
+              <span className="w-2.5 h-2.5 rounded-full border border-current border-t-transparent animate-spin shrink-0" />
+              <span>{isBn ? 'ডাটাবেজে যাচাই করা হচ্ছে...' : 'Checking database availability...'}</span>
+            </>
+          ) : available === false ? (
+            <>
+              <span>✕</span>
+              <span>{isBn ? 'এই URL ইতিমধ্যে ব্যবহৃত' : 'This URL is already taken in database'}</span>
+            </>
+          ) : available === true ? (
+            <>
+              <span>✓</span>
+              <span>{isBn ? 'URL পাওয়া যাচ্ছে' : 'URL is available'}</span>
+            </>
+          ) : null}
         </p>
       )}
     </div>

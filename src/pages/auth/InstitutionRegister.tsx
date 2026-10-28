@@ -10,7 +10,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
-import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
+import { compressImageWithinLimit } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { authApi, ApiError } from '@/lib/api'
@@ -231,9 +231,9 @@ export default function InstitutionRegister() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const result = await compressImageWithinLimit(file, { maxDim: 512 })
+    const result = await compressImageWithinLimit(file, { maxDim: 512, maxBytes: 250 * 1024 })
     if (!result.ok) {
-      alert(result.reason === 'too-large' ? imageTooLargeMessage(isBn) : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
+      alert(result.reason === 'too-large' ? (isBn ? 'ছবির সাইজ সর্বোচ্চ ২৫০ KB হতে হবে' : 'Image must be under 250KB') : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
       e.target.value = ''
       return
     }

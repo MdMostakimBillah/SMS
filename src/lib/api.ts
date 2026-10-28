@@ -97,6 +97,8 @@ export interface RegisterInstitutionPayload {
   bannerPosition?: string
   brandColor?: string
   package?: 'Basic' | 'Standard' | 'Premium' | 'Enterprise' | string
+  plan?: string
+  status?: string
   adminEmail: string
   adminPassword: string
   startTime?: string
