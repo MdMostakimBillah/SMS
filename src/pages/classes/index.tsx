@@ -11,16 +11,19 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { usePermission } from '@/hooks/usePermission'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
-import { useClassStore } from '@/store/classStore'
+import { useClassStore, mapSchoolToInstitutionSettings } from '@/store/classStore'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useAuth } from '@/contexts/AuthContext'
+import { authApi } from '@/lib/api'
 import ClassesTab from './ClassesTab'
 import InstitutionTab from './tabs/InstitutionTab'
 import RoutineTab from './tabs/RoutineTab'
 
 export default function ClassesPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const { isMobile, isTablet } = useWindowSize()
   const {
     institution,
@@ -80,11 +83,75 @@ export default function ClassesPage() {
     }
   }, [tabs, activeTab])
 
-  const handleSaveInstitution = () => {
+  // Sync instForm when store institution changes
+  useEffect(() => {
+    setInstForm((prev: any) => ({
+      ...prev,
+      ...institution,
+      breaks: institution.breaks?.length > 0 ? institution.breaks : prev.breaks,
+    }))
+  }, [institution])
+
+  // Fetch institution data from database on mount if available
+  useEffect(() => {
+    const slug = sessionStorage.getItem('edutech_inst_slug') || user?.subdomain || (user?.schoolId ? String(user.schoolId) : null)
+    if (slug) {
+      authApi
+        .getPublicSchool(slug)
+        .then((res) => {
+          if (res?.school) {
+            const mapped = mapSchoolToInstitutionSettings(res.school, useClassStore.getState().institution)
+            updateInstitution(mapped)
+            setInstForm((prev: any) => ({ ...prev, ...mapped }))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [user?.subdomain, user?.schoolId])
+
+  const handleSaveInstitution = async () => {
     updateInstitution(instForm)
     setEditingInst(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+
+    try {
+      const targetId = user?.schoolId || sessionStorage.getItem('edutech_inst_slug')
+      if (targetId) {
+        const brandColor = instForm.lightColors?.brand || '#6366f1'
+        const res = await authApi.updateSchool(targetId, {
+          name: instForm.name,
+          nameBn: instForm.nameBn,
+          brandName: instForm.brandName,
+          brandColor,
+          logo: instForm.logo,
+          banner: instForm.banner,
+          bannerPosition: JSON.stringify(instForm.bannerPosition || { x: 0, y: 0 }),
+          motto: instForm.motto,
+          mottoBn: instForm.mottoBn,
+          eiin: instForm.eiin,
+          phone: instForm.phone,
+          email: instForm.email,
+          address: instForm.address,
+          addressBn: instForm.addressBn,
+          website: instForm.website,
+          startTime: instForm.startTime,
+          endTime: instForm.endTime,
+          sessions: JSON.stringify(instForm.sessions || []),
+          breaks: JSON.stringify(instForm.breaks || []),
+        })
+
+        // If server stored uploaded logo/banner via R2, sync returned URLs to state
+        if (res?.school?.logo || res?.school?.banner) {
+          updateInstitution({
+            ...(res.school.logo ? { logo: res.school.logo } : {}),
+            ...(res.school.banner ? { banner: res.school.banner } : {}),
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync institution to database:', err)
+    }
   }
 
   const { getChain } = useNavChain()

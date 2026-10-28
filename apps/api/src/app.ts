@@ -63,7 +63,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
   })
 
-  app.use('/api/auth', authRouter(prisma, jwtSecret, corsOrigin))
+  app.use('/api/auth', authRouter(prisma, jwtSecret, corsOrigin, storage))
   app.use('/api/teachers', teacherRouter(prisma, jwtSecret))
   app.use('/api/students', studentRouter(prisma, jwtSecret))
   app.use('/api/departments', departmentRouter(prisma, jwtSecret))
@@ -72,7 +72,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   app.use('/api/backup', backupRouter(prisma, jwtSecret))
   app.use('/api/license', licenseRouter(licenseSecret))
 
-  const sRouter = schoolRouter(prisma, jwtSecret)
+  const sRouter = schoolRouter(prisma, jwtSecret, storage)
   app.use('/api/schools', sRouter)
   app.use('/api/institutions', sRouter)
   app.use('/api/public/schools', sRouter)

@@ -99,6 +99,83 @@ export const defaultThemeColorsDark: ThemeColors = {
   cardPurple: 'rgba(192,132,252,0.08)',
 }
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const clean = hex.replace('#', '')
+  return {
+    r: parseInt(clean.substring(0, 2), 16) || 0,
+    g: parseInt(clean.substring(2, 4), 16) || 0,
+    b: parseInt(clean.substring(4, 6), 16) || 0,
+  }
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  return '#' + [r, g, b].map((x) => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('')
+}
+
+function lighten(hex: string, amt: number): string {
+  const { r, g, b } = hexToRgb(hex)
+  const factor = amt / 100
+  return rgbToHex(r + (255 - r) * factor, g + (255 - g) * factor, b + (255 - b) * factor)
+}
+
+function withAlpha(hex: string, alpha: number): string {
+  const { r, g, b } = hexToRgb(hex)
+  return `rgba(${r},${g},${b},${alpha})`
+}
+
+export function generateLightColors(brandHex: string): ThemeColors {
+  return {
+    ...defaultThemeColors,
+    brand: brandHex,
+    brand2: lighten(brandHex, 20),
+    brandLight: withAlpha(brandHex, 0.08),
+  }
+}
+
+export function generateDarkColors(brandHex: string): ThemeColors {
+  const dark = lighten(brandHex, 15)
+  return {
+    ...defaultThemeColorsDark,
+    brand: dark,
+    brand2: lighten(brandHex, 30),
+    brandLight: withAlpha(dark, 0.12),
+  }
+}
+
+export function mapSchoolToInstitutionSettings(school: any, current?: InstitutionSettings): InstitutionSettings {
+  const brand = school.brandColor || current?.lightColors?.brand || '#6366f1'
+  return {
+    name: school.name || current?.name || '',
+    nameBn: school.nameBn || current?.nameBn || school.name || '',
+    logo: school.logo || current?.logo || '',
+    banner: school.banner || current?.banner || '',
+    bannerPosition: school.bannerPosition
+      ? (typeof school.bannerPosition === 'string' ? JSON.parse(school.bannerPosition) : school.bannerPosition)
+      : current?.bannerPosition || { x: 0, y: 0 },
+    brandName: school.brandName || current?.brandName || school.name || 'EduTech',
+    motto: school.motto || current?.motto || '',
+    mottoBn: school.mottoBn || current?.mottoBn || '',
+    eiin: school.eiin || current?.eiin || '',
+    phone: school.phone || current?.phone || '',
+    email: school.email || current?.email || '',
+    address: school.address || current?.address || '',
+    addressBn: school.addressBn || current?.addressBn || school.address || '',
+    website: school.website || current?.website || '',
+    subjects: current?.subjects || [],
+    startTime: school.startTime || current?.startTime || '07:30',
+    endTime: school.endTime || current?.endTime || '14:30',
+    breaks: school.breaks
+      ? (typeof school.breaks === 'string' ? JSON.parse(school.breaks) : school.breaks)
+      : current?.breaks?.length ? current.breaks : [{ id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' }],
+    currentSession: current?.currentSession || '2025-26',
+    sessions: school.sessions
+      ? (typeof school.sessions === 'string' ? JSON.parse(school.sessions) : school.sessions)
+      : current?.sessions?.length ? current.sessions : ['2025-26'],
+    lightColors: generateLightColors(brand),
+    darkColors: generateDarkColors(brand),
+  }
+}
+
 export interface InstitutionSettings {
   name: string
   nameBn: string
@@ -112,6 +189,7 @@ export interface InstitutionSettings {
   phone: string
   email: string
   address: string
+  addressBn?: string
   website: string
   subjects: string[]
   startTime: string

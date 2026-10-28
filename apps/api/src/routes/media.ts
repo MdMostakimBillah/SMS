@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express'
+import { Router, type Request, type Response } from 'express'
 import type { PrismaClient } from '@prisma/client'
 import multer from 'multer'
 import { randomUUID } from 'node:crypto'
@@ -259,6 +259,36 @@ export function mediaRouter(prisma: PrismaClient, jwtSecret: string, storage: Me
         return res.status(400).json({ error: 'Validation failed', details: err.errors })
       }
       res.status(500).json({ error: 'Internal server error' })
+    }
+  })
+
+  /**
+   * Public streaming endpoint for institution branding (logo & banner).
+   * Does NOT require authentication so public pages (login, public landing)
+   * can display institutional assets securely directly from R2.
+   */
+  router.get('/public/:id', requireStorage, async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id as string
+      const row = await prisma.mediaObject.findFirst({
+        where: {
+          id,
+          deletedAt: null,
+          category: { in: ['institution_logo', 'institution_banner'] },
+        },
+      })
+      if (!row) {
+        return res.status(404).json({ error: 'Media not found' })
+      }
+      const stream = await storage!.getStream(row.objectKey)
+      res.setHeader('Content-Type', row.mimeType)
+      res.setHeader('Content-Length', String(row.sizeBytes))
+      res.setHeader('Cache-Control', 'public, max-age=86400')
+      res.setHeader('X-Content-Type-Options', 'nosniff')
+      res.setHeader('Content-Disposition', `inline; filename="${row.fileName.replace(/"/g, '')}"`)
+      stream.pipe(res)
+    } catch {
+      if (!res.headersSent) res.status(500).json({ error: 'Internal server error' })
     }
   })
 

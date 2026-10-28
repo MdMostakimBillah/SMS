@@ -2,8 +2,10 @@ import { Router, type Request, type Response } from 'express'
 import type { PrismaClient } from '@prisma/client'
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 import { requireRole } from '../middleware/rbac.js'
+import type { MediaStorage } from '../storage.js'
+import { uploadBase64Media } from '../lib/media-helper.js'
 
-export function schoolRouter(prisma: PrismaClient, jwtSecret: string) {
+export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: MediaStorage | null) {
   const router = Router()
 
   async function resolveSchool(rawSlug: string | string[] | undefined) {
@@ -21,11 +23,22 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string) {
         id: true,
         name: true,
         nameBn: true,
-        domain: true,
-        email: true,
-        phone: true,
-        address: true,
+        brandName: true,
+        brandColor: true,
         logo: true,
+        banner: true,
+        bannerPosition: true,
+        motto: true,
+        mottoBn: true,
+        eiin: true,
+        website: true,
+        phone: true,
+        email: true,
+        address: true,
+        addressBn: true,
+        sessions: true,
+        breaks: true,
+        domain: true,
         startTime: true,
         endTime: true,
         storageMode: true,
@@ -81,11 +94,22 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string) {
           id: true,
           name: true,
           nameBn: true,
-          domain: true,
-          email: true,
-          phone: true,
-          address: true,
+          brandName: true,
+          brandColor: true,
           logo: true,
+          banner: true,
+          bannerPosition: true,
+          motto: true,
+          mottoBn: true,
+          eiin: true,
+          website: true,
+          phone: true,
+          email: true,
+          address: true,
+          addressBn: true,
+          sessions: true,
+          breaks: true,
+          domain: true,
           startTime: true,
           endTime: true,
           storageMode: true,
@@ -138,14 +162,32 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string) {
   })
 
   /**
-   * Super Admin only: Update institution subscription / license / metadata.
+   * Super Admin & School Admin: Update institution subscription / license / branding / metadata.
    */
-  router.patch('/:id', requireAuth(prisma, jwtSecret), requireRole('super_admin'), async (req: AuthenticatedRequest, res: Response) => {
+  router.patch('/:id', requireAuth(prisma, jwtSecret), requireRole('super_admin', 'school_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = req.params.id as string
+
+      // Only super_admin or the school's own admin may update
+      if (req.userRole !== 'super_admin' && req.schoolId !== id) {
+        return res.status(403).json({ error: 'You are not authorized to update this institution' })
+      }
+
       const {
         name,
         nameBn,
+        brandName,
+        brandColor,
+        logo,
+        banner,
+        bannerPosition,
+        motto,
+        mottoBn,
+        eiin,
+        website,
+        addressBn,
+        sessions,
+        breaks,
         status,
         plan,
         expiresAt,
@@ -166,15 +208,22 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string) {
       const dataToUpdate: any = {}
       if (name !== undefined) dataToUpdate.name = String(name)
       if (nameBn !== undefined) dataToUpdate.nameBn = String(nameBn)
-      if (status !== undefined) dataToUpdate.status = String(status)
-      if (plan !== undefined) dataToUpdate.plan = String(plan)
-      if (expiresAt !== undefined) {
-        dataToUpdate.expiresAt = expiresAt ? new Date(expiresAt) : null
+      if (brandName !== undefined) dataToUpdate.brandName = String(brandName)
+      if (brandColor !== undefined) dataToUpdate.brandColor = String(brandColor)
+      if (bannerPosition !== undefined) {
+        dataToUpdate.bannerPosition = typeof bannerPosition === 'object' ? JSON.stringify(bannerPosition) : String(bannerPosition)
       }
-      if (maxStudents !== undefined) dataToUpdate.maxStudents = Number(maxStudents)
-      if (maxTeachers !== undefined) dataToUpdate.maxTeachers = Number(maxTeachers)
-      if (paymentStatus !== undefined) dataToUpdate.paymentStatus = String(paymentStatus)
-      if (billingCycle !== undefined) dataToUpdate.billingCycle = String(billingCycle)
+      if (motto !== undefined) dataToUpdate.motto = String(motto)
+      if (mottoBn !== undefined) dataToUpdate.mottoBn = String(mottoBn)
+      if (eiin !== undefined) dataToUpdate.eiin = String(eiin)
+      if (website !== undefined) dataToUpdate.website = String(website)
+      if (addressBn !== undefined) dataToUpdate.addressBn = String(addressBn)
+      if (sessions !== undefined) {
+        dataToUpdate.sessions = typeof sessions === 'object' ? JSON.stringify(sessions) : String(sessions)
+      }
+      if (breaks !== undefined) {
+        dataToUpdate.breaks = typeof breaks === 'object' ? JSON.stringify(breaks) : String(breaks)
+      }
       if (storageMode !== undefined) dataToUpdate.storageMode = String(storageMode)
       if (serverUrl !== undefined) dataToUpdate.serverUrl = String(serverUrl)
       if (folderName !== undefined) dataToUpdate.folderName = String(folderName)
@@ -183,6 +232,35 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string) {
       if (address !== undefined) dataToUpdate.address = String(address)
       if (startTime !== undefined) dataToUpdate.startTime = String(startTime)
       if (endTime !== undefined) dataToUpdate.endTime = String(endTime)
+
+      // Upload logo and banner to Cloudflare R2 if provided as base64 dataUrl
+      if (logo !== undefined) {
+        if (typeof logo === 'string' && logo.startsWith('data:image/')) {
+          dataToUpdate.logo = await uploadBase64Media(storage, prisma, id, 'institution_logo', logo)
+        } else {
+          dataToUpdate.logo = logo ? String(logo) : null
+        }
+      }
+      if (banner !== undefined) {
+        if (typeof banner === 'string' && banner.startsWith('data:image/')) {
+          dataToUpdate.banner = await uploadBase64Media(storage, prisma, id, 'institution_banner', banner)
+        } else {
+          dataToUpdate.banner = banner ? String(banner) : null
+        }
+      }
+
+      // Privileged license/subscription fields: super_admin only
+      if (req.userRole === 'super_admin') {
+        if (status !== undefined) dataToUpdate.status = String(status)
+        if (plan !== undefined) dataToUpdate.plan = String(plan)
+        if (expiresAt !== undefined) {
+          dataToUpdate.expiresAt = expiresAt ? new Date(expiresAt) : null
+        }
+        if (maxStudents !== undefined) dataToUpdate.maxStudents = Number(maxStudents)
+        if (maxTeachers !== undefined) dataToUpdate.maxTeachers = Number(maxTeachers)
+        if (paymentStatus !== undefined) dataToUpdate.paymentStatus = String(paymentStatus)
+        if (billingCycle !== undefined) dataToUpdate.billingCycle = String(billingCycle)
+      }
 
       const updated = await prisma.school.update({
         where: { id },

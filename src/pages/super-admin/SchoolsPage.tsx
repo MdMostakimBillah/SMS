@@ -7,6 +7,7 @@ import {
   CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check, Plus, HardDrive,
 } from 'lucide-react'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
+import { useClassStore, generateLightColors, generateDarkColors } from '@/store/classStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { setSlug } from '@/lib/storage'
 import { authApi } from '@/lib/api'
@@ -357,6 +358,27 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
     }
     startViewing(inst.id)
     setSlug(inst.slug)
+    const brand = inst.brandColor || '#6366f1'
+    useClassStore.getState().updateInstitution({
+      name: inst.name,
+      nameBn: inst.nameBn,
+      brandName: inst.brandName || inst.name,
+      logo: inst.logo,
+      banner: inst.banner,
+      motto: inst.motto,
+      mottoBn: inst.mottoBn,
+      eiin: inst.eiin,
+      phone: inst.phone,
+      email: inst.email,
+      address: inst.address,
+      addressBn: inst.addressBn,
+      website: inst.website,
+      startTime: inst.startTime || '07:30',
+      endTime: inst.endTime || '14:30',
+      sessions: inst.sessions?.length ? inst.sessions : ['2025-26'],
+      lightColors: generateLightColors(brand),
+      darkColors: generateDarkColors(brand),
+    })
     navigate('/super-admin/viewing/admin/dashboard')
   }
 

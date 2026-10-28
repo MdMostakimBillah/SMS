@@ -24,6 +24,17 @@ model School {
   phone     String?
   email     String?
   logo      String?
+  banner    String?
+  bannerPosition String? @default("{\"x\":0,\"y\":0}") @map("banner_position")
+  brandName String?  @map("brand_name")
+  brandColor String? @default("#6366f1") @map("brand_color")
+  motto     String?
+  mottoBn   String?  @map("motto_bn")
+  eiin      String?
+  website   String?
+  addressBn String?  @map("address_bn")
+  sessions  String?  @default("[\"2025-26\"]")
+  breaks    String?  @default("[]")
   domain    String?  @unique
   timezone  String   @default("Asia/Dhaka")
   startTime String   @default("07:30") @map("start_time")

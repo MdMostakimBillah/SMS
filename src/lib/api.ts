@@ -90,7 +90,10 @@ export interface RegisterInstitutionPayload {
   address?: string
   addressBn?: string
   eiin?: string
+  website?: string
   logo?: string
+  banner?: string
+  bannerPosition?: string
   brandColor?: string
   package?: 'Basic' | 'Standard' | 'Premium' | 'Enterprise' | string
   adminEmail: string
@@ -106,15 +109,18 @@ export interface RegisterInstitutionResponse {
   id?: string
   name?: string
   slug?: string
-  school?: {
+  school?: Partial<PublicSchool> & {
     id: string
     name: string
-    nameBn: string | null
+    nameBn?: string | null
     domain: string
-    email: string | null
-    phone: string | null
-    address: string | null
-    logo: string | null
+    email?: string | null
+    phone?: string | null
+    address?: string | null
+    logo?: string | null
+    banner?: string | null
+    brandColor?: string | null
+    brandName?: string | null
   }
   user?: SessionUser
   admin?: { id: string; email: string; role: string }
@@ -128,6 +134,15 @@ export interface PublicSchool {
   slug?: string
   brandName?: string | null
   brandColor?: string | null
+  banner?: string | null
+  bannerPosition?: string | null
+  motto?: string | null
+  mottoBn?: string | null
+  eiin?: string | null
+  website?: string | null
+  addressBn?: string | null
+  sessions?: string | null
+  breaks?: string | null
   package?: string
   status?: string
   plan?: string
@@ -215,8 +230,26 @@ export const authApi = {
             nameBn: raw.nameBn || null,
             brandName: raw.brandName || null,
             brandColor: raw.brandColor || null,
-            package: raw.package || 'Basic',
+            banner: raw.banner || null,
+            bannerPosition: raw.bannerPosition || null,
+            motto: raw.motto || null,
+            mottoBn: raw.mottoBn || null,
+            eiin: raw.eiin || null,
+            website: raw.website || null,
+            addressBn: raw.addressBn || null,
+            sessions: raw.sessions || null,
+            breaks: raw.breaks || null,
+            package: raw.package || raw.plan || 'Basic',
+            plan: raw.plan || raw.package || 'basic',
             status: raw.status || 'active',
+            expiresAt: raw.expiresAt || null,
+            maxStudents: raw.maxStudents,
+            maxTeachers: raw.maxTeachers,
+            paymentStatus: raw.paymentStatus || 'paid',
+            billingCycle: raw.billingCycle || 'monthly',
+            storageMode: raw.storageMode || 'cloud',
+            serverUrl: raw.serverUrl || '',
+            folderName: raw.folderName || '',
             domain: raw.domain || raw.slug || slug,
             slug: raw.slug || raw.domain || slug,
             email: raw.email || null,
@@ -240,8 +273,26 @@ export const authApi = {
               nameBn: raw2.nameBn || null,
               brandName: raw2.brandName || null,
               brandColor: raw2.brandColor || null,
-              package: raw2.package || 'Basic',
+              banner: raw2.banner || null,
+              bannerPosition: raw2.bannerPosition || null,
+              motto: raw2.motto || null,
+              mottoBn: raw2.mottoBn || null,
+              eiin: raw2.eiin || null,
+              website: raw2.website || null,
+              addressBn: raw2.addressBn || null,
+              sessions: raw2.sessions || null,
+              breaks: raw2.breaks || null,
+              package: raw2.package || raw2.plan || 'Basic',
+              plan: raw2.plan || raw2.package || 'basic',
               status: raw2.status || 'active',
+              expiresAt: raw2.expiresAt || null,
+              maxStudents: raw2.maxStudents,
+              maxTeachers: raw2.maxTeachers,
+              paymentStatus: raw2.paymentStatus || 'paid',
+              billingCycle: raw2.billingCycle || 'monthly',
+              storageMode: raw2.storageMode || 'cloud',
+              serverUrl: raw2.serverUrl || '',
+              folderName: raw2.folderName || '',
               domain: raw2.domain || raw2.slug || slug,
               slug: raw2.slug || raw2.domain || slug,
               email: raw2.email || null,
@@ -273,9 +324,18 @@ export const authApi = {
         email: item.email || null,
         phone: item.phone || null,
         address: item.address || null,
+        addressBn: item.addressBn || null,
         logo: item.logo || null,
+        banner: item.banner || null,
+        bannerPosition: item.bannerPosition || null,
         brandName: item.brandName || null,
         brandColor: item.brandColor || null,
+        motto: item.motto || null,
+        mottoBn: item.mottoBn || null,
+        eiin: item.eiin || null,
+        website: item.website || null,
+        sessions: item.sessions || null,
+        breaks: item.breaks || null,
         package: item.package || item.plan || 'Basic',
         plan: item.plan || item.package || 'basic',
         status: item.status || 'active',

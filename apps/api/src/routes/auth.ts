@@ -16,6 +16,8 @@ import {
 import { requireRole } from '../middleware/rbac.js'
 import { requireTrustedOrigin } from '../middleware/origin.js'
 import { audit } from '../audit.js'
+import type { MediaStorage } from '../storage.js'
+import { uploadBase64Media } from '../lib/media-helper.js'
 
 const loginSchema = z.object({
   email: z.string().email().max(254),
@@ -26,6 +28,14 @@ const registerInstitutionSchema = z.object({
   name: z.string().min(1, 'Institution name is required').max(200),
   nameBn: z.string().max(200).optional().nullable(),
   brandName: z.string().max(200).optional().nullable(),
+  brandColor: z.string().max(30).optional().nullable(),
+  banner: z.string().optional().or(z.literal('')).nullable(),
+  bannerPosition: z.string().optional().or(z.literal('')).nullable(),
+  motto: z.string().max(300).optional().or(z.literal('')).nullable(),
+  mottoBn: z.string().max(300).optional().or(z.literal('')).nullable(),
+  eiin: z.string().max(50).optional().or(z.literal('')).nullable(),
+  website: z.string().max(200).optional().or(z.literal('')).nullable(),
+  addressBn: z.string().max(500).optional().or(z.literal('')).nullable(),
   subdomain: z
     .string()
     .min(2, 'Subdomain is required')
@@ -42,7 +52,6 @@ const registerInstitutionSchema = z.object({
   phone: z.string().max(50).optional().or(z.literal('')).nullable(),
   address: z.string().max(500).optional().or(z.literal('')).nullable(),
   logo: z.string().optional().or(z.literal('')).nullable(),
-  brandColor: z.string().max(30).optional().nullable(),
   adminEmail: z.string().email('Invalid admin email').max(254),
   adminPassword: z.string().min(8, 'Password must be at least 8 characters').max(128),
   package: z.string().max(50).optional().nullable(),
@@ -78,9 +87,10 @@ export interface PublicUser {
   schoolPlan?: string | null
   schoolExpiresAt?: Date | null
   avatar: string | null
+  school?: any
 }
 
-function toPublicUser(user: User & { school?: { name: string; domain?: string | null; status?: string | null; plan?: string | null; expiresAt?: Date | null } | null }): PublicUser {
+function toPublicUser(user: User & { school?: any }): PublicUser {
   return {
     id: user.id,
     email: user.email,
@@ -93,6 +103,7 @@ function toPublicUser(user: User & { school?: { name: string; domain?: string | 
     schoolPlan: user.school?.plan ?? null,
     schoolExpiresAt: user.school?.expiresAt ?? null,
     avatar: user.avatar,
+    school: user.school ?? null,
   }
 }
 
@@ -105,7 +116,7 @@ function isUniqueViolation(err: unknown): boolean {
   return typeof err === 'object' && err !== null && 'code' in err && (err as { code?: unknown }).code === 'P2002'
 }
 
-export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: string) {
+export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: string, storage?: MediaStorage | null) {
   const router = Router()
 
   const loginLimiter = rateLimit({
@@ -262,17 +273,37 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
       }
 
       const passwordHash = await hash(parsed.data.adminPassword, ARGON2_OPTIONS)
+      const schoolId = randomUUID()
+
+      let uploadedLogo = parsed.data.logo || null
+      if (uploadedLogo && uploadedLogo.startsWith('data:image/')) {
+        uploadedLogo = await uploadBase64Media(storage, prisma, schoolId, 'institution_logo', uploadedLogo)
+      }
+      let uploadedBanner = parsed.data.banner || null
+      if (uploadedBanner && uploadedBanner.startsWith('data:image/')) {
+        uploadedBanner = await uploadBase64Media(storage, prisma, schoolId, 'institution_banner', uploadedBanner)
+      }
 
       const result = await prisma.$transaction(async (tx) => {
         const school = await tx.school.create({
           data: {
+            id: schoolId,
             name: parsed.data.name.trim(),
             nameBn: parsed.data.nameBn?.trim() || null,
+            brandName: parsed.data.brandName?.trim() || parsed.data.name.trim(),
+            brandColor: parsed.data.brandColor?.trim() || '#6366f1',
+            logo: uploadedLogo,
+            banner: uploadedBanner,
+            bannerPosition: parsed.data.bannerPosition || '{"x":0,"y":0}',
+            motto: parsed.data.motto?.trim() || null,
+            mottoBn: parsed.data.mottoBn?.trim() || null,
+            eiin: parsed.data.eiin?.trim() || null,
+            website: parsed.data.website?.trim() || null,
+            addressBn: parsed.data.addressBn?.trim() || null,
             domain: subdomain,
             email: parsed.data.email?.trim() || null,
             phone: parsed.data.phone?.trim() || null,
             address: parsed.data.address?.trim() || null,
-            logo: parsed.data.logo || null,
             startTime: parsed.data.startTime?.trim() || '07:30',
             endTime: parsed.data.endTime?.trim() || '14:30',
             status: 'trial',

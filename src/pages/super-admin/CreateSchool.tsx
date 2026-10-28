@@ -258,6 +258,8 @@ export default function CreateSchool() {
     const slug = subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
 
     let serverSchoolId: string | null = null
+    let serverLogo: string | null = null
+    let serverBanner: string | null = null
     try {
       const res = await authApi.registerInstitution({
         name: form.name.trim(),
@@ -270,7 +272,13 @@ export default function CreateSchool() {
         phone: form.phone?.trim() || undefined,
         address: form.address?.trim() || undefined,
         logo: form.logo || undefined,
+        banner: form.banner || undefined,
         brandColor: form.brandColor || undefined,
+        motto: form.motto?.trim() || undefined,
+        mottoBn: form.mottoBn?.trim() || undefined,
+        eiin: form.eiin?.trim() || undefined,
+        website: form.website?.trim() || undefined,
+        addressBn: form.addressBn?.trim() || undefined,
         adminEmail: (form.adminEmail || form.email || `admin@${slug}.local`).trim().toLowerCase(),
         adminPassword: form.adminPassword || 'Admin@123456',
         startTime: form.startTime || '07:30',
@@ -278,6 +286,8 @@ export default function CreateSchool() {
       })
       if (res.id || res.school?.id) {
         serverSchoolId = res.id || res.school?.id || null
+        serverLogo = res.school?.logo || null
+        serverBanner = res.school?.banner || null
       }
     } catch {
       // Backend error or offline — still save to local store
@@ -299,8 +309,8 @@ export default function CreateSchool() {
       package: form.package,
       createdAt: new Date().toISOString().split('T')[0],
       lastLogin: '-',
-      logo: form.logo,
-      banner: form.banner,
+      logo: serverLogo || form.logo,
+      banner: serverBanner || form.banner,
       brandColor: form.brandColor,
       brandName: form.brandName || 'EduTech',
       motto: form.motto,

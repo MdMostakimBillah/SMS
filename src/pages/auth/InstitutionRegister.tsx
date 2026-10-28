@@ -248,6 +248,7 @@ export default function InstitutionRegister() {
     setCreateError('')
 
     let serverSchoolId: string | null = null
+    let serverLogo: string | null = null
 
     try {
       const res = await authApi.registerInstitution({
@@ -269,6 +270,7 @@ export default function InstitutionRegister() {
       })
       if (res.id || res.school?.id) {
         serverSchoolId = res.id || res.school?.id || null
+        serverLogo = res.school?.logo || null
       }
     } catch (err: unknown) {
       const msg =
@@ -298,7 +300,7 @@ export default function InstitutionRegister() {
       package: form.package,
       createdAt: new Date().toISOString().split('T')[0],
       lastLogin: '-',
-      logo: form.logo,
+      logo: serverLogo || form.logo,
       banner: '',
       brandColor: form.brandColor,
       brandName: form.brandName,
