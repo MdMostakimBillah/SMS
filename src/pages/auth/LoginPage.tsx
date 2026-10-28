@@ -135,10 +135,6 @@ export default function LoginPage() {
           </div>
 
           <div className="mb-6">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--brand)]/10 text-[var(--brand)] text-[0.75rem] font-semibold mb-3">
-              <Lock size={12} />
-              <span>{isBn ? 'সুপার অ্যাডমিন' : 'Super Admin'}</span>
-            </div>
             <h2 className={`text-[1.5rem] font-bold mb-2 ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>
               {isBn ? 'সুপার অ্যাডমিন লগইন' : 'Super Admin Login'}
             </h2>
