@@ -528,6 +528,41 @@ export const departmentsApi = {
     apiRequest<{ success: boolean }>(`/api/departments/${id}`, { method: 'DELETE' }),
 }
 
+export interface ClassesResponse {
+  classes: any[]
+  routines: any[]
+  sessions?: string[]
+  breaks?: any[]
+  startTime?: string
+  endTime?: string
+}
+
+export const classesApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<ClassesResponse>(`/api/classes${q}`)
+  },
+  update: (data: { classes?: any[]; routines?: any[]; schoolId?: string }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean; classes?: any[]; routines?: any[] }>('/api/classes', {
+      method: 'PUT',
+      body,
+    })
+  },
+  updateRoutines: (routines: any[], schoolId?: string) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    return apiRequest<{ success: boolean; routines?: any[] }>('/api/classes/routines', {
+      method: 'PUT',
+      body: { routines, schoolId: schoolId || fallbackSlug || undefined },
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

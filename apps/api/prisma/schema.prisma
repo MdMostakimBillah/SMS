@@ -42,6 +42,8 @@ model School {
   storageMode String? @default("cloud") @map("storage_mode")
   serverUrl   String? @default("") @map("server_url")
   folderName  String? @default("") @map("folder_name")
+  classesData String? @default("[]") @map("classes_data")
+  routinesData String? @default("[]") @map("routines_data")
   status      String   @default("active")
   plan        String   @default("basic")
   expiresAt   DateTime? @map("expires_at")

@@ -13,6 +13,7 @@ import { schoolRouter } from './routes/schools.js'
 import { studentRouter } from './routes/students.js'
 import { backupRouter } from './routes/backup.js'
 import { licenseRouter } from './routes/license.js'
+import { classRouter } from './routes/classes.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
@@ -71,6 +72,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   app.use('/api/media', mediaRouter(prisma, jwtSecret, storage))
   app.use('/api/backup', backupRouter(prisma, jwtSecret))
   app.use('/api/license', licenseRouter(licenseSecret))
+  app.use('/api/classes', classRouter(prisma, jwtSecret))
 
   const sRouter = schoolRouter(prisma, jwtSecret, storage)
   app.use('/api/schools', sRouter)

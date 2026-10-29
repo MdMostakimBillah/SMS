@@ -96,7 +96,7 @@ export default function ClassesPage() {
     }))
   }, [institution])
 
-  // Fetch institution data from database on mount if available
+  // Fetch institution data and classes/routines from database on mount if available
   useEffect(() => {
     const viewingId = useSuperAdminStore.getState().viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
     const slug = (user?.role === 'super_admin' && viewingId) ? viewingId : (getSlug() || user?.subdomain || (user?.schoolId ? String(user.schoolId) : null) || viewingId)
@@ -118,6 +118,9 @@ export default function ClassesPage() {
         })
         .catch(() => {})
     }
+
+    // Load classes and routines from database
+    useClassStore.getState().syncFromServer(slug || undefined).catch(() => {})
   }, [user?.subdomain, user?.schoolId, user?.role])
 
   const handleSaveInstitution = async () => {
@@ -157,6 +160,8 @@ export default function ClassesPage() {
           storageMode: instForm.storageMode || 'cloud',
           serverUrl: instForm.serverUrl || '',
           folderName: instForm.folderName || '',
+          classes: useClassStore.getState().classes,
+          routines: useClassStore.getState().routines,
         })
 
         if (res?.school) {

@@ -74,6 +74,7 @@ export default function AppLayout() {
           const brand = res.school.brandColor || '#6366f1'
           const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
           applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+          useClassStore.getState().syncFromServer(targetSlug).catch(() => {})
         }
       }).catch(() => {})
       return
@@ -93,6 +94,7 @@ export default function AppLayout() {
       const brand = user.school.brandColor || '#6366f1'
       const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
       applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+      useClassStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
     } else {
       const pathSlug =
         (typeof window !== 'undefined' ? window.location.pathname.match(/^\/i\/([^/]+)/)?.[1] : null) ||
@@ -107,6 +109,7 @@ export default function AppLayout() {
             const brand = res.school.brandColor || '#6366f1'
             const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
             applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+            useClassStore.getState().syncFromServer(pathSlug).catch(() => {})
           }
         }).catch(() => {})
       }

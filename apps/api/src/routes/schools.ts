@@ -38,6 +38,8 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         addressBn: true,
         sessions: true,
         breaks: true,
+        classesData: true,
+        routinesData: true,
         domain: true,
         startTime: true,
         endTime: true,
@@ -90,6 +92,8 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         addressBn: true,
         sessions: true,
         breaks: true,
+        classesData: true,
+        routinesData: true,
         domain: true,
         startTime: true,
         endTime: true,
@@ -331,6 +335,10 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         address,
         startTime,
         endTime,
+        classes,
+        classesData,
+        routines,
+        routinesData,
       } = parsedBody
 
       const dataToUpdate: any = {}
@@ -360,6 +368,14 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
       if (address !== undefined) dataToUpdate.address = String(address)
       if (startTime !== undefined) dataToUpdate.startTime = String(startTime)
       if (endTime !== undefined) dataToUpdate.endTime = String(endTime)
+      if (classes !== undefined || classesData !== undefined) {
+        const val = classes !== undefined ? classes : classesData
+        dataToUpdate.classesData = typeof val === 'object' ? JSON.stringify(val) : String(val)
+      }
+      if (routines !== undefined || routinesData !== undefined) {
+        const val = routines !== undefined ? routines : routinesData
+        dataToUpdate.routinesData = typeof val === 'object' ? JSON.stringify(val) : String(val)
+      }
 
       // Upload logo and banner to Cloudflare R2 if provided as base64 dataUrl
       if (logo !== undefined) {

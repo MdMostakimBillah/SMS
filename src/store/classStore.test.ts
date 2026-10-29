@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   useClassStore,
   extractClassNumber,
@@ -8,6 +8,19 @@ import {
   mapSchoolToInstitutionSettings,
   type ClassInfo,
 } from './classStore'
+import { classesApi } from '@/lib/api'
+
+vi.mock('@/lib/api', () => ({
+  classesApi: {
+    get: vi.fn(),
+    update: vi.fn(),
+    updateRoutines: vi.fn(),
+  },
+  authApi: {
+    getPublicSchool: vi.fn(),
+    updateSchool: vi.fn(),
+  },
+}))
 
 describe('classStore pure functions', () => {
   it('extractClassNumber extracts number from "Class 1"', () => {
@@ -160,5 +173,33 @@ describe('classStore actions', () => {
     expect(mapped.banner).toBe('/api/media/public/med-5678')
     expect(mapped.lightColors?.brand).toBe('#a855f7')
     expect(mapped.darkColors?.brand).toBeDefined()
+  })
+
+  it('syncFromServer updates store when server returns classes and routines', async () => {
+    const mockClasses = [{ id: 'CLS-99', name: 'Class 99', sections: [] }]
+    const mockRoutines = [{ classId: 'CLS-99', sectionId: 'SEC-1', periodDuration: 45, weekendDays: [5], periods: [] }]
+    vi.mocked(classesApi.get).mockResolvedValueOnce({
+      classes: mockClasses as any,
+      routines: mockRoutines as any,
+      sessions: ['2025-26'],
+      breaks: [],
+    })
+
+    await useClassStore.getState().syncFromServer('test-slug')
+    expect(useClassStore.getState().classes).toEqual(mockClasses)
+    expect(useClassStore.getState().routines).toEqual(mockRoutines)
+    expect(useClassStore.getState().serverSynced).toBe(true)
+  })
+
+  it('syncToServer calls classesApi.update with current classes and routines', async () => {
+    vi.mocked(classesApi.update).mockResolvedValueOnce({ success: true })
+    useClassStore.getState().addClass({ id: 'CLS-SYNC', name: 'Sync Class', sections: [] } as any)
+
+    await useClassStore.getState().syncToServer()
+    expect(classesApi.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        classes: expect.arrayContaining([expect.objectContaining({ id: 'CLS-SYNC' })]),
+      })
+    )
   })
 })
