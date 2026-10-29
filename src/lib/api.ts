@@ -48,6 +48,8 @@ export async function apiRequest<T = unknown>(
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeout)
 
+  const viewingId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null
+
   try {
     const res = await fetch(`${API_BASE}${path}`, {
       method,
@@ -55,6 +57,7 @@ export async function apiRequest<T = unknown>(
       headers: {
         'Content-Type': 'application/json',
         ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        ...(viewingId ? { 'x-school-id': viewingId } : {}),
         ...headers,
       },
       body: body !== undefined ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,

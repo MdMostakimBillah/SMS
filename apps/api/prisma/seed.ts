@@ -58,10 +58,16 @@ async function main() {
       parallelism: 1,
     })
 
+    const defaultSchool = await prisma.school.findFirst({
+      where: { OR: [{ domain: 'edutech' }, { domain: 'main' }] },
+      select: { id: true },
+    })
+    const defaultSchoolId = defaultSchool?.id ?? null
+
     if (existingByEmail) {
       await prisma.user.update({
         where: { id: existingByEmail.id },
-        data: { email, passwordHash, role: SUPER_ADMIN_ROLE, schoolId: null, isActive: true },
+        data: { email, passwordHash, role: SUPER_ADMIN_ROLE, schoolId: existingByEmail.schoolId ?? defaultSchoolId, isActive: true },
       })
       console.log(`[seed] Super admin credentials rotated (id=${existingByEmail.id}, email=${email}).`)
     } else {
@@ -75,7 +81,7 @@ async function main() {
           passwordHash,
           name: 'Super Admin',
           role: SUPER_ADMIN_ROLE,
-          schoolId: null,
+          schoolId: defaultSchoolId,
           isActive: true,
         },
       })

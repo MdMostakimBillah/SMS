@@ -10,7 +10,7 @@ import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus 
 import { useClassStore, generateLightColors, generateDarkColors } from '@/store/classStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { setSlug } from '@/lib/storage'
-import { authApi } from '@/lib/api'
+import { authApi, resolveMediaUrl } from '@/lib/api'
 import { LicenseModal } from './modals/LicenseModal'
 
 function statusConfig(status: InstitutionStatus, isBn: boolean) {
@@ -34,7 +34,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
   const status = statusConfig(inst.status, isBn)
   const isExpired = inst.expiresAt ? new Date(inst.expiresAt).getTime() < Date.now() : false
   const daysRemaining = inst.expiresAt ? Math.ceil((new Date(inst.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
-  const isSuperAdminSchool = inst.email === 'admin@edutech.local' || inst.slug === 'main' || inst.slug === 'superadmin'
+  const isSuperAdminSchool = inst.email === 'admin@edutech.local' || inst.slug === 'main' || inst.slug === 'superadmin' || inst.slug === 'edutech' || inst.id === 'b903f56f-2a26-411f-81f4-d7f0122bdc52'
 
   return (
     <div
@@ -53,7 +53,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
           style={{ background: inst.brandColor }}
         >
           {inst.logo ? (
-            <img src={inst.logo} alt={inst.name} className="w-full h-full object-cover" />
+            <img src={resolveMediaUrl(inst.logo)} alt={inst.name} className="w-full h-full object-cover" />
           ) : (
             <span className="text-white font-bold text-[0.875rem]">{inst.name.charAt(0)}</span>
           )}
@@ -300,13 +300,13 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
             return {
               id: item.id,
               name: sName,
-              nameBn: existing?.nameBn || item.nameBn || sName,
-              email: existing?.email || item.email || '',
-              phone: existing?.phone || item.phone || '',
-              address: existing?.address || item.address || '',
-              addressBn: existing?.addressBn || item.address || '',
-              eiin: existing?.eiin || '',
-              website: existing?.website || `smsappbd.vercel.app/i/${sSlug}`,
+              nameBn: item.nameBn || existing?.nameBn || sName,
+              email: item.email || existing?.email || '',
+              phone: item.phone || existing?.phone || '',
+              address: item.address || existing?.address || '',
+              addressBn: (item as any).addressBn || existing?.addressBn || item.address || '',
+              eiin: (item as any).eiin || existing?.eiin || '',
+              website: item.website || existing?.website || `smsappbd.vercel.app/i/${sSlug}`,
               subdomain: sSlug,
               slug: sSlug,
               status: ((item as any).status as InstitutionStatus) || existing?.status || 'active',
@@ -320,15 +320,17 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
                 : existing?.createdAt || new Date().toISOString().split('T')[0],
               lastLogin: existing?.lastLogin || '-',
               logo: item.logo || existing?.logo || '',
-              banner: existing?.banner || '',
+              banner: item.banner || existing?.banner || '',
               brandColor: (item as any).brandColor || existing?.brandColor || '#6366f1',
               brandName: (item as any).brandName || existing?.brandName || sName,
-              motto: existing?.motto || '',
-              mottoBn: existing?.mottoBn || '',
+              motto: (item as any).motto || existing?.motto || '',
+              mottoBn: (item as any).mottoBn || existing?.mottoBn || '',
               startTime: item.startTime || existing?.startTime || '07:30',
               endTime: item.endTime || existing?.endTime || '14:30',
               optionalSubjects: existing?.optionalSubjects || [],
-              sessions: existing?.sessions || ['2025-26'],
+              sessions: (item as any).sessions
+                ? (typeof (item as any).sessions === 'string' ? JSON.parse((item as any).sessions) : (item as any).sessions)
+                : existing?.sessions || ['2025-26'],
               accessModes: existing?.accessModes || {
                 pathBased: true,
                 subdomainBased: true,

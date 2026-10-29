@@ -11,7 +11,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { usePermission } from '@/hooks/usePermission'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
-import { useClassStore, mapSchoolToInstitutionSettings } from '@/store/classStore'
+import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, generateDarkColors } from '@/store/classStore'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -20,6 +20,7 @@ import { authApi } from '@/lib/api'
 import { getSlug } from '@/lib/storage'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { useAppStore } from '@/store/appStore'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 import ClassesTab from './ClassesTab'
 import InstitutionTab from './tabs/InstitutionTab'
 import RoutineTab from './tabs/RoutineTab'
@@ -97,7 +98,8 @@ export default function ClassesPage() {
 
   // Fetch institution data from database on mount if available
   useEffect(() => {
-    const slug = getSlug() || user?.subdomain || (user?.schoolId ? String(user.schoolId) : null)
+    const viewingId = useSuperAdminStore.getState().viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
+    const slug = (user?.role === 'super_admin' && viewingId) ? viewingId : (getSlug() || user?.subdomain || (user?.schoolId ? String(user.schoolId) : null) || viewingId)
     if (slug) {
       authApi
         .getPublicSchool(slug)
@@ -106,11 +108,17 @@ export default function ClassesPage() {
             const mapped = mapSchoolToInstitutionSettings(res.school, useClassStore.getState().institution)
             updateInstitution(mapped)
             setInstForm((prev: any) => ({ ...prev, ...mapped }))
+
+            // Apply theme colors dynamically
+            const brand = res.school.brandColor || '#6366f1'
+            const currentTheme = useAppStore.getState().theme
+            const isDark = currentTheme === 'dark' || (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+            applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
           }
         })
         .catch(() => {})
     }
-  }, [user?.subdomain, user?.schoolId])
+  }, [user?.subdomain, user?.schoolId, user?.role])
 
   const handleSaveInstitution = async () => {
     updateInstitution(instForm)
@@ -119,7 +127,10 @@ export default function ClassesPage() {
     setTimeout(() => setSaved(false), 2000)
 
     try {
-      const targetId = user?.schoolId || getSlug() || sessionStorage.getItem('edutech_inst_slug')
+      const viewingId = useSuperAdminStore.getState().viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
+      const targetId = (user?.role === 'super_admin' && viewingId)
+        ? viewingId
+        : (user?.schoolId || getSlug() || viewingId || sessionStorage.getItem('edutech_inst_slug'))
       if (targetId) {
         const brandColor = instForm.lightColors?.brand || '#6366f1'
         const res = await authApi.updateSchool(targetId, {
@@ -149,6 +160,22 @@ export default function ClassesPage() {
           const mapped = mapSchoolToInstitutionSettings(res.school, instForm)
           updateInstitution(mapped)
           setInstForm(mapped)
+
+          // If super admin edited an institution, update it in superAdminStore too so /super-admin/schools reflects it immediately
+          useSuperAdminStore.getState().updateInstitution(res.school.id, {
+            name: res.school.name,
+            nameBn: res.school.nameBn || res.school.name,
+            brandName: res.school.brandName || res.school.name,
+            brandColor,
+            logo: res.school.logo || '',
+            banner: res.school.banner || '',
+            address: res.school.address || '',
+            addressBn: res.school.addressBn || res.school.address || '',
+            phone: res.school.phone || '',
+            email: res.school.email || '',
+            website: res.school.website || '',
+            eiin: res.school.eiin || '',
+          })
 
           // Apply theme colors dynamically
           const currentTheme = useAppStore.getState().theme

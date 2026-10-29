@@ -76,9 +76,21 @@ export function requireAuth(prisma: PrismaClient, jwtSecret: string) {
         return res.status(401).json({ error: 'Authentication required' })
       }
 
+      let resolvedSchoolId = user.schoolId
+      if (user.role === 'super_admin' && req.headers['x-school-id']) {
+        const headerSchoolId = String(req.headers['x-school-id']).trim()
+        const targetSchool = await prisma.school.findFirst({
+          where: { OR: [{ id: headerSchoolId }, { domain: headerSchoolId }] },
+          select: { id: true },
+        })
+        if (targetSchool) {
+          resolvedSchoolId = targetSchool.id
+        }
+      }
+
       req.userId = user.id
       req.userRole = user.role
-      req.schoolId = user.schoolId
+      req.schoolId = resolvedSchoolId
       req.sessionId = claims.jti
       next()
     } catch {

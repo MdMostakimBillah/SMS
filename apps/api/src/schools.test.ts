@@ -221,4 +221,71 @@ describe('School Branding & Institution Tab API', () => {
     const deletedBannerRow = await prisma.mediaObject.findUnique({ where: { id: mediaId } })
     expect(deletedBannerRow).toBeNull()
   })
+
+  describe('Super Admin Institution & Fetcher Powers', () => {
+    const SUPER_ADMIN_EMAIL = 'superadmin-fetcher-test@test.local'
+    let superAdminJar: CookieJar
+    let superAdminUserId = ''
+
+    beforeAll(async () => {
+      await prisma.user.deleteMany({ where: { email: SUPER_ADMIN_EMAIL } })
+      const passwordHash = await hash(FIXTURE_PASSWORD)
+      const sa = await prisma.user.create({
+        data: {
+          email: SUPER_ADMIN_EMAIL,
+          passwordHash,
+          name: 'Super Administrator',
+          role: 'super_admin',
+          schoolId,
+        },
+      })
+      superAdminUserId = sa.id
+      const loginResult = await login(app, SUPER_ADMIN_EMAIL, FIXTURE_PASSWORD)
+      superAdminJar = loginResult.jar
+    })
+
+    afterAll(async () => {
+      await prisma.session.deleteMany({ where: { userId: superAdminUserId } })
+      await prisma.user.deleteMany({ where: { id: superAdminUserId } })
+    })
+
+    it('super admin /me returns connected school metadata from database', async () => {
+      const res = await request(app)
+        .get('/api/auth/me')
+        .set('Cookie', cookieHeader(superAdminJar))
+
+      expect(res.status).toBe(200)
+      expect(res.body.user.role).toBe('super_admin')
+      expect(res.body.user.schoolId).toBe(schoolId)
+      expect(res.body.user.school).toBeDefined()
+      expect(res.body.user.school.domain).toBe(SLUG)
+    })
+
+    it('super admin can update school branding, logo, and banner in R2 storage', async () => {
+      const patchRes = await request(app)
+        .patch(`/api/schools/${schoolId}`)
+        .set('Cookie', cookieHeader(superAdminJar))
+        .set('x-csrf-token', csrfToken(superAdminJar))
+        .send({
+          name: 'Super Admin Updated School',
+          brandName: 'Super Brand',
+          brandColor: '#8b5cf6',
+          logo: PNG_A,
+        })
+
+      expect(patchRes.status).toBe(200)
+      expect(patchRes.body.school.name).toBe('Super Admin Updated School')
+      expect(patchRes.body.school.brandColor).toBe('#8b5cf6')
+      expect(patchRes.body.school.logo).toMatch(/\/api\/media\/public\//)
+    })
+
+    it('super admin can use x-school-id header to act on a target school', async () => {
+      const res = await request(app)
+        .get('/api/teachers')
+        .set('Cookie', cookieHeader(superAdminJar))
+        .set('x-school-id', schoolId)
+
+      expect(res.status).toBe(200)
+    })
+  })
 })

@@ -229,7 +229,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSessionSource('server')
       loginTimestampRef.current = Date.now()
       setUserId(res.user.email)
-      if (res.user.school) {
+      if (res.user.role === 'super_admin' && typeof sessionStorage !== 'undefined') {
+        const viewingId = sessionStorage.getItem('edutech_viewing_id')
+        if (viewingId) {
+          try {
+            const pubSchool = await authApi.getPublicSchool(viewingId)
+            if (pubSchool?.school) {
+              syncUserSchool(pubSchool.school, { ...res.user, schoolDomain: pubSchool.school.domain })
+            } else if (res.user.school) {
+              syncUserSchool(res.user.school, res.user)
+            }
+          } catch {
+            if (res.user.school) {
+              syncUserSchool(res.user.school, res.user)
+            }
+          }
+        } else if (res.user.school) {
+          syncUserSchool(res.user.school, res.user)
+        }
+      } else if (res.user.school) {
         syncUserSchool(res.user.school, res.user)
       }
     } catch (err) {
@@ -293,7 +311,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginTimestampRef.current = Date.now()
       setUserId(res.user.email)
       clearLoginAttempts()
-      if (res.user.school) {
+      if (res.user.role === 'super_admin' && typeof sessionStorage !== 'undefined') {
+        const viewingId = sessionStorage.getItem('edutech_viewing_id')
+        if (viewingId) {
+          try {
+            const pubSchool = await authApi.getPublicSchool(viewingId)
+            if (pubSchool?.school) {
+              syncUserSchool(pubSchool.school, { ...res.user, schoolDomain: pubSchool.school.domain })
+            } else if (res.user.school) {
+              syncUserSchool(res.user.school, res.user)
+            }
+          } catch {
+            if (res.user.school) {
+              syncUserSchool(res.user.school, res.user)
+            }
+          }
+        } else if (res.user.school) {
+          syncUserSchool(res.user.school, res.user)
+        }
+      } else if (res.user.school) {
         syncUserSchool(res.user.school, res.user)
       }
       return userObj

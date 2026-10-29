@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   Users,
   ClipboardCheck,
+  Crown,
   PanelLeftClose,
   PanelLeftOpen,
   Menu,
@@ -829,6 +830,12 @@ export default React.memo(function Topbar() {
                     labelBn: 'উপস্থিতি',
                     path: `${navBase}/attendance`,
                   },
+                  ...(user?.role === 'super_admin' ? [{
+                    icon: <Crown size={14} className="text-amber-500" />,
+                    labelEn: 'Super Admin Panel',
+                    labelBn: 'সুপার অ্যাডমিন প্যানেল',
+                    path: '/super-admin',
+                  }] : []),
                 ].map((item) => (
                   <div
                     key={item.path}

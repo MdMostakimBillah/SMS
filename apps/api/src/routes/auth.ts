@@ -199,6 +199,37 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         }
       }
 
+      // Ensure super_admin is connected to default EduTech school to test all institution fetchers
+      if (user.role === 'super_admin' && !user.school) {
+        let defaultSchool =
+          (await prisma.school.findFirst({
+            where: { OR: [{ domain: 'edutech' }, { domain: 'main' }] },
+          })) || (await prisma.school.findFirst({ orderBy: { createdAt: 'asc' } }))
+
+        if (!defaultSchool) {
+          defaultSchool = await prisma.school.create({
+            data: {
+              name: 'EduTech',
+              nameBn: 'এডুটেক',
+              domain: 'edutech',
+              brandName: 'EduTech',
+              brandColor: '#6366f1',
+              status: 'active',
+              plan: 'enterprise',
+            },
+          }).catch(() => null)
+        }
+
+        if (defaultSchool) {
+          ;(user as any).schoolId = defaultSchool.id
+          ;(user as any).school = defaultSchool
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { schoolId: defaultSchool.id },
+          }).catch(() => {})
+        }
+      }
+
       await issueSession(res, user)
       res.json({ user: toPublicUser(user) })
     } catch (err) {
@@ -228,6 +259,38 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
           return res.status(403).json({ error: 'Institution subscription has expired', code: 'SUBSCRIPTION_EXPIRED' })
         }
       }
+
+      // Ensure super_admin is connected to default EduTech school to test all institution fetchers
+      if (user.role === 'super_admin' && !user.school) {
+        let defaultSchool =
+          (await prisma.school.findFirst({
+            where: { OR: [{ domain: 'edutech' }, { domain: 'main' }] },
+          })) || (await prisma.school.findFirst({ orderBy: { createdAt: 'asc' } }))
+
+        if (!defaultSchool) {
+          defaultSchool = await prisma.school.create({
+            data: {
+              name: 'EduTech',
+              nameBn: 'এডুটেক',
+              domain: 'edutech',
+              brandName: 'EduTech',
+              brandColor: '#6366f1',
+              status: 'active',
+              plan: 'enterprise',
+            },
+          }).catch(() => null)
+        }
+
+        if (defaultSchool) {
+          ;(user as any).schoolId = defaultSchool.id
+          ;(user as any).school = defaultSchool
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { schoolId: defaultSchool.id },
+          }).catch(() => {})
+        }
+      }
+
       res.json({ user: toPublicUser(user) })
     } catch {
       res.status(500).json({ error: 'Internal server error' })

@@ -63,6 +63,22 @@ export default function AppLayout() {
 
   // Synchronize institution data from database on mount / refresh
   useEffect(() => {
+    const viewingId = viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
+    if (user?.role === 'super_admin' && viewingId) {
+      authApi.getPublicSchool(viewingId).then((res) => {
+        if (res?.school) {
+          const targetSlug = res.school.domain || res.school.slug || viewingId
+          setSlug(targetSlug)
+          const mapped = mapSchoolToInstitutionSettings(res.school, useClassStore.getState().institution)
+          useClassStore.getState().updateInstitution(mapped)
+          const brand = res.school.brandColor || '#6366f1'
+          const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+        }
+      }).catch(() => {})
+      return
+    }
+
     if (user?.school) {
       const targetSlug =
         user.schoolDomain ||
@@ -95,7 +111,7 @@ export default function AppLayout() {
         }).catch(() => {})
       }
     }
-  }, [user?.school, theme])
+  }, [user?.school, user?.role, viewingInstitutionId, theme])
 
   useEffect(() => {
     const slug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
@@ -232,7 +248,18 @@ export default function AppLayout() {
               <span>Viewing as: <strong>{viewedInst.name}</strong></span>
             </div>
             <button
-              onClick={() => { clearSlug(); stopViewing(); navigate('/super-admin/schools') }}
+              onClick={() => {
+                clearSlug()
+                stopViewing()
+                if (user?.school) {
+                  const mapped = mapSchoolToInstitutionSettings(user.school, useClassStore.getState().institution)
+                  useClassStore.getState().updateInstitution(mapped)
+                  const brand = user.school.brandColor || '#6366f1'
+                  const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+                  applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+                }
+                navigate('/super-admin/schools')
+              }}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.6875rem] font-semibold text-amber-700 bg-amber-500/15 hover:bg-amber-500/25 transition-colors cursor-pointer border-none"
             >
               <X size={12} />
