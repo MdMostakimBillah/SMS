@@ -11,7 +11,8 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,html,json}\"",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "list-media": "npm run list-media --prefix apps/api"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

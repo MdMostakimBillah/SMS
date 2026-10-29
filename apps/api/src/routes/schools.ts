@@ -3,7 +3,7 @@ import type { PrismaClient } from '@prisma/client'
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 import { requireRole } from '../middleware/rbac.js'
 import type { MediaStorage } from '../storage.js'
-import { uploadBase64Media } from '../lib/media-helper.js'
+import { uploadBase64Media, deletePreviousMedia } from '../lib/media-helper.js'
 
 export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: MediaStorage | null) {
   const router = Router()
@@ -53,6 +53,9 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         billingCycle: true,
         createdAt: true,
         updatedAt: true,
+        subjects: {
+          select: { id: true, name: true, nameBn: true },
+        },
       },
     })
   }
@@ -188,11 +191,33 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
    */
   router.patch('/:id', requireAuth(prisma, jwtSecret), requireRole('super_admin', 'school_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const id = req.params.id as string
+      const requestedId = req.params.id as string
+
+      // Resolve school by ID or domain slug
+      const existingSchool = await prisma.school.findFirst({
+        where: {
+          OR: [{ id: requestedId }, { domain: requestedId }],
+        },
+      })
+
+      if (!existingSchool) {
+        return res.status(404).json({ error: 'Institution not found' })
+      }
+
+      const id = existingSchool.id
 
       // Only super_admin or the school's own admin may update
       if (req.userRole !== 'super_admin' && req.schoolId !== id) {
         return res.status(403).json({ error: 'You are not authorized to update this institution' })
+      }
+
+      let parsedBody = req.body || {}
+      if (typeof parsedBody === 'string') {
+        try {
+          parsedBody = JSON.parse(parsedBody)
+        } catch {
+          parsedBody = {}
+        }
       }
 
       const {
@@ -210,6 +235,7 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         addressBn,
         sessions,
         breaks,
+        subjects,
         status,
         plan,
         expiresAt,
@@ -225,7 +251,7 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         address,
         startTime,
         endTime,
-      } = req.body
+      } = parsedBody
 
       const dataToUpdate: any = {}
       if (name !== undefined) dataToUpdate.name = String(name)
@@ -284,10 +310,48 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         if (billingCycle !== undefined) dataToUpdate.billingCycle = String(billingCycle)
       }
 
+      // Upsert subjects if provided as an array
+      if (Array.isArray(subjects)) {
+        for (const sub of subjects) {
+          const subName = typeof sub === 'string' ? sub.trim() : sub?.name?.trim()
+          if (subName) {
+            await prisma.subject.upsert({
+              where: {
+                name_schoolId: {
+                  name: subName,
+                  schoolId: id,
+                },
+              },
+              create: {
+                name: subName,
+                schoolId: id,
+              },
+              update: {},
+            }).catch(() => {})
+          }
+        }
+      }
+
       const updated = await prisma.school.update({
         where: { id },
         data: dataToUpdate,
+        include: {
+          subjects: {
+            select: { id: true, name: true, nameBn: true },
+          },
+        },
       })
+
+      // If user changed or removed their logo, delete previous image from R2 storage and database
+      if (logo !== undefined && existingSchool.logo && existingSchool.logo !== updated.logo) {
+        await deletePreviousMedia(storage, prisma, id, existingSchool.logo)
+      }
+
+      // If user changed or removed their banner, delete previous image from R2 storage and database
+      if (banner !== undefined && existingSchool.banner && existingSchool.banner !== updated.banner) {
+        await deletePreviousMedia(storage, prisma, id, existingSchool.banner)
+      }
+
       res.json({ success: true, school: updated })
     } catch (err) {
       console.error('[schools] patch failed:', err instanceof Error ? err.message : err)
@@ -311,8 +375,22 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         return res.status(403).json({ error: 'Super Admin institution cannot be deleted' })
       }
 
+      // Delete all stored media objects for this school in R2 storage
+      const mediaList = await prisma.mediaObject.findMany({
+        where: { schoolId: id },
+      }).catch(() => [])
+
+      if (storage && mediaList.length > 0) {
+        for (const m of mediaList) {
+          await storage.delete(m.objectKey).catch(() => {})
+        }
+      }
+
       await prisma.$transaction(async (tx) => {
-        // Cascade delete users belonging to this school (except super_admin)
+        // Cascade delete users and media belonging to this school (except super_admin)
+        await tx.mediaObject.deleteMany({
+          where: { schoolId: id },
+        })
         await tx.session.deleteMany({
           where: { user: { schoolId: id, role: { not: 'super_admin' } } },
         })

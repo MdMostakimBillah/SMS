@@ -1,6 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import { authApi, ApiError, type SessionUser } from '@/lib/api'
-import { nsRemove, setUserId, clearUserId, clearSlug } from '@/lib/storage'
+import { nsRemove, setUserId, clearUserId, clearSlug, setSlug } from '@/lib/storage'
+import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, generateDarkColors } from '@/store/classStore'
+import { useAppStore } from '@/store/appStore'
+import { applyThemeColors } from '@/hooks/useThemeColors'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 
 interface User {
   id: string
@@ -125,6 +129,46 @@ function serverUserToUser(u: SessionUser): User {
   }
 }
 
+export function syncUserSchool(school: any, u: SessionUser | User): void {
+  if (!school) return
+  const targetSlug =
+    u.schoolDomain ||
+    school.domain ||
+    school.slug ||
+    (u.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : '')
+
+  if (targetSlug) {
+    setSlug(targetSlug)
+  }
+
+  const mapped = mapSchoolToInstitutionSettings(school, useClassStore.getState().institution)
+  useClassStore.getState().updateInstitution(mapped)
+
+  const brandColor = school.brandColor || '#6366f1'
+  const currentTheme = useAppStore.getState().theme
+  const isDark =
+    currentTheme === 'dark' ||
+    (currentTheme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  applyThemeColors(isDark ? generateDarkColors(brandColor) : generateLightColors(brandColor))
+
+  if (targetSlug) {
+    const instId = school.id || `INST-${targetSlug}`
+    const existing = useSuperAdminStore.getState().institutions.find((i) => i.id === instId || i.slug === targetSlug)
+    if (existing) {
+      useSuperAdminStore.getState().updateInstitution(existing.id, {
+        name: school.name,
+        nameBn: school.nameBn || school.name,
+        brandName: school.brandName || school.name,
+        brandColor,
+        logo: school.logo || '',
+        banner: school.banner || '',
+        slug: targetSlug,
+        subdomain: targetSlug,
+      })
+    }
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -180,10 +224,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRestoreFailed(false)
     try {
       const res = await authApi.me()
-      setUser(serverUserToUser(res.user))
+      const userObj = serverUserToUser(res.user)
+      setUser(userObj)
       setSessionSource('server')
       loginTimestampRef.current = Date.now()
       setUserId(res.user.email)
+      if (res.user.school) {
+        syncUserSchool(res.user.school, res.user)
+      }
     } catch (err) {
       setUser(null)
       setSessionSource(null)
@@ -245,6 +293,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginTimestampRef.current = Date.now()
       setUserId(res.user.email)
       clearLoginAttempts()
+      if (res.user.school) {
+        syncUserSchool(res.user.school, res.user)
+      }
       return userObj
     } catch (err) {
       const msg = applyError(err, 'Invalid credentials', setLockoutState)

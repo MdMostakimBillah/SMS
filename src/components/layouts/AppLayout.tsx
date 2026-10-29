@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
-import { useClassStore } from '@/store/classStore'
+import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, generateDarkColors } from '@/store/classStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useThemeColors } from '@/hooks/useThemeColors'
+import { useThemeColors, applyThemeColors } from '@/hooks/useThemeColors'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { useAuth } from '@/contexts/AuthContext'
+import { authApi, resolveMediaUrl } from '@/lib/api'
 import { gsap } from 'gsap'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
@@ -13,7 +14,7 @@ import CommandPalette from '@/components/shared/CommandPalette'
 import QuickAccessFAB from '@/components/shared/QuickAccessFAB'
 import { Crown, X } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
-import { clearSlug } from '@/lib/storage'
+import { clearSlug, setSlug } from '@/lib/storage'
 import { useBn } from '@/hooks/useBn'
 
 export default function AppLayout() {
@@ -60,8 +61,44 @@ export default function AppLayout() {
     document.documentElement.setAttribute('data-lang', language)
   }, [language])
 
+  // Synchronize institution data from database on mount / refresh
   useEffect(() => {
-    const slug = sessionStorage.getItem('edutech_inst_slug')
+    if (user?.school) {
+      const targetSlug =
+        user.schoolDomain ||
+        user.school.domain ||
+        user.school.slug ||
+        (user.schoolName ? user.schoolName.toLowerCase().replace(/\s+/g, '-') : '')
+      if (targetSlug) {
+        setSlug(targetSlug)
+      }
+      const mapped = mapSchoolToInstitutionSettings(user.school, useClassStore.getState().institution)
+      useClassStore.getState().updateInstitution(mapped)
+      const brand = user.school.brandColor || '#6366f1'
+      const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+    } else {
+      const pathSlug =
+        (typeof window !== 'undefined' ? window.location.pathname.match(/^\/i\/([^/]+)/)?.[1] : null) ||
+        sessionStorage.getItem('edutech_inst_slug') ||
+        localStorage.getItem('edutech_inst_slug')
+      if (pathSlug && pathSlug !== 'super-admin' && (!institution.name || institution.brandName === 'EduTech')) {
+        authApi.getPublicSchool(pathSlug).then((res) => {
+          if (res?.school) {
+            setSlug(pathSlug)
+            const mapped = mapSchoolToInstitutionSettings(res.school, useClassStore.getState().institution)
+            useClassStore.getState().updateInstitution(mapped)
+            const brand = res.school.brandColor || '#6366f1'
+            const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+            applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+          }
+        }).catch(() => {})
+      }
+    }
+  }, [user?.school, theme])
+
+  useEffect(() => {
+    const slug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
     const viewed = viewedInst
     const inst = slug ? viewed || institution : null
     if (inst && inst.name) {
@@ -69,7 +106,7 @@ export default function AppLayout() {
       if (inst.logo) {
         let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
         if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link) }
-        link.href = inst.logo
+        link.href = resolveMediaUrl(inst.logo)
       }
     } else {
       document.title = 'EduTech SMS'
@@ -120,7 +157,7 @@ export default function AppLayout() {
           {loadingLogo && !loadingLogoErr ? (
             <div className="w-16 h-16 rounded-2xl bg-[var(--brand)] flex items-center justify-center overflow-hidden">
               <img
-                src={loadingLogo}
+                src={resolveMediaUrl(loadingLogo)}
                 alt={loadingName}
                 referrerPolicy="no-referrer"
                 onError={() => setLoadingLogoErr(true)}

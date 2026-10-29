@@ -8,7 +8,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useBn } from '@/hooks/useBn'
 import { useSuperAdminStore, PACKAGES, type Institution } from '@/store/superAdminStore'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
-import { authApi } from '@/lib/api'
+import { authApi, resolveMediaUrl } from '@/lib/api'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
 
 function getInitialTheme(): 'light' | 'dark' {
@@ -114,7 +114,7 @@ export default function InstitutionLanding() {
         link.rel = 'icon'
         document.head.appendChild(link)
       }
-      link.href = institution.logo
+      link.href = resolveMediaUrl(institution.logo)
     }
     // Notify service worker of institution for PWA identity
     if (navigator.serviceWorker) {
@@ -185,7 +185,7 @@ export default function InstitutionLanding() {
         <div className="relative z-10 text-center px-8">
           {institution.logo ? (
             <div className="w-[72px] h-[72px] rounded-2xl mx-auto mb-4 overflow-hidden shadow-xl">
-              <img src={institution.logo} alt={institution.name} className="w-full h-full object-cover" />
+              <img src={resolveMediaUrl(institution.logo)} alt={institution.name} className="w-full h-full object-cover" />
             </div>
           ) : (
             <BrandLogo size={104} className="mx-auto mb-5" />
@@ -215,7 +215,7 @@ export default function InstitutionLanding() {
           <div className="lg:hidden text-center mb-8">
             {institution.logo ? (
               <div className="w-11 h-11 rounded-xl mx-auto mb-4 overflow-hidden shadow-lg">
-                <img src={institution.logo} alt={institution.name} className="w-full h-full object-cover" />
+                <img src={resolveMediaUrl(institution.logo)} alt={institution.name} className="w-full h-full object-cover" />
               </div>
             ) : (
               <BrandLogo size={64} className="mx-auto mb-4" />

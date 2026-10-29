@@ -1,8 +1,26 @@
 const STORAGE_PREFIX = 'edutech'
 
-function getSlug(): string | null {
+export function getSlug(): string | null {
   try {
-    return sessionStorage.getItem('edutech_inst_slug')
+    const s = sessionStorage.getItem('edutech_inst_slug')
+    if (s) return s
+    const l = localStorage.getItem('edutech_inst_slug')
+    if (l) {
+      try { sessionStorage.setItem('edutech_inst_slug', l) } catch { /* ignore */ }
+      return l
+    }
+    if (typeof window !== 'undefined' && window.location?.pathname) {
+      const match = window.location.pathname.match(/^\/i\/([^/]+)/)
+      if (match && match[1] && match[1] !== 'super-admin') {
+        const urlSlug = match[1]
+        try {
+          sessionStorage.setItem('edutech_inst_slug', urlSlug)
+          localStorage.setItem('edutech_inst_slug', urlSlug)
+        } catch { /* ignore */ }
+        return urlSlug
+      }
+    }
+    return null
   } catch {
     return null
   }
@@ -131,13 +149,19 @@ function loadAllStores(): void {
 registerReloadRequester(loadAllStores)
 
 export function setSlug(slug: string): void {
-  sessionStorage.setItem('edutech_inst_slug', slug)
+  try {
+    sessionStorage.setItem('edutech_inst_slug', slug)
+    localStorage.setItem('edutech_inst_slug', slug)
+  } catch { /* ignore */ }
   slugListeners.forEach((cb) => cb(slug))
   loadAllStores()
 }
 
 export function clearSlug(): void {
-  sessionStorage.removeItem('edutech_inst_slug')
+  try {
+    sessionStorage.removeItem('edutech_inst_slug')
+    localStorage.removeItem('edutech_inst_slug')
+  } catch { /* ignore */ }
   slugListeners.forEach((cb) => cb(null))
   resetAllStores()
 }

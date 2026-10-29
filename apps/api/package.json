@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
+    "list-media": "tsx scripts/list-media.ts",
     "pretest": "bash scripts/prepare-test-db.sh",
     "test": "vitest run"
   },

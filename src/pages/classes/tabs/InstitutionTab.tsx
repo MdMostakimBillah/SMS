@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react'
-import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
+import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import {
   Building2,
   Phone,
@@ -21,6 +21,7 @@ import ColorSettings from '@/components/shared/ColorSettings'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
 import { applyThemeColors } from '@/hooks/useThemeColors'
+import { resolveMediaUrl } from '@/lib/api'
 
 interface InstitutionTabProps {
   institution: any
@@ -109,7 +110,7 @@ function BannerPositionEditor({ banner, position, onPositionChange, onUpload, on
       >
         {banner && (
           <img 
-            src={banner} 
+            src={resolveMediaUrl(banner)} 
             alt="Banner" 
             className="w-full h-full object-cover pointer-events-none select-none"
             style={{
@@ -131,17 +132,15 @@ function BannerPositionEditor({ banner, position, onPositionChange, onUpload, on
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
-                  const sizeErr = validateImageSize(file, isBn)
-                  if (sizeErr) {
-                    alert(sizeErr)
+                  const result = await compressImageWithinLimit(file, { maxDim: 1600, maxBytes: 600 * 1024 })
+                  if (!result.ok) {
+                    alert(result.reason === 'too-large' ? imageTooLargeMessage(isBn) : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
                     return
                   }
-                  const reader = new FileReader()
-                  reader.onload = (ev) => onUpload(ev.target?.result as string)
-                  reader.readAsDataURL(file)
+                  onUpload(result.dataUrl)
                 }}
               />
             </label>
@@ -173,17 +172,15 @@ function BannerPositionEditor({ banner, position, onPositionChange, onUpload, on
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0]
                 if (!file) return
-                const sizeErr = validateImageSize(file, isBn)
-                if (sizeErr) {
-                  alert(sizeErr)
+                const result = await compressImageWithinLimit(file, { maxDim: 1600, maxBytes: 600 * 1024 })
+                if (!result.ok) {
+                  alert(result.reason === 'too-large' ? imageTooLargeMessage(isBn) : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
                   return
                 }
-                const reader = new FileReader()
-                reader.onload = (ev) => onUpload(ev.target?.result as string)
-                reader.readAsDataURL(file)
+                onUpload(result.dataUrl)
               }}
             />
           </label>
@@ -284,7 +281,7 @@ export default React.memo(function InstitutionTab({
           <div className="relative h-48 bg-gradient-to-r from-[var(--brand)] to-[var(--brand-2)] overflow-hidden">
             {institution.banner && (
               <img 
-                src={institution.banner} 
+                src={resolveMediaUrl(institution.banner)} 
                 alt="Banner" 
                 className="w-full h-full object-cover"
                 style={{
@@ -306,7 +303,7 @@ export default React.memo(function InstitutionTab({
             <div className="absolute -top-14 left-5">
               <div className="w-28 h-28 rounded-2xl border-4 border-[var(--bg-primary)] bg-[var(--bg-secondary)] shadow-xl overflow-hidden">
                 {institution.logo ? (
-                  <img src={institution.logo} alt="Logo" className="w-full h-full object-cover" />
+                  <img src={resolveMediaUrl(institution.logo)} alt="Logo" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-[var(--brand-light)]">
                     <Building2 size={36} className="text-[var(--brand)]" />
@@ -359,14 +356,21 @@ export default React.memo(function InstitutionTab({
                       </div>
                     </div>
                   )}
-                  {institution.address && (
+                  {(institution.address || institution.addressBn) && (
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-lg bg-[var(--brand-light)] flex items-center justify-center shrink-0">
                         <MapPin size={14} className="text-[var(--brand)]" />
                       </div>
                       <div>
                         <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ঠিকানা' : 'Address'}</div>
-                        <div className="text-xs font-semibold text-[var(--text-primary)]">{institution.address}</div>
+                        <div className="text-xs font-semibold text-[var(--text-primary)]">
+                          {isBn ? (institution.addressBn || institution.address) : (institution.address || institution.addressBn)}
+                        </div>
+                        {institution.address && institution.addressBn && (
+                          <div className="text-[0.625rem] text-[var(--text-muted)]">
+                            {isBn ? institution.address : institution.addressBn}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -457,31 +461,43 @@ export default React.memo(function InstitutionTab({
               <div className="relative">
                 <div className="w-20 h-20 rounded-xl border-4 border-[var(--bg-primary)] bg-[var(--bg-secondary)] shadow-lg overflow-hidden">
                   {instForm.logo ? (
-                    <img src={instForm.logo} alt="Logo" className="w-full h-full object-cover" />
+                    <img src={resolveMediaUrl(instForm.logo)} alt="Logo" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-[var(--brand-light)]">
                       <Building2 size={28} className="text-[var(--brand)]" />
                     </div>
                   )}
                 </div>
-                <label className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-[var(--brand)] text-white cursor-pointer hover:scale-110 transition-transform">
-                  <Camera size={12} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-                      const result = await compressImageWithinLimit(file, { maxDim: 512 })
-                      if (!result.ok) {
-                        alert(result.reason === 'too-large' ? imageTooLargeMessage(isBn) : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
-                        return
-                      }
-                      setInstForm((p: any) => ({ ...p, logo: result.dataUrl }))
-                    }}
-                  />
-                </label>
+                <div className="absolute -bottom-1 -right-1 flex items-center gap-1">
+                  <label className="p-1.5 rounded-full bg-[var(--brand)] text-white cursor-pointer hover:scale-110 transition-transform">
+                    <Camera size={12} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        const result = await compressImageWithinLimit(file, { maxDim: 512 })
+                        if (!result.ok) {
+                          alert(result.reason === 'too-large' ? imageTooLargeMessage(isBn) : (isBn ? 'ছবি লোড করতে সমস্যা' : 'Error loading image'))
+                          return
+                        }
+                        setInstForm((p: any) => ({ ...p, logo: result.dataUrl }))
+                      }}
+                    />
+                  </label>
+                  {instForm.logo && (
+                    <button
+                      type="button"
+                      onClick={() => setInstForm((p: any) => ({ ...p, logo: '' }))}
+                      className="p-1.5 rounded-full bg-red-500 text-white cursor-pointer hover:scale-110 transition-transform"
+                      title={isBn ? 'লোগো মুছুন' : 'Remove logo'}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -573,11 +589,19 @@ export default React.memo(function InstitutionTab({
                   placeholder={isBn ? 'বাংলা, ইংরেজি, গণিত' : 'Bangla, English, Mathematics'}
                 />
               </div>
-              <div className="sm:col-span-2">
-                <label className={labelClass}>{isBn ? 'ঠিকানা' : 'Address'}</label>
+              <div>
+                <label className={labelClass}>{isBn ? 'ঠিকানা (ইং)' : 'Address (EN)'}</label>
                 <input
-                  value={instForm.address}
+                  value={instForm.address || ''}
                   onChange={(e) => setInstForm((p: any) => ({ ...p, address: e.target.value }))}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>{isBn ? 'ঠিকানা (বাং)' : 'Address (BN)'}</label>
+                <input
+                  value={instForm.addressBn || ''}
+                  onChange={(e) => setInstForm((p: any) => ({ ...p, addressBn: e.target.value }))}
                   className={inputClass}
                 />
               </div>

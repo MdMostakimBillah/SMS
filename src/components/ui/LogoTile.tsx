@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BrandLogo } from './BrandLogo'
+import { resolveMediaUrl } from '@/lib/api'
 
 interface Props {
   /** Institution logo URL. Missing or broken URLs fall back to the EduTech brand mark. */
@@ -35,7 +36,7 @@ export function LogoTile({ src, alt = 'Logo', className = 'w-10 h-10', rounded =
     >
       {showImg ? (
         <img
-          src={src as string}
+          src={resolveMediaUrl(src as string)}
           alt={alt}
           referrerPolicy="no-referrer"
           onError={() => setFailed(true)}

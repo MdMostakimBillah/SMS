@@ -5,6 +5,7 @@ import {
   getClassOptions,
   buildSectionsMap,
   getAllSections,
+  mapSchoolToInstitutionSettings,
   type ClassInfo,
 } from './classStore'
 
@@ -139,5 +140,25 @@ describe('classStore actions', () => {
   it('updateInstitution merges data', () => {
     useClassStore.getState().updateInstitution({ name: 'New School' })
     expect(useClassStore.getState().institution.name).toBe('New School')
+  })
+
+  it('mapSchoolToInstitutionSettings maps database school and R2 image correctly', () => {
+    const dbSchool = {
+      name: 'Udvash Academic & Admission Care',
+      nameBn: 'উদ্ভাস একাডেমি',
+      brandName: 'Udvash',
+      brandColor: '#a855f7',
+      logo: '/api/media/public/med-1234',
+      banner: '/api/media/public/med-5678',
+      domain: 'udvash',
+    }
+    const mapped = mapSchoolToInstitutionSettings(dbSchool)
+    expect(mapped.name).toBe('Udvash Academic & Admission Care')
+    expect(mapped.nameBn).toBe('উদ্ভাস একাডেমি')
+    expect(mapped.brandName).toBe('Udvash')
+    expect(mapped.logo).toBe('/api/media/public/med-1234')
+    expect(mapped.banner).toBe('/api/media/public/med-5678')
+    expect(mapped.lightColors?.brand).toBe('#a855f7')
+    expect(mapped.darkColors?.brand).toBeDefined()
   })
 })

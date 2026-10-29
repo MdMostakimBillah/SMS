@@ -17,6 +17,9 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/lib/api'
+import { getSlug } from '@/lib/storage'
+import { applyThemeColors } from '@/hooks/useThemeColors'
+import { useAppStore } from '@/store/appStore'
 import ClassesTab from './ClassesTab'
 import InstitutionTab from './tabs/InstitutionTab'
 import RoutineTab from './tabs/RoutineTab'
@@ -94,7 +97,7 @@ export default function ClassesPage() {
 
   // Fetch institution data from database on mount if available
   useEffect(() => {
-    const slug = sessionStorage.getItem('edutech_inst_slug') || user?.subdomain || (user?.schoolId ? String(user.schoolId) : null)
+    const slug = getSlug() || user?.subdomain || (user?.schoolId ? String(user.schoolId) : null)
     if (slug) {
       authApi
         .getPublicSchool(slug)
@@ -116,7 +119,7 @@ export default function ClassesPage() {
     setTimeout(() => setSaved(false), 2000)
 
     try {
-      const targetId = user?.schoolId || sessionStorage.getItem('edutech_inst_slug')
+      const targetId = user?.schoolId || getSlug() || sessionStorage.getItem('edutech_inst_slug')
       if (targetId) {
         const brandColor = instForm.lightColors?.brand || '#6366f1'
         const res = await authApi.updateSchool(targetId, {
@@ -139,14 +142,18 @@ export default function ClassesPage() {
           endTime: instForm.endTime,
           sessions: JSON.stringify(instForm.sessions || []),
           breaks: JSON.stringify(instForm.breaks || []),
+          subjects: instForm.subjects || [],
         })
 
-        // If server stored uploaded logo/banner via R2, sync returned URLs to state
-        if (res?.school?.logo || res?.school?.banner) {
-          updateInstitution({
-            ...(res.school.logo ? { logo: res.school.logo } : {}),
-            ...(res.school.banner ? { banner: res.school.banner } : {}),
-          })
+        if (res?.school) {
+          const mapped = mapSchoolToInstitutionSettings(res.school, instForm)
+          updateInstitution(mapped)
+          setInstForm(mapped)
+
+          // Apply theme colors dynamically
+          const currentTheme = useAppStore.getState().theme
+          const isDark = currentTheme === 'dark' || (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          applyThemeColors(isDark ? mapped.darkColors : mapped.lightColors)
         }
       }
     } catch (err) {

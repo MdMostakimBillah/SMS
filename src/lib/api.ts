@@ -1,5 +1,20 @@
 export const API_BASE = import.meta.env.VITE_API_URL || ''
 
+/**
+ * Resolves media URLs (e.g. from Cloudflare R2 storage /api/media/public/:id)
+ * prepending API_BASE if configured and path is relative.
+ */
+export function resolveMediaUrl(url: string | null | undefined): string {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return url
+  }
+  if (url.startsWith('/api/') && API_BASE) {
+    return `${API_BASE.replace(/\/+$/, '')}${url}`
+  }
+  return url
+}
+
 /** Reads the readable double-submit CSRF cookie set by the backend. */
 function getCsrfToken(): string | null {
   const match = document.cookie.match(/(?:^|;\s*)edutech_csrf=([^;]*)/)
@@ -42,7 +57,7 @@ export async function apiRequest<T = unknown>(
         ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
         ...headers,
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined,
       signal: controller.signal,
     })
 
@@ -390,7 +405,7 @@ export const authApi = {
   updateSchool: async (id: string, data: Partial<PublicSchool> & Record<string, any>) => {
     return apiRequest<{ success: boolean; school?: any }>(`/api/schools/${encodeURIComponent(id)}`, {
       method: 'PATCH',
-      body: JSON.stringify(data),
+      body: data,
     })
   },
 

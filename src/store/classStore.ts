@@ -147,21 +147,23 @@ export function mapSchoolToInstitutionSettings(school: any, current?: Institutio
   return {
     name: school.name || current?.name || '',
     nameBn: school.nameBn || current?.nameBn || school.name || '',
-    logo: school.logo || current?.logo || '',
-    banner: school.banner || current?.banner || '',
+    logo: school.logo !== undefined ? (school.logo || '') : (current?.logo || ''),
+    banner: school.banner !== undefined ? (school.banner || '') : (current?.banner || ''),
     bannerPosition: school.bannerPosition
       ? (typeof school.bannerPosition === 'string' ? JSON.parse(school.bannerPosition) : school.bannerPosition)
       : current?.bannerPosition || { x: 0, y: 0 },
     brandName: school.brandName || current?.brandName || school.name || 'EduTech',
-    motto: school.motto || current?.motto || '',
-    mottoBn: school.mottoBn || current?.mottoBn || '',
-    eiin: school.eiin || current?.eiin || '',
-    phone: school.phone || current?.phone || '',
-    email: school.email || current?.email || '',
-    address: school.address || current?.address || '',
-    addressBn: school.addressBn || current?.addressBn || school.address || '',
-    website: school.website || current?.website || '',
-    subjects: current?.subjects || [],
+    motto: school.motto !== undefined ? (school.motto || '') : (current?.motto || ''),
+    mottoBn: school.mottoBn !== undefined ? (school.mottoBn || '') : (current?.mottoBn || ''),
+    eiin: school.eiin !== undefined ? (school.eiin || '') : (current?.eiin || ''),
+    phone: school.phone !== undefined ? (school.phone || '') : (current?.phone || ''),
+    email: school.email !== undefined ? (school.email || '') : (current?.email || ''),
+    address: school.address !== undefined ? (school.address || '') : (current?.address || ''),
+    addressBn: school.addressBn !== undefined ? (school.addressBn || '') : (current?.addressBn || ''),
+    website: school.website !== undefined ? (school.website || '') : (current?.website || ''),
+    subjects: Array.isArray(school.subjects)
+      ? school.subjects.map((s: any) => (typeof s === 'string' ? s : s.name))
+      : (current?.subjects || []),
     startTime: school.startTime || current?.startTime || '07:30',
     endTime: school.endTime || current?.endTime || '14:30',
     breaks: school.breaks
@@ -574,17 +576,13 @@ registerStoreReset(() => {
 })
 
 registerStoreLoad(() => {
-  const slug = sessionStorage.getItem('edutech_inst_slug')
+  const slug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
   if (!slug) return
   try {
     const raw = localStorage.getItem(`edutech-classes_${slug}`)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed.state) useClassStore.setState(parsed.state)
-    } else {
-      useClassStore.setState({ institution: { ...defaultInstitution }, classes: [], routines: [], sessionClasses: {}, sessionRoutines: {} })
+      if (parsed?.state) useClassStore.setState(parsed.state)
     }
-  } catch {
-    useClassStore.setState({ institution: { ...defaultInstitution }, classes: [], routines: [], sessionClasses: {}, sessionRoutines: {} })
-  }
+  } catch { /* ignore */ }
 })

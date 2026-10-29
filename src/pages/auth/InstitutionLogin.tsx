@@ -5,11 +5,13 @@ import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
 import { AuthContext } from '@/contexts/AuthContext'
-import { authApi } from '@/lib/api'
+import { authApi, resolveMediaUrl } from '@/lib/api'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
 import { useSuperAdminStore, PACKAGES, type Institution } from '@/store/superAdminStore'
-import { useClassStore, defaultThemeColors, defaultThemeColorsDark, type ThemeColors } from '@/store/classStore'
+import { useClassStore, defaultThemeColors, defaultThemeColorsDark, type ThemeColors, mapSchoolToInstitutionSettings } from '@/store/classStore'
+import { setSlug } from '@/lib/storage'
+import { applyThemeColors } from '@/hooks/useThemeColors'
 import { presets } from '@/components/shared/ColorSettings'
 
 const MAX_ATTEMPTS = 5
@@ -276,7 +278,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         link.rel = 'icon'
         document.head.appendChild(link)
       }
-      link.href = institution.logo
+      link.href = resolveMediaUrl(institution.logo)
     }
     return () => {
       document.title = 'EduTech SMS'
@@ -391,32 +393,6 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
       }
       clearLoginAttempts()
 
-      if (u?.school) {
-        const s = u.school
-        const brand = s.brandColor || '#6366f1'
-        useClassStore.getState().updateInstitution({
-          name: s.name,
-          nameBn: s.nameBn || s.name,
-          brandName: s.brandName || s.name,
-          logo: s.logo || '',
-          banner: s.banner || '',
-          motto: s.motto || '',
-          mottoBn: s.mottoBn || '',
-          eiin: s.eiin || '',
-          phone: s.phone || '',
-          email: s.email || '',
-          address: s.address || '',
-          addressBn: s.addressBn || s.address || '',
-          website: s.website || '',
-          startTime: s.startTime || '07:30',
-          endTime: s.endTime || '14:30',
-          sessions: s.sessions ? (typeof s.sessions === 'string' ? JSON.parse(s.sessions) : s.sessions) : ['2025-26'],
-          breaks: s.breaks ? (typeof s.breaks === 'string' ? JSON.parse(s.breaks) : s.breaks) : [{ id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' }],
-          lightColors: generateLightColors(brand),
-          darkColors: generateDarkColors(brand),
-        })
-      }
-
       const userRole = u?.role || 'admin'
       const targetRole = userRole === 'school_admin' ? 'admin' : userRole
       const targetSlug =
@@ -428,8 +404,16 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         (u?.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : 'school')
 
       if (targetSlug) {
-        sessionStorage.setItem('edutech_inst_slug', targetSlug)
-        localStorage.setItem('edutech_inst_slug', targetSlug)
+        setSlug(targetSlug)
+      }
+
+      if (u?.school) {
+        const s = u.school
+        const brand = s.brandColor || '#6366f1'
+        const mapped = mapSchoolToInstitutionSettings(s, useClassStore.getState().institution)
+        useClassStore.getState().updateInstitution(mapped)
+        const isCurrentDark = theme === 'dark'
+        applyThemeColors(isCurrentDark ? generateDarkColors(brand) : generateLightColors(brand))
       }
 
       if (userRole === 'super_admin') {
@@ -503,7 +487,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           {institution.logo ? (
             <div className="w-[72px] h-[72px] rounded-2xl mx-auto mb-4 overflow-hidden shadow-xl">
               <img
-                src={institution.logo}
+                src={resolveMediaUrl(institution.logo)}
                 alt={institution.name}
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
@@ -537,7 +521,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
             {institution.logo ? (
               <div className="w-11 h-11 rounded-xl mx-auto mb-4 overflow-hidden shadow-lg">
               <img
-                src={institution.logo}
+                src={resolveMediaUrl(institution.logo)}
                 alt={institution.name}
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
