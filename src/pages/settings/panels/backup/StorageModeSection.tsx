@@ -94,6 +94,15 @@ export const StorageModeSection: React.FC<Props> = ({
         })}
       </div>
 
+      {mode === 'local_computer' && (
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs">
+          <strong>{isBn ? 'মনোযোগ দিন:' : 'Important:'}</strong>{' '}
+          {isBn
+            ? 'লোকাল কম্পিউটার নির্বাচন করলে কেন্দ্রীয় সার্ভার ডাটাবেজ সংযোগ বন্ধ থাকবে। ডেটা সুরক্ষিত রাখতে নিয়মিত টেলিগ্রাম ব্যাকআপ নিন বা ব্যাকআপ ফাইল ডাউনলোড করে রাখুন।'
+            : 'In Local Computer mode, central cloud database mutations are completely stopped. All data is saved on this machine. Use Telegram backup below to safeguard your records.'}
+        </div>
+      )}
+
       {mode === 'local_server' && (
         <div className="pt-2 border-t border-[var(--border)] space-y-3">
           <div>

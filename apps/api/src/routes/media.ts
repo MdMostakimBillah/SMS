@@ -270,6 +270,9 @@ export function mediaRouter(prisma: PrismaClient, jwtSecret: string, storage: Me
   router.get('/public/:id', requireStorage, async (req: Request, res: Response) => {
     try {
       const id = req.params.id as string
+      if (req.headers['if-none-match'] === `"${id}"`) {
+        return res.status(304).end()
+      }
       const row = await prisma.mediaObject.findFirst({
         where: {
           id,
@@ -283,7 +286,8 @@ export function mediaRouter(prisma: PrismaClient, jwtSecret: string, storage: Me
       const stream = await storage!.getStream(row.objectKey)
       res.setHeader('Content-Type', row.mimeType)
       res.setHeader('Content-Length', String(row.sizeBytes))
-      res.setHeader('Cache-Control', 'public, max-age=86400')
+      res.setHeader('ETag', `"${row.id}"`)
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
       res.setHeader('X-Content-Type-Options', 'nosniff')
       res.setHeader('Content-Disposition', `inline; filename="${row.fileName.replace(/"/g, '')}"`)
       stream.pipe(res)

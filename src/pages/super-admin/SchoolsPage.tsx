@@ -32,6 +32,68 @@ function formatBytes(bytes?: number | null): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
+function InstitutionLogo({ logo, name, brandColor }: { logo?: string; name: string; brandColor: string }) {
+  const [loaded, setLoaded] = useState(false)
+  const [hasError, setHasError] = useState(false)
+
+  if (!logo || hasError) {
+    return (
+      <div
+        className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 overflow-hidden font-bold text-white text-[0.875rem] shadow-sm select-none"
+        style={{ background: brandColor || '#6366f1' }}
+      >
+        {name.charAt(0)}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className="w-11 h-11 rounded-xl relative flex items-center justify-center shrink-0 overflow-hidden shadow-sm"
+      style={{ background: brandColor || 'var(--bg-secondary)' }}
+    >
+      {!loaded && (
+        <div className="absolute inset-0 bg-[var(--border)] animate-pulse flex items-center justify-center">
+          <Building2 size={16} className="text-[var(--text-muted)] opacity-40 animate-pulse" />
+        </div>
+      )}
+      <img
+        src={resolveMediaUrl(logo)}
+        alt={name}
+        loading="eager"
+        onLoad={() => setLoaded(true)}
+        onError={() => setHasError(true)}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${
+          loaded ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+    </div>
+  )
+}
+
+function InstitutionCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 flex items-center gap-3 animate-pulse">
+      <div className="w-11 h-11 rounded-xl bg-[var(--bg-secondary)] shrink-0 flex items-center justify-center">
+        <Building2 size={18} className="text-[var(--text-muted)] opacity-30" />
+      </div>
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="h-4 w-36 bg-[var(--bg-secondary)] rounded" />
+          <div className="h-4 w-16 bg-[var(--bg-secondary)] rounded-full" />
+          <div className="h-4 w-20 bg-[var(--bg-secondary)] rounded-full" />
+          <div className="h-4 w-16 bg-[var(--bg-secondary)] rounded-full" />
+        </div>
+        <div className="h-3 w-44 bg-[var(--bg-secondary)] rounded" />
+      </div>
+      <div className="hidden sm:flex flex-col items-end gap-1.5 shrink-0">
+        <div className="h-3 w-20 bg-[var(--bg-secondary)] rounded" />
+        <div className="h-2.5 w-14 bg-[var(--bg-secondary)] rounded" />
+      </div>
+    </div>
+  )
+}
+
 function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLicense }: {
   inst: Institution
   isBn: boolean
@@ -57,16 +119,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
         onClick={onToggle}
         className="w-full p-4 flex items-center gap-3 text-left cursor-pointer bg-transparent border-none"
       >
-        <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
-          style={{ background: inst.brandColor }}
-        >
-          {inst.logo ? (
-            <img src={resolveMediaUrl(inst.logo)} alt={inst.name} className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-white font-bold text-[0.875rem]">{inst.name.charAt(0)}</span>
-          )}
-        </div>
+        <InstitutionLogo logo={inst.logo} name={inst.name} brandColor={inst.brandColor} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">
@@ -329,6 +382,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
 
   const [showFilters, setShowFilters] = useState(false)
   const [managingLicenseInst, setManagingLicenseInst] = useState<Institution | null>(null)
+  const [loading, setLoading] = useState(institutions.length === 0)
 
   useEffect(() => {
     let mounted = true
@@ -396,6 +450,10 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
         }
       } catch (err) {
         console.error('Failed to load schools from backend:', err)
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
     fetchSchools()
@@ -544,7 +602,14 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
       )}
 
       <div className="space-y-3">
-        {filtered.length === 0 ? (
+        {loading && institutions.length === 0 ? (
+          <>
+            <InstitutionCardSkeleton />
+            <InstitutionCardSkeleton />
+            <InstitutionCardSkeleton />
+            <InstitutionCardSkeleton />
+          </>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-[var(--text-muted)]">
             <Building2 size={32} className="mx-auto mb-3 opacity-40" />
             <div className="text-[0.875rem]">{isBn ? 'কোনো প্রতিষ্ঠান পাওয়া যায়নি' : 'No institutions found'}</div>

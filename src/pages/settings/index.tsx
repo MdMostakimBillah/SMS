@@ -7,7 +7,7 @@ import {
   Mail, Bell, Shield, Key,
   Calendar,
   Trash2, Star,
-  Monitor, Code, Activity, Users,
+  Monitor, Code, Activity, Users, HardDrive,
 } from 'lucide-react'
 import { SettingsGroup } from './components/SettingsGroup'
 import { SettingsRow } from './components/SettingsRow'
@@ -34,6 +34,7 @@ import { StaffPermissionsPanel } from './panels/StaffPermissions'
 import { RolesList } from './panels/RolesList'
 import { RoleEditor } from './panels/RoleEditor'
 import { LicensePanel } from './panels/LicensePanel'
+import { BackupStoragePanel } from './panels/BackupStorage'
 
 export default function Page() {
   const { user } = useAuth()
@@ -105,6 +106,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       { key: 'roles-permissions', icon: Shield, iconBg: '#6366f115', iconColor: '#6366f1', title: 'Roles & Permissions', titleBn: 'ভূমিকা ও অনুমতি', description: 'Manage roles and permission templates', descriptionBn: 'ভূমিকা ও অনুমতির টেমপ্লেট পরিচালনা করুন' },
       { key: 'staff-permissions', icon: Users, iconBg: '#10b98115', iconColor: '#10b981', title: 'Staff Access', titleBn: 'স্টাফ অ্যাক্সেস', description: 'Assign roles to teachers and staff', descriptionBn: 'শিক্ষক ও স্টাফকে ভূমিকা নির্ধারণ করুন' },
       { key: 'license', icon: Key, iconBg: '#a855f715', iconColor: '#a855f7', title: 'License', titleBn: 'লাইসেন্স', description: 'Activate signed license key and manage expiry', descriptionBn: 'সইন করা লাইসেন্স কী সক্রিয় করুন ও মেয়াদ পরিচালনা করুন' },
+      { key: 'backup-storage', icon: HardDrive, iconBg: '#06b6d415', iconColor: '#06b6d4', title: 'Storage & Backup', titleBn: 'স্টোরেজ ও ব্যাকআপ', description: 'Configure cloud, local computer or custom server storage & Telegram backup', descriptionBn: 'ক্লাউড, লোকাল কম্পিউটার বা কাস্টম সার্ভার ও টেলিগ্রাম ব্যাকআপ পরিচালনা করুন' },
     ],
   }
 
@@ -169,6 +171,7 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
       case 'roles-permissions': return <RolesList isBn={isBn} onBack={() => setActivePanel(null)} onCreateRole={() => { setActivePanel(null); setCreatingRole(true) }} onEditRole={(id) => { setActivePanel(null); setEditingRoleId(id) }} />
       case 'staff-permissions': return <StaffPermissionsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'license': return <LicensePanel isBn={isBn} onBack={() => setActivePanel(null)} />
+      case 'backup-storage': return <BackupStoragePanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'email-password': return <EmailPasswordPanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'danger-zone': return <DangerZonePanel isBn={isBn} onBack={() => setActivePanel(null)} />
       case 'bookmarks': return <BookmarkSettingsPanel isBn={isBn} onBack={() => setActivePanel(null)} />
