@@ -222,6 +222,32 @@ describe('School Branding & Institution Tab API', () => {
     expect(deletedBannerRow).toBeNull()
   })
 
+  describe('Security & Access Controls', () => {
+    it('public endpoint /public/:slug omits internal serverUrl, folderName, and billing details', async () => {
+      const res = await request(app).get(`/api/schools/public/${SLUG}`)
+      expect(res.status).toBe(200)
+      expect(res.body.domain).toBe(SLUG)
+      expect(res.body.serverUrl).toBeUndefined()
+      expect(res.body.folderName).toBeUndefined()
+      expect(res.body.paymentStatus).toBeUndefined()
+      expect(res.body.billingCycle).toBeUndefined()
+      expect(res.body.maxStudents).toBeUndefined()
+      expect(res.body.maxTeachers).toBeUndefined()
+    })
+
+    it('GET /api/schools denies unauthenticated callers with 401', async () => {
+      const res = await request(app).get('/api/schools')
+      expect(res.status).toBe(401)
+    })
+
+    it('GET /api/schools denies non-super-admin with 403', async () => {
+      const res = await request(app)
+        .get('/api/schools')
+        .set('Cookie', cookieHeader(adminJar))
+      expect(res.status).toBe(403)
+    })
+  })
+
   describe('Super Admin Institution & Fetcher Powers', () => {
     const SUPER_ADMIN_EMAIL = 'superadmin-fetcher-test@test.local'
     let superAdminJar: CookieJar
@@ -286,6 +312,17 @@ describe('School Branding & Institution Tab API', () => {
         .set('x-school-id', schoolId)
 
       expect(res.status).toBe(200)
+    })
+
+    it('super admin can list all institutions via GET /api/schools', async () => {
+      const res = await request(app)
+        .get('/api/schools')
+        .set('Cookie', cookieHeader(superAdminJar))
+
+      expect(res.status).toBe(200)
+      expect(Array.isArray(res.body)).toBe(true)
+      const found = res.body.find((s: any) => s.id === schoolId)
+      expect(found).toBeDefined()
     })
   })
 })

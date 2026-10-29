@@ -140,6 +140,10 @@ export function backupRouter(prisma: PrismaClient, jwtSecret: string) {
           targetSchoolId = req.body.schoolId
         }
 
+        if (!isSuper && !targetSchoolId) {
+          return res.status(403).json({ error: 'No tenant context' })
+        }
+
         const schoolFilter = targetSchoolId ? { schoolId: targetSchoolId } : {}
 
         // Gather database records
@@ -251,6 +255,11 @@ export function backupRouter(prisma: PrismaClient, jwtSecret: string) {
       try {
         const isSuper = req.userRole === 'super_admin'
         const targetSchoolId = isSuper && typeof req.query.schoolId === 'string' ? req.query.schoolId : req.schoolId
+
+        if (!isSuper && !targetSchoolId) {
+          return res.status(403).json({ error: 'No tenant context' })
+        }
+
         const schoolFilter = targetSchoolId ? { schoolId: targetSchoolId } : {}
 
         const [school, teachers, students, departments, notices] = await Promise.all([

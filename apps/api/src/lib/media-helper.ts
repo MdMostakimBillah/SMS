@@ -1,11 +1,16 @@
 import { randomUUID } from 'node:crypto'
 import type { PrismaClient } from '@prisma/client'
 import type { MediaStorage } from '../storage.js'
+import { matchesSignature } from '../routes/media.js'
+
+const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp'] as const
+const MAX_BASE64_MEDIA_BYTES = 5 * 1024 * 1024 // 5 MB
 
 /**
  * Uploads a base64 dataUrl (e.g. data:image/png;base64,...) directly to Cloudflare R2
  * and registers the MediaObject in PostgreSQL.
  *
+ * Enforces strict MIME whitelist, size limit, and binary magic bytes validation.
  * Returns the public media streaming path (e.g. /api/media/public/{id}),
  * or returns the original string if storage is unconfigured / not a dataUrl.
  */
@@ -26,8 +31,23 @@ export async function uploadBase64Media(
     if (!matches || matches.length !== 3) {
       return dataUrl
     }
-    const mime = matches[1]
+    const mime = matches[1].toLowerCase()
+    if (!ALLOWED_IMAGE_MIMES.includes(mime as any)) {
+      console.warn(`[media-helper] rejected upload: unsupported MIME type ${mime}`)
+      return null
+    }
+
     const buffer = Buffer.from(matches[2], 'base64')
+    if (buffer.length === 0 || buffer.length > MAX_BASE64_MEDIA_BYTES) {
+      console.warn(`[media-helper] rejected upload: size ${buffer.length} out of allowed bounds`)
+      return null
+    }
+
+    if (!matchesSignature(buffer, mime)) {
+      console.warn(`[media-helper] rejected upload: signature mismatch for MIME ${mime}`)
+      return null
+    }
+
     const ext = mime === 'image/jpeg' ? '.jpg' : mime === 'image/webp' ? '.webp' : '.png'
     const mediaId = randomUUID()
     const objectKey = `schools/${schoolId}/${category}/${mediaId}${ext}`
@@ -56,7 +76,7 @@ export async function uploadBase64Media(
 
 /**
  * Deletes a previous media object from Cloudflare R2 storage and removes its record from the database.
- * Completely cleans up old image assets when replaced or removed.
+ * Strictly verifies tenant boundary (schoolId) to prevent IDOR / cross-tenant deletion attacks.
  */
 export async function deletePreviousMedia(
   storage: MediaStorage | null | undefined,
@@ -77,18 +97,13 @@ export async function deletePreviousMedia(
   }
 
   try {
-    // 1. Look up by ID in mediaObject
-    let row = await prisma.mediaObject.findFirst({
+    // 1. Look up by ID strictly scoped to this schoolId
+    const row = await prisma.mediaObject.findFirst({
       where: {
         id: mediaId,
         ...(schoolId ? { schoolId } : {}),
       },
     })
-    if (!row) {
-      row = await prisma.mediaObject.findUnique({
-        where: { id: mediaId },
-      }).catch(() => null)
-    }
 
     if (row) {
       if (storage) {
@@ -102,16 +117,19 @@ export async function deletePreviousMedia(
       return
     }
 
-    // 2. Fallback: if mediaUrlOrId contains object key pattern
-    if (storage && mediaUrlOrId.includes('schools/')) {
-      const match = mediaUrlOrId.match(/schools\/.*$/)
-      const key = match ? match[0] : mediaUrlOrId
-      await storage.delete(key).catch(() => {})
-      await prisma.mediaObject.deleteMany({
-        where: {
-          objectKey: key,
-        },
-      }).catch(() => {})
+    // 2. Scoped fallback: only if the object key strictly belongs to schools/${schoolId}/
+    if (storage && schoolId && mediaUrlOrId.includes(`schools/${schoolId}/`)) {
+      const matchKey = mediaUrlOrId.match(new RegExp(`schools/${schoolId}/.*$`))
+      if (matchKey) {
+        const key = matchKey[0]
+        await storage.delete(key).catch(() => {})
+        await prisma.mediaObject.deleteMany({
+          where: {
+            objectKey: key,
+            schoolId,
+          },
+        }).catch(() => {})
+      }
     }
   } catch (err) {
     console.warn(`[media-helper] error deleting previous media ${mediaUrlOrId}:`, err)

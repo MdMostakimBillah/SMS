@@ -60,7 +60,52 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
     })
   }
 
-  function formatSchoolResponse(school: NonNullable<Awaited<ReturnType<typeof resolveSchool>>>) {
+  async function resolvePublicSchool(rawSlug: string | string[] | undefined) {
+    if (!rawSlug) return null
+    const str = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug
+    if (typeof str !== 'string') return null
+    const slug = str.trim().toLowerCase()
+    if (!slug) return null
+
+    return prisma.school.findFirst({
+      where: {
+        OR: [{ domain: slug }, { id: slug }],
+      },
+      select: {
+        id: true,
+        name: true,
+        nameBn: true,
+        brandName: true,
+        brandColor: true,
+        logo: true,
+        banner: true,
+        bannerPosition: true,
+        motto: true,
+        mottoBn: true,
+        eiin: true,
+        website: true,
+        phone: true,
+        email: true,
+        address: true,
+        addressBn: true,
+        sessions: true,
+        breaks: true,
+        domain: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        plan: true,
+        expiresAt: true,
+        createdAt: true,
+        updatedAt: true,
+        subjects: {
+          select: { id: true, name: true, nameBn: true },
+        },
+      },
+    })
+  }
+
+  function formatSchoolResponse(school: any) {
     return {
       school,
       ...school,
@@ -70,11 +115,12 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
 
   /**
    * Public school metadata lookup by domain / slug.
+   * Exposes public branding and contact info; omits internal storage/billing data.
    * Matches /public/:slug
    */
   router.get('/public/:slug', async (req: Request, res: Response) => {
     try {
-      const school = await resolveSchool(req.params.slug)
+      const school = await resolvePublicSchool(req.params.slug)
       if (!school) {
         return res.status(404).json({ error: 'Institution not found', school: null })
       }
@@ -109,9 +155,9 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
 
   /**
    * List all schools in the system.
-   * Accessible by Super Admin with authentication, or returns public school directory.
+   * Accessible exclusively by Super Admin with authentication.
    */
-  router.get('/', async (req: Request, res: Response) => {
+  router.get('/', requireAuth(prisma, jwtSecret), requireRole('super_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const schools = await prisma.school.findMany({
         orderBy: { createdAt: 'desc' },
