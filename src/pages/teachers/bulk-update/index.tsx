@@ -24,6 +24,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { teachersApi, type TeacherData } from '@/lib/api'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
@@ -181,6 +182,24 @@ export default function TeacherBulkUpdatePage() {
       alert(isBn ? 'কোনো পরিবর্তন নেই' : 'No changes to apply')
       return
     }
+
+    if (isLocalComputerMode()) {
+      setApplying(true)
+      for (const c of changes) {
+        const existing = teachers.find((t) => t.id === c.id)
+        if (existing) {
+          upsertServerTeacher({
+            ...existing,
+            ...(c.payload as any),
+          })
+        }
+      }
+      setApplied(true)
+      setApplying(false)
+      setTimeout(() => setApplied(false), 3000)
+      return
+    }
+
     // Sequential API writes — the store is updated only with server responses.
     setApplying(true)
     setApplyError('')

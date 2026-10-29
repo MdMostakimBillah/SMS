@@ -204,7 +204,41 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
           },
         },
       })
-      res.json(schools)
+
+      // Aggregate media storage usage per school
+      const storageUsage = await prisma.mediaObject.groupBy({
+        by: ['schoolId'],
+        _sum: {
+          sizeBytes: true,
+        },
+        _count: {
+          id: true,
+        },
+        where: {
+          deletedAt: null,
+        },
+      }).catch(() => [])
+
+      const storageMap = new Map<string, { bytes: number; count: number }>()
+      for (const item of storageUsage) {
+        if (item.schoolId) {
+          storageMap.set(item.schoolId, {
+            bytes: item._sum?.sizeBytes || 0,
+            count: item._count?.id || 0,
+          })
+        }
+      }
+
+      const schoolsWithStorage = schools.map((s) => {
+        const usage = storageMap.get(s.id) || { bytes: 0, count: 0 }
+        return {
+          ...s,
+          storageBytes: usage.bytes,
+          mediaCount: usage.count,
+        }
+      })
+
+      res.json(schoolsWithStorage)
     } catch (err) {
       console.error('[schools] list failed:', err instanceof Error ? err.message : err)
       res.status(500).json({ error: 'Internal server error' })

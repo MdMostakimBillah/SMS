@@ -4,6 +4,7 @@ import type { Teacher, Department, Subject, Designation } from '@/pages/teachers
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 import { teachersApi, departmentsApi, type TeacherData } from '@/lib/api'
 import { serverTeacherToTeacher, serverDepartmentToDepartment, apiErrorMessage } from '@/lib/teacherMappers'
+import { isLocalComputerMode } from '@/lib/storageMode'
 
 export type AttendanceStatus = 'present' | 'absent' | 'on-leave'
 
@@ -133,6 +134,13 @@ export const useTeacherStore = create<TeacherState>()(
       legacyDepartments: [],
 
       syncFromServer: async () => {
+        // When in Local Computer mode, cloud database sync is stopped completely;
+        // teachers stay in local computer storage (JSON/localStorage).
+        if (isLocalComputerMode()) {
+          set({ syncing: false, serverSynced: true, syncError: null })
+          return
+        }
+
         if (syncPromise) return syncPromise
         const current = get()
         // Fresh server data already on screen: avoid re-fetching on every mount.

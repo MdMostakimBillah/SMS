@@ -8,8 +8,9 @@ import { useNavChain } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
-import type { TeacherStatus } from '@/pages/teachers/types'
+import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { teachersApi } from '@/lib/api'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
@@ -191,6 +192,57 @@ export default function AddTeacherPage() {
         guardianRelation: form.guardianRelation.trim(), parentAddress: form.parentAddress.trim(),
         signature: form.signature,
       })
+
+      if (isLocalComputerMode()) {
+        const localId = `loc-tch-${Date.now()}`
+        const localTeacher: Teacher = {
+          id: localId,
+          nameEn: form.nameEn.trim(),
+          nameBn: form.nameBn.trim(),
+          gender: form.gender,
+          dob: form.dob,
+          bloodGroup: form.bloodGroup,
+          religion: form.religion,
+          phone: form.phone.trim(),
+          email: form.email.trim(),
+          address: form.address.trim(),
+          nid: form.nid.trim(),
+          emergencyPhone: form.emergencyPhone.trim(),
+          photo: form.photo,
+          departmentId: form.departmentId,
+          subjectIds: form.subjectIds,
+          designation: form.designation,
+          category: form.category,
+          qualification: form.qualification.trim(),
+          experience: form.experience.trim(),
+          joiningDate: form.joiningDate,
+          salary: Number(form.salary) || 0,
+          salaryStartDate: form.salaryStartDate || undefined,
+          overtime: Number(form.overtime) || 0,
+          status: form.status,
+          inTime: form.inTime,
+          outTime: form.outTime,
+          fatherNameEn: form.fatherNameEn.trim(),
+          fatherNameBn: form.fatherNameBn.trim(),
+          fatherPhone: form.fatherPhone.trim(),
+          fatherNid: form.fatherNid.trim(),
+          motherNameEn: form.motherNameEn.trim(),
+          motherNameBn: form.motherNameBn.trim(),
+          motherPhone: form.motherPhone.trim(),
+          guardianName: form.guardianName.trim(),
+          guardianPhone: form.guardianPhone.trim(),
+          guardianRelation: form.guardianRelation.trim(),
+          parentAddress: form.parentAddress.trim(),
+          signature: form.signature,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+        upsertServerTeacher(localTeacher)
+        setDoneId(localId)
+        setDone(true)
+        return
+      }
+
       const created = await teachersApi.create(payload)
       upsertServerTeacher(serverTeacherToTeacher(created))
       setDoneId(created.id)

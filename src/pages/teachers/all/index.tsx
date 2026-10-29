@@ -28,6 +28,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { teachersApi } from '@/lib/api'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { apiErrorMessage } from '@/lib/teacherMappers'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
@@ -192,6 +193,12 @@ export default function AllTeachersPage() {
   const handleDelete = useCallback(async (id: string) => {
     setDelError('')
     try {
+      if (isLocalComputerMode()) {
+        removeServerTeacher(id)
+        setDelConfirm(null)
+        setViewT(null)
+        return
+      }
       await teachersApi.delete(id) // server is authoritative — no local-only delete
       removeServerTeacher(id)
       setDelConfirm(null)

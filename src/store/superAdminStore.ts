@@ -38,6 +38,8 @@ export interface Institution {
   storageMode?: string
   serverUrl?: string
   folderName?: string
+  storageBytes?: number
+  mediaCount?: number
   createdAt: string
   lastLogin: string
   logo: string

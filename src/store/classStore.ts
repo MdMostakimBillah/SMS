@@ -173,6 +173,9 @@ export function mapSchoolToInstitutionSettings(school: any, current?: Institutio
     sessions: school.sessions
       ? (typeof school.sessions === 'string' ? JSON.parse(school.sessions) : school.sessions)
       : current?.sessions?.length ? current.sessions : ['2025-26'],
+    storageMode: school.storageMode || current?.storageMode || 'cloud',
+    serverUrl: school.serverUrl || current?.serverUrl || '',
+    folderName: school.folderName || current?.folderName || '',
     lightColors: generateLightColors(brand),
     darkColors: generateDarkColors(brand),
   }
@@ -199,6 +202,9 @@ export interface InstitutionSettings {
   breaks: BreakTime[]
   currentSession: string
   sessions: string[]
+  storageMode?: string
+  serverUrl?: string
+  folderName?: string
   lightColors: ThemeColors
   darkColors: ThemeColors
 }
@@ -305,6 +311,9 @@ const defaultInstitution: InstitutionSettings = {
   breaks: [],
   currentSession: '2025-26',
   sessions: ['2024-25', '2025-26'],
+  storageMode: 'cloud',
+  serverUrl: '',
+  folderName: '',
   lightColors: { ...defaultThemeColors },
   darkColors: { ...defaultThemeColorsDark },
 }

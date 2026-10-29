@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Calendar, Clock, Shield, Check, HardDrive, RefreshCw } from 'lucide-react'
 import { PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { authApi } from '@/lib/api'
@@ -81,9 +82,14 @@ export function LicenseModal({ isOpen, onClose, inst, isBn, onSaved }: LicenseMo
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="relative w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] my-auto">
         {/* Header */}
         <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between shrink-0 bg-[var(--bg-secondary)]">
           <div className="flex items-center gap-2.5">
@@ -337,4 +343,9 @@ export function LicenseModal({ isOpen, onClose, inst, isBn, onSaved }: LicenseMo
       </div>
     </div>
   )
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalContent, document.body)
+  }
+  return modalContent
 }

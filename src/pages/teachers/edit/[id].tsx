@@ -7,8 +7,9 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAuth } from '@/contexts/AuthContext'
-import type { TeacherStatus } from '@/pages/teachers/types'
+import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { teachersApi } from '@/lib/api'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
@@ -247,6 +248,55 @@ export default function EditTeacherPage() {
       setSaving(true)
       setSubmitError('')
       try {
+        if (isLocalComputerMode()) {
+          const localTeacher: Teacher = {
+            id: teacher.id,
+            nameEn: nameEn.trim(),
+            nameBn: nameBn.trim(),
+            gender,
+            dob,
+            bloodGroup,
+            religion,
+            phone: phone.trim(),
+            email: email.trim(),
+            address: address.trim(),
+            nid: nid.trim(),
+            emergencyPhone: emergencyPhone.trim(),
+            photo,
+            departmentId,
+            subjectIds,
+            designation,
+            category,
+            qualification: qualification.trim(),
+            experience: experience.trim(),
+            joiningDate,
+            salary: Number(salary) || 0,
+            salaryStartDate: salaryStartDate || undefined,
+            overtime: Number(overtime) || 0,
+            status,
+            inTime,
+            outTime,
+            fatherNameEn: fatherNameEn.trim(),
+            fatherNameBn: fatherNameBn.trim(),
+            fatherPhone: fatherPhone.trim(),
+            fatherNid: fatherNid.trim(),
+            motherNameEn: motherNameEn.trim(),
+            motherNameBn: motherNameBn.trim(),
+            motherPhone: motherPhone.trim(),
+            guardianName: guardianName.trim(),
+            guardianPhone: guardianPhone.trim(),
+            guardianRelation: guardianRelation.trim(),
+            parentAddress: parentAddress.trim(),
+            signature,
+            createdAt: teacher.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+          upsertServerTeacher(localTeacher)
+          setSaved(true)
+          setTimeout(() => navigate(nav(`/teachers/all`)), 1200)
+          return
+        }
+
         // Server-authoritative update (Phase 7): single API write — no local
         // duplicate. The response row replaces the store entry.
         const updated = await teachersApi.update(

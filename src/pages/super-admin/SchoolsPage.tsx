@@ -5,6 +5,7 @@ import {
   Users, GraduationCap, Calendar, Mail, Phone, Globe,
   MapPin, CheckCircle, XCircle, Pause, Clock,
   CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check, Plus, HardDrive,
+  Cloud, Laptop, Server, Database,
 } from 'lucide-react'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useClassStore, generateLightColors, generateDarkColors } from '@/store/classStore'
@@ -21,6 +22,14 @@ function statusConfig(status: InstitutionStatus, isBn: boolean) {
     inactive: { label: isBn ? 'নিষ্ক্রিয়' : 'Inactive', color: '#6b7280', bg: '#6b728012', icon: <XCircle size={13} /> },
   }
   return map[status]
+}
+
+function formatBytes(bytes?: number | null): string {
+  if (!bytes || bytes <= 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
 function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLicense }: {
@@ -81,6 +90,41 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
                 {isExpired ? (isBn ? 'মেয়াদ শেষ' : 'Expired') : `${daysRemaining}${isBn ? ' দিন বাকি' : 'd left'}`}
               </span>
             )}
+            {/* Storage Architecture Mode Badge */}
+            {inst.storageMode === 'local_computer' ? (
+              <span
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20 shrink-0"
+                title={isBn ? 'লোকাল কম্পিউটার স্টোরেজ (সার্ভার ডাটাবেস সম্পূর্ণ বন্ধ)' : 'Local Computer Storage (Server Database Stopped)'}
+              >
+                <Laptop size={11} />
+                {isBn ? 'লোকাল পিসি' : 'Local PC'}
+              </span>
+            ) : inst.storageMode === 'local_server' ? (
+              <span
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 shrink-0"
+                title={isBn ? 'কাস্টম সার্ভার / ভিপিএস' : 'Custom Server / VPS'}
+              >
+                <Server size={11} />
+                {isBn ? 'কাস্টম সার্ভার' : 'Custom Server'}
+              </span>
+            ) : (
+              <span
+                className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0"
+                title={isBn ? 'প্রোভাইডার সার্ভার (সুপাবেস + R2 ক্লাউড)' : 'Provider Server (Supabase + R2 Cloud)'}
+              >
+                <Cloud size={11} />
+                {isBn ? 'প্রোভাইডার ক্লাউড' : 'Provider Cloud'}
+              </span>
+            )}
+
+            {/* Storage Size Badge */}
+            <span
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0"
+              title={isBn ? `ব্যবহৃত স্টোরেজ: ${formatBytes(inst.storageBytes)} (${inst.mediaCount || 0} টি ফাইল)` : `Used Storage: ${formatBytes(inst.storageBytes)} (${inst.mediaCount || 0} files)`}
+            >
+              <HardDrive size={11} />
+              {inst.storageMode === 'local_computer' ? (isBn ? 'পিসি স্টোরেজ' : 'Local Storage') : formatBytes(inst.storageBytes)}
+            </span>
           </div>
           <div className="text-[0.75rem] text-[var(--text-muted)] mt-0.5 truncate">{inst.email}</div>
         </div>
@@ -107,10 +151,11 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
       {isSelected && (
         <div className="px-5 pb-5 space-y-4 border-t border-[var(--border)]">
           {/* Stats Row */}
-          <div className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="pt-4 grid grid-cols-2 sm:grid-cols-5 gap-2.5">
             <MiniStat icon={<GraduationCap size={14} />} label={isBn ? 'শিক্ষার্থী' : 'Students'} value={inst.package.maxStudents >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : inst.package.maxStudents.toLocaleString()} color="#6366f1" />
             <MiniStat icon={<Users size={14} />} label={isBn ? 'শিক্ষক' : 'Teachers'} value={inst.package.maxTeachers >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : inst.package.maxTeachers.toLocaleString()} color="#3b82f6" />
             <MiniStat icon={<Building2 size={14} />} label={isBn ? 'শ্রেণি' : 'Classes'} value={inst.package.maxClasses.toString()} color="#8b5cf6" />
+            <MiniStat icon={<HardDrive size={14} />} label={isBn ? 'ব্যবহৃত স্টোরেজ' : 'Storage Used'} value={inst.storageMode === 'local_computer' ? (isBn ? 'লোকাল পিসি' : 'Local PC') : formatBytes(inst.storageBytes)} color="#a855f7" />
             <MiniStat icon={<Clock size={14} />} label={isBn ? 'শেষ লগইন' : 'Last Login'} value={inst.lastLogin} color="#f59e0b" />
           </div>
 
@@ -129,8 +174,13 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
             />
             <InfoRow
               icon={<HardDrive size={13} />}
-              label={isBn ? 'স্টোরেজ' : 'Storage'}
-              value={inst.storageMode === 'local_computer' ? (isBn ? 'লোকাল পিসি' : 'Local Computer') : inst.storageMode === 'local_server' ? (isBn ? 'নিজস্ব সার্ভার' : 'Custom Server') : (isBn ? 'ক্লাউড' : 'EduTech Cloud')}
+              label={isBn ? 'স্টোরেজ মডেল' : 'Storage'}
+              value={inst.storageMode === 'local_computer' ? (isBn ? 'লোকাল কম্পিউটার (অফলাইন - ডাটাবেস সম্পূর্ণ বন্ধ)' : 'Local Computer (Offline - DB Stopped)') : inst.storageMode === 'local_server' ? (isBn ? `কাস্টম সার্ভার (${inst.serverUrl || 'Not set'})` : `Custom Server (${inst.serverUrl || 'Not set'})`) : (isBn ? 'প্রোভাইডার ক্লাউড (সুপাবেস + R2)' : 'Provider Cloud (Supabase + R2)')}
+            />
+            <InfoRow
+              icon={<Database size={13} />}
+              label={isBn ? 'ব্যবহৃত সাইজ' : 'Storage Size'}
+              value={inst.storageMode === 'local_computer' ? (isBn ? 'লোকাল পিসি স্টোরেজ' : 'Local Computer Storage') : `${formatBytes(inst.storageBytes)} (${inst.mediaCount || 0} ${isBn ? 'টি ফাইল' : 'files'})`}
             />
             <InfoRow icon={<CreditCard size={13} />} label={isBn ? 'মূল্য' : 'Price'} value={inst.package.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${inst.package.price}/${isBn ? 'মাস' : 'mo'}`} />
             <InfoRow icon={<Calendar size={13} />} label={isBn ? 'নিবন্ধন' : 'Created'} value={inst.createdAt} />
@@ -315,6 +365,8 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
               storageMode: item.storageMode || existing?.storageMode || 'cloud',
               serverUrl: item.serverUrl || existing?.serverUrl || '',
               folderName: item.folderName || existing?.folderName || '',
+              storageBytes: (item as any).storageBytes ?? existing?.storageBytes ?? 0,
+              mediaCount: (item as any).mediaCount ?? existing?.mediaCount ?? 0,
               createdAt: (item as any).createdAt
                 ? (item as any).createdAt.split('T')[0]
                 : existing?.createdAt || new Date().toISOString().split('T')[0],

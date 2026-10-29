@@ -175,6 +175,8 @@ export interface PublicSchool {
   storageMode?: string | null
   serverUrl?: string | null
   folderName?: string | null
+  storageBytes?: number
+  mediaCount?: number
   createdAt?: string
   email: string | null
   phone: string | null
@@ -395,6 +397,8 @@ export const authApi = {
         storageMode: item.storageMode || 'cloud',
         serverUrl: item.serverUrl || '',
         folderName: item.folderName || '',
+        storageBytes: item.storageBytes ?? 0,
+        mediaCount: item.mediaCount ?? 0,
         createdAt: item.createdAt || new Date().toISOString(),
         startTime: item.startTime || '07:30',
         endTime: item.endTime || '14:30',

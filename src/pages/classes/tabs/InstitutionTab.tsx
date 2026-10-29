@@ -15,7 +15,18 @@ import {
   Camera,
   Move,
   Image,
+  HardDrive,
+  Cloud,
+  Laptop,
+  Server,
+  Send,
+  Download,
+  Upload,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react'
+import { sendTelegramBackupNow, downloadLocalBackup, parseAndValidateBackup, restoreLocalStores } from '@/lib/backup'
 import { usePermission } from '@/hooks/usePermission'
 import ColorSettings from '@/components/shared/ColorSettings'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
@@ -223,6 +234,83 @@ export default React.memo(function InstitutionTab({
   isBn,
 }: InstitutionTabProps) {
   const { canEdit } = usePermission()
+  const [backupLoading, setBackupLoading] = useState(false)
+  const [backupNotice, setBackupNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const restoreFileRef = useRef<HTMLInputElement>(null)
+
+  const handleQuickTelegramBackup = async () => {
+    setBackupLoading(true)
+    setBackupNotice(null)
+    try {
+      const res = await sendTelegramBackupNow({
+        schoolName: institution.name,
+        via: 'server',
+      })
+      if (res && (res as any).success) {
+        setBackupNotice({
+          type: 'success',
+          text: isBn ? 'টেলিগ্রামে ব্যাকআপ সফলভাবে পাঠানো হয়েছে!' : 'Backup successfully sent to Telegram!',
+        })
+      } else {
+        const browserRes = await sendTelegramBackupNow({
+          schoolName: institution.name,
+          via: 'browser',
+        })
+        if (browserRes && (browserRes as any).success) {
+          setBackupNotice({
+            type: 'success',
+            text: isBn ? 'ব্রাউজার থেকে সরাসরি টেলিগ্রামে ব্যাকআপ পাঠানো হয়েছে!' : 'Backup sent to Telegram via browser!',
+          })
+        } else {
+          setBackupNotice({
+            type: 'error',
+            text:
+              (res as any)?.error ||
+              (browserRes as any)?.error ||
+              (isBn
+                ? 'টেলিগ্রাম ব্যাকআপ ব্যর্থ হয়েছে। অনুগ্রহ করে বটের ক্রেডেনশিয়াল পরীক্ষা করুন।'
+                : 'Telegram backup failed. Please check bot credentials.'),
+          })
+        }
+      }
+    } catch (err: any) {
+      setBackupNotice({
+        type: 'error',
+        text: err?.message || (isBn ? 'ব্যাকআপ পাঠাতে সমস্যা হয়েছে' : 'Failed to send backup'),
+      })
+    } finally {
+      setBackupLoading(false)
+    }
+  }
+
+  const handleRestoreFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string
+        const parsed = parseAndValidateBackup(text)
+        if (!parsed.valid || !parsed.bundle) {
+          alert(parsed.error || (isBn ? 'অকার্যকর ব্যাকআপ ফাইল' : 'Invalid backup file'))
+          return
+        }
+        const confirmMsg = isBn
+          ? `এই ব্যাকআপ ফাইলে ${parsed.summary?.students || 0} জন শিক্ষার্থী ও ${parsed.summary?.teachers || 0} জন শিক্ষকের তথ্য রয়েছে। রিস্টোর করতে চান?`
+          : `This backup contains ${parsed.summary?.students || 0} students and ${parsed.summary?.teachers || 0} teachers. Restore now?`
+        if (window.confirm(confirmMsg)) {
+          restoreLocalStores(parsed.bundle)
+          alert(isBn ? 'ডেটা সফলভাবে রিস্টোর হয়েছে! পেজ রিলোড করা হচ্ছে...' : 'Data successfully restored! Reloading...')
+          window.location.reload()
+        }
+      } catch (err: any) {
+        alert(err?.message || (isBn ? 'রিস্টোর করতে ত্রুটি ঘটেছে' : 'Restore failed'))
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
   const inputClass =
     'w-full py-[0.5625rem] px-[0.6875rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none'
   const labelClass = 'text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem] block'
@@ -436,6 +524,110 @@ export default React.memo(function InstitutionTab({
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Storage Architecture & Data Backup Card */}
+              <div className="mt-3 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[var(--border)]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[var(--brand-light)] flex items-center justify-center shrink-0">
+                      <HardDrive size={16} className="text-[var(--brand)]" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-[var(--text-primary)]">
+                        {isBn ? 'স্টোরেজ ও ব্যাকআপ আর্কিটেকচার' : 'Storage & Backup Architecture'}
+                      </div>
+                      <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                        {isBn ? 'ডেটা সংরক্ষণ ও সুরক্ষার বর্তমান অবস্থা' : 'Current data storage and safety state'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mode Badge */}
+                  <div>
+                    {institution.storageMode === 'local_computer' ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/30">
+                        <Laptop size={13} />
+                        {isBn ? 'লোকাল কম্পিউটার (অফলাইন)' : 'Local Computer (Offline)'}
+                      </span>
+                    ) : institution.storageMode === 'local_server' ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
+                        <Server size={13} />
+                        {isBn ? 'কাস্টম সার্ভার' : 'Custom Server'}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        <Cloud size={13} />
+                        {isBn ? 'এডুটেক ক্লাউড প্রোভাইডার' : 'EduTech Cloud Provider'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Local Computer Notice */}
+                {institution.storageMode === 'local_computer' && (
+                  <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex items-start gap-2">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold">{isBn ? 'ক্লাউড ডাটাবেজ স্টপ মোড সক্রিয়:' : 'Cloud Database Stop Active:'}</span>{' '}
+                      {isBn
+                        ? 'আপনার প্রতিষ্ঠানের সমস্ত তথ্য (শিক্ষক, শিক্ষার্থী, ফিস ইত্যাদি) শুধুমাত্র এই ডিভাইসে সংরক্ষিত। ক্লাউড ডাটাবেজ সংযোগ সম্পূর্ণ বন্ধ রয়েছে। কোনো কারণে ব্রাউজার ডেটা মুছে গেলে যেন ডেটা উদ্ধার করা যায়, সেজন্য নিয়মিত টেলিগ্রামে ব্যাকআপ পাঠিয়ে রাখুন।'
+                        : 'All institution data is stored exclusively on this local device. Cloud database mutations are halted. To prevent loss if browser cache is cleared, send frequent Telegram backups.'}
+                    </div>
+                  </div>
+                )}
+
+                {/* Backup Actions */}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={backupLoading}
+                    onClick={handleQuickTelegramBackup}
+                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--brand)] text-white text-xs font-medium cursor-pointer hover:opacity-90 disabled:opacity-50 transition-all"
+                  >
+                    {backupLoading ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
+                    {isBn ? 'টেলিগ্রামে ব্যাকআপ পাঠান' : 'Send Telegram Backup'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => downloadLocalBackup(undefined, institution.name)}
+                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-primary)] text-xs font-medium cursor-pointer hover:bg-[var(--bg-secondary)] transition-all"
+                  >
+                    <Download size={13} />
+                    {isBn ? 'লোকাল ব্যাকআপ ডাউনলোড' : 'Download Local Backup'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => restoreFileRef.current?.click()}
+                    className="flex items-center gap-1.5 py-1.5 px-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-primary)] text-xs font-medium cursor-pointer hover:bg-[var(--bg-secondary)] transition-all"
+                  >
+                    <Upload size={13} />
+                    {isBn ? 'ব্যাকআপ থেকে রিস্টোর' : 'Restore from Backup'}
+                  </button>
+                  <input
+                    ref={restoreFileRef}
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={handleRestoreFile}
+                  />
+                </div>
+
+                {/* Status Notice */}
+                {backupNotice && (
+                  <div
+                    className={`mt-2.5 p-2 rounded-lg text-xs flex items-center gap-2 ${
+                      backupNotice.type === 'success'
+                        ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                        : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                    }`}
+                  >
+                    {backupNotice.type === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                    <span>{backupNotice.text}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -817,6 +1009,107 @@ export default React.memo(function InstitutionTab({
                       </button>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+
+            {/* Storage Architecture Settings */}
+            <div className="border border-[var(--border)] rounded-lg overflow-hidden p-3 bg-[var(--bg-secondary)]">
+              <div className="flex items-center gap-2 mb-2">
+                <HardDrive size={15} className="text-[var(--brand)]" />
+                <span className="text-xs font-semibold text-[var(--text-primary)]">
+                  {isBn ? 'স্টোরেজ আর্কিটেকচার নির্বাচন' : 'Storage Architecture Selection'}
+                </span>
+              </div>
+              <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3">
+                {isBn
+                  ? 'আপনার প্রতিষ্ঠান কোন সার্ভার বা ডিভাইসে ডেটা জমা রাখবে তা নির্ধারণ করুন।'
+                  : 'Select where your institution records and media should be stored.'}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {/* Option 1: Cloud */}
+                <div
+                  onClick={() => setInstForm((p: any) => ({ ...p, storageMode: 'cloud' }))}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    (!instForm.storageMode || instForm.storageMode === 'cloud')
+                      ? 'border-[var(--brand)] bg-[var(--brand-light)]'
+                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Cloud size={16} className={(!instForm.storageMode || instForm.storageMode === 'cloud') ? 'text-[var(--brand)]' : 'text-[var(--text-secondary)]'} />
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">
+                      {isBn ? 'এডুটেক ক্লাউড' : 'EduTech Cloud'}
+                    </span>
+                  </div>
+                  <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
+                    {isBn ? 'প্রোভাইডার ক্লাউড ডাটাবেজ ও ক্লাউডফ্লেয়ার R2 স্টোরেজ (ডিফল্ট)' : 'Provider managed PostgreSQL + Cloudflare R2'}
+                  </p>
+                </div>
+
+                {/* Option 2: Local Computer */}
+                <div
+                  onClick={() => setInstForm((p: any) => ({ ...p, storageMode: 'local_computer' }))}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    instForm.storageMode === 'local_computer'
+                      ? 'border-amber-500 bg-amber-500/10'
+                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Laptop size={16} className={instForm.storageMode === 'local_computer' ? 'text-amber-500' : 'text-[var(--text-secondary)]'} />
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">
+                      {isBn ? 'লোকাল কম্পিউটার' : 'Local Computer'}
+                    </span>
+                  </div>
+                  <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
+                    {isBn ? 'সব ডেটা কেবল এই কম্পিউটারে জমা হবে, ক্লাউড ডাটাবেজ বন্ধ থাকবে।' : 'Store all data locally on PC; stop cloud DB mutations.'}
+                  </p>
+                </div>
+
+                {/* Option 3: Custom Server */}
+                <div
+                  onClick={() => setInstForm((p: any) => ({ ...p, storageMode: 'local_server' }))}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    instForm.storageMode === 'local_server'
+                      ? 'border-indigo-500 bg-indigo-500/10'
+                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Server size={16} className={instForm.storageMode === 'local_server' ? 'text-indigo-500' : 'text-[var(--text-secondary)]'} />
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">
+                      {isBn ? 'কাস্টম সার্ভার' : 'Custom Server'}
+                    </span>
+                  </div>
+                  <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
+                    {isBn ? 'আপনার নিজস্ব VPS বা সেলফ-হোস্টেড API সার্ভার' : 'Self-hosted VPS API endpoint'}
+                  </p>
+                </div>
+              </div>
+
+              {instForm.storageMode === 'local_computer' && (
+                <div className="mt-3 p-2.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[0.6875rem] flex items-start gap-2">
+                  <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                  <div>
+                    <strong>{isBn ? 'মনোযোগ দিন:' : 'Important:'}</strong>{' '}
+                    {isBn
+                      ? 'লোকাল কম্পিউটার নির্বাচন করলে প্রোভাইডার ক্লাউড ডাটাবেজে কোনো ডেটা সিঙ্ক হবে না। ডেটা সুরক্ষিত রাখতে নিয়মিত টেলিগ্রাম ব্যাকআপ নিন।'
+                      : 'In Local Computer mode, cloud database writes are completely stopped. Make sure to take regular Telegram backups to recover if local files are lost.'}
+                  </div>
+                </div>
+              )}
+
+              {instForm.storageMode === 'local_server' && (
+                <div className="mt-3">
+                  <label className={labelClass}>{isBn ? 'সার্ভার URL' : 'Server API URL'}</label>
+                  <input
+                    value={instForm.serverUrl || ''}
+                    onChange={(e) => setInstForm((p: any) => ({ ...p, serverUrl: e.target.value }))}
+                    className={inputClass}
+                    placeholder="https://api.myschool.edu.bd"
+                  />
                 </div>
               )}
             </div>

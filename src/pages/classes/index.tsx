@@ -154,12 +154,27 @@ export default function ClassesPage() {
           sessions: JSON.stringify(instForm.sessions || []),
           breaks: JSON.stringify(instForm.breaks || []),
           subjects: instForm.subjects || [],
+          storageMode: instForm.storageMode || 'cloud',
+          serverUrl: instForm.serverUrl || '',
+          folderName: instForm.folderName || '',
         })
 
         if (res?.school) {
           const mapped = mapSchoolToInstitutionSettings(res.school, instForm)
           updateInstitution(mapped)
           setInstForm(mapped)
+
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+          }
+          useAppStore.getState().updateSettings({
+            storageSettings: {
+              ...(useAppStore.getState().settings?.storageSettings || { serverUrl: '', folderName: '' }),
+              mode: (mapped.storageMode as any) || 'cloud',
+              serverUrl: mapped.serverUrl || '',
+              folderName: mapped.folderName || '',
+            },
+          })
 
           // If super admin edited an institution, update it in superAdminStore too so /super-admin/schools reflects it immediately
           useSuperAdminStore.getState().updateInstitution(res.school.id, {
@@ -175,6 +190,9 @@ export default function ClassesPage() {
             email: res.school.email || '',
             website: res.school.website || '',
             eiin: res.school.eiin || '',
+            storageMode: res.school.storageMode || 'cloud',
+            serverUrl: res.school.serverUrl || '',
+            folderName: res.school.folderName || '',
           })
 
           // Apply theme colors dynamically
