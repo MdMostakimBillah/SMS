@@ -14,7 +14,7 @@ export function usePermission() {
   const staffPermissions = usePermissionStore((s) => s.staffPermissions) ?? []
   const roles = usePermissionStore((s) => s.roles) ?? []
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
+  const isAdmin = user?.role === 'admin' || user?.role === 'school_admin' || user?.role === 'super_admin'
 
   const myStaff = !isAdmin
     ? staffPermissions.find((s) => s.staffId === user?.staffId || s.staffId === user?.id)

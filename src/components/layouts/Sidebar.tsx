@@ -424,7 +424,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
   // generic EduTech brand; everyone else gets the institution's branding.
   const showInstLogo =
     !!institution.logo &&
-    (user?.role === 'admin' || isViewing || (!isSuperAdmin && !!institution.name))
+    (user?.role === 'admin' || user?.role === 'school_admin' || isViewing || (!isSuperAdmin && !!institution.name))
   const brandName =
     isSuperAdmin && !isViewing
       ? 'EduTech'
@@ -478,7 +478,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             </button>
 
             {/* Session Switcher — show for institution admin or when super admin viewing */}
-            {!collapsed && (user?.role === 'admin' || isViewing) && (
+            {!collapsed && (user?.role === 'admin' || user?.role === 'school_admin' || isViewing) && (
             <div ref={dropdownRef} className="relative mt-2 z-50">
               <div
                 onClick={() => setShowSessionDropdown(!showSessionDropdown)}

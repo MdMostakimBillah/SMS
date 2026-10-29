@@ -39,7 +39,7 @@ export default function Page() {
   const { user } = useAuth()
   const isBn = useBn()
   const isSuperAdmin = user?.role === 'super_admin'
-  const isInstAdmin = user?.role === 'admin'
+  const isInstAdmin = user?.role === 'admin' || user?.role === 'school_admin'
 
   if (!isSuperAdmin && !isInstAdmin) {
     return (

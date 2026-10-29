@@ -746,7 +746,7 @@ export default React.memo(function Topbar() {
                     marginTop: '0.0625rem',
                   }}
                 >
-                  {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : user?.role === 'admin' ? (isBn ? 'প্রশাসক' : 'Admin') : myRole ? (isBn ? (myRole.nameBn || myRole.name) : myRole.name) : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
+                  {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : (user?.role === 'admin' || user?.role === 'school_admin') ? (isBn ? 'প্রশাসক' : 'Admin') : myRole ? (isBn ? (myRole.nameBn || myRole.name) : myRole.name) : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
                 </div>
               </div>
             )}
@@ -798,7 +798,7 @@ export default React.memo(function Topbar() {
                     {user?.name || (isBn ? 'ব্যবহারকারী' : 'User')}
                   </div>
                   <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
-                  {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : user?.role === 'admin' ? (isBn ? 'প্রশাসক' : 'Admin') : myRole ? (isBn ? (myRole.nameBn || myRole.name) : myRole.name) : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
+                  {user?.role === 'super_admin' ? (isBn ? 'সুপার অ্যাডমিন' : 'Super Admin') : (user?.role === 'admin' || user?.role === 'school_admin') ? (isBn ? 'প্রশাসক' : 'Admin') : myRole ? (isBn ? (myRole.nameBn || myRole.name) : myRole.name) : ROLE_LABELS[user?.role as InstitutionRole] ? (isBn ? ROLE_LABELS[user?.role as InstitutionRole].bn : ROLE_LABELS[user?.role as InstitutionRole].en) : (isBn ? 'শিক্ষক/স্টাফ' : 'Teacher/Staff')}
                   </div>
                 </div>
               </div>

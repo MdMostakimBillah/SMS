@@ -50,9 +50,10 @@ export default function SuperAdminPage() {
   const currentPage = SUPER_ADMIN_PATH_MAP[location.pathname] || 'home'
 
   if (user && user.role !== 'super_admin') {
-    const slug = sessionStorage.getItem('edutech_inst_slug')
-    if (slug) return <Navigate to={`/i/${slug}/${user.role}/dashboard`} replace />
-    return <Navigate to="/super-admin/admin/dashboard" replace />
+    const slug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || user.subdomain
+    const role = (user.role === 'school_admin' || user.role === 'super_admin') ? 'admin' : user.role
+    if (slug) return <Navigate to={`/i/${slug}/${role}/dashboard`} replace />
+    return <Navigate to="/register" replace />
   }
 
   const goTo = (id: string) => navigate(SUPER_ADMIN_REVERSE_MAP[id])
