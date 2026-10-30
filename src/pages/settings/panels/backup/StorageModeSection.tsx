@@ -62,8 +62,8 @@ export const StorageModeSection: React.FC<Props> = ({ isBn, mode, onModeChange }
             onClick={() => onModeChange(c.id)}
             className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between select-none ${
               isSelected
-                ? 'border-[#10b981] bg-[#0d1f18]/70 shadow-[0_0_24px_rgba(16,185,129,0.16)] ring-1 ring-[#10b981]/50'
-                : 'border-slate-800/80 bg-[#0f141c]/80 hover:border-slate-700 hover:bg-[#121924]/90'
+                ? 'border-[var(--brand)] bg-[var(--brand-light)] shadow-sm ring-1 ring-[var(--brand)]/40'
+                : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]'
             }`}
           >
             <div>
@@ -72,15 +72,15 @@ export const StorageModeSection: React.FC<Props> = ({ isBn, mode, onModeChange }
                 <div
                   className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
                     isSelected
-                      ? 'bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30'
-                      : 'bg-slate-800/60 text-slate-400 border border-slate-700/40'
+                      ? 'bg-[var(--brand)] text-white shadow-sm'
+                      : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border)]'
                   }`}
                 >
                   <Icon size={18} />
                 </div>
 
                 {isSelected ? (
-                  <span className="text-[0.6875rem] font-bold text-[#10b981] tracking-wider uppercase">
+                  <span className="text-[0.6875rem] font-bold text-[var(--brand)] tracking-wider uppercase">
                     {isBn ? 'বাছাইকৃত' : 'SELECTED'}
                   </span>
                 ) : (
@@ -90,7 +90,7 @@ export const StorageModeSection: React.FC<Props> = ({ isBn, mode, onModeChange }
                       e.stopPropagation()
                       onModeChange(c.id)
                     }}
-                    className="text-[0.6875rem] font-semibold text-slate-400 hover:text-white tracking-wider uppercase transition-colors"
+                    className="text-[0.6875rem] font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] tracking-wider uppercase transition-colors cursor-pointer"
                   >
                     {isBn ? 'নির্বাচন' : 'SELECT'}
                   </button>
@@ -98,24 +98,24 @@ export const StorageModeSection: React.FC<Props> = ({ isBn, mode, onModeChange }
               </div>
 
               {/* Title & Description */}
-              <h4 className="text-[0.9375rem] font-semibold text-white tracking-tight mb-1">
+              <h4 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] tracking-tight mb-1">
                 {c.title}
               </h4>
-              <p className="text-[0.75rem] text-slate-400 leading-relaxed mb-4 min-h-[2.4rem]">
+              <p className="text-[0.75rem] text-[var(--text-secondary)] leading-relaxed mb-4 min-h-[2.4rem]">
                 {c.desc}
               </p>
             </div>
 
             {/* Checklist */}
-            <div className="pt-3 border-t border-slate-800/70 space-y-1.5">
+            <div className="pt-3 border-t border-[var(--border)] space-y-1.5">
               {c.checklist.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-2 text-[0.75rem]">
                   {item.enabled ? (
-                    <span className="text-[#10b981] font-bold text-[0.8125rem]">✓</span>
+                    <span className="text-[var(--brand)] font-bold text-[0.8125rem]">✓</span>
                   ) : (
-                    <span className="text-slate-500 font-bold text-[0.8125rem]">–</span>
+                    <span className="text-[var(--text-muted)] font-bold text-[0.8125rem]">–</span>
                   )}
-                  <span className={item.enabled ? 'text-slate-300' : 'text-slate-500'}>
+                  <span className={item.enabled ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-muted)]'}>
                     {item.label}
                   </span>
                 </div>

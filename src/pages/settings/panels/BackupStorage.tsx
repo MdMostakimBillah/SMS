@@ -214,19 +214,19 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
           <button
             type="button"
             onClick={onBack}
-            className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#0f141c] border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-colors mt-0.5 cursor-pointer shrink-0"
+            className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-colors mt-0.5 cursor-pointer shrink-0"
             title={isBn ? 'ফিরে যান' : 'Go back'}
           >
             <ArrowLeft size={16} />
           </button>
           <div>
-            <span className="text-[0.6875rem] font-bold text-[#10b981] tracking-widest uppercase block mb-1">
+            <span className="text-[0.6875rem] font-bold text-[var(--brand)] tracking-widest uppercase block mb-1">
               {isBn ? 'সেটিংস · ডেটা' : 'SETTINGS · DATA'}
             </span>
-            <h2 className="text-[1.625rem] font-bold text-white tracking-tight">
+            <h2 className="text-[1.625rem] font-bold text-[var(--text-primary)] tracking-tight">
               {isBn ? 'স্টোরেজ ও ডিপ্লয়মেন্ট' : 'Storage & deployment'}
             </h2>
-            <p className="text-[0.8125rem] text-slate-400 mt-1 max-w-xl leading-relaxed">
+            <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-1 max-w-xl leading-relaxed">
               {isBn
                 ? 'আপনার প্রতিষ্ঠানের রেকর্ড কোথায় সংরক্ষিত হবে তা নির্ধারণ করুন। ডেটা না হারিয়ে যেকোনো সময় পরিবর্তন করতে পারবেন।'
                 : "Decide where your institution's records live. You can switch modes at any time without losing data."}
@@ -235,8 +235,8 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
         </div>
 
         {/* Live Status Pill Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0d2218] border border-[#10b981]/30 text-[#10b981] text-xs font-semibold shrink-0 self-start md:self-auto shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--green-light)] border border-[var(--green)]/30 text-[var(--green)] text-[0.75rem] font-semibold shrink-0 self-start md:self-auto shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" />
           <span>
             {storageMode === 'local_computer'
               ? (isBn ? 'লোকাল ডেটাবেস অনলাইন' : 'Local database online')
@@ -248,7 +248,7 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
       </div>
 
       {savedNotice && (
-        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2 shadow-sm">
+        <div className="p-3.5 rounded-xl bg-[var(--green-light)] border border-[var(--green)]/30 text-[var(--green)] text-[0.75rem] flex items-center gap-2 shadow-sm">
           <CheckCircle2 size={16} />
           <span>{savedNotice}</span>
         </div>
