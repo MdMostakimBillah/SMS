@@ -231,6 +231,16 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
       }
 
       await issueSession(res, user)
+      if (user.school) {
+        const usage = await prisma.mediaObject?.aggregate({
+          where: { schoolId: user.school.id, deletedAt: null },
+          _sum: { sizeBytes: true },
+          _count: { id: true },
+        }).catch(() => null)
+        ;(user.school as any).storageBytes = usage?._sum?.sizeBytes || 0
+        ;(user.school as any).mediaCount = usage?._count?.id || 0
+      }
+
       res.json({ user: toPublicUser(user) })
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -289,6 +299,16 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
             data: { schoolId: defaultSchool.id },
           }).catch(() => {})
         }
+      }
+
+      if (user.school) {
+        const usage = await prisma.mediaObject?.aggregate({
+          where: { schoolId: user.school.id, deletedAt: null },
+          _sum: { sizeBytes: true },
+          _count: { id: true },
+        }).catch(() => null)
+        ;(user.school as any).storageBytes = usage?._sum?.sizeBytes || 0
+        ;(user.school as any).mediaCount = usage?._count?.id || 0
       }
 
       res.json({ user: toPublicUser(user) })

@@ -263,7 +263,17 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
       if (!school) {
         return res.status(404).json({ error: 'Institution not found', school: null })
       }
-      res.json(formatSchoolResponse(school))
+      const usage = await prisma.mediaObject?.aggregate({
+        where: { schoolId: school.id, deletedAt: null },
+        _sum: { sizeBytes: true },
+        _count: { id: true },
+      }).catch(() => null)
+      const schoolWithStorage = {
+        ...school,
+        storageBytes: usage?._sum?.sizeBytes || 0,
+        mediaCount: usage?._count?.id || 0,
+      }
+      res.json(formatSchoolResponse(schoolWithStorage))
     } catch (err) {
       console.error('[schools] lookup failed:', err instanceof Error ? err.message : err)
       res.status(500).json({ error: 'Internal server error' })

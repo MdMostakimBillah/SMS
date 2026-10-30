@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react'
-import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw, FolderOpen } from 'lucide-react'
+import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw, FolderOpen, Cloud } from 'lucide-react'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
@@ -9,8 +9,18 @@ interface Props {
   folderPath?: string
   lastBackupTime?: string | null
   isBackingUp?: boolean
+  providerBytes?: number
+  providerMediaCount?: number
   onBackupNow: () => void
   onChangeFolder: () => void
+}
+
+function formatBytes(bytes?: number | null): string {
+  if (!bytes || bytes <= 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
 function calculateLocalStorageUsage() {
@@ -49,6 +59,8 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
   folderPath,
   lastBackupTime,
   isBackingUp = false,
+  providerBytes = 0,
+  providerMediaCount = 0,
   onBackupNow,
   onChangeFolder,
 }) => {
@@ -131,7 +143,7 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
           </div>
 
           {/* Details */}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <span className="text-[0.6875rem] font-medium text-[var(--text-muted)] uppercase tracking-wider block">
               {isBn ? 'ডিভাইস স্টোরেজ' : 'Device storage'}
             </span>
@@ -142,6 +154,20 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
             <span className="text-[0.75rem] text-[var(--text-secondary)] mt-1 block">
               {isBn ? `${storageUsage.remainingMB} MB অবশিষ্ট` : `${storageUsage.remainingMB} MB remaining`}
             </span>
+
+            {/* Provider Server Storage Usage Indicator */}
+            <div className="mt-2.5 pt-2 border-t border-[var(--border)] flex items-center justify-between text-[0.6875rem]">
+              <span
+                className="text-[var(--text-muted)] flex items-center gap-1.5"
+                title={isBn ? `ক্লাউডফ্লেয়ার R2 ও ক্লাউড ডাটাবেজ ব্যাকআপ (${providerMediaCount} টি ফাইল)` : `Cloudflare R2 & Cloud baseline usage (${providerMediaCount} files)`}
+              >
+                <Cloud size={12} className="text-blue-400 shrink-0" />
+                {isBn ? 'প্রোভাইডার সার্ভার ব্যবহৃত:' : 'Provider server used:'}
+              </span>
+              <span className="font-semibold text-blue-400 font-mono">
+                {formatBytes(providerBytes)}
+              </span>
+            </div>
           </div>
         </div>
 

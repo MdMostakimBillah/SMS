@@ -170,13 +170,13 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
               </span>
             )}
 
-            {/* Storage Size Badge */}
+            {/* Storage Size Badge (Always shows Provider Server storage usage) */}
             <span
               className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0"
-              title={isBn ? `ব্যবহৃত স্টোরেজ: ${formatBytes(inst.storageBytes)} (${inst.mediaCount || 0} টি ফাইল)` : `Used Storage: ${formatBytes(inst.storageBytes)} (${inst.mediaCount || 0} files)`}
+              title={isBn ? `প্রোভাইডার সার্ভার ব্যবহৃত স্টোরেজ: ${formatBytes(inst.storageBytes)} (${inst.mediaCount || 0} টি ফাইল)` : `Provider Server Storage Used: ${formatBytes(inst.storageBytes)} (${inst.mediaCount || 0} files)`}
             >
               <HardDrive size={11} />
-              {inst.storageMode === 'local_computer' ? (isBn ? 'পিসি স্টোরেজ' : 'Local Storage') : formatBytes(inst.storageBytes)}
+              {formatBytes(inst.storageBytes)}
             </span>
           </div>
           <div className="text-[0.75rem] text-[var(--text-muted)] mt-0.5 truncate">{inst.email}</div>
@@ -208,7 +208,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
             <MiniStat icon={<GraduationCap size={14} />} label={isBn ? 'শিক্ষার্থী' : 'Students'} value={inst.package.maxStudents >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : inst.package.maxStudents.toLocaleString()} color="#6366f1" />
             <MiniStat icon={<Users size={14} />} label={isBn ? 'শিক্ষক' : 'Teachers'} value={inst.package.maxTeachers >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : inst.package.maxTeachers.toLocaleString()} color="#3b82f6" />
             <MiniStat icon={<Building2 size={14} />} label={isBn ? 'শ্রেণি' : 'Classes'} value={inst.package.maxClasses.toString()} color="#8b5cf6" />
-            <MiniStat icon={<HardDrive size={14} />} label={isBn ? 'ব্যবহৃত স্টোরেজ' : 'Storage Used'} value={inst.storageMode === 'local_computer' ? (isBn ? 'লোকাল পিসি' : 'Local PC') : formatBytes(inst.storageBytes)} color="#a855f7" />
+            <MiniStat icon={<HardDrive size={14} />} label={isBn ? 'প্রোভাইডার স্টোরেজ' : 'Provider Storage'} value={formatBytes(inst.storageBytes)} color="#a855f7" />
             <MiniStat icon={<Clock size={14} />} label={isBn ? 'শেষ লগইন' : 'Last Login'} value={inst.lastLogin} color="#f59e0b" />
           </div>
 
@@ -232,8 +232,8 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
             />
             <InfoRow
               icon={<Database size={13} />}
-              label={isBn ? 'ব্যবহৃত সাইজ' : 'Storage Size'}
-              value={inst.storageMode === 'local_computer' ? (isBn ? 'লোকাল পিসি স্টোরেজ' : 'Local Computer Storage') : `${formatBytes(inst.storageBytes)} (${inst.mediaCount || 0} ${isBn ? 'টি ফাইল' : 'files'})`}
+              label={isBn ? 'প্রোভাইডার সার্ভার সাইজ' : 'Provider Server Size'}
+              value={`${formatBytes(inst.storageBytes)} (${inst.mediaCount || 0} ${isBn ? 'টি ফাইল' : 'files'})`}
             />
             <InfoRow icon={<CreditCard size={13} />} label={isBn ? 'মূল্য' : 'Price'} value={inst.package.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${inst.package.price}/${isBn ? 'মাস' : 'mo'}`} />
             <InfoRow icon={<Calendar size={13} />} label={isBn ? 'নিবন্ধন' : 'Created'} value={inst.createdAt} />

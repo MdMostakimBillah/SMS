@@ -1,13 +1,14 @@
 import React from 'react'
-import { Cloud, Laptop, Server } from 'lucide-react'
+import { Cloud, Laptop, Server, Lock, ShieldAlert } from 'lucide-react'
 
 interface Props {
   isBn: boolean
   mode: 'cloud' | 'local_computer' | 'local_server'
+  isSuperAdminAccount?: boolean
   onModeChange: (mode: 'cloud' | 'local_computer' | 'local_server') => void
 }
 
-export const StorageModeSection: React.FC<Props> = ({ isBn, mode, onModeChange }) => {
+export const StorageModeSection: React.FC<Props> = ({ isBn, mode, isSuperAdminAccount = false, onModeChange }) => {
   const cards = [
     {
       id: 'cloud' as const,
@@ -52,18 +53,36 @@ export const StorageModeSection: React.FC<Props> = ({ isBn, mode, onModeChange }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+      {isSuperAdminAccount && (
+        <div className="md:col-span-3 p-3.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-blue-400 text-[0.75rem] flex items-center gap-2.5 shadow-sm">
+          <ShieldAlert size={16} className="shrink-0" />
+          <span>
+            {isBn
+              ? 'সুপার অ্যাডমিন অ্যাকাউন্ট প্রোভাইডার ক্লাউড ইনফ্রাস্ট্রাকচারে স্থায়ীভাবে লক করা। সুপার অ্যাডমিনকে লোকাল কম্পিউটার বা নিজস্ব ভিপিএস সার্ভারে পরিবর্তন করা যাবে না।'
+              : 'Super Admin accounts are strictly locked to Provider Cloud. Super Admin accounts can never be switched to Local Computer or Own VPS.'}
+          </span>
+        </div>
+      )}
+
       {cards.map((c) => {
         const Icon = c.icon
         const isSelected = mode === c.id
+        const isLockedForSuperAdmin = isSuperAdminAccount && c.id !== 'cloud'
 
         return (
           <div
             key={c.id}
-            onClick={() => onModeChange(c.id)}
-            className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between select-none ${
-              isSelected
-                ? 'border-[var(--brand)] bg-[var(--brand-light)] shadow-sm ring-1 ring-[var(--brand)]/40'
-                : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)]'
+            onClick={() => {
+              if (!isLockedForSuperAdmin) {
+                onModeChange(c.id)
+              }
+            }}
+            className={`p-4 rounded-2xl border transition-all duration-200 flex flex-col justify-between select-none ${
+              isLockedForSuperAdmin
+                ? 'border-[var(--border)] bg-[var(--bg-secondary)]/50 opacity-50 cursor-not-allowed'
+                : isSelected
+                ? 'border-[var(--brand)] bg-[var(--brand-light)] shadow-sm ring-1 ring-[var(--brand)]/40 cursor-pointer'
+                : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-2)] cursor-pointer'
             }`}
           >
             <div>
@@ -79,7 +98,12 @@ export const StorageModeSection: React.FC<Props> = ({ isBn, mode, onModeChange }
                   <Icon size={18} />
                 </div>
 
-                {isSelected ? (
+                {isLockedForSuperAdmin ? (
+                  <span className="inline-flex items-center gap-1 text-[0.625rem] font-semibold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                    <Lock size={10} />
+                    {isBn ? 'লকড' : 'LOCKED'}
+                  </span>
+                ) : isSelected ? (
                   <span className="text-[0.6875rem] font-bold text-[var(--brand)] tracking-wider uppercase">
                     {isBn ? 'বাছাইকৃত' : 'SELECTED'}
                   </span>

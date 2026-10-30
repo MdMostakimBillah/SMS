@@ -178,6 +178,8 @@ export function mapSchoolToInstitutionSettings(school: any, current?: Institutio
     storageMode: school.storageMode || current?.storageMode || 'cloud',
     serverUrl: school.serverUrl || current?.serverUrl || '',
     folderName: school.folderName || current?.folderName || '',
+    storageBytes: (school as any)?.storageBytes ?? (current as any)?.storageBytes ?? 0,
+    mediaCount: (school as any)?.mediaCount ?? (current as any)?.mediaCount ?? 0,
     lightColors: generateLightColors(brand),
     darkColors: generateDarkColors(brand),
   }
@@ -207,6 +209,8 @@ export interface InstitutionSettings {
   storageMode?: string
   serverUrl?: string
   folderName?: string
+  storageBytes?: number
+  mediaCount?: number
   lightColors: ThemeColors
   darkColors: ThemeColors
 }

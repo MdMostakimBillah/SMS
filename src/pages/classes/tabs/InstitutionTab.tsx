@@ -25,7 +25,9 @@ import {
   CheckCircle2,
   AlertCircle,
   RefreshCw,
+  Lock,
 } from 'lucide-react'
+import { isSuperAdminAccount } from '@/lib/storageMode'
 import { sendTelegramBackupNow, downloadLocalBackup, parseAndValidateBackup, restoreLocalStores } from '@/lib/backup'
 import { usePermission } from '@/hooks/usePermission'
 import ColorSettings from '@/components/shared/ColorSettings'
@@ -1027,6 +1029,17 @@ export default React.memo(function InstitutionTab({
                   : 'Select where your institution records and media should be stored.'}
               </p>
 
+              {isSuperAdminAccount() && (
+                <div className="mb-3 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[0.6875rem] flex items-center gap-2">
+                  <Lock size={13} className="shrink-0" />
+                  <span>
+                    {isBn
+                      ? 'সুপার অ্যাডমিন অ্যাকাউন্ট প্রোভাইডার ক্লাউড ইনফ্রাস্ট্রাকচারে স্থায়ীভাবে লক করা।'
+                      : 'Super Admin account is permanently locked to Provider Cloud.'}
+                  </span>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {/* Option 1: Cloud */}
                 <div
@@ -1050,18 +1063,31 @@ export default React.memo(function InstitutionTab({
 
                 {/* Option 2: Local Computer */}
                 <div
-                  onClick={() => setInstForm((p: any) => ({ ...p, storageMode: 'local_computer' }))}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    instForm.storageMode === 'local_computer'
-                      ? 'border-amber-500 bg-amber-500/10'
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)]'
+                  onClick={() => {
+                    if (!isSuperAdminAccount()) {
+                      setInstForm((p: any) => ({ ...p, storageMode: 'local_computer' }))
+                    }
+                  }}
+                  className={`p-3 rounded-lg border transition-all ${
+                    isSuperAdminAccount()
+                      ? 'border-[var(--border)] bg-[var(--bg-primary)] opacity-50 cursor-not-allowed'
+                      : instForm.storageMode === 'local_computer'
+                      ? 'border-amber-500 bg-amber-500/10 cursor-pointer'
+                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)] cursor-pointer'
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Laptop size={16} className={instForm.storageMode === 'local_computer' ? 'text-amber-500' : 'text-[var(--text-secondary)]'} />
-                    <span className="text-xs font-semibold text-[var(--text-primary)]">
-                      {isBn ? 'লোকাল কম্পিউটার' : 'Local Computer'}
-                    </span>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="flex items-center gap-2">
+                      <Laptop size={16} className={instForm.storageMode === 'local_computer' ? 'text-amber-500' : 'text-[var(--text-secondary)]'} />
+                      <span className="text-xs font-semibold text-[var(--text-primary)]">
+                        {isBn ? 'লোকাল কম্পিউটার' : 'Local Computer'}
+                      </span>
+                    </div>
+                    {isSuperAdminAccount() && (
+                      <span className="text-[0.625rem] text-amber-500 flex items-center gap-1 font-semibold">
+                        <Lock size={10} /> {isBn ? 'লকড' : 'Locked'}
+                      </span>
+                    )}
                   </div>
                   <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
                     {isBn ? 'সব ডেটা কেবল এই কম্পিউটারে জমা হবে, ক্লাউড ডাটাবেজ বন্ধ থাকবে।' : 'Store all data locally on PC; stop cloud DB mutations.'}
@@ -1070,18 +1096,31 @@ export default React.memo(function InstitutionTab({
 
                 {/* Option 3: Custom Server */}
                 <div
-                  onClick={() => setInstForm((p: any) => ({ ...p, storageMode: 'local_server' }))}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    instForm.storageMode === 'local_server'
-                      ? 'border-indigo-500 bg-indigo-500/10'
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)]'
+                  onClick={() => {
+                    if (!isSuperAdminAccount()) {
+                      setInstForm((p: any) => ({ ...p, storageMode: 'local_server' }))
+                    }
+                  }}
+                  className={`p-3 rounded-lg border transition-all ${
+                    isSuperAdminAccount()
+                      ? 'border-[var(--border)] bg-[var(--bg-primary)] opacity-50 cursor-not-allowed'
+                      : instForm.storageMode === 'local_server'
+                      ? 'border-indigo-500 bg-indigo-500/10 cursor-pointer'
+                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)] cursor-pointer'
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Server size={16} className={instForm.storageMode === 'local_server' ? 'text-indigo-500' : 'text-[var(--text-secondary)]'} />
-                    <span className="text-xs font-semibold text-[var(--text-primary)]">
-                      {isBn ? 'কাস্টম সার্ভার' : 'Custom Server'}
-                    </span>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <div className="flex items-center gap-2">
+                      <Server size={16} className={instForm.storageMode === 'local_server' ? 'text-indigo-500' : 'text-[var(--text-secondary)]'} />
+                      <span className="text-xs font-semibold text-[var(--text-primary)]">
+                        {isBn ? 'কাস্টম সার্ভার' : 'Custom Server'}
+                      </span>
+                    </div>
+                    {isSuperAdminAccount() && (
+                      <span className="text-[0.625rem] text-amber-500 flex items-center gap-1 font-semibold">
+                        <Lock size={10} /> {isBn ? 'লকড' : 'Locked'}
+                      </span>
+                    )}
                   </div>
                   <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
                     {isBn ? 'আপনার নিজস্ব VPS বা সেলফ-হোস্টেড API সার্ভার' : 'Self-hosted VPS API endpoint'}

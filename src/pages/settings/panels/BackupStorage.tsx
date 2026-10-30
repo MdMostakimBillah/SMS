@@ -37,11 +37,20 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
   const schoolSlug = sessionStorage.getItem('edutech_inst_slug') || 'edutech'
   const schoolName = institution?.name || 'EduTech School'
 
-  const rawMode = settings.storageSettings?.mode || institution?.storageMode || 'local_computer'
+  const isViewingSpecificInstitution =
+    typeof sessionStorage !== 'undefined' && Boolean(sessionStorage.getItem('edutech_viewing_id'))
+  const isSuperAdminAccount = user?.role === 'super_admin' && !isViewingSpecificInstitution
+
+  const rawMode = isSuperAdminAccount
+    ? 'cloud'
+    : settings.storageSettings?.mode || institution?.storageMode || 'cloud'
   const storageMode: 'cloud' | 'local_computer' | 'local_server' =
-    rawMode === 'cloud' || rawMode === 'local_server' ? rawMode : 'local_computer'
+    isSuperAdminAccount ? 'cloud' : (rawMode === 'local_computer' || rawMode === 'local_server' ? rawMode : 'cloud')
   const serverUrl = settings.storageSettings?.serverUrl || institution?.serverUrl || ''
   const folderName = settings.storageSettings?.folderName || institution?.folderName || ''
+
+  const providerBytes = (institution as any)?.storageBytes ?? (user?.school as any)?.storageBytes ?? 0
+  const providerMediaCount = (institution as any)?.mediaCount ?? (user?.school as any)?.mediaCount ?? 0
 
   const botToken = settings.telegramBackup?.botToken || ''
   const chatId = settings.telegramBackup?.chatId || ''
@@ -53,14 +62,18 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
     newUrl?: string,
     newFolder?: string
   ) => {
+    // Super admin account can never switch to local computer or own VPS
+    const effectiveMode: 'cloud' | 'local_computer' | 'local_server' =
+      isSuperAdminAccount ? 'cloud' : newMode
+
     const finalUrl = newUrl !== undefined ? newUrl : serverUrl
     const finalFolder = newFolder !== undefined ? newFolder : folderName
 
-    setLocalStorageMode(newMode)
+    setLocalStorageMode(effectiveMode)
     if (institution) {
       updateInstitution({
         ...institution,
-        storageMode: newMode,
+        storageMode: effectiveMode,
         serverUrl: finalUrl,
         folderName: finalFolder,
       })
@@ -75,7 +88,7 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
     if (targetId) {
       try {
         await authApi.updateSchool(targetId, {
-          storageMode: newMode,
+          storageMode: effectiveMode,
           serverUrl: finalUrl,
           folderName: finalFolder,
         })
@@ -93,6 +106,9 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
   }
 
   const handleModeChange = (mode: 'cloud' | 'local_computer' | 'local_server') => {
+    if (isSuperAdminAccount && mode !== 'cloud') {
+      return
+    }
     updateSettings({
       storageSettings: {
         ...(settings.storageSettings || { serverUrl: '', folderName: '' }),
@@ -258,6 +274,7 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
       <StorageModeSection
         isBn={isBn}
         mode={storageMode}
+        isSuperAdminAccount={isSuperAdminAccount}
         onModeChange={handleModeChange}
       />
 
@@ -268,6 +285,8 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
           folderPath={displayFolderPath}
           lastBackupTime={lastBackupTime}
           isBackingUp={isBackingUp}
+          providerBytes={providerBytes}
+          providerMediaCount={providerMediaCount}
           onBackupNow={handleBackupNow}
           onChangeFolder={handleChangeFolder}
         />
@@ -286,6 +305,8 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
           isBn={isBn}
           serverUrl={serverUrl}
           folderName={folderName}
+          providerBytes={providerBytes}
+          providerMediaCount={providerMediaCount}
           onServerUrlChange={handleServerUrlChange}
           onFolderNameChange={handleFolderNameChange}
           onSave={() => syncStorage('local_server', serverUrl, folderName)}

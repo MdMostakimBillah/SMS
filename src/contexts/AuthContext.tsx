@@ -111,6 +111,7 @@ function clearAllIdentityKeys(): void {
   }
   sessionStorage.removeItem('edutech_viewing_id')
   sessionStorage.removeItem('edutech_user_id')
+  sessionStorage.removeItem('edutech_user_role')
 }
 
 function serverUserToUser(u: SessionUser): User {
@@ -229,6 +230,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSessionSource('server')
       loginTimestampRef.current = Date.now()
       setUserId(res.user.email)
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('edutech_user_role', res.user.role)
+      }
       if (res.user.role === 'super_admin' && typeof sessionStorage !== 'undefined') {
         const viewingId = sessionStorage.getItem('edutech_viewing_id')
         if (viewingId) {
@@ -310,6 +314,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSessionSource('server')
       loginTimestampRef.current = Date.now()
       setUserId(res.user.email)
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('edutech_user_role', res.user.role)
+      }
       clearLoginAttempts()
       if (res.user.role === 'super_admin' && typeof sessionStorage !== 'undefined') {
         const viewingId = sessionStorage.getItem('edutech_viewing_id')

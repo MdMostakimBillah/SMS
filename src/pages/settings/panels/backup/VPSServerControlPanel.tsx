@@ -1,19 +1,31 @@
 import React, { useState } from 'react'
-import { Server, ShieldCheck, Globe, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Server, ShieldCheck, Globe, RefreshCw, CheckCircle2, AlertCircle, Cloud } from 'lucide-react'
 
 interface Props {
   isBn: boolean
   serverUrl: string
   folderName: string
+  providerBytes?: number
+  providerMediaCount?: number
   onServerUrlChange: (url: string) => void
   onFolderNameChange: (folder: string) => void
   onSave: () => void
+}
+
+function formatBytes(bytes?: number | null): string {
+  if (!bytes || bytes <= 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
 export const VPSServerControlPanel: React.FC<Props> = ({
   isBn,
   serverUrl,
   folderName,
+  providerBytes = 0,
+  providerMediaCount = 0,
   onServerUrlChange,
   onFolderNameChange,
   onSave,
@@ -99,6 +111,21 @@ export const VPSServerControlPanel: React.FC<Props> = ({
             className="w-full h-10 px-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
           />
         </div>
+      </div>
+
+      {/* Provider Server Usage Notice */}
+      <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-between text-[0.75rem]">
+        <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+          <Cloud size={15} className="text-blue-400" />
+          <span>
+            {isBn
+              ? `প্রোভাইডার ক্লাউড ব্যবহৃত স্টোরেজ (${providerMediaCount} টি মিডিয়া ফাইল):`
+              : `Provider Cloud storage used (${providerMediaCount} media files):`}
+          </span>
+        </div>
+        <span className="font-semibold text-blue-400 font-mono">
+          {formatBytes(providerBytes)}
+        </span>
       </div>
 
       {testResult && (
