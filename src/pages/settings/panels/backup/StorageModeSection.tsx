@@ -1,136 +1,129 @@
 import React from 'react'
-import { Cloud, Laptop, Server, Check } from 'lucide-react'
+import { Cloud, Laptop, Server } from 'lucide-react'
 
 interface Props {
   isBn: boolean
   mode: 'cloud' | 'local_computer' | 'local_server'
-  serverUrl: string
-  folderName: string
   onModeChange: (mode: 'cloud' | 'local_computer' | 'local_server') => void
-  onServerUrlChange: (url: string) => void
-  onFolderNameChange: (folder: string) => void
 }
 
-export const StorageModeSection: React.FC<Props> = ({
-  isBn,
-  mode,
-  serverUrl,
-  folderName,
-  onModeChange,
-  onServerUrlChange,
-  onFolderNameChange,
-}) => {
-  const modes = [
+export const StorageModeSection: React.FC<Props> = ({ isBn, mode, onModeChange }) => {
+  const cards = [
     {
       id: 'cloud' as const,
-      title: isBn ? 'ক্লাউড ডেটাবেস' : 'Cloud Database',
-      desc: isBn ? 'ক্লাউড পোস্টগ্রেস সার্ভারে সঞ্চয়' : 'Store on central cloud PostgreSQL',
       icon: Cloud,
-      color: 'var(--brand)',
+      title: isBn ? 'প্রোভাইডার ক্লাউড' : 'Provider Cloud',
+      desc: isBn
+        ? 'এডুটেক ক্লাউড সার্ভারে সংরক্ষিত, কোনো জটিল কনফিগারেশন নেই।'
+        : 'Hosted on EduTech servers, with nothing to configure.',
+      checklist: [
+        { label: isBn ? 'স্বয়ংক্রিয় ক্লাউড ব্যাকআপ' : 'Automatic backups', enabled: true },
+        { label: isBn ? 'জিরো সেটআপ' : 'Zero setup', enabled: true },
+        { label: isBn ? 'অফলাইনে চলে' : 'Works offline', enabled: false },
+      ],
     },
     {
       id: 'local_computer' as const,
-      title: isBn ? 'লোকাল কম্পিউটার' : 'Local Computer',
-      desc: isBn ? 'ব্রাউজার ও লোকাল ড্রাইভে ফাইল ব্যাকআপ' : 'Store locally with offline files',
       icon: Laptop,
-      color: 'var(--amber)',
+      title: isBn ? 'লোকাল কম্পিউটার' : 'Local Computer',
+      desc: isBn
+        ? 'সকল রেকর্ড কেবল এই ডিভাইসে থাকবে। প্রোভাইডার শুধু বেসিক মেটাডাটা দেখবে।'
+        : 'Records stay on this device. The provider only sees basic metadata.',
+      checklist: [
+        { label: isBn ? 'সম্পূর্ণ অফলাইনে কাজ করে' : 'Works fully offline', enabled: true },
+        { label: isBn ? 'ডিফল্টভাবে গোপনীয়' : 'Private by default', enabled: true },
+        { label: isBn ? 'কেবল লগইনের জন্য নেট' : 'Internet only for login', enabled: true },
+      ],
     },
     {
       id: 'local_server' as const,
-      title: isBn ? 'লোকাল সার্ভার' : 'Local Server',
-      desc: isBn ? 'অন-প্রেমিসেস লোকাল নেটওয়ার্ক সার্ভার' : 'Connect to on-premise local server',
       icon: Server,
-      color: 'var(--green)',
+      title: isBn ? 'নিজস্ব সার্ভার (VPS)' : 'Own Server (VPS)',
+      desc: isBn
+        ? 'প্রতিষ্ঠানের নিজস্ব ভিপিএস বা প্রাইভেট ক্লাউড ডেটাবেসে সেলফ-হোস্টেড।'
+        : 'Self-hosted on your institution’s VPS or private cloud database.',
+      checklist: [
+        { label: isBn ? 'সম্পূর্ণ ডেটা কন্ট্রোল' : 'Full data control', enabled: true },
+        { label: isBn ? 'মাল্টি-ক্যাম্পাস অ্যাক্সেস' : 'Multi-campus access', enabled: true },
+        { label: isBn ? 'আইটি সেটআপ প্রয়োজন' : 'Needs IT setup', enabled: false },
+      ],
     },
   ]
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
-            {isBn ? 'স্টোরেজ মোড নির্বাচন' : 'Storage Mode'}
-          </h3>
-          <p className="text-[0.75rem] text-[var(--text-muted)] mt-0.5">
-            {isBn ? 'তথ্য সংরক্ষণের প্রধান অবস্থান নির্ধারণ করুন' : 'Select primary destination for institutional data'}
-          </p>
-        </div>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+      {cards.map((c) => {
+        const Icon = c.icon
+        const isSelected = mode === c.id
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-        {modes.map((m) => {
-          const Icon = m.icon
-          const active = mode === m.id
-          return (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => onModeChange(m.id)}
-              className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
-                active
-                  ? 'border-[var(--brand)] bg-[rgba(99,102,241,0.08)] shadow-sm'
-                  : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)]'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
+        return (
+          <div
+            key={c.id}
+            onClick={() => onModeChange(c.id)}
+            className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between select-none ${
+              isSelected
+                ? 'border-[#10b981] bg-[#0d1f18]/70 shadow-[0_0_24px_rgba(16,185,129,0.16)] ring-1 ring-[#10b981]/50'
+                : 'border-slate-800/80 bg-[#0f141c]/80 hover:border-slate-700 hover:bg-[#121924]/90'
+            }`}
+          >
+            <div>
+              {/* Top row: Icon + Action / Badge */}
+              <div className="flex items-center justify-between mb-3.5">
                 <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: `${m.color}18`, color: m.color }}
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                    isSelected
+                      ? 'bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30'
+                      : 'bg-slate-800/60 text-slate-400 border border-slate-700/40'
+                  }`}
                 >
-                  <Icon size={16} />
+                  <Icon size={18} />
                 </div>
-                {active && (
-                  <div className="w-5 h-5 rounded-full bg-[var(--brand)] text-white flex items-center justify-center">
-                    <Check size={12} strokeWidth={3} />
-                  </div>
+
+                {isSelected ? (
+                  <span className="text-[0.6875rem] font-bold text-[#10b981] tracking-wider uppercase">
+                    {isBn ? 'বাছাইকৃত' : 'SELECTED'}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onModeChange(c.id)
+                    }}
+                    className="text-[0.6875rem] font-semibold text-slate-400 hover:text-white tracking-wider uppercase transition-colors"
+                  >
+                    {isBn ? 'নির্বাচন' : 'SELECT'}
+                  </button>
                 )}
               </div>
-              <div>
-                <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{m.title}</div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">{m.desc}</div>
-              </div>
-            </button>
-          )
-        })}
-      </div>
 
-      {mode === 'local_computer' && (
-        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 text-xs">
-          <strong>{isBn ? 'মনোযোগ দিন:' : 'Important:'}</strong>{' '}
-          {isBn
-            ? 'লোকাল কম্পিউটার নির্বাচন করলে কেন্দ্রীয় সার্ভার ডাটাবেজ সংযোগ বন্ধ থাকবে। ডেটা সুরক্ষিত রাখতে নিয়মিত টেলিগ্রাম ব্যাকআপ নিন বা ব্যাকআপ ফাইল ডাউনলোড করে রাখুন।'
-            : 'In Local Computer mode, central cloud database mutations are completely stopped. All data is saved on this machine. Use Telegram backup below to safeguard your records.'}
-        </div>
-      )}
+              {/* Title & Description */}
+              <h4 className="text-[0.9375rem] font-semibold text-white tracking-tight mb-1">
+                {c.title}
+              </h4>
+              <p className="text-[0.75rem] text-slate-400 leading-relaxed mb-4 min-h-[2.4rem]">
+                {c.desc}
+              </p>
+            </div>
 
-      {mode === 'local_server' && (
-        <div className="pt-2 border-t border-[var(--border)] space-y-3">
-          <div>
-            <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1 block">
-              {isBn ? 'লোকাল সার্ভার URL' : 'Local Server URL'}
-            </label>
-            <input
-              type="text"
-              value={serverUrl}
-              onChange={(e) => onServerUrlChange(e.target.value)}
-              placeholder="http://192.168.1.100:3001"
-              className="w-full h-9 px-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
-            />
+            {/* Checklist */}
+            <div className="pt-3 border-t border-slate-800/70 space-y-1.5">
+              {c.checklist.map((item, idx) => (
+                <div key={idx} className="flex items-center gap-2 text-[0.75rem]">
+                  {item.enabled ? (
+                    <span className="text-[#10b981] font-bold text-[0.8125rem]">✓</span>
+                  ) : (
+                    <span className="text-slate-500 font-bold text-[0.8125rem]">–</span>
+                  )}
+                  <span className={item.enabled ? 'text-slate-300' : 'text-slate-500'}>
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div>
-            <label className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-1 block">
-              {isBn ? 'সংরক্ষণ ফোল্ডারের নাম' : 'Storage Folder Name'}
-            </label>
-            <input
-              type="text"
-              value={folderName}
-              onChange={(e) => onFolderNameChange(e.target.value)}
-              placeholder="edutech_data"
-              className="w-full h-9 px-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[0.8125rem] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]"
-            />
-          </div>
-        </div>
-      )}
+        )
+      })}
     </div>
   )
 }
