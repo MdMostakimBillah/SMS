@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import ClassesTab from './ClassesTab'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 
-describe('ClassesTab Storage Architecture Connection', () => {
+describe('ClassesTab Component', () => {
   const mockInstitution = {
     name: 'Test Institution',
     nameBn: 'টেস্ট প্রতিষ্ঠান',
@@ -54,34 +54,21 @@ describe('ClassesTab Storage Architecture Connection', () => {
     localStorage.clear()
   })
 
-  it('renders Provider Cloud Database badge in cloud mode', () => {
-    sessionStorage.setItem('edutech_storage_mode', 'cloud')
+  it('renders session indicator and does not show manual sync banner', () => {
     render(<ClassesTab {...baseProps} />)
 
-    expect(screen.getByText('Provider Cloud Database')).toBeInTheDocument()
-    expect(screen.getByText('Sync Database')).toBeInTheDocument()
+    expect(screen.getByText('2025-26')).toBeInTheDocument()
+    expect(screen.getByText('Current Session')).toBeInTheDocument()
+    // Manual sync button banner should not be present
+    expect(screen.queryByText('Sync Database')).not.toBeInTheDocument()
+    expect(screen.queryByText('Provider Cloud Database')).not.toBeInTheDocument()
   })
 
-  it('renders Local PC Storage badge in local_computer mode', () => {
-    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
-    render(<ClassesTab {...baseProps} />)
+  it('renders in Bengali correctly without manual sync banner', () => {
+    render(<ClassesTab {...baseProps} isBn={true} />)
 
-    expect(screen.getByText('Local PC Storage')).toBeInTheDocument()
-    expect(screen.getByText('Export JSON to PC')).toBeInTheDocument()
-  })
-
-  it('renders Custom VPS Server badge in local_server mode', () => {
-    sessionStorage.setItem('edutech_storage_mode', 'local_server')
-    sessionStorage.setItem('edutech_server_url', 'https://vps.school.edu.bd')
-    render(
-      <ClassesTab
-        {...baseProps}
-        institution={{ ...mockInstitution, storageMode: 'local_server', serverUrl: 'https://vps.school.edu.bd' }}
-      />
-    )
-
-    expect(screen.getByText('Custom VPS Server')).toBeInTheDocument()
-    expect(screen.getByText('Sync VPS')).toBeInTheDocument()
-    expect(screen.getByText(/https:\/\/vps\.school\.edu\.bd/)).toBeInTheDocument()
+    expect(screen.getByText('2025-26')).toBeInTheDocument()
+    expect(screen.getByText('বর্তমান সেশন')).toBeInTheDocument()
+    expect(screen.queryByText('ডাটাবেজ সিঙ্ক')).not.toBeInTheDocument()
   })
 })

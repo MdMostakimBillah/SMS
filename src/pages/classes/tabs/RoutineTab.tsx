@@ -19,7 +19,6 @@ import {
 } from 'lucide-react'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { RoutinePDFOptionsModal } from '@/components/shared/RoutinePDFOptionsModal'
-import { StorageArchitectureBanner } from '../components/StorageArchitectureBanner'
 import { generateRoutineGridPDF } from '@/pages/classes/routinePdfTemplate'
 import type { RoutineListPDFOptions, RoutineGridData } from '@/pages/classes/routinePdfTemplate'
 import { openPrintWindow } from '@/lib/pdf'
@@ -307,14 +306,6 @@ export default React.memo(function RoutineTab({
 
   return (
     <div>
-      <StorageArchitectureBanner
-        serverUrl={institution?.serverUrl}
-        currentSession={institution?.currentSession}
-        classes={classes}
-        routines={routines}
-        isBn={isBn}
-      />
-
       {/* Class + Section selector + Period config */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '0.625rem', marginBottom: '0.875rem' }}>
         <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '0.75rem' }}>

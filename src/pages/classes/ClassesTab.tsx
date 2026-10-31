@@ -8,7 +8,6 @@ import type { StudentAdmission } from '@/pages/students/admission/types'
 import { TopBar } from './components/TopBar'
 import { AddClassForm } from './components/AddClassForm'
 import { ClassCard } from './components/ClassCard'
-import { StorageArchitectureBanner } from './components/StorageArchitectureBanner'
 import { BulkTimeModal } from './modals/BulkTimeModal'
 import { BulkSubjectModal } from './modals/BulkSubjectModal'
 import { BulkSectionModal } from './modals/BulkSectionModal'
@@ -185,14 +184,6 @@ export default function ClassesTab({
 
   return (
     <>
-      {/* Storage Architecture & Database Connection Status Banner */}
-      <StorageArchitectureBanner
-        serverUrl={institution.serverUrl}
-        currentSession={institution.currentSession}
-        classes={classes}
-        isBn={isBn}
-      />
-
       {/* Session indicator */}
       <div className="flex items-center gap-2 mb-3 py-2 px-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]">
         <CalendarDays size={14} className="text-[var(--brand)]" />
