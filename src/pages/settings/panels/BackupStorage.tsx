@@ -69,7 +69,7 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
     const finalUrl = newUrl !== undefined ? newUrl : serverUrl
     const finalFolder = newFolder !== undefined ? newFolder : folderName
 
-    setLocalStorageMode(effectiveMode)
+    setLocalStorageMode(effectiveMode, finalUrl)
     if (institution) {
       updateInstitution({
         ...institution,

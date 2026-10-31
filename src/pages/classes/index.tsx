@@ -171,6 +171,7 @@ export default function ClassesPage() {
 
           if (typeof sessionStorage !== 'undefined') {
             sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+            sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
           }
           useAppStore.getState().updateSettings({
             storageSettings: {

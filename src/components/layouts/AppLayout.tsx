@@ -71,6 +71,10 @@ export default function AppLayout() {
           setSlug(targetSlug)
           const mapped = mapSchoolToInstitutionSettings(res.school, useClassStore.getState().institution)
           useClassStore.getState().updateInstitution(mapped)
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+            sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
+          }
           const brand = res.school.brandColor || '#6366f1'
           const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
           applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
@@ -91,6 +95,10 @@ export default function AppLayout() {
       }
       const mapped = mapSchoolToInstitutionSettings(user.school, useClassStore.getState().institution)
       useClassStore.getState().updateInstitution(mapped)
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+        sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
+      }
       const brand = user.school.brandColor || '#6366f1'
       const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
       applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
@@ -106,6 +114,10 @@ export default function AppLayout() {
             setSlug(pathSlug)
             const mapped = mapSchoolToInstitutionSettings(res.school, useClassStore.getState().institution)
             useClassStore.getState().updateInstitution(mapped)
+            if (typeof sessionStorage !== 'undefined') {
+              sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+              sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
+            }
             const brand = res.school.brandColor || '#6366f1'
             const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
             applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))

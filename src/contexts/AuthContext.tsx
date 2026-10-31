@@ -144,6 +144,10 @@ export function syncUserSchool(school: any, u: SessionUser | User): void {
 
   const mapped = mapSchoolToInstitutionSettings(school, useClassStore.getState().institution)
   useClassStore.getState().updateInstitution(mapped)
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+    sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
+  }
 
   const brandColor = school.brandColor || '#6366f1'
   const currentTheme = useAppStore.getState().theme

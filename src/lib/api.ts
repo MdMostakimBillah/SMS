@@ -1,16 +1,44 @@
 export const API_BASE = import.meta.env.VITE_API_URL || ''
 
 /**
+ * Resolves the base URL for API requests.
+ * When the institution has configured 'Own Server (VPS)' mode, it routes directly to the custom serverUrl.
+ * Otherwise, it uses the provider cloud API_BASE.
+ */
+export function resolveApiBase(): string {
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      const mode = sessionStorage.getItem('edutech_storage_mode')
+      if (mode === 'local_server') {
+        const url = sessionStorage.getItem('edutech_server_url')
+        if (url && url.trim()) return url.trim().replace(/\/+$/, '')
+      }
+    }
+    if (typeof localStorage !== 'undefined') {
+      const mode = localStorage.getItem('edutech_storage_mode')
+      if (mode === 'local_server') {
+        const url = localStorage.getItem('edutech_server_url')
+        if (url && url.trim()) return url.trim().replace(/\/+$/, '')
+      }
+    }
+  } catch {
+    /* fallback */
+  }
+  return API_BASE
+}
+
+/**
  * Resolves media URLs (e.g. from Cloudflare R2 storage /api/media/public/:id)
- * prepending API_BASE if configured and path is relative.
+ * prepending active API base if configured and path is relative.
  */
 export function resolveMediaUrl(url: string | null | undefined): string {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
     return url
   }
-  if (url.startsWith('/api/') && API_BASE) {
-    return `${API_BASE.replace(/\/+$/, '')}${url}`
+  const base = resolveApiBase()
+  if (url.startsWith('/api/') && base) {
+    return `${base.replace(/\/+$/, '')}${url}`
   }
   return url
 }
@@ -50,8 +78,15 @@ export async function apiRequest<T = unknown>(
 
   const viewingId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null
 
+  const apiBase = resolveApiBase()
+  const targetUrl = apiBase
+    ? `${apiBase}${path}`
+    : typeof window !== 'undefined' && window.location?.origin && window.location.origin !== 'null' && !path.startsWith('http')
+    ? `${window.location.origin}${path}`
+    : path
+
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(targetUrl, {
       method,
       credentials: 'include',
       headers: {

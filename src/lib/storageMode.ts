@@ -23,25 +23,11 @@ export function isSuperAdminAccount(): boolean {
  * Note: Super admin accounts NEVER switch to local computer mode.
  */
 export function isLocalComputerMode(): boolean {
-  if (isSuperAdminAccount()) {
-    return false
-  }
+  return getActiveStorageMode() === 'local_computer'
+}
 
-  try {
-    const instMode = (useClassStore.getState()?.institution as any)?.storageMode
-    if (instMode === 'local_computer') return true
-
-    const appSettingMode = useAppStore.getState()?.settings?.storageSettings?.mode
-    if (appSettingMode === 'local_computer') return true
-
-    if (typeof sessionStorage !== 'undefined') {
-      const sess = sessionStorage.getItem('edutech_storage_mode')
-      if (sess === 'local_computer') return true
-    }
-  } catch {
-    /* fallback to cloud */
-  }
-  return false
+export function isLocalServerMode(): boolean {
+  return getActiveStorageMode() === 'local_server'
 }
 
 export function getActiveStorageMode(): StorageMode {
@@ -50,15 +36,24 @@ export function getActiveStorageMode(): StorageMode {
   }
 
   try {
+    if (typeof sessionStorage !== 'undefined') {
+      const sess = sessionStorage.getItem('edutech_storage_mode')
+      if (sess === 'cloud' || sess === 'local_computer' || sess === 'local_server') {
+        return sess as StorageMode
+      }
+    }
+
     const instMode = (useClassStore.getState()?.institution as any)?.storageMode
     if (instMode) return instMode as StorageMode
 
     const appSettingMode = useAppStore.getState()?.settings?.storageSettings?.mode
     if (appSettingMode) return appSettingMode as StorageMode
 
-    if (typeof sessionStorage !== 'undefined') {
-      const sess = sessionStorage.getItem('edutech_storage_mode')
-      if (sess) return sess as StorageMode
+    if (typeof localStorage !== 'undefined') {
+      const loc = localStorage.getItem('edutech_storage_mode')
+      if (loc === 'cloud' || loc === 'local_computer' || loc === 'local_server') {
+        return loc as StorageMode
+      }
     }
   } catch {
     /* fallback to cloud */
@@ -66,12 +61,82 @@ export function getActiveStorageMode(): StorageMode {
   return 'cloud'
 }
 
-export function setLocalStorageMode(mode: StorageMode): void {
+export function getActiveServerUrl(): string {
+  if (isSuperAdminAccount()) {
+    return ''
+  }
+
+  try {
+    const mode = getActiveStorageMode()
+    if (mode === 'local_server') {
+      if (typeof sessionStorage !== 'undefined') {
+        const url = sessionStorage.getItem('edutech_server_url')
+        if (url && url.trim()) return url.trim().replace(/\/+$/, '')
+      }
+
+      const instUrl = (useClassStore.getState()?.institution as any)?.serverUrl
+      if (instUrl && typeof instUrl === 'string' && instUrl.trim()) {
+        return instUrl.trim().replace(/\/+$/, '')
+      }
+
+      const appUrl = useAppStore.getState()?.settings?.storageSettings?.serverUrl
+      if (appUrl && typeof appUrl === 'string' && appUrl.trim()) {
+        return appUrl.trim().replace(/\/+$/, '')
+      }
+
+      if (typeof localStorage !== 'undefined') {
+        const url = localStorage.getItem('edutech_server_url')
+        if (url && url.trim()) return url.trim().replace(/\/+$/, '')
+      }
+    }
+  } catch {
+    /* fallback to default */
+  }
+  return ''
+}
+
+export function setLocalServerUrl(url: string): void {
+  const cleanUrl = url.trim().replace(/\/+$/, '')
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.setItem('edutech_server_url', cleanUrl)
+  }
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('edutech_server_url', cleanUrl)
+  }
+  try {
+    const inst = useClassStore.getState().institution
+    if (inst) {
+      useClassStore.getState().updateInstitution({
+        ...inst,
+        serverUrl: cleanUrl,
+      })
+    }
+    useAppStore.getState().updateSettings({
+      storageSettings: {
+        ...(useAppStore.getState().settings.storageSettings || { mode: 'local_server', folderName: '' }),
+        serverUrl: cleanUrl,
+      },
+    })
+  } catch {
+    /* ignore */
+  }
+}
+
+export function setLocalStorageMode(mode: StorageMode, serverUrl?: string): void {
   // Super admin account can never switch away from cloud
   const effectiveMode: StorageMode = isSuperAdminAccount() ? 'cloud' : mode
 
   if (typeof sessionStorage !== 'undefined') {
     sessionStorage.setItem('edutech_storage_mode', effectiveMode)
+    if (serverUrl !== undefined) {
+      sessionStorage.setItem('edutech_server_url', serverUrl.trim().replace(/\/+$/, ''))
+    }
+  }
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('edutech_storage_mode', effectiveMode)
+    if (serverUrl !== undefined) {
+      localStorage.setItem('edutech_server_url', serverUrl.trim().replace(/\/+$/, ''))
+    }
   }
   try {
     const inst = useClassStore.getState().institution
@@ -79,12 +144,14 @@ export function setLocalStorageMode(mode: StorageMode): void {
       useClassStore.getState().updateInstitution({
         ...inst,
         storageMode: effectiveMode,
+        ...(serverUrl !== undefined ? { serverUrl: serverUrl.trim().replace(/\/+$/, '') } : {}),
       })
     }
     useAppStore.getState().updateSettings({
       storageSettings: {
         ...(useAppStore.getState().settings.storageSettings || { serverUrl: '', folderName: '' }),
         mode: effectiveMode,
+        ...(serverUrl !== undefined ? { serverUrl: serverUrl.trim().replace(/\/+$/, '') } : {}),
       },
     })
   } catch {

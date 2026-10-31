@@ -202,4 +202,22 @@ describe('classStore actions', () => {
       })
     )
   })
+
+  it('in local_computer mode, syncFromServer and syncToServer skip server mutations', async () => {
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    useClassStore.setState({
+      institution: {
+        ...useClassStore.getState().institution,
+        storageMode: 'local_computer',
+      },
+    })
+    vi.mocked(classesApi.get).mockClear()
+    vi.mocked(classesApi.update).mockClear()
+
+    await useClassStore.getState().syncFromServer('test-slug')
+    expect(classesApi.get).not.toHaveBeenCalled()
+
+    await useClassStore.getState().syncToServer()
+    expect(classesApi.update).not.toHaveBeenCalled()
+  })
 })
