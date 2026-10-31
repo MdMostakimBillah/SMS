@@ -1,5 +1,5 @@
-import type { TeacherData, DepartmentData } from '@/lib/api'
-import type { Teacher, TeacherStatus, Department } from '@/pages/teachers/types'
+import type { TeacherData, DepartmentData, SubjectData, DesignationData } from '@/lib/api'
+import type { Teacher, TeacherStatus, Department, Subject, Designation } from '@/pages/teachers/types'
 
 /**
  * Server <-> UI mappers for the Phase 7 teacher migration.
@@ -136,6 +136,28 @@ export function serverDepartmentToDepartment(d: DepartmentData): Department {
     name: d.name,
     nameBn: str(d.nameBn),
     head: str(d.head),
+    createdAt: d.createdAt,
+    updatedAt: d.updatedAt,
+  }
+}
+
+export function serverSubjectToSubject(s: SubjectData): Subject {
+  return {
+    id: s.id,
+    name: s.name,
+    nameBn: str(s.nameBn),
+    departmentId: str(s.departmentId),
+    departmentIds: s.departmentIds || (s.departmentId ? [s.departmentId] : []),
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  }
+}
+
+export function serverDesignationToDesignation(d: DesignationData): Designation {
+  return {
+    id: d.id,
+    name: d.name,
+    nameBn: str(d.nameBn),
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
   }

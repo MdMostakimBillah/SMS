@@ -7,6 +7,8 @@ import type { PrismaClient } from '@prisma/client'
 import { authRouter } from './routes/auth.js'
 import { teacherRouter } from './routes/teachers.js'
 import { departmentRouter } from './routes/departments.js'
+import { subjectRouter } from './routes/subjects.js'
+import { designationRouter } from './routes/designations.js'
 import { noticeRouter } from './routes/notices.js'
 import { mediaRouter } from './routes/media.js'
 import { schoolRouter } from './routes/schools.js'
@@ -68,6 +70,8 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   app.use('/api/teachers', teacherRouter(prisma, jwtSecret))
   app.use('/api/students', studentRouter(prisma, jwtSecret))
   app.use('/api/departments', departmentRouter(prisma, jwtSecret))
+  app.use('/api/subjects', subjectRouter(prisma, jwtSecret))
+  app.use('/api/designations', designationRouter(prisma, jwtSecret))
   app.use('/api/notices', noticeRouter(prisma, jwtSecret))
   app.use('/api/media', mediaRouter(prisma, jwtSecret, storage))
   app.use('/api/backup', backupRouter(prisma, jwtSecret))

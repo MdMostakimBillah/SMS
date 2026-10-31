@@ -18,6 +18,7 @@ import { useAppStore } from '@/store/appStore'
 import { useNavPath } from '@/hooks/useNavPath'
 import { usePermission } from '@/hooks/usePermission'
 import { QuickAccessGrid } from '@/components/shared/QuickAccessGrid'
+import { TeacherStorageBanner } from './components/TeacherStorageBanner'
 
 import gsap from 'gsap'
 
@@ -167,6 +168,7 @@ export default function TeachersPage() {
   }, [orderedCardIds, setTeacherCardsOrder])
 
   useEffect(() => {
+    useTeacherStore.getState().syncFromServer().catch(() => {})
     const timer = setTimeout(() => setIsLoading(false), 600)
     return () => clearTimeout(timer)
   }, [])
@@ -279,6 +281,9 @@ export default function TeachersPage() {
           {isBn ? 'নিচের অপশন বেছে নিন' : 'Select an option below'}
         </p>
       </div>
+
+      {/* Storage Architecture & Database Connection Banner */}
+      <TeacherStorageBanner isBn={isBn} />
 
       {/* Quick stats */}
       <div

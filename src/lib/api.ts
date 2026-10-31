@@ -567,6 +567,56 @@ export const departmentsApi = {
     apiRequest<{ success: boolean }>(`/api/departments/${id}`, { method: 'DELETE' }),
 }
 
+export interface SubjectData {
+  id: string
+  schoolId: string
+  name: string
+  nameBn: string | null
+  departmentId: string | null
+  departmentIds?: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PaginatedSubjects {
+  data: SubjectData[]
+  total: number
+}
+
+export const subjectsApi = {
+  list: () => apiRequest<PaginatedSubjects>('/api/subjects'),
+  create: (data: { name: string; nameBn?: string | null; departmentId?: string | null; departmentIds?: string[] }) =>
+    apiRequest<SubjectData>('/api/subjects', { method: 'POST', body: data }),
+  update: (id: string, data: { name?: string; nameBn?: string | null; departmentId?: string | null; departmentIds?: string[] }) =>
+    apiRequest<SubjectData>(`/api/subjects/${id}`, { method: 'PUT', body: data }),
+  delete: (id: string) =>
+    apiRequest<{ success: boolean }>(`/api/subjects/${id}`, { method: 'DELETE' }),
+}
+
+export interface DesignationData {
+  id: string
+  schoolId: string
+  name: string
+  nameBn: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PaginatedDesignations {
+  data: DesignationData[]
+  total: number
+}
+
+export const designationsApi = {
+  list: () => apiRequest<PaginatedDesignations>('/api/designations'),
+  create: (data: { name: string; nameBn?: string | null }) =>
+    apiRequest<DesignationData>('/api/designations', { method: 'POST', body: data }),
+  update: (id: string, data: { name?: string; nameBn?: string | null }) =>
+    apiRequest<DesignationData>(`/api/designations/${id}`, { method: 'PUT', body: data }),
+  delete: (id: string) =>
+    apiRequest<{ success: boolean }>(`/api/designations/${id}`, { method: 'DELETE' }),
+}
+
 export interface ClassesResponse {
   classes: any[]
   routines: any[]

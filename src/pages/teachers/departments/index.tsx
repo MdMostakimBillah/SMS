@@ -12,6 +12,7 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { usePermission } from '@/hooks/usePermission'
 import { useAuth } from '@/contexts/AuthContext'
 import { departmentsApi } from '@/lib/api'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverDepartmentToDepartment, apiErrorMessage } from '@/lib/teacherMappers'
 import type { Department } from '@/pages/teachers/types'
 
@@ -80,6 +81,24 @@ export default function DepartmentsPage() {
     if (!newName.trim() || saving) return
     setSaving(true)
     setFormError('')
+
+    if (isLocalComputerMode()) {
+      const localId = `loc-dept-${Date.now()}`
+      const localDept: Department = {
+        id: localId,
+        name: newName.trim(),
+        nameBn: newNameBn.trim(),
+        head: newHead.trim(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      upsertServerDepartment(localDept)
+      resetForm()
+      setShowAdd(false)
+      setSaving(false)
+      return
+    }
+
     try {
       // Server derives schoolId from session — never sent from here.
       const created = await departmentsApi.create({
@@ -101,6 +120,21 @@ export default function DepartmentsPage() {
     if (!editD || !newName.trim() || saving) return
     setSaving(true)
     setFormError('')
+
+    if (isLocalComputerMode()) {
+      upsertServerDepartment({
+        ...editD,
+        name: newName.trim(),
+        nameBn: newNameBn.trim(),
+        head: newHead.trim(),
+        updatedAt: new Date().toISOString(),
+      })
+      setEditD(null)
+      resetForm()
+      setSaving(false)
+      return
+    }
+
     try {
       const updated = await departmentsApi.update(editD.id, {
         name: newName.trim(),
@@ -119,6 +153,11 @@ export default function DepartmentsPage() {
 
   const handleDelete = async (id: string) => {
     setDelError('')
+    if (isLocalComputerMode()) {
+      removeServerDepartment(id)
+      setDelConfirm(null)
+      return
+    }
     try {
       await departmentsApi.delete(id)
       removeServerDepartment(id)

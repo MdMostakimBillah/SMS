@@ -10,18 +10,23 @@ import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
 import { usePermission } from '@/hooks/usePermission'
 import type { Designation } from '@/pages/teachers/types'
+import { designationsApi } from '@/lib/api'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { serverDesignationToDesignation } from '@/lib/teacherMappers'
 
 export default function DesignationsPage() {
   const navigate = useNavigate()
   const nav = useNavPath()
   const isBn = useBn()
-  const { designations, teachers, addDesignation, updateDesignation, deleteDesignation } = useTeacherStore(
+  const { designations, teachers, addDesignation, updateDesignation, deleteDesignation, upsertServerDesignation, removeServerDesignation } = useTeacherStore(
     useShallow((s) => ({
       designations: s.designations,
       teachers: s.teachers,
       addDesignation: s.addDesignation,
       updateDesignation: s.updateDesignation,
       deleteDesignation: s.deleteDesignation,
+      upsertServerDesignation: s.upsertServerDesignation,
+      removeServerDesignation: s.removeServerDesignation,
     }))
   )
   const { canCreate } = usePermission()
@@ -38,27 +43,82 @@ export default function DesignationsPage() {
 
   const getDesignationTeacherCount = (name: string) => teachers.filter((t) => t.designation === name).length
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newName.trim()) return
     const now = new Date().toISOString().split('T')[0]
-    addDesignation({
-      id: `DES-${String(designations.length + 1).padStart(3, '0')}`,
-      name: newName.trim(),
-      nameBn: newNameBn.trim(),
-      createdAt: now,
-      updatedAt: now,
-    })
+    const localId = `DES-${String(designations.length + 1).padStart(3, '0')}`
+
+    if (isLocalComputerMode()) {
+      addDesignation({
+        id: localId,
+        name: newName.trim(),
+        nameBn: newNameBn.trim(),
+        createdAt: now,
+        updatedAt: now,
+      })
+      setNewName('')
+      setNewNameBn('')
+      setShowAdd(false)
+      return
+    }
+
+    try {
+      const created = await designationsApi.create({
+        name: newName.trim(),
+        nameBn: newNameBn.trim() || null,
+      })
+      upsertServerDesignation(serverDesignationToDesignation(created))
+    } catch {
+      addDesignation({
+        id: localId,
+        name: newName.trim(),
+        nameBn: newNameBn.trim(),
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
     setNewName('')
     setNewNameBn('')
     setShowAdd(false)
   }
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (!editD || !newName.trim()) return
-    updateDesignation(editD.id, { name: newName.trim(), nameBn: newNameBn.trim() })
+    if (isLocalComputerMode()) {
+      updateDesignation(editD.id, { name: newName.trim(), nameBn: newNameBn.trim() })
+      setEditD(null)
+      setNewName('')
+      setNewNameBn('')
+      return
+    }
+
+    try {
+      const updated = await designationsApi.update(editD.id, {
+        name: newName.trim(),
+        nameBn: newNameBn.trim() || null,
+      })
+      upsertServerDesignation(serverDesignationToDesignation(updated))
+    } catch {
+      updateDesignation(editD.id, { name: newName.trim(), nameBn: newNameBn.trim() })
+    }
     setEditD(null)
     setNewName('')
     setNewNameBn('')
+  }
+
+  const handleDelete = async (id: string) => {
+    if (isLocalComputerMode()) {
+      deleteDesignation(id)
+      setDelConfirm(null)
+      return
+    }
+    try {
+      await designationsApi.delete(id)
+      removeServerDesignation(id)
+    } catch {
+      deleteDesignation(id)
+    }
+    setDelConfirm(null)
   }
 
   const startEdit = (d: Designation) => {
@@ -152,8 +212,7 @@ export default function DesignationsPage() {
               {canCreate('teachers.designations') && (
                 <button
                   onClick={() => {
-                    deleteDesignation(delConfirm)
-                    setDelConfirm(null)
+                    if (delConfirm) handleDelete(delConfirm)
                   }}
                   className="px-3.5 py-2 rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
                 >

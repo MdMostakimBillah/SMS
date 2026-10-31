@@ -2,8 +2,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Teacher, Department, Subject, Designation } from '@/pages/teachers/types'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
-import { teachersApi, departmentsApi, type TeacherData } from '@/lib/api'
-import { serverTeacherToTeacher, serverDepartmentToDepartment, apiErrorMessage } from '@/lib/teacherMappers'
+import { teachersApi, departmentsApi, subjectsApi, designationsApi, type TeacherData } from '@/lib/api'
+import {
+  serverTeacherToTeacher,
+  serverDepartmentToDepartment,
+  serverSubjectToSubject,
+  serverDesignationToDesignation,
+  apiErrorMessage,
+} from '@/lib/teacherMappers'
 import { isLocalComputerMode } from '@/lib/storageMode'
 
 export type AttendanceStatus = 'present' | 'absent' | 'on-leave'
@@ -85,6 +91,10 @@ interface TeacherState {
   removeServerTeacher: (id: string) => void
   upsertServerDepartment: (dept: Department) => void
   removeServerDepartment: (id: string) => void
+  upsertServerSubject: (sub: Subject) => void
+  removeServerSubject: (id: string) => void
+  upsertServerDesignation: (des: Designation) => void
+  removeServerDesignation: (id: string) => void
 
   addSubject: (sub: Subject) => void
   updateSubject: (id: string, data: Partial<Subject>) => void
@@ -149,14 +159,20 @@ export const useTeacherStore = create<TeacherState>()(
 
         syncPromise = (async () => {
           try {
-            const [serverTeachers, deptRes] = await Promise.all([
+            const [serverTeachers, deptRes, subjectRes, designationRes] = await Promise.all([
               fetchAllServerTeachers(),
               departmentsApi.list(),
+              subjectsApi.list().catch(() => ({ data: [], total: 0 })),
+              designationsApi.list().catch(() => ({ data: [], total: 0 })),
             ])
             const serverDepts = deptRes.data.map(serverDepartmentToDepartment)
+            const serverSubjects = subjectRes.data.map(serverSubjectToSubject)
+            const serverDesignations = designationRes.data.map(serverDesignationToDesignation)
 
             const prev = get()
             let attendance = prev.attendance
+            const finalSubjects = serverSubjects.length > 0 ? serverSubjects : prev.subjects
+            const finalDesignations = serverDesignations.length > 0 ? serverDesignations : prev.designations
 
             // One-time legacy backup — only on the first successful sync of a
             // store that has never been server-synced (serverSynced persists),
@@ -183,6 +199,8 @@ export const useTeacherStore = create<TeacherState>()(
             set({
               teachers: serverTeachers,
               departments: serverDepts,
+              subjects: finalSubjects,
+              designations: finalDesignations,
               attendance,
               legacyTeachers: readLegacy<LegacyTeachersBackup>(legacyTeachersBackupKey())?.teachers ?? [],
               legacyDepartments: readLegacy<LegacyDepartmentsBackup>(legacyDepartmentsBackupKey())?.departments ?? [],
@@ -223,6 +241,26 @@ export const useTeacherStore = create<TeacherState>()(
 
       removeServerDepartment: (id) =>
         set((state) => ({ departments: state.departments.filter((d) => d.id !== id) })),
+
+      upsertServerSubject: (sub) =>
+        set((state) => ({
+          subjects: state.subjects.some((s) => s.id === sub.id)
+            ? state.subjects.map((s) => (s.id === sub.id ? sub : s))
+            : [...state.subjects, sub],
+        })),
+
+      removeServerSubject: (id) =>
+        set((state) => ({ subjects: state.subjects.filter((s) => s.id !== id) })),
+
+      upsertServerDesignation: (des) =>
+        set((state) => ({
+          designations: state.designations.some((d) => d.id === des.id)
+            ? state.designations.map((d) => (d.id === des.id ? des : d))
+            : [...state.designations, des],
+        })),
+
+      removeServerDesignation: (id) =>
+        set((state) => ({ designations: state.designations.filter((d) => d.id !== id) })),
 
       addSubject: (sub) => set((state) => ({ subjects: [...state.subjects, sub] })),
 

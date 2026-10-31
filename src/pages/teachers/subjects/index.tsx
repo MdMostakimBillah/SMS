@@ -9,6 +9,9 @@ import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
 import { usePermission } from '@/hooks/usePermission'
 import type { Subject } from '@/pages/teachers/types'
+import { subjectsApi } from '@/lib/api'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { serverSubjectToSubject } from '@/lib/teacherMappers'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 const sel =
@@ -18,7 +21,7 @@ export default function SubjectsPage() {
   const navigate = useNavigate()
   const nav = useNavPath()
   const isBn = useBn()
-  const { subjects, departments, legacyDepartments, teachers, addSubject, updateSubject, deleteSubject } = useTeacherStore(
+  const { subjects, departments, legacyDepartments, teachers, addSubject, updateSubject, deleteSubject, upsertServerSubject, removeServerSubject } = useTeacherStore(
     useShallow((s) => ({
       subjects: s.subjects,
       departments: s.departments,
@@ -27,6 +30,8 @@ export default function SubjectsPage() {
       addSubject: s.addSubject,
       updateSubject: s.updateSubject,
       deleteSubject: s.deleteSubject,
+      upsertServerSubject: s.upsertServerSubject,
+      removeServerSubject: s.removeServerSubject,
     }))
   )
   const { canCreate } = usePermission()
@@ -59,31 +64,94 @@ export default function SubjectsPage() {
 
   const getSubjectTeacherCount = (id: string) => teachers.filter((t) => t.subjectIds.includes(id)).length
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newName.trim() || newDeptIds.length === 0) return
     const now = new Date().toISOString().split('T')[0]
-    addSubject({
-      id: `SUB-${String(subjects.length + 1).padStart(3, '0')}`,
-      name: newName.trim(),
-      nameBn: newNameBn.trim(),
-      departmentId: newDeptIds[0],
-      departmentIds: newDeptIds,
-      createdAt: now,
-      updatedAt: now,
-    })
+    const localId = `SUB-${String(subjects.length + 1).padStart(3, '0')}`
+
+    if (isLocalComputerMode()) {
+      addSubject({
+        id: localId,
+        name: newName.trim(),
+        nameBn: newNameBn.trim(),
+        departmentId: newDeptIds[0],
+        departmentIds: newDeptIds,
+        createdAt: now,
+        updatedAt: now,
+      })
+      setNewName('')
+      setNewNameBn('')
+      setNewDeptIds([])
+      setShowAdd(false)
+      return
+    }
+
+    try {
+      const created = await subjectsApi.create({
+        name: newName.trim(),
+        nameBn: newNameBn.trim() || null,
+        departmentId: newDeptIds[0] || null,
+        departmentIds: newDeptIds,
+      })
+      upsertServerSubject(serverSubjectToSubject(created))
+    } catch {
+      addSubject({
+        id: localId,
+        name: newName.trim(),
+        nameBn: newNameBn.trim(),
+        departmentId: newDeptIds[0],
+        departmentIds: newDeptIds,
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
     setNewName('')
     setNewNameBn('')
     setNewDeptIds([])
     setShowAdd(false)
   }
 
-  const handleEdit = () => {
+  const handleEdit = async () => {
     if (!editS || !newName.trim() || newDeptIds.length === 0) return
-    updateSubject(editS.id, { name: newName.trim(), nameBn: newNameBn.trim(), departmentId: newDeptIds[0], departmentIds: newDeptIds })
+    if (isLocalComputerMode()) {
+      updateSubject(editS.id, { name: newName.trim(), nameBn: newNameBn.trim(), departmentId: newDeptIds[0], departmentIds: newDeptIds })
+      setEditS(null)
+      setNewName('')
+      setNewNameBn('')
+      setNewDeptIds([])
+      return
+    }
+
+    try {
+      const updated = await subjectsApi.update(editS.id, {
+        name: newName.trim(),
+        nameBn: newNameBn.trim() || null,
+        departmentId: newDeptIds[0] || null,
+        departmentIds: newDeptIds,
+      })
+      upsertServerSubject(serverSubjectToSubject(updated))
+    } catch {
+      updateSubject(editS.id, { name: newName.trim(), nameBn: newNameBn.trim(), departmentId: newDeptIds[0], departmentIds: newDeptIds })
+    }
     setEditS(null)
     setNewName('')
     setNewNameBn('')
     setNewDeptIds([])
+  }
+
+  const handleDelete = async (id: string) => {
+    if (isLocalComputerMode()) {
+      deleteSubject(id)
+      setDelConfirm(null)
+      return
+    }
+    try {
+      await subjectsApi.delete(id)
+      removeServerSubject(id)
+    } catch {
+      deleteSubject(id)
+    }
+    setDelConfirm(null)
   }
 
   const startEdit = (s: Subject) => {
@@ -209,8 +277,7 @@ export default function SubjectsPage() {
               {canCreate('teachers.subjects') && (
                 <button
                   onClick={() => {
-                    deleteSubject(delConfirm)
-                    setDelConfirm(null)
+                    if (delConfirm) handleDelete(delConfirm)
                   }}
                   className="py-2 px-[0.875rem] rounded-lg bg-[var(--red)] border-none text-white text-[0.8125rem] font-semibold cursor-pointer font-[inherit]"
                 >
