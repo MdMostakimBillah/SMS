@@ -146,11 +146,16 @@ export function generateDarkColors(brandHex: string): ThemeColors {
 
 export function mapSchoolToInstitutionSettings(school: any, current?: InstitutionSettings): InstitutionSettings {
   const brand = school.brandColor || current?.lightColors?.brand || '#6366f1'
+  const isLocalComp = school.storageMode === 'local_computer' || current?.storageMode === 'local_computer'
   return {
     name: school.name || current?.name || '',
     nameBn: school.nameBn || current?.nameBn || school.name || '',
-    logo: school.logo !== undefined ? (school.logo || '') : (current?.logo || ''),
-    banner: school.banner !== undefined ? (school.banner || '') : (current?.banner || ''),
+    logo: isLocalComp
+      ? (current?.logo || school.logo || '')
+      : (school.logo !== undefined ? (school.logo || '') : (current?.logo || '')),
+    banner: isLocalComp
+      ? (current?.banner || school.banner || '')
+      : (school.banner !== undefined ? (school.banner || '') : (current?.banner || '')),
     bannerPosition: school.bannerPosition
       ? (typeof school.bannerPosition === 'string' ? JSON.parse(school.bannerPosition) : school.bannerPosition)
       : current?.bannerPosition || { x: 0, y: 0 },

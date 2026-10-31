@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { Download, Upload, HardDrive, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react'
-import { collectLocalStores, downloadLocalBackup, parseAndValidateBackup, restoreLocalStores, type BackupSummary } from '@/lib/backup'
+import { collectLocalStores, downloadLocalBackup, readAndValidateBackupFile, restoreLocalStores, type BackupSummary } from '@/lib/backup'
 import { backupApi } from '@/lib/api'
 
 interface Props {
@@ -68,26 +68,21 @@ export const LocalBackupSection: React.FC<Props> = ({ isBn, schoolSlug, schoolNa
     }
   }
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const content = event.target?.result as string
-      const result = parseAndValidateBackup(content)
-      if (!result.valid || !result.bundle || !result.summary) {
-        setStatusMessage({
-          type: 'error',
-          text: result.error || (isBn ? 'ব্যাকআপ ফাইলের ফরম্যাট অবৈধ।' : 'Invalid backup file format.'),
-        })
-        return
-      }
-
-      setPendingSummary(result.summary)
-      setPendingBundle(result.bundle)
+    const result = await readAndValidateBackupFile(file)
+    if (!result.valid || !result.bundle || !result.summary) {
+      setStatusMessage({
+        type: 'error',
+        text: result.error || (isBn ? 'ব্যাকআপ ফাইলের ফরম্যাট অবৈধ।' : 'Invalid backup file format.'),
+      })
+      return
     }
-    reader.readAsText(file)
+
+    setPendingSummary(result.summary)
+    setPendingBundle(result.bundle)
   }
 
   const handleConfirmRestore = () => {
@@ -202,7 +197,7 @@ export const LocalBackupSection: React.FC<Props> = ({ isBn, schoolSlug, schoolNa
         <input
           ref={fileInputRef}
           type="file"
-          accept=".json"
+          accept=".zip,.json"
           onChange={handleFileSelect}
           className="hidden"
         />

@@ -7,6 +7,7 @@
  */
 
 import type { BackupBundle } from '../backup'
+import { createBackupZip } from './zipHelper'
 
 const TELEGRAM_API = 'https://api.telegram.org'
 
@@ -36,8 +37,16 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
 }
 
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+async function sha256Hex(data: string | Blob | Uint8Array): Promise<string> {
+  let bytes: Uint8Array
+  if (typeof data === 'string') {
+    bytes = new TextEncoder().encode(data)
+  } else if (data instanceof Blob) {
+    bytes = new Uint8Array(await data.arrayBuffer())
+  } else {
+    bytes = data
+  }
+  const digest = await crypto.subtle.digest('SHA-256', bytes as unknown as ArrayBuffer)
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
@@ -69,15 +78,16 @@ export async function telegramGetMe(token: string): Promise<TelegramBotInfo> {
   }
 }
 
-/** Send a JSON backup document to the configured chat/channel. */
+/** Send a backup document (ZIP or JSON) to the configured chat/channel. */
 export async function telegramSendBackup(opts: {
   botToken: string
   chatId: string
   filename: string
-  content: string
+  content: string | Blob | Uint8Array
+  mimeType?: string
   caption?: string
 }): Promise<TelegramSendResult> {
-  const { botToken, chatId, filename, content, caption } = opts
+  const { botToken, chatId, filename, content, mimeType, caption } = opts
   if (!botToken.trim() || !chatId.trim()) {
     return { success: false, error: 'Bot token and chat ID are required.' }
   }
@@ -85,7 +95,22 @@ export async function telegramSendBackup(opts: {
   try {
     const form = new FormData()
     form.append('chat_id', chatId.trim())
-    form.append('document', new Blob([content], { type: 'application/json' }), filename)
+
+    let fileBlob: Blob
+    let byteLength: number
+    if (content instanceof Blob) {
+      fileBlob = content
+      byteLength = content.size
+    } else if (typeof content === 'string') {
+      const defaultMime = filename.endsWith('.zip') ? 'application/zip' : 'application/json'
+      fileBlob = new Blob([content], { type: mimeType || defaultMime })
+      byteLength = new TextEncoder().encode(content).length
+    } else {
+      fileBlob = new Blob([content as unknown as ArrayBuffer], { type: mimeType || 'application/octet-stream' })
+      byteLength = content.byteLength
+    }
+
+    form.append('document', fileBlob, filename)
     if (caption) form.append('caption', caption)
 
     const res = await fetch(botUrl(botToken.trim(), 'sendDocument'), {
@@ -103,7 +128,7 @@ export async function telegramSendBackup(opts: {
     return {
       success: true,
       filename,
-      size: formatBytes(new TextEncoder().encode(content).length),
+      size: formatBytes(byteLength),
       sha256: await sha256Hex(content),
       messageId: data.result?.message_id,
     }
@@ -112,7 +137,7 @@ export async function telegramSendBackup(opts: {
   }
 }
 
-/** Send a collected backup bundle as a single pretty-printed JSON document. */
+/** Send a collected local backup bundle as a compressed ZIP document containing all data & images. */
 export async function sendBundleToTelegram(opts: {
   botToken?: string
   chatId?: string
@@ -125,22 +150,26 @@ export async function sendBundleToTelegram(opts: {
     return { success: false, error: 'Telegram bot token and chat ID are required.' }
   }
 
-  const content = JSON.stringify(opts.bundle, null, 2)
+  // Create ZIP archive containing backup.json and local images
+  const zipBlob = await createBackupZip(opts.bundle)
   const date = new Date().toISOString().slice(0, 10)
   const name = opts.institutionName ? ` (${opts.institutionName})` : ''
   const caption =
-    `EduTech SMS backup${name}\n` +
-    `Institution: ${opts.bundle.metadata.slug}\n` +
-    `Date: ${new Date().toISOString()}\n` +
-    `Records: ${opts.bundle.metadata.counts.classes} classes, ` +
+    `📦 *EduTech SMS — Local Computer Backup (ZIP)*${name}\n` +
+    `🏫 Institution: *${opts.bundle.metadata.slug}*\n` +
+    `📅 Date: \`${new Date().toISOString()}\`\n` +
+    `📊 Mode: Local Computer Storage (Offline)\n` +
+    `👥 Records: ${opts.bundle.metadata.counts.classes} classes, ` +
     `${opts.bundle.metadata.counts.teachers} teachers, ` +
-    `${opts.bundle.metadata.counts.students} students`
+    `${opts.bundle.metadata.counts.students} students\n` +
+    `📁 Archive: Full local data & local images preserved in ZIP`
 
   return telegramSendBackup({
     botToken: token,
     chatId,
-    filename: `edutech_backup_${opts.bundle.metadata.slug}_${date}.json`,
-    content,
+    filename: `edutech_backup_${opts.bundle.metadata.slug}_${date}.zip`,
+    content: zipBlob,
+    mimeType: 'application/zip',
     caption,
   })
 }

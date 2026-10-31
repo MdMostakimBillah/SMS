@@ -136,13 +136,14 @@ export default function ClassesPage() {
         : (user?.schoolId || getSlug() || viewingId || sessionStorage.getItem('edutech_inst_slug'))
       if (targetId) {
         const brandColor = instForm.lightColors?.brand || '#6366f1'
+        const isLocalComp = instForm.storageMode === 'local_computer'
         const res = await authApi.updateSchool(targetId, {
           name: instForm.name,
           nameBn: instForm.nameBn,
           brandName: instForm.brandName,
           brandColor,
-          logo: instForm.logo,
-          banner: instForm.banner,
+          logo: isLocalComp ? null : instForm.logo,
+          banner: isLocalComp ? null : instForm.banner,
           bannerPosition: JSON.stringify(instForm.bannerPosition || { x: 0, y: 0 }),
           motto: instForm.motto,
           mottoBn: instForm.mottoBn,

@@ -28,7 +28,7 @@ import {
   Lock,
 } from 'lucide-react'
 import { isSuperAdminAccount } from '@/lib/storageMode'
-import { sendTelegramBackupNow, downloadLocalBackup, parseAndValidateBackup, restoreLocalStores } from '@/lib/backup'
+import { sendTelegramBackupNow, downloadLocalBackup, readAndValidateBackupFile, restoreLocalStores } from '@/lib/backup'
 import { usePermission } from '@/hooks/usePermission'
 import ColorSettings from '@/components/shared/ColorSettings'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
@@ -244,14 +244,16 @@ export default React.memo(function InstitutionTab({
     setBackupLoading(true)
     setBackupNotice(null)
     try {
+      // In local computer mode, send local files directly from browser as ZIP archive
+      const viaMode = institution.storageMode === 'local_computer' ? 'browser' : 'server'
       const res = await sendTelegramBackupNow({
         schoolName: institution.name,
-        via: 'server',
+        via: viaMode,
       })
       if (res && (res as any).success) {
         setBackupNotice({
           type: 'success',
-          text: isBn ? 'টেলিগ্রামে ব্যাকআপ সফলভাবে পাঠানো হয়েছে!' : 'Backup successfully sent to Telegram!',
+          text: isBn ? 'টেলিগ্রামে জিপ ব্যাকআপ সফলভাবে পাঠানো হয়েছে!' : 'ZIP backup successfully sent to Telegram!',
         })
       } else {
         const browserRes = await sendTelegramBackupNow({
@@ -261,7 +263,7 @@ export default React.memo(function InstitutionTab({
         if (browserRes && (browserRes as any).success) {
           setBackupNotice({
             type: 'success',
-            text: isBn ? 'ব্রাউজার থেকে সরাসরি টেলিগ্রামে ব্যাকআপ পাঠানো হয়েছে!' : 'Backup sent to Telegram via browser!',
+            text: isBn ? 'ব্রাউজার থেকে সরাসরি টেলিগ্রামে জিপ ব্যাকআপ পাঠানো হয়েছে!' : 'ZIP backup sent to Telegram via browser!',
           })
         } else {
           setBackupNotice({
@@ -285,32 +287,28 @@ export default React.memo(function InstitutionTab({
     }
   }
 
-  const handleRestoreFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRestoreFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      try {
-        const text = event.target?.result as string
-        const parsed = parseAndValidateBackup(text)
-        if (!parsed.valid || !parsed.bundle) {
-          alert(parsed.error || (isBn ? 'অকার্যকর ব্যাকআপ ফাইল' : 'Invalid backup file'))
-          return
-        }
-        const confirmMsg = isBn
-          ? `এই ব্যাকআপ ফাইলে ${parsed.summary?.students || 0} জন শিক্ষার্থী ও ${parsed.summary?.teachers || 0} জন শিক্ষকের তথ্য রয়েছে। রিস্টোর করতে চান?`
-          : `This backup contains ${parsed.summary?.students || 0} students and ${parsed.summary?.teachers || 0} teachers. Restore now?`
-        if (window.confirm(confirmMsg)) {
-          restoreLocalStores(parsed.bundle)
-          alert(isBn ? 'ডেটা সফলভাবে রিস্টোর হয়েছে! পেজ রিলোড করা হচ্ছে...' : 'Data successfully restored! Reloading...')
-          window.location.reload()
-        }
-      } catch (err: any) {
-        alert(err?.message || (isBn ? 'রিস্টোর করতে ত্রুটি ঘটেছে' : 'Restore failed'))
+    try {
+      const parsed = await readAndValidateBackupFile(file)
+      if (!parsed.valid || !parsed.bundle) {
+        alert(parsed.error || (isBn ? 'অকার্যকর ব্যাকআপ ফাইল' : 'Invalid backup file'))
+        return
       }
+      const confirmMsg = isBn
+        ? `এই ব্যাকআপ ফাইলে ${parsed.summary?.students || 0} জন শিক্ষার্থী ও ${parsed.summary?.teachers || 0} জন শিক্ষকের তথ্য রয়েছে। রিস্টোর করতে চান?`
+        : `This backup contains ${parsed.summary?.students || 0} students and ${parsed.summary?.teachers || 0} teachers. Restore now?`
+      if (window.confirm(confirmMsg)) {
+        restoreLocalStores(parsed.bundle)
+        alert(isBn ? 'ডেটা সফলভাবে রিস্টোর হয়েছে! পেজ রিলোড করা হচ্ছে...' : 'Data successfully restored! Reloading...')
+        window.location.reload()
+      }
+    } catch (err: any) {
+      alert(err?.message || (isBn ? 'রিস্টোর করতে ত্রুটি ঘটেছে' : 'Restore failed'))
+    } finally {
+      e.target.value = ''
     }
-    reader.readAsText(file)
-    e.target.value = ''
   }
 
   const inputClass =
@@ -611,7 +609,7 @@ export default React.memo(function InstitutionTab({
                   <input
                     ref={restoreFileRef}
                     type="file"
-                    accept=".json"
+                    accept=".zip,.json"
                     className="hidden"
                     onChange={handleRestoreFile}
                   />

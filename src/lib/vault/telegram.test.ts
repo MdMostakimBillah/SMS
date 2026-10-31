@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { telegramGetMe, telegramSendBackup, sendBundleToTelegram } from './telegram'
+import { extractBackupFromZip } from './zipHelper'
 
 function jsonResponse(body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -120,9 +121,9 @@ describe('sendBundleToTelegram', () => {
     expect(res.success).toBe(true)
     const form = fetchMock.mock.calls[0][1].body as FormData
     const doc = form.get('document') as File
-    expect(doc.name).toMatch(/^edutech_backup_demo_\d{4}-\d{2}-\d{2}\.json$/)
-    const text = await doc.text()
-    expect(JSON.parse(text)).toEqual(bundle) // round-trips losslessly
+    expect(doc.name).toMatch(/^edutech_backup_demo_\d{4}-\d{2}-\d{2}\.zip$/)
+    const zipText = await extractBackupFromZip(doc)
+    expect(JSON.parse(zipText)).toEqual(bundle) // round-trips losslessly from inside zip
     const caption = form.get('caption') as string
     expect(caption).toContain('Demo School')
     expect(caption).toContain('100 students')

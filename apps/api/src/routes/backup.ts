@@ -1,5 +1,6 @@
 import { Router, type Response } from 'express'
 import crypto from 'node:crypto'
+import JSZip from 'jszip'
 import type { PrismaClient } from '@prisma/client'
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 import { requireRole } from '../middleware/rbac.js'
@@ -144,72 +145,118 @@ export function backupRouter(prisma: PrismaClient, jwtSecret: string) {
           return res.status(403).json({ error: 'No tenant context' })
         }
 
+        const school = targetSchoolId
+          ? await prisma.school.findUnique({
+              where: { id: targetSchoolId },
+              select: { id: true, name: true, domain: true, email: true, phone: true, address: true, storageMode: true, createdAt: true },
+            })
+          : null
+
+        const isLocalComputer = school?.storageMode === 'local_computer' || Boolean(req.body?.clientData)
         const schoolFilter = targetSchoolId ? { schoolId: targetSchoolId } : {}
 
-        // Gather database records
-        const [school, teachers, students, departments, notices] = await Promise.all([
-          targetSchoolId
-            ? prisma.school.findUnique({
-                where: { id: targetSchoolId },
-                select: { id: true, name: true, domain: true, email: true, phone: true, address: true, createdAt: true },
-              })
-            : null,
-          prisma.teacher.findMany({ where: schoolFilter }),
-          prisma.student.findMany({ where: schoolFilter }),
-          prisma.department.findMany({ where: schoolFilter }),
-          prisma.notice.findMany({ where: schoolFilter }),
-        ])
+        // If local_computer mode or clientData provided:
+        // "local file should be store not webside sever data store"
+        // Use client's local files/stores directly instead of website server tables!
+        let teachers: any[] = []
+        let students: any[] = []
+        let departments: any[] = []
+        let notices: any[] = []
+
+        if (!isLocalComputer) {
+          ;[teachers, students, departments, notices] = await Promise.all([
+            prisma.teacher.findMany({ where: schoolFilter }),
+            prisma.student.findMany({ where: schoolFilter }),
+            prisma.department.findMany({ where: schoolFilter }),
+            prisma.notice.findMany({ where: schoolFilter }),
+          ])
+        }
 
         const timestamp = new Date().toISOString()
         const safeTimestamp = timestamp.replace(/[:.]/g, '-')
         const schoolSlug = school?.domain || req.body?.schoolSlug || 'global'
-        const filename = `edutech_backup_${schoolSlug}_${safeTimestamp}.json`
+        const filename = `edutech_backup_${schoolSlug}_${safeTimestamp}.zip`
+
+        const clientData = req.body?.clientData || null
+        const counts = clientData?.metadata?.counts || {
+          teachers: teachers.length,
+          students: students.length,
+          departments: departments.length,
+          notices: notices.length,
+        }
 
         const backupPayload = {
           metadata: {
             app: 'EduTech SMS',
             version: '2.0.0',
             timestamp,
+            mode: isLocalComputer ? 'local_computer' : 'cloud',
             school: school || { domain: schoolSlug, name: req.body?.schoolName || 'EduTech School' },
-            counts: {
-              teachers: teachers.length,
-              students: students.length,
-              departments: departments.length,
-              notices: notices.length,
-            },
+            counts,
           },
-          serverData: {
+          // When in local_computer mode, strictly store local file data, not website server database rows
+          serverData: isLocalComputer ? null : {
             school,
             teachers,
             students,
             departments,
             notices,
           },
-          clientData: req.body?.clientData || null,
+          clientData,
+          stores: clientData?.stores || null,
         }
 
         const jsonString = JSON.stringify(backupPayload, null, 2)
-        const sha256 = crypto.createHash('sha256').update(jsonString).digest('hex')
-        const fileBytes = Buffer.from(jsonString, 'utf-8')
-        const sizeKb = (fileBytes.byteLength / 1024).toFixed(2)
+
+        // Package as a compressed .zip archive
+        const zip = new JSZip()
+        zip.file('backup.json', jsonString)
+
+        // If clientData has stores with local images, include them in an images/ folder inside the zip
+        if (clientData?.stores) {
+          const imagesFolder = zip.folder('images')
+          const classStore = clientData.stores['edutech-classes']
+          const inst = classStore?.state?.institution || classStore?.institution
+          if (inst && imagesFolder) {
+            if (typeof inst.logo === 'string' && inst.logo.startsWith('data:image/')) {
+              const base64Data = inst.logo.split(',')[1]
+              if (base64Data) imagesFolder.file('logo.png', base64Data, { base64: true })
+            }
+            if (typeof inst.banner === 'string' && inst.banner.startsWith('data:image/')) {
+              const base64Data = inst.banner.split(',')[1]
+              if (base64Data) imagesFolder.file('banner.jpg', base64Data, { base64: true })
+            }
+          }
+        }
+
+        const zipBuffer = await zip.generateAsync({
+          type: 'nodebuffer',
+          compression: 'DEFLATE',
+          compressionOptions: { level: 6 },
+        })
+
+        const sha256 = crypto.createHash('sha256').update(zipBuffer).digest('hex')
+        const sizeKb = (zipBuffer.byteLength / 1024).toFixed(2)
 
         // Build FormData with Blob
         const formData = new FormData()
         formData.append('chat_id', chatId)
         formData.append('parse_mode', 'Markdown')
 
+        const modeLabel = isLocalComputer ? 'Local Computer Storage (Local Files)' : 'Cloud Database'
         const caption =
-          `📦 *EduTech SMS — Database Backup*\n` +
-          `🏫 Institution: *${school?.name || schoolSlug}*\n` +
+          `📦 *EduTech SMS — Backup (ZIP Archive)*\n` +
+          `🏫 Institution: *${school?.name || req.body?.schoolName || schoolSlug}*\n` +
           `📅 Date: \`${timestamp}\`\n` +
-          `📊 Size: \`${sizeKb} KB\`\n` +
-          `👥 Students: \`${students.length}\` | Teachers: \`${teachers.length}\`\n` +
+          `📊 Mode: \`${modeLabel}\`\n` +
+          `📁 Archive: \`${filename}\` (${sizeKb} KB)\n` +
+          `👥 Students: \`${counts.students || 0}\` | Teachers: \`${counts.teachers || 0}\`\n` +
           `🔒 SHA256: \`${sha256.slice(0, 16)}...\`\n` +
           `✅ Status: Verified & Complete`
 
         formData.append('caption', caption)
 
-        const fileBlob = new Blob([fileBytes], { type: 'application/json' })
+        const fileBlob = new Blob([zipBuffer], { type: 'application/zip' })
         formData.append('document', fileBlob, filename)
 
         const telegramRes = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {

@@ -1,5 +1,7 @@
 import { backupApi } from './api'
 import { telegramGetMe, sendBundleToTelegram } from './vault/telegram'
+import { createBackupZip, extractBackupFromZip } from './vault/zipHelper'
+import { isLocalComputerMode } from './storageMode'
 
 export interface BackupMetadata {
   app: string
@@ -114,26 +116,51 @@ export function collectLocalStores(targetSlug?: string): BackupBundle {
 }
 
 /**
- * Download a local computer backup file (.json) to the client machine.
+ * Download a local computer backup archive (.zip) containing all data & local images.
  */
-export function downloadLocalBackup(slug?: string, institutionName?: string): void {
+export async function downloadLocalBackup(slug?: string, institutionName?: string): Promise<void> {
   const bundle = collectLocalStores(slug)
   if (institutionName) {
     bundle.metadata.institutionName = institutionName
   }
 
-  const jsonStr = JSON.stringify(bundle, null, 2)
-  const blob = new Blob([jsonStr], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
+  const zipBlob = await createBackupZip(bundle)
+  const url = URL.createObjectURL(zipBlob)
 
   const dateStr = new Date().toISOString().slice(0, 10)
   const a = document.createElement('a')
   a.href = url
-  a.download = `edutech_backup_${bundle.metadata.slug}_${dateStr}.json`
+  a.download = `edutech_backup_${bundle.metadata.slug}_${dateStr}.zip`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+/**
+ * Reads and validates a user-uploaded backup file (.zip or .json).
+ */
+export async function readAndValidateBackupFile(file: File): Promise<{
+  valid: boolean
+  error?: string
+  summary?: BackupSummary
+  bundle?: BackupBundle
+}> {
+  try {
+    const isZip = file.name.endsWith('.zip') || file.type === 'application/zip' || file.type === 'application/x-zip-compressed'
+    if (isZip) {
+      const jsonText = await extractBackupFromZip(file)
+      return parseAndValidateBackup(jsonText)
+    }
+
+    const text = await file.text()
+    return parseAndValidateBackup(text)
+  } catch (err) {
+    return {
+      valid: false,
+      error: err instanceof Error ? err.message : 'Invalid backup archive format.',
+    }
+  }
 }
 
 /**
@@ -234,8 +261,13 @@ export async function sendTelegramBackupNow(opts: {
   via?: TelegramTransport
 }) {
   const localStores = opts.includeLocalStores !== false ? collectLocalStores(opts.schoolSlug) : undefined
+  const isLocal = isLocalComputerMode()
 
-  if (opts.via === 'browser') {
+  // When running in local computer mode:
+  // "and when backup telegram. the file should be zip. and local file should be store not webside sever data store"
+  // We send the local computer files as a ZIP directly from the browser to Telegram,
+  // completely bypassing the website server database!
+  if (isLocal || opts.via === 'browser') {
     if (!localStores) {
       return { success: false as const, error: 'Local data bundle is required for browser-direct backup.' }
     }
