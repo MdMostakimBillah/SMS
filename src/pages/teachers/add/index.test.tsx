@@ -182,4 +182,20 @@ describe('AddTeacherPage — Phase 7 server create', () => {
     expect(useTeacherStore.getState().teachers).toHaveLength(0)
     expect(mockedTeachersApi.create).toHaveBeenCalledTimes(1)
   })
+
+  it('generates sequential ET0001 id and skips server API in local_computer mode', async () => {
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    const { container } = renderPage()
+    await reachReview(container)
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit/ }))
+
+    expect(await screen.findByText('Teacher Added!')).toBeInTheDocument()
+    expect(screen.getByText('ET0001')).toBeInTheDocument()
+    expect(mockedTeachersApi.create).not.toHaveBeenCalled()
+
+    const stored = useTeacherStore.getState().teachers
+    expect(stored).toHaveLength(1)
+    expect(stored[0].id).toBe('ET0001')
+  })
 })

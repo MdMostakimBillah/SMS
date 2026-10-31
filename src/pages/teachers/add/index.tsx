@@ -11,7 +11,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { teachersApi } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
-import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
+import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage, generateSimpleTeacherId } from '@/lib/teacherMappers'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
 import { usePermission } from '@/hooks/usePermission'
@@ -198,7 +198,7 @@ export default function AddTeacherPage() {
       })
 
       if (isLocalComputerMode()) {
-        const localId = `loc-tch-${Date.now()}`
+        const localId = generateSimpleTeacherId(useTeacherStore.getState().teachers)
         const localTeacher: Teacher = {
           id: localId,
           nameEn: form.nameEn.trim(),

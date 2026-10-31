@@ -59,6 +59,15 @@ export function designationRouter(prisma: PrismaClient, jwtSecret: string) {
   router.post('/', auth, requireRole(...WRITE_ROLES), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const schoolId = req.schoolId as string
+      const school = await prisma.school.findUnique({
+        where: { id: schoolId },
+        select: { storageMode: true },
+      })
+      if (school?.storageMode === 'local_computer') {
+        return res.status(400).json({
+          error: 'Institution is in Local Computer storage mode. Operational data must be stored locally on the PC, not on the server.',
+        })
+      }
       const body = createDesignationSchema.parse(req.body)
 
       const designation = await prisma.designation.create({

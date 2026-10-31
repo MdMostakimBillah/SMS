@@ -184,3 +184,23 @@ export function apiErrorMessage(err: unknown, isBn: boolean): string {
   }
   return isBn ? 'কাজটি সম্পন্ন হয়নি' : 'The action could not be completed'
 }
+
+/**
+ * Generates a clean, simple, human-readable Teacher ID (ET0001, ET0002, ET0003...).
+ */
+export function generateSimpleTeacherId(teachers: Array<{ id?: string }>): string {
+  let maxNum = 0
+  for (const t of teachers) {
+    if (!t.id) continue
+    const match = t.id.match(/^ET(\d+)$/i)
+    if (match) {
+      const num = parseInt(match[1], 10)
+      if (num > maxNum) maxNum = num
+    }
+  }
+  if (maxNum > 0) {
+    return `ET${String(maxNum + 1).padStart(4, '0')}`
+  }
+  return `ET${String(teachers.length + 1).padStart(4, '0')}`
+}
+

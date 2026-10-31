@@ -11,6 +11,7 @@ import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
 import { useSuperAdminStore, PACKAGES, type Institution } from '@/store/superAdminStore'
 import { useClassStore, defaultThemeColors, defaultThemeColorsDark, type ThemeColors, mapSchoolToInstitutionSettings } from '@/store/classStore'
 import { setSlug } from '@/lib/storage'
+import { setLocalStorageMode } from '@/lib/storageMode'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { presets } from '@/components/shared/ColorSettings'
 
@@ -191,6 +192,9 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
             accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
             language: 'en',
             theme: 'light',
+          }
+          if (s.storageMode) {
+            setLocalStorageMode(s.storageMode, s.serverUrl || '')
           }
           setDbInstitution(inst)
           useSuperAdminStore.getState().addInstitution(inst)
@@ -412,6 +416,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         const brand = s.brandColor || '#6366f1'
         const mapped = mapSchoolToInstitutionSettings(s, useClassStore.getState().institution)
         useClassStore.getState().updateInstitution(mapped)
+        setLocalStorageMode(mapped.storageMode || s.storageMode || 'cloud', mapped.serverUrl || s.serverUrl || '')
         const isCurrentDark = theme === 'dark'
         applyThemeColors(isCurrentDark ? generateDarkColors(brand) : generateLightColors(brand))
       }

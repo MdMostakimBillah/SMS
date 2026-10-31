@@ -194,6 +194,15 @@ export function studentRouter(prisma: PrismaClient, jwtSecret: string) {
       }
 
       const schoolId = req.schoolId!
+      const school = await prisma.school.findUnique({
+        where: { id: schoolId },
+        select: { storageMode: true },
+      })
+      if (school?.storageMode === 'local_computer') {
+        return res.status(400).json({
+          error: 'Institution is in Local Computer storage mode. Operational data must be stored locally on the PC, not on the server.',
+        })
+      }
       const results = []
 
       for (const item of parsed.data.students) {
@@ -241,6 +250,16 @@ export function studentRouter(prisma: PrismaClient, jwtSecret: string) {
       const parsed = studentSchema.safeParse(req.body)
       if (!parsed.success) {
         return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
+      }
+
+      const school = await prisma.school.findUnique({
+        where: { id: req.schoolId! },
+        select: { storageMode: true },
+      })
+      if (school?.storageMode === 'local_computer') {
+        return res.status(400).json({
+          error: 'Institution is in Local Computer storage mode. Operational data must be stored locally on the PC, not on the server.',
+        })
       }
 
       const payload = extractStudentPayload(parsed.data, req.schoolId!)

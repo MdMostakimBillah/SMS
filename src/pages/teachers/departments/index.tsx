@@ -100,6 +100,23 @@ export default function DepartmentsPage() {
       return
     }
 
+    if (isLocalComputerMode()) {
+      const localId = `DEP-${String(departments.length + 1).padStart(3, '0')}`
+      const now = new Date().toISOString()
+      upsertServerDepartment({
+        id: localId,
+        name: newName.trim(),
+        nameBn: newNameBn.trim(),
+        head: newHead.trim(),
+        createdAt: now,
+        updatedAt: now,
+      })
+      resetForm()
+      setShowAdd(false)
+      setSaving(false)
+      return
+    }
+
     try {
       // Server derives schoolId from session — never sent from here.
       const created = await departmentsApi.create({

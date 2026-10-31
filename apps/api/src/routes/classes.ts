@@ -156,6 +156,15 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(403).json({ error: 'Forbidden' })
       }
 
+      if (school.storageMode === 'local_computer') {
+        return res.json({
+          success: true,
+          message: 'Local computer storage: classes stored locally on PC.',
+          classes: [],
+          routines: [],
+        })
+      }
+
       const updateData: any = {}
       if (req.body.classes !== undefined) {
         updateData.classesData = typeof req.body.classes === 'object' ? JSON.stringify(req.body.classes) : String(req.body.classes)
@@ -232,6 +241,15 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
 
       if (req.userRole !== 'super_admin' && req.schoolId !== school.id) {
         return res.status(403).json({ error: 'Forbidden' })
+      }
+
+      if (school.storageMode === 'local_computer') {
+        return res.json({
+          success: true,
+          message: 'Local computer storage: classes stored locally on PC.',
+          classes: [],
+          routines: [],
+        })
       }
 
       const routinesData = typeof req.body.routines === 'object' ? JSON.stringify(req.body.routines) : String(req.body.routines || '[]')

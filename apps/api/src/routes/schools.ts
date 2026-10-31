@@ -391,29 +391,24 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
       const isLocalComputer = targetStorageMode === 'local_computer'
 
       if (isLocalComputer) {
-        // In local computer mode, everything (including images) is stored locally on the client's PC.
-        // Server database and R2 cloud storage are NOT used for media.
-        if (storageMode === 'local_computer' && existingSchool.storageMode !== 'local_computer') {
-          await deletePreviousMedia(storage, prisma, id, 'institution_logo').catch(() => {})
-          await deletePreviousMedia(storage, prisma, id, 'institution_banner').catch(() => {})
+        // In local computer mode, operational classes and routines are stored locally on the PC
+        dataToUpdate.classesData = null
+        dataToUpdate.routinesData = null
+      }
+
+      // Institution logo and banner remain available on the server for institution identification and branding
+      if (logo !== undefined) {
+        if (typeof logo === 'string' && logo.startsWith('data:image/')) {
+          dataToUpdate.logo = await uploadBase64Media(storage, prisma, id, 'institution_logo', logo)
+        } else {
+          dataToUpdate.logo = logo ? String(logo) : null
         }
-        if (logo !== undefined) dataToUpdate.logo = null
-        if (banner !== undefined) dataToUpdate.banner = null
-      } else {
-        // Upload logo and banner to Cloudflare R2 if provided as base64 dataUrl
-        if (logo !== undefined) {
-          if (typeof logo === 'string' && logo.startsWith('data:image/')) {
-            dataToUpdate.logo = await uploadBase64Media(storage, prisma, id, 'institution_logo', logo)
-          } else {
-            dataToUpdate.logo = logo ? String(logo) : null
-          }
-        }
-        if (banner !== undefined) {
-          if (typeof banner === 'string' && banner.startsWith('data:image/')) {
-            dataToUpdate.banner = await uploadBase64Media(storage, prisma, id, 'institution_banner', banner)
-          } else {
-            dataToUpdate.banner = banner ? String(banner) : null
-          }
+      }
+      if (banner !== undefined) {
+        if (typeof banner === 'string' && banner.startsWith('data:image/')) {
+          dataToUpdate.banner = await uploadBase64Media(storage, prisma, id, 'institution_banner', banner)
+        } else {
+          dataToUpdate.banner = banner ? String(banner) : null
         }
       }
 

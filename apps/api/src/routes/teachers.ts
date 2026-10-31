@@ -175,8 +175,33 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(400).json({ error: 'Invalid departmentId' })
       }
 
+      const school = await prisma.school.findUnique({
+        where: { id: schoolId },
+        select: { storageMode: true },
+      })
+      if (school?.storageMode === 'local_computer') {
+        return res.status(400).json({
+          error: 'Institution is in Local Computer storage mode. Operational data must be stored locally on the PC, not on the server database.',
+        })
+      }
+
+      const existingTeachers = await prisma.teacher.findMany({
+        where: { schoolId },
+        select: { id: true },
+      })
+      let maxNum = 0
+      for (const t of existingTeachers) {
+        const match = t.id.match(/^ET(\d+)$/i)
+        if (match) {
+          const num = parseInt(match[1], 10)
+          if (num > maxNum) maxNum = num
+        }
+      }
+      const newTeacherId = maxNum > 0 ? `ET${String(maxNum + 1).padStart(4, '0')}` : `ET${String(existingTeachers.length + 1).padStart(4, '0')}`
+
       const teacher = await prisma.teacher.create({
         data: {
+          id: newTeacherId,
           schoolId,
           nameEn: body.nameEn,
           nameBn: body.nameBn ?? null,

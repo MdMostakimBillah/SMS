@@ -43,18 +43,35 @@ export function getActiveStorageMode(): StorageMode {
       }
     }
 
-    const instMode = (useClassStore.getState()?.institution as any)?.storageMode
-    if (instMode) return instMode as StorageMode
-
-    const appSettingMode = useAppStore.getState()?.settings?.storageSettings?.mode
-    if (appSettingMode) return appSettingMode as StorageMode
-
     if (typeof localStorage !== 'undefined') {
       const loc = localStorage.getItem('edutech_storage_mode')
       if (loc === 'cloud' || loc === 'local_computer' || loc === 'local_server') {
         return loc as StorageMode
       }
+
+      // Check scoped classes file for institution's configured storageMode
+      const slug =
+        (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : null) ||
+        localStorage.getItem('edutech_inst_slug')
+      if (slug) {
+        const rawClasses = localStorage.getItem(`edutech-classes_${slug}`)
+        if (rawClasses) {
+          try {
+            const parsed = JSON.parse(rawClasses)
+            const mode = parsed?.state?.institution?.storageMode
+            if (mode === 'cloud' || mode === 'local_computer' || mode === 'local_server') {
+              return mode as StorageMode
+            }
+          } catch { /* ignore */ }
+        }
+      }
     }
+
+    const instMode = (useClassStore.getState()?.institution as any)?.storageMode
+    if (instMode) return instMode as StorageMode
+
+    const appSettingMode = useAppStore.getState()?.settings?.storageSettings?.mode
+    if (appSettingMode) return appSettingMode as StorageMode
   } catch {
     /* fallback to cloud */
   }
@@ -122,9 +139,10 @@ export function setLocalServerUrl(url: string): void {
   }
 }
 
-export function setLocalStorageMode(mode: StorageMode, serverUrl?: string): void {
+export function setLocalStorageMode(mode?: StorageMode | string | null, serverUrl?: string): void {
+  const validMode: StorageMode = (mode === 'local_computer' || mode === 'local_server') ? mode : 'cloud'
   // Super admin account can never switch away from cloud
-  const effectiveMode: StorageMode = isSuperAdminAccount() ? 'cloud' : mode
+  const effectiveMode: StorageMode = isSuperAdminAccount() ? 'cloud' : validMode
 
   if (typeof sessionStorage !== 'undefined') {
     sessionStorage.setItem('edutech_storage_mode', effectiveMode)

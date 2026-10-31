@@ -18,6 +18,7 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/lib/api'
 import { getSlug } from '@/lib/storage'
+import { setLocalStorageMode } from '@/lib/storageMode'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { useAppStore } from '@/store/appStore'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -137,13 +138,14 @@ export default function ClassesPage() {
       if (targetId) {
         const brandColor = instForm.lightColors?.brand || '#6366f1'
         const isLocalComp = instForm.storageMode === 'local_computer'
+        setLocalStorageMode(instForm.storageMode || 'cloud', instForm.serverUrl || '')
         const res = await authApi.updateSchool(targetId, {
           name: instForm.name,
           nameBn: instForm.nameBn,
           brandName: instForm.brandName,
           brandColor,
-          logo: isLocalComp ? null : instForm.logo,
-          banner: isLocalComp ? null : instForm.banner,
+          logo: instForm.logo,
+          banner: instForm.banner,
           bannerPosition: JSON.stringify(instForm.bannerPosition || { x: 0, y: 0 }),
           motto: instForm.motto,
           mottoBn: instForm.mottoBn,
@@ -161,19 +163,15 @@ export default function ClassesPage() {
           storageMode: instForm.storageMode || 'cloud',
           serverUrl: instForm.serverUrl || '',
           folderName: instForm.folderName || '',
-          classes: useClassStore.getState().classes,
-          routines: useClassStore.getState().routines,
+          classes: isLocalComp ? null : useClassStore.getState().classes,
+          routines: isLocalComp ? null : useClassStore.getState().routines,
         })
 
         if (res?.school) {
           const mapped = mapSchoolToInstitutionSettings(res.school, instForm)
           updateInstitution(mapped)
           setInstForm(mapped)
-
-          if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
-            sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
-          }
+          setLocalStorageMode(mapped.storageMode || 'cloud', mapped.serverUrl || '')
           useAppStore.getState().updateSettings({
             storageSettings: {
               ...(useAppStore.getState().settings?.storageSettings || { serverUrl: '', folderName: '' }),
