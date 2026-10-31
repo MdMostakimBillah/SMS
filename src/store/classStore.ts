@@ -720,6 +720,20 @@ registerStoreLoad(() => {
     if (raw) {
       const parsed = JSON.parse(raw)
       if (parsed?.state) useClassStore.setState(parsed.state)
+    } else {
+      useClassStore.setState({
+        classes: [],
+        routines: [],
+        sessionClasses: {},
+        sessionRoutines: {},
+      })
     }
-  } catch { /* ignore */ }
+  } catch {
+    useClassStore.setState({
+      classes: [],
+      routines: [],
+      sessionClasses: {},
+      sessionRoutines: {},
+    })
+  }
 })

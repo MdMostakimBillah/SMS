@@ -203,14 +203,59 @@ export async function deleteTextFile(
   }
 }
 
+export async function writeBinaryFile(
+  root: VfsDirectoryHandle,
+  path: string,
+  data: Uint8Array | Blob | ArrayBuffer,
+): Promise<void> {
+  const segments = path.split('/').filter(Boolean)
+  const filename = segments.pop()
+  if (!filename) throw new Error(`Invalid vault path: ${path}`)
+  const dir = await walkToParent(root, segments)
+  const fileHandle = await dir.getFileHandle(filename, { create: true })
+  const writable = await fileHandle.createWritable()
+  await writable.write(data as any)
+  await writable.close()
+}
+
+export async function readBinaryFile(
+  root: VfsDirectoryHandle,
+  path: string,
+): Promise<Uint8Array | null> {
+  const segments = path.split('/').filter(Boolean)
+  const filename = segments.pop()
+  if (!filename) return null
+  try {
+    let dir = root
+    for (const segment of segments) {
+      dir = await dir.getDirectoryHandle(segment)
+    }
+    const fileHandle = await dir.getFileHandle(filename)
+    const file = await fileHandle.getFile()
+    const buffer = await file.arrayBuffer()
+    return new Uint8Array(buffer)
+  } catch {
+    return null
+  }
+}
+
+export const deleteVaultFile = deleteTextFile
+
+export const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif']
+
+export function isImageFileName(name: string): boolean {
+  const lower = name.toLowerCase()
+  return IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext))
+}
+
 export interface VaultFileInfo {
   path: string
   lastModified: number
   size: number
 }
 
-/** Recursively list every .json file with its mtime (for external-change watching). */
-export async function listJsonFiles(
+/** Recursively list every .json and image file with its mtime (for external-change watching). */
+export async function listAllVaultFiles(
   root: VfsDirectoryHandle,
   prefixSegments: string[] = [],
 ): Promise<VaultFileInfo[]> {
@@ -226,16 +271,19 @@ export async function listJsonFiles(
 
   const walk = async (current: VfsDirectoryHandle, parts: string[]): Promise<void> => {
     for await (const entry of current.values()) {
-      if (entry.kind === 'file' && entry.name.endsWith('.json')) {
-        try {
-          const file = await (entry as VfsFileHandle).getFile()
-          results.push({
-            path: [...parts, entry.name].join('/'),
-            lastModified: file.lastModified,
-            size: file.size,
-          })
-        } catch {
-          /* unreadable file — skip */
+      if (entry.kind === 'file') {
+        const lower = entry.name.toLowerCase()
+        if (lower.endsWith('.json') || isImageFileName(entry.name)) {
+          try {
+            const file = await (entry as VfsFileHandle).getFile()
+            results.push({
+              path: [...parts, entry.name].join('/'),
+              lastModified: file.lastModified,
+              size: file.size,
+            })
+          } catch {
+            /* unreadable file — skip */
+          }
         }
       } else if (entry.kind === 'directory') {
         await walk(entry as VfsDirectoryHandle, [...parts, entry.name])
@@ -245,4 +293,13 @@ export async function listJsonFiles(
 
   await walk(dir, prefixSegments)
   return results
+}
+
+/** Recursively list every .json file with its mtime (for external-change watching). */
+export async function listJsonFiles(
+  root: VfsDirectoryHandle,
+  prefixSegments: string[] = [],
+): Promise<VaultFileInfo[]> {
+  const all = await listAllVaultFiles(root, prefixSegments)
+  return all.filter((f) => f.path.endsWith('.json'))
 }

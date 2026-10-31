@@ -6,6 +6,11 @@ import {
   vaultPathToKey,
   prettifyJson,
   compactJson,
+  parseVaultImagePath,
+  isVaultImagePath,
+  mimeFromExt,
+  uint8ArrayToDataUrl,
+  dataUrlToUint8Array,
 } from './mapping'
 
 describe('parseVaultKey', () => {
@@ -131,3 +136,65 @@ describe('json helpers', () => {
     expect(compactJson('{broken')).toBe('{broken')
   })
 })
+
+describe('vault image mapping & conversion', () => {
+  it('parses institution logo and banner paths', () => {
+    expect(parseVaultImagePath('demo/images/logo.png')).toEqual({ type: 'logo', slug: 'demo', ext: 'png' })
+    expect(parseVaultImagePath('demo/images/banner.jpg')).toEqual({ type: 'banner', slug: 'demo', ext: 'jpg' })
+    expect(isVaultImagePath('demo/images/logo.png')).toBe(true)
+    expect(isVaultImagePath('demo/images/banner.webp')).toBe(true)
+  })
+
+  it('parses teacher photo and signature paths', () => {
+    expect(parseVaultImagePath('demo/images/teachers/T-1_photo.png')).toEqual({
+      type: 'teacher_photo',
+      slug: 'demo',
+      id: 'T-1',
+      ext: 'png',
+    })
+    expect(parseVaultImagePath('demo/images/teachers/TCH-99_signature.jpeg')).toEqual({
+      type: 'teacher_signature',
+      slug: 'demo',
+      id: 'TCH-99',
+      ext: 'jpeg',
+    })
+  })
+
+  it('parses student photo paths', () => {
+    expect(parseVaultImagePath('demo/images/students/S-500_photo.png')).toEqual({
+      type: 'student_photo',
+      slug: 'demo',
+      id: 'S-500',
+      ext: 'png',
+    })
+  })
+
+  it('rejects paths outside scopeSlug or non-image files', () => {
+    expect(parseVaultImagePath('other/images/logo.png', 'demo')).toBeNull()
+    expect(parseVaultImagePath('demo/classes.json')).toBeNull()
+    expect(parseVaultImagePath('demo/images/random.txt')).toBeNull()
+    expect(isVaultImagePath('demo/classes.json')).toBe(false)
+  })
+
+  it('round-trips data URLs to Uint8Array and back', () => {
+    const rawDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+    const parsed = dataUrlToUint8Array(rawDataUrl)
+    expect(parsed).not.toBeNull()
+    expect(parsed!.ext).toBe('png')
+    expect(parsed!.mime).toBe('image/png')
+    expect(parsed!.bytes.byteLength).toBeGreaterThan(0)
+
+    const convertedBack = uint8ArrayToDataUrl(parsed!.bytes, parsed!.mime)
+    expect(convertedBack).toBe(rawDataUrl)
+  })
+
+  it('correctly maps MIME types from extensions', () => {
+    expect(mimeFromExt('png')).toBe('image/png')
+    expect(mimeFromExt('jpg')).toBe('image/jpeg')
+    expect(mimeFromExt('jpeg')).toBe('image/jpeg')
+    expect(mimeFromExt('webp')).toBe('image/webp')
+    expect(mimeFromExt('svg')).toBe('image/svg+xml')
+    expect(mimeFromExt('gif')).toBe('image/gif')
+  })
+})
+

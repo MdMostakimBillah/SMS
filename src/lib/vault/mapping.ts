@@ -134,3 +134,116 @@ export function compactJson(text: string): string {
     return text
   }
 }
+
+// ---------------------------------------------------------------------------
+// Image mapping for Obsidian-style local vault
+// ---------------------------------------------------------------------------
+
+export type VaultImageTarget =
+  | { type: 'logo'; slug: string; ext: string }
+  | { type: 'banner'; slug: string; ext: string }
+  | { type: 'teacher_photo'; slug: string; id: string; ext: string }
+  | { type: 'teacher_signature'; slug: string; id: string; ext: string }
+  | { type: 'student_photo'; slug: string; id: string; ext: string }
+
+export function isVaultImagePath(path: string): boolean {
+  return parseVaultImagePath(path) !== null
+}
+
+export function parseVaultImagePath(path: string, scopeSlug?: string): VaultImageTarget | null {
+  const segments = path.split('/').filter(Boolean)
+  if (segments.length < 3) return null
+  const slug = segments[0]
+  if (scopeSlug && slug !== scopeSlug) return null
+  if (segments[1] !== 'images') return null
+
+  // Case 1: {slug}/images/logo.{ext} or {slug}/images/banner.{ext}
+  if (segments.length === 3) {
+    const file = segments[2]
+    const dot = file.lastIndexOf('.')
+    if (dot <= 0) return null
+    const base = file.slice(0, dot)
+    const ext = file.slice(dot + 1).toLowerCase()
+    if (base === 'logo') return { type: 'logo', slug, ext }
+    if (base === 'banner') return { type: 'banner', slug, ext }
+    return null
+  }
+
+  // Case 2: {slug}/images/teachers/{id}_photo.{ext} or {id}_signature.{ext}
+  if (segments.length === 4 && segments[2] === 'teachers') {
+    const file = segments[3]
+    const dot = file.lastIndexOf('.')
+    if (dot <= 0) return null
+    const base = file.slice(0, dot)
+    const ext = file.slice(dot + 1).toLowerCase()
+    if (base.endsWith('_photo')) {
+      const id = base.slice(0, -'_photo'.length)
+      if (id) return { type: 'teacher_photo', slug, id, ext }
+    }
+    if (base.endsWith('_signature')) {
+      const id = base.slice(0, -'_signature'.length)
+      if (id) return { type: 'teacher_signature', slug, id, ext }
+    }
+    return null
+  }
+
+  // Case 3: {slug}/images/students/{id}_photo.{ext}
+  if (segments.length === 4 && segments[2] === 'students') {
+    const file = segments[3]
+    const dot = file.lastIndexOf('.')
+    if (dot <= 0) return null
+    const base = file.slice(0, dot)
+    const ext = file.slice(dot + 1).toLowerCase()
+    if (base.endsWith('_photo')) {
+      const id = base.slice(0, -'_photo'.length)
+      if (id) return { type: 'student_photo', slug, id, ext }
+    }
+    return null
+  }
+
+  return null
+}
+
+export function mimeFromExt(ext: string): string {
+  const e = ext.toLowerCase()
+  if (e === 'png') return 'image/png'
+  if (e === 'jpg' || e === 'jpeg') return 'image/jpeg'
+  if (e === 'webp') return 'image/webp'
+  if (e === 'svg') return 'image/svg+xml'
+  if (e === 'gif') return 'image/gif'
+  return 'image/png'
+}
+
+export function uint8ArrayToDataUrl(data: Uint8Array, mime: string): string {
+  let binary = ''
+  const len = data.byteLength
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(data[i])
+  }
+  const base64 = typeof btoa === 'function' ? btoa(binary) : Buffer.from(binary, 'binary').toString('base64')
+  return `data:${mime};base64,${base64}`
+}
+
+export function dataUrlToUint8Array(dataUrl: string): { bytes: Uint8Array; mime: string; ext: string } | null {
+  if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) return null
+  const commaIdx = dataUrl.indexOf(',')
+  if (commaIdx === -1) return null
+  const meta = dataUrl.slice(5, commaIdx)
+  const [mime, encoding] = meta.split(';')
+  if (encoding !== 'base64') return null
+  const base64 = dataUrl.slice(commaIdx + 1)
+  const binary = typeof atob === 'function' ? atob(base64) : Buffer.from(base64, 'base64').toString('binary')
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  let ext = 'png'
+  if (mime) {
+    if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpg'
+    else if (mime.includes('webp')) ext = 'webp'
+    else if (mime.includes('svg')) ext = 'svg'
+    else if (mime.includes('gif')) ext = 'gif'
+  }
+  return { bytes, mime: mime || 'image/png', ext }
+}
+
