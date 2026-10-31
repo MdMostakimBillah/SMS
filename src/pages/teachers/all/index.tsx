@@ -44,7 +44,6 @@ import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { BLOOD_GROUPS } from '@/lib/constants'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { usePermission } from '@/hooks/usePermission'
-import { TeacherStorageBanner } from '../components/TeacherStorageBanner'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 
@@ -89,6 +88,12 @@ export default function AllTeachersPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [showActionMenu, setShowActionMenu] = useState(false)
   const actionMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!serverSynced && !syncing && !syncError) {
+      void syncFromServer()
+    }
+  }, [serverSynced, syncing, syncError, syncFromServer])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -528,9 +533,6 @@ ${photoHtml}
 
       {/* Top Section */}
       <div className="shrink-0">
-        {/* Storage Architecture & Database Connection Banner */}
-        <TeacherStorageBanner isBn={isBn} />
-
         <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
           <button
             onClick={() => navigate(nav('/teachers'))}

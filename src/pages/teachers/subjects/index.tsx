@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Plus, AlertTriangle, BookOpen, Filter, X, Edit2, Trash2, Building2 } from 'lucide-react'
@@ -21,7 +21,7 @@ export default function SubjectsPage() {
   const navigate = useNavigate()
   const nav = useNavPath()
   const isBn = useBn()
-  const { subjects, departments, legacyDepartments, teachers, addSubject, updateSubject, deleteSubject, upsertServerSubject, removeServerSubject } = useTeacherStore(
+  const { subjects, departments, legacyDepartments, teachers, addSubject, updateSubject, deleteSubject, upsertServerSubject, removeServerSubject, syncFromServer } = useTeacherStore(
     useShallow((s) => ({
       subjects: s.subjects,
       departments: s.departments,
@@ -32,9 +32,14 @@ export default function SubjectsPage() {
       deleteSubject: s.deleteSubject,
       upsertServerSubject: s.upsertServerSubject,
       removeServerSubject: s.removeServerSubject,
+      syncFromServer: s.syncFromServer,
     }))
   )
   const { canCreate } = usePermission()
+
+  useEffect(() => {
+    void syncFromServer()
+  }, [syncFromServer])
 
   /** Server departments + local legacy backups so older subjects still resolve names. */
   const allDepartments = useMemo(

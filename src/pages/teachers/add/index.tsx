@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, Camera, Clock, Users, Send, Briefcase, X, IdCard, MessageSquare, FileText, ChevronRight, ChevronLeft, AlertTriangle } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -104,6 +104,10 @@ export default function AddTeacherPage() {
   const [doneId, setDoneId] = useState('')
   const [photoErr, setPhotoErr] = useState('')
   const [activeTab, setActiveTab] = useState<TabKey>('personal')
+
+  useEffect(() => {
+    void syncFromServer()
+  }, [syncFromServer])
   const [showReview, setShowReview] = useState(false)
   const [tabErrors, setTabErrors] = useState<Record<TabKey, Set<string>>>({ personal: new Set(), professional: new Set(), family: new Set() })
   const [touched, setTouched] = useState<Set<string>>(new Set())

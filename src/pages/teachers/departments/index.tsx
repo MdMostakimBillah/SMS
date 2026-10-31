@@ -58,14 +58,15 @@ export default function DepartmentsPage() {
   const [delError, setDelError] = useState('')
   useScrollLock(showAdd || editD !== null || delConfirm !== null)
 
-  // Clear nav chain if user navigated directly (not via redirect button)
+  // Clear nav chain if user navigated directly (not via redirect button) and load server data
   useEffect(() => {
+    void syncFromServer()
     const lastRedirect = sessionStorage.getItem('edutech_lastRedirect')
     const now = Date.now()
     if (!lastRedirect || now - Number(lastRedirect) > 30000) {
       localStorage.removeItem('edutech_navChain')
     }
-  }, [])
+  }, [syncFromServer])
 
   const getDeptTeacherCount = (id: string) => teachers.filter((t) => t.departmentId === id).length
   const getDeptSubjectCount = (id: string) => subjects.filter((s) => s.departmentId === id).length

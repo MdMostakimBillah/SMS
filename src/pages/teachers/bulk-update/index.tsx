@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -114,6 +114,10 @@ export default function TeacherBulkUpdatePage() {
   const [applyError, setApplyError] = useState('')
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
+  useEffect(() => {
+    void syncFromServer()
+  }, [syncFromServer])
+
   const opInfo = OPS.find((x) => x.id === op)!
 
   const filtered = useMemo(
@@ -185,12 +189,18 @@ export default function TeacherBulkUpdatePage() {
 
     if (isLocalComputerMode()) {
       setApplying(true)
+      const currentTeachers = useTeacherStore.getState().teachers
       for (const c of changes) {
-        const existing = teachers.find((t) => t.id === c.id)
+        const existing = currentTeachers.find((t) => t.id === c.id)
         if (existing) {
+          const patch: any = { ...c.payload }
+          if (patch.salary !== undefined) {
+            patch.salary = Number(patch.salary) || 0
+          }
           upsertServerTeacher({
             ...existing,
-            ...(c.payload as any),
+            ...patch,
+            updatedAt: new Date().toISOString(),
           })
         }
       }

@@ -160,6 +160,10 @@ export default function EditTeacherPage() {
   const [photoErr, setPhotoErr] = useState('')
 
   useEffect(() => {
+    void syncFromServer()
+  }, [syncFromServer])
+
+  useEffect(() => {
     if (!teacher) return
     setPhoto(teacher.photo || '')
     setNameEn(teacher.nameEn)
@@ -395,9 +399,6 @@ export default function EditTeacherPage() {
     return (
       <div className="p-10 text-center">
         <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'শিক্ষক পাওয়া যায়নি' : 'Teacher not found'}</p>
-        <p className="text-xs text-[var(--text-muted)] mt-1">
-          {isBn ? 'লোকাল রেকর্ড সম্পাদনা করা যায় না — তারা সার্ভারে নেই।' : 'Local legacy records cannot be edited — they are not on the server.'}
-        </p>
         <button
           onClick={() => navigate(nav('/teachers/all'))}
           className="mt-3 px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer"

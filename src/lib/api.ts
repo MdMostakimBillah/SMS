@@ -20,6 +20,17 @@ export function resolveApiBase(): string {
         const url = localStorage.getItem('edutech_server_url')
         if (url && url.trim()) return url.trim().replace(/\/+$/, '')
       }
+      const rawStore = localStorage.getItem('edutech_class_store')
+      if (rawStore) {
+        try {
+          const parsed = JSON.parse(rawStore)
+          if (parsed?.state?.institution?.storageMode === 'local_server' && parsed?.state?.institution?.serverUrl) {
+            return parsed.state.institution.serverUrl.trim().replace(/\/+$/, '')
+          }
+        } catch {
+          /* ignore json parse error */
+        }
+      }
     }
   } catch {
     /* fallback */

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, AlertTriangle, Briefcase, Edit2, Trash2 } from 'lucide-react'
@@ -18,7 +18,7 @@ export default function DesignationsPage() {
   const navigate = useNavigate()
   const nav = useNavPath()
   const isBn = useBn()
-  const { designations, teachers, addDesignation, updateDesignation, deleteDesignation, upsertServerDesignation, removeServerDesignation } = useTeacherStore(
+  const { designations, teachers, addDesignation, updateDesignation, deleteDesignation, upsertServerDesignation, removeServerDesignation, syncFromServer } = useTeacherStore(
     useShallow((s) => ({
       designations: s.designations,
       teachers: s.teachers,
@@ -27,9 +27,14 @@ export default function DesignationsPage() {
       deleteDesignation: s.deleteDesignation,
       upsertServerDesignation: s.upsertServerDesignation,
       removeServerDesignation: s.removeServerDesignation,
+      syncFromServer: s.syncFromServer,
     }))
   )
   const { canCreate } = usePermission()
+
+  useEffect(() => {
+    void syncFromServer()
+  }, [syncFromServer])
 
   const { popFromChain, getChain } = useNavChain()
   useNavChainClearOnMount()
