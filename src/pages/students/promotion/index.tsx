@@ -74,6 +74,10 @@ export default function ClassPromotionPage() {
   }, [newSession, sessionClasses, classes])
 
   useEffect(() => {
+    useAdmissionStore.getState().syncFromServer().catch(() => {})
+  }, [])
+
+  useEffect(() => {
     setToClass('')
     setToSection('')
   }, [newSession])

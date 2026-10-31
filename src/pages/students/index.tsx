@@ -4,7 +4,7 @@ import { UserPlus, Users, User, UserPen, TableProperties, IdCard, ArrowUpCircle 
 import { useBn } from '@/hooks/useBn'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useSessionStudents } from '@/store/admissionStore'
+import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useAppStore } from '@/store/appStore'
 import { usePermission } from '@/hooks/usePermission'
 import { QuickAccessGrid } from '@/components/shared/QuickAccessGrid'
@@ -225,6 +225,7 @@ export default function StudentsPage() {
   ]
 
   useEffect(() => {
+    useAdmissionStore.getState().syncFromServer().catch(() => {})
     const timer = setTimeout(() => setIsLoading(false), 600)
     return () => clearTimeout(timer)
   }, [])

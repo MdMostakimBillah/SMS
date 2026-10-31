@@ -67,7 +67,7 @@ const Cell = React.memo(function Cell({ value, onChange, type = 'text', options,
 })
 
 export default function BulkAdmission() {
-  const addStudent = useAdmissionStore((s) => s.addStudent)
+  const bulkAddStudents = useAdmissionStore((s) => s.bulkAddStudents)
   const existing = useAdmissionStore((s) => s.students)
   const { classes, institution } = useClassStore()
   const isBn = useBn()
@@ -103,8 +103,9 @@ export default function BulkAdmission() {
     const valid = rows.filter((r) => r.nameEn && r.class && r.phone)
     if (valid.length === 0) return alert(isBn ? 'কমপক্ষে ১টি সম্পূর্ণ সারি দরকার' : 'At least 1 complete row required')
     const now = new Date().toISOString().split('T')[0]
-    valid.forEach((r) => {
-      addStudent({
+    const toAdd = valid.map((r) => {
+      logger.sms(r.phone, `আবেদন ID ${r.id}`)
+      return {
         id: r.id,
         createdAt: now,
         updatedAt: now,
@@ -141,12 +142,13 @@ export default function BulkAdmission() {
         guardianName: '',
         guardianRelation: '',
         guardianPhone: '',
-      } as StudentAdmission)
-      logger.sms(r.phone, `আবেদন ID ${r.id}`)
+        teacherId: '',
+      } as StudentAdmission
     })
+    bulkAddStudents(toAdd)
     setCount(valid.length)
     setDone(true)
-  }, [rows, addStudent, isBn])
+  }, [rows, bulkAddStudents, session, isBn])
 
   if (done)
     return (

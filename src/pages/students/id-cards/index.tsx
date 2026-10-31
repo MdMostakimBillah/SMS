@@ -218,6 +218,10 @@ export default function IDCardsPage() {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string[]>([])
 
+  useEffect(() => {
+    useAdmissionStore.getState().syncFromServer().catch(() => {})
+  }, [])
+
   const filtered = useMemo(
     () =>
       approved.filter((s) => {

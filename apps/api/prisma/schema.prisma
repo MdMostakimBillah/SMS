@@ -191,30 +191,56 @@ model Designation {
 }
 
 model Student {
-  id            String   @id @default(uuid())
-  schoolId      String   @map("school_id")
-  nameEn        String   @map("name_en")
-  nameBn        String?  @map("name_bn")
-  phone         String?
-  email         String?
-  photo         String?
-  class         String?
-  section       String?
-  admissionDate String?  @map("admission_date")
-  status        String   @default("approved")
-  fatherNameEn  String?  @map("father_name_en")
-  fatherPhone   String?  @map("father_phone")
-  motherNameEn  String?  @map("mother_name_en")
-  motherPhone   String?  @map("mother_phone")
-  district      String?
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  schoolId         String   @map("school_id")
+  nameEn           String   @map("name_en")
+  nameBn           String?  @map("name_bn")
+  phone            String?
+  email            String?
+  photo            String?
+  class            String?
+  section          String?
+  roll             String?
+  academicYear     String?  @map("academic_year")
+  dob              String?
+  gender           String?
+  bloodGroup       String?  @map("blood_group")
+  religion         String?
+  nationality      String?
+  admissionDate    String?  @map("admission_date")
+  previousSchool   String?  @map("previous_school")
+  presentAddress   String?  @map("present_address")
+  permanentAddress String?  @map("permanent_address")
+  status           String   @default("approved")
+  fatherNameEn     String?  @map("father_name_en")
+  fatherNameBn     String?  @map("father_name_bn")
+  fatherOccupation String?  @map("father_occupation")
+  fatherPhone      String?  @map("father_phone")
+  fatherNid        String?  @map("father_nid")
+  motherNameEn     String?  @map("mother_name_en")
+  motherNameBn     String?  @map("mother_name_bn")
+  motherOccupation String?  @map("mother_occupation")
+  motherPhone      String?  @map("mother_phone")
+  motherNid        String?  @map("mother_nid")
+  guardianName     String?  @map("guardian_name")
+  guardianRelation String?  @map("guardian_relation")
+  guardianPhone    String?  @map("guardian_phone")
+  district         String?
+  teacherId        String?  @map("teacher_id")
+  billingDate      String?  @map("billing_date")
+  approvedAt       String?  @map("approved_at")
+  approvedBy       String?  @map("approved_by")
+  inactiveAt       String?  @map("inactive_at")
+  inactiveReason   String?  @map("inactive_reason")
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 
   @@index([schoolId])
   @@index([schoolId, class, section])
+  @@index([schoolId, academicYear])
   @@map("students")
 }
 

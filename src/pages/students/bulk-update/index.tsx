@@ -126,6 +126,10 @@ export default function BulkUpdatePage() {
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   useEffect(() => {
+    useAdmissionStore.getState().syncFromServer().catch(() => {})
+  }, [])
+
+  useEffect(() => {
     setFSession(currentSession)
     setFClass('')
     setFSection('')

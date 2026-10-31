@@ -752,25 +752,51 @@ export interface StudentRecord {
   photo: string | null
   class: string | null
   section: string | null
+  roll?: string | null
+  academicYear?: string | null
+  dob?: string | null
+  gender?: string | null
+  bloodGroup?: string | null
+  religion?: string | null
+  nationality?: string | null
   admissionDate: string | null
+  previousSchool?: string | null
+  presentAddress?: string | null
+  permanentAddress?: string | null
   status: string
   fatherNameEn: string | null
+  fatherNameBn?: string | null
+  fatherOccupation?: string | null
   fatherPhone: string | null
+  fatherNid?: string | null
   motherNameEn: string | null
+  motherNameBn?: string | null
+  motherOccupation?: string | null
   motherPhone: string | null
+  motherNid?: string | null
+  guardianName?: string | null
+  guardianRelation?: string | null
+  guardianPhone?: string | null
   district: string | null
+  teacherId?: string | null
+  billingDate?: string | null
+  approvedAt?: string | null
+  approvedBy?: string | null
+  inactiveAt?: string | null
+  inactiveReason?: string | null
   active: boolean
   createdAt: string
   updatedAt: string
 }
 
 export const studentsApi = {
-  list: (params?: { page?: number; pageSize?: number; class?: string; section?: string; status?: string; search?: string }) => {
+  list: (params?: { page?: number; pageSize?: number; class?: string; section?: string; academicYear?: string; status?: string; search?: string }) => {
     const qs = new URLSearchParams()
     if (params?.page) qs.set('page', String(params.page))
     if (params?.pageSize) qs.set('pageSize', String(params.pageSize))
     if (params?.class) qs.set('class', params.class)
     if (params?.section) qs.set('section', params.section)
+    if (params?.academicYear) qs.set('academicYear', params.academicYear)
     if (params?.status) qs.set('status', params.status)
     if (params?.search) qs.set('search', params.search)
     const qStr = qs.toString()
@@ -780,6 +806,7 @@ export const studentsApi = {
   },
   get: (id: string) => apiRequest<{ student: StudentRecord }>(`/api/students/${encodeURIComponent(id)}`),
   create: (data: Partial<StudentRecord>) => apiRequest<{ student: StudentRecord }>('/api/students', { method: 'POST', body: data }),
+  bulkSave: (students: Partial<StudentRecord>[]) => apiRequest<{ students: StudentRecord[]; count: number }>('/api/students/bulk', { method: 'POST', body: { students } }),
   update: (id: string, data: Partial<StudentRecord>) => apiRequest<{ student: StudentRecord }>(`/api/students/${encodeURIComponent(id)}`, { method: 'PUT', body: data }),
   delete: (id: string) => apiRequest<{ success: boolean }>(`/api/students/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 }

@@ -77,6 +77,10 @@ export default function UpdateStudentPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    useAdmissionStore.getState().syncFromServer().catch(() => {})
+  }, [])
+
+  useEffect(() => {
     const sid = (location.state as any)?.studentId
     if (sid) {
       const s = students.find((x) => x.id === sid)

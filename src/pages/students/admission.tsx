@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, UserPlus, Users, ListChecks } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useNavPath } from '@/hooks/useNavPath'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { useAdmissionStore } from '@/store/admissionStore'
 import GeneralAdmission from './admission/GeneralAdmission'
 import BulkAdmission from './admission/BulkAdmission'
 import AdmissionManage from './admission/AdmissionManage'
@@ -23,6 +24,10 @@ export default function StudentAdmission() {
   const isBn = useBn()
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    useAdmissionStore.getState().syncFromServer().catch(() => {})
+  }, [])
 
   useTabSlider({
     activeTab,

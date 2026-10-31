@@ -48,8 +48,13 @@ export default function AllStudentsPage() {
   const nav = useNavPath()
   const { isMobile } = useWindowSize()
   const students = useSessionStudents()
+  const syncFromServer = useAdmissionStore((s) => s.syncFromServer)
   const deactivateStudent = useAdmissionStore((s) => s.deactivateStudent)
   const reactivateStudent = useAdmissionStore((s) => s.reactivateStudent)
+
+  useEffect(() => {
+    void syncFromServer()
+  }, [syncFromServer])
   const { classes, institution } = useClassStore()
   const currentSession = institution.currentSession
   const isBn = useBn()
