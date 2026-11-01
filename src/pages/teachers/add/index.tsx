@@ -14,7 +14,7 @@ import { isLocalComputerMode } from '@/lib/storageMode'
 import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage, generateSimpleTeacherId } from '@/lib/teacherMappers'
 import { flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
-import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
+import { BLOOD_GROUPS, TEACHER_CATEGORIES, MAX_IMAGE_SIZE_KB } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
 import { usePermission } from '@/hooks/usePermission'
 import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
@@ -542,7 +542,7 @@ export default function AddTeacherPage() {
           {sHead(<Users />, 'ব্যক্তিগত তথ্য', 'Personal Information')}
           <div className="flex gap-4 mb-[0.875rem] flex-wrap">
             <div>
-              <div className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem]">{isBn ? 'ছবি (সর্বোচ্চ ২ MB)' : 'Photo (max 2MB)'}</div>
+              <div className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem]">{isBn ? 'ছবি (সর্বোচ্চ ২৫০ KB)' : `Photo (max ${MAX_IMAGE_SIZE_KB}KB)`}</div>
               <div onClick={() => fileRef.current?.click()} className={'w-[5.625rem] h-[6.875rem] rounded-[0.625rem] border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden bg-[var(--bg-secondary)] relative ' + (form.photo ? 'border-[var(--brand)]' : 'border-[var(--border-2)]')}>
                 {form.photo ? <img src={form.photo} alt={isBn ? 'ছবি' : 'Photo'} className="w-full h-full object-cover" /> : <div className="text-center text-[var(--text-muted)] pointer-events-none"><Camera size={22} className="block mx-auto mb-1" /><div className="text-[0.625rem]">{isBn ? 'ছবি' : 'Photo'}</div></div>}
                 {form.photo && <button type="button" onClick={(e) => { e.stopPropagation(); setField('photo', '') }} aria-label={isBn ? 'ছবি সরান' : 'Remove photo'} className="absolute top-[0.1875rem] right-[0.1875rem] w-[1.125rem] h-[1.125rem] rounded-full bg-[var(--red)] border-0 cursor-pointer flex items-center justify-center text-white"><X size={10} /></button>}
@@ -652,7 +652,7 @@ export default function AddTeacherPage() {
             </div>
 
             <div className="mt-[0.875rem]">
-              <div className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem]">{isBn ? 'সিগনেচার (সর্বোচ্চ ১ MB)' : 'Signature (max 1MB)'}</div>
+              <div className="text-[0.75rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem]">{isBn ? 'সিগনেচার (সর্বোচ্চ ২৫০ KB)' : `Signature (max ${MAX_IMAGE_SIZE_KB}KB)`}</div>
               <div className="flex items-center gap-3">
                 <div onClick={() => signatureRef.current?.click()} className={'w-[10rem] h-[3.5rem] rounded-[0.5rem] border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden bg-[var(--bg-secondary)] relative ' + (form.signature ? 'border-[var(--brand)]' : 'border-[var(--border-2)]')}>
                   {form.signature ? <img src={form.signature} alt={isBn ? 'সিগনেচার' : 'Signature'} className="w-full h-full object-contain" /> : <div className="text-center text-[var(--text-muted)] pointer-events-none"><div className="text-[0.625rem]">{isBn ? 'সিগনেচার' : 'Signature'}</div></div>}

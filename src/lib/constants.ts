@@ -23,7 +23,7 @@ export const LOGIN_ROUTE = LOGIN_PATH ? `${LOGIN_PATH}/login` : '/super-admin/lo
  * One limit, shared by every image input — photo, signature, logo, banner and
  * inline editor images alike.
  */
-export const MAX_IMAGE_SIZE_KB = 200
+export const MAX_IMAGE_SIZE_KB = 250
 export const MAX_IMAGE_BYTES = MAX_IMAGE_SIZE_KB * 1024
 
 export const BLOOD_GROUPS = [

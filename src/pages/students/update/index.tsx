@@ -6,6 +6,7 @@ import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import { MAX_IMAGE_SIZE_KB } from '@/lib/constants'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 
@@ -298,7 +299,7 @@ export default function UpdateStudentPage() {
               <div className="flex gap-[0.875rem] mb-3 flex-wrap">
                 <div>
                   <div className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-[0.3125rem]">
-                    {isBn ? 'ছবি (সর্বোচ্চ ২ MB)' : 'Photo (max 2MB)'}
+                    {isBn ? 'ছবি (সর্বোচ্চ ২৫০ KB)' : `Photo (max ${MAX_IMAGE_SIZE_KB}KB)`}
                   </div>
                   <div
                     onClick={() => fileRef.current?.click()}

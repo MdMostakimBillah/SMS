@@ -12,9 +12,9 @@ const imageOfBytes = (bytes: number) =>
   new File([new ArrayBuffer(bytes)], 'photo.jpg', { type: 'image/jpeg' })
 
 describe('imageUpload', () => {
-  it('caps every image at 200KB', () => {
-    expect(MAX_IMAGE_SIZE_KB).toBe(200)
-    expect(MAX_IMAGE_BYTES).toBe(200 * 1024)
+  it('caps every image at 250KB', () => {
+    expect(MAX_IMAGE_SIZE_KB).toBe(250)
+    expect(MAX_IMAGE_BYTES).toBe(250 * 1024)
   })
 
   it('accepts an image at exactly the limit', () => {
@@ -28,12 +28,12 @@ describe('imageUpload', () => {
   it('returns the message only for oversized images', () => {
     expect(validateImageSize(imageOfBytes(MAX_IMAGE_BYTES), false)).toBeNull()
     expect(validateImageSize(imageOfBytes(MAX_IMAGE_BYTES + 1), false)).toBe(
-      'Image must be under 200KB'
+      'Image must be under 250KB'
     )
   })
 
   it('phrases the message in Bangla when asked', () => {
-    expect(imageTooLargeMessage(true)).toBe('ছবির সাইজ সর্বোচ্চ 200 KB')
+    expect(imageTooLargeMessage(true)).toBe('ছবির সাইজ সর্বোচ্চ 250 KB')
   })
 })
 

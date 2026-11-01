@@ -13,7 +13,7 @@ import { isLocalComputerMode } from '@/lib/storageMode'
 import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
 import { flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
-import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
+import { BLOOD_GROUPS, TEACHER_CATEGORIES, MAX_IMAGE_SIZE_KB } from '@/lib/constants'
 import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 
@@ -455,7 +455,7 @@ export default function EditTeacherPage() {
           {/* Photo */}
           <div>
             <div className="text-xs font-medium text-[var(--text-secondary)] mb-[0.3125rem]">
-              {isBn ? 'ছবি (সর্বোচ্চ ২ MB)' : 'Photo (max 2MB)'}
+              {isBn ? 'ছবি (সর্বোচ্চ ২৫০ KB)' : `Photo (max ${MAX_IMAGE_SIZE_KB}KB)`}
             </div>
             <div
               onClick={() => fileRef.current?.click()}
@@ -646,7 +646,7 @@ export default function EditTeacherPage() {
         {/* Signature */}
         <div className="mt-[0.875rem]">
           <div className="text-xs font-medium text-[var(--text-secondary)] mb-[0.3125rem]">
-            {isBn ? 'সিগনেচার (সর্বোচ্চ ১ MB)' : 'Signature (max 1MB)'}
+            {isBn ? 'সিগনেচার (সর্বোচ্চ ২৫০ KB)' : `Signature (max ${MAX_IMAGE_SIZE_KB}KB)`}
           </div>
           <div className="flex items-center gap-3">
             <div

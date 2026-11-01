@@ -47,7 +47,7 @@ export function dataUrlBytes(dataUrl: string): number {
 }
 
 /**
- * Encode an image as a data URL, shrinking it until it fits the 200KB cap.
+ * Encode an image as a data URL, shrinking it until it fits the 250KB cap.
  *
  * The cap is judged on the *encoded result* rather than on the picked file, so
  * an ordinary 4MB phone photo is accepted — it downscales to a fraction of the
