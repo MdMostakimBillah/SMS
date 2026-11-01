@@ -2,6 +2,7 @@ import { backupApi } from './api'
 import { telegramGetMe, sendBundleToTelegram } from './vault/telegram'
 import { createBackupZip, extractBackupFromZip } from './vault/zipHelper'
 import { isLocalComputerMode } from './storageMode'
+import { useAppStore } from '@/store/appStore'
 
 export interface BackupMetadata {
   app: string
@@ -262,26 +263,29 @@ export async function sendTelegramBackupNow(opts: {
 }) {
   const localStores = opts.includeLocalStores !== false ? collectLocalStores(opts.schoolSlug) : undefined
   const isLocal = isLocalComputerMode()
+  const appSettings = useAppStore.getState().settings?.telegramBackup
+  const botToken = opts.botToken || appSettings?.botToken
+  const chatId = opts.chatId || appSettings?.chatId
 
   // When running in local computer mode:
-  // "and when backup telegram. the file should be zip. and local file should be store not webside sever data store"
-  // We send the local computer files as a ZIP directly from the browser to Telegram,
+  // "when the local PC data backeup into the telegram, must be store from the local PC files, not one json file backup in the telegram. all the file and image folder becom zip then backup into telegram"
+  // We send the local computer files as a multi-file ZIP directly from the browser to Telegram,
   // completely bypassing the website server database!
   if (isLocal || opts.via === 'browser') {
     if (!localStores) {
       return { success: false as const, error: 'Local data bundle is required for browser-direct backup.' }
     }
     return sendBundleToTelegram({
-      botToken: opts.botToken,
-      chatId: opts.chatId,
+      botToken,
+      chatId,
       bundle: localStores,
       institutionName: opts.schoolName,
     })
   }
 
   return backupApi.sendTelegramBackup({
-    botToken: opts.botToken,
-    chatId: opts.chatId,
+    botToken,
+    chatId,
     schoolId: opts.schoolId,
     schoolSlug: opts.schoolSlug,
     schoolName: opts.schoolName,

@@ -116,6 +116,11 @@ describe('POST /api/backup/telegram/send', () => {
     const backupJsonText = await backupJsonFile!.async('text')
     const parsedPayload = JSON.parse(backupJsonText)
 
+    // Verify all individual local PC store files are packaged in the ZIP
+    expect(zip.file('classes.json')).not.toBeNull()
+    expect(zip.file('teachers.json')).not.toBeNull()
+    expect(zip.file('students.json')).not.toBeNull()
+
     // Verify local files/data are stored, NOT server DB data store
     expect(parsedPayload.metadata.mode).toBe('local_computer')
     expect(parsedPayload.serverData).toBeNull() // Server database data is NOT stored

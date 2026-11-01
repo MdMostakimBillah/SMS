@@ -8,6 +8,7 @@
 
 import type { BackupBundle } from '../backup'
 import { createBackupZip } from './zipHelper'
+import type { VfsDirectoryHandle } from './fsAccess'
 
 const TELEGRAM_API = 'https://api.telegram.org'
 
@@ -143,6 +144,7 @@ export async function sendBundleToTelegram(opts: {
   chatId?: string
   bundle: BackupBundle
   institutionName?: string
+  vaultHandle?: VfsDirectoryHandle | null
 }): Promise<TelegramSendResult> {
   const token = opts.botToken?.trim()
   const chatId = opts.chatId?.trim()
@@ -150,19 +152,22 @@ export async function sendBundleToTelegram(opts: {
     return { success: false, error: 'Telegram bot token and chat ID are required.' }
   }
 
-  // Create ZIP archive containing backup.json and local images
-  const zipBlob = await createBackupZip(opts.bundle)
+  // Create ZIP archive containing all local PC vault files, individual store JSONs, and local images
+  const zipBlob = await createBackupZip(opts.bundle, {
+    vaultHandle: opts.vaultHandle,
+    slug: opts.bundle.metadata.slug,
+  })
   const date = new Date().toISOString().slice(0, 10)
   const name = opts.institutionName ? ` (${opts.institutionName})` : ''
   const caption =
-    `📦 *EduTech SMS — Local Computer Backup (ZIP)*${name}\n` +
+    `📦 *EduTech SMS — Local Computer Multi-File Vault Backup (ZIP)*${name}\n` +
     `🏫 Institution: *${opts.bundle.metadata.slug}*\n` +
     `📅 Date: \`${new Date().toISOString()}\`\n` +
     `📊 Mode: Local Computer Storage (Offline)\n` +
     `👥 Records: ${opts.bundle.metadata.counts.classes} classes, ` +
     `${opts.bundle.metadata.counts.teachers} teachers, ` +
     `${opts.bundle.metadata.counts.students} students\n` +
-    `📁 Archive: Full local data & local images preserved in ZIP`
+    `📁 Archive: Direct local PC files (classes.json, students.json, teachers.json, routines.json) & /images folder`
 
   return telegramSendBackup({
     botToken: token,

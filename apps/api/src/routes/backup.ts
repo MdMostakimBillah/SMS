@@ -208,12 +208,60 @@ export function backupRouter(prisma: PrismaClient, jwtSecret: string) {
 
         const jsonString = JSON.stringify(backupPayload, null, 2)
 
-        // Package as a compressed .zip archive
+        // Package as a compressed .zip archive containing all individual files and images folder
         const zip = new JSZip()
         zip.file('backup.json', jsonString)
 
-        // If clientData has stores with local images, include them in an images/ folder inside the zip
+        // Write individual JSON files and images
         if (clientData?.stores) {
+          for (const [storeKey, storeData] of Object.entries(clientData.stores as Record<string, any>)) {
+            if (!storeData) continue
+            let rawBase = storeKey
+            if (rawBase.startsWith('edutech-')) rawBase = rawBase.slice('edutech-'.length)
+            else if (rawBase.startsWith('edutech_')) rawBase = rawBase.slice('edutech_'.length)
+            const baseName = rawBase.split('_')[0]
+
+            const str = JSON.stringify(storeData, null, 2)
+            if (!zip.file(`${baseName}.json`)) zip.file(`${baseName}.json`, str)
+
+            if (baseName === 'admissions') {
+              const studentsList = storeData?.state?.students || storeData?.students
+              const studentsPayload = Array.isArray(studentsList) ? { students: studentsList } : storeData
+              if (!zip.file('students.json')) zip.file('students.json', JSON.stringify(studentsPayload, null, 2))
+            }
+
+            if (baseName === 'classes') {
+              const routines = storeData?.state?.routines || storeData?.routines
+              if (Array.isArray(routines) && !zip.file('routines.json')) {
+                zip.file('routines.json', JSON.stringify({ routines }, null, 2))
+              }
+              const depts = storeData?.state?.departments || storeData?.departments
+              if (Array.isArray(depts) && !zip.file('departments.json')) {
+                zip.file('departments.json', JSON.stringify({ departments: depts }, null, 2))
+              }
+              const subs = storeData?.state?.subjects || storeData?.subjects
+              if (Array.isArray(subs) && !zip.file('subjects.json')) {
+                zip.file('subjects.json', JSON.stringify({ subjects: subs }, null, 2))
+              }
+            }
+
+            if (baseName === 'teachers') {
+              const depts = storeData?.state?.departments || storeData?.departments
+              if (Array.isArray(depts) && !zip.file('departments.json')) {
+                zip.file('departments.json', JSON.stringify({ departments: depts }, null, 2))
+              }
+              const desigs = storeData?.state?.designations || storeData?.designations
+              if (Array.isArray(desigs) && !zip.file('designations.json')) {
+                zip.file('designations.json', JSON.stringify({ designations: desigs }, null, 2))
+              }
+              const subs = storeData?.state?.subjects || storeData?.subjects
+              if (Array.isArray(subs) && !zip.file('subjects.json')) {
+                zip.file('subjects.json', JSON.stringify({ subjects: subs }, null, 2))
+              }
+            }
+          }
+
+          // Extract images into images/ folder inside the zip
           const imagesFolder = zip.folder('images')
           const classStore = clientData.stores['edutech-classes']
           const inst = classStore?.state?.institution || classStore?.institution
@@ -227,6 +275,49 @@ export function backupRouter(prisma: PrismaClient, jwtSecret: string) {
               if (base64Data) imagesFolder.file('banner.jpg', base64Data, { base64: true })
             }
           }
+
+          // Teachers photos and signatures
+          const teacherStore = clientData.stores['edutech-teachers']
+          const tchList = teacherStore?.state?.teachers || teacherStore?.teachers
+          if (Array.isArray(tchList) && imagesFolder) {
+            const tchFolder = imagesFolder.folder('teachers')
+            tchList.forEach((t: any) => {
+              if (typeof t?.photo === 'string' && t.photo.startsWith('data:image/')) {
+                const b64 = t.photo.split(',')[1]
+                if (b64 && tchFolder) {
+                  tchFolder.file(`${t.id || 'photo'}_photo.png`, b64, { base64: true })
+                  tchFolder.file(`${t.id || 'photo'}.png`, b64, { base64: true })
+                }
+              }
+              if (typeof t?.signature === 'string' && t.signature.startsWith('data:image/')) {
+                const b64 = t.signature.split(',')[1]
+                if (b64 && tchFolder) {
+                  tchFolder.file(`${t.id || 'sig'}_signature.png`, b64, { base64: true })
+                }
+              }
+            })
+          }
+
+          // Students photos
+          const studentStore = clientData.stores['edutech-admissions']
+          const stdList = studentStore?.state?.students || studentStore?.students
+          if (Array.isArray(stdList) && imagesFolder) {
+            const stdFolder = imagesFolder.folder('students')
+            stdList.forEach((s: any) => {
+              if (typeof s?.photo === 'string' && s.photo.startsWith('data:image/')) {
+                const b64 = s.photo.split(',')[1]
+                if (b64 && stdFolder) {
+                  stdFolder.file(`${s.id || 'photo'}_photo.png`, b64, { base64: true })
+                  stdFolder.file(`${s.id || 'photo'}.png`, b64, { base64: true })
+                }
+              }
+            })
+          }
+        } else if (!isLocalComputer) {
+          zip.file('teachers.json', JSON.stringify(teachers, null, 2))
+          zip.file('students.json', JSON.stringify(students, null, 2))
+          zip.file('departments.json', JSON.stringify(departments, null, 2))
+          zip.file('notices.json', JSON.stringify(notices, null, 2))
         }
 
         const zipBuffer = await zip.generateAsync({

@@ -89,6 +89,10 @@ export function getVaultStatus(): VaultStatus {
   return status
 }
 
+export function getActiveVaultHandle(): VfsDirectoryHandle | null {
+  return handle
+}
+
 export function subscribeVault(fn: (s: VaultStatus) => void): () => void {
   listeners.add(fn)
   return () => listeners.delete(fn)
