@@ -244,6 +244,11 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
             await writeBinaryFile(handle, imgPath, img.bytes)
             knownVaultFiles.add(imgPath)
             ownWriteAt.set(imgPath, Date.now())
+
+            const rootImgPath = `images/logo.${img.ext}`
+            await writeBinaryFile(handle, rootImgPath, img.bytes)
+            knownVaultFiles.add(rootImgPath)
+            ownWriteAt.set(rootImgPath, Date.now())
           }
         }
         if (typeof inst.banner === 'string' && inst.banner.startsWith('data:')) {
@@ -253,6 +258,11 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
             await writeBinaryFile(handle, imgPath, img.bytes)
             knownVaultFiles.add(imgPath)
             ownWriteAt.set(imgPath, Date.now())
+
+            const rootImgPath = `images/banner.${img.ext}`
+            await writeBinaryFile(handle, rootImgPath, img.bytes)
+            knownVaultFiles.add(rootImgPath)
+            ownWriteAt.set(rootImgPath, Date.now())
           }
         }
       }
@@ -457,6 +467,32 @@ async function seedVaultFromStorage(): Promise<number> {
       ownWriteAt.set(rootTeachers, Date.now())
       knownVaultFiles.add(rootTeachers)
     }
+    if (path === `${slug}/classes.json`) {
+      const rootClasses = 'classes.json'
+      await writeTextFile(handle, rootClasses, pretty)
+      fileContentCache.set(rootClasses, compactJson(raw))
+      ownWriteAt.set(rootClasses, Date.now())
+      knownVaultFiles.add(rootClasses)
+
+      try {
+        const parsed = JSON.parse(raw)
+        const routines = parsed?.state?.routines || parsed?.routines
+        if (Array.isArray(routines) && routines.length > 0) {
+          const routinesPath = `${slug}/routines.json`
+          const prettyRoutines = JSON.stringify({ routines }, null, 2)
+          await writeTextFile(handle, routinesPath, prettyRoutines)
+          fileContentCache.set(routinesPath, compactJson(prettyRoutines))
+          ownWriteAt.set(routinesPath, Date.now())
+          knownVaultFiles.add(routinesPath)
+
+          const rootRoutines = 'routines.json'
+          await writeTextFile(handle, rootRoutines, prettyRoutines)
+          fileContentCache.set(rootRoutines, compactJson(prettyRoutines))
+          ownWriteAt.set(rootRoutines, Date.now())
+          knownVaultFiles.add(rootRoutines)
+        }
+      } catch { /* ignore */ }
+    }
     await exportStoreImages(slug, path, raw)
     seeded++
   }
@@ -487,6 +523,18 @@ function handleStoreWrite(key: string, json: string): void {
   if (!slug || !keyMatchesInstitution(key, slug, currentUserId())) return
   const path = keyToVaultPath(key)
   if (!path || fileContentCache.get(path) === json) return // no-op change
+
+  const isLocalComp =
+    (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('edutech_storage_mode') === 'local_computer') ||
+    (typeof localStorage !== 'undefined' && localStorage.getItem('edutech_storage_mode') === 'local_computer')
+
+  if (isLocalComp || key.includes('classes') || key.includes('teachers') || key.includes('admissions')) {
+    const existing = pendingWrites.get(path)
+    if (existing) clearTimeout(existing.timer)
+    pendingWrites.delete(path)
+    void writePath(path, json)
+    return
+  }
 
   const existing = pendingWrites.get(path)
   if (existing) clearTimeout(existing.timer)
@@ -542,15 +590,29 @@ async function writePath(path: string, json: string): Promise<void> {
         knownVaultFiles.add(rootStudentsPath)
       }
       if (path === `${slug}/classes.json`) {
+        const rootClassesPath = 'classes.json'
+        await writeTextFile(handle, rootClassesPath, prettifyJson(json))
+        fileContentCache.set(rootClassesPath, json)
+        fileMtimeCache.delete(rootClassesPath)
+        ownWriteAt.set(rootClassesPath, Date.now())
+        knownVaultFiles.add(rootClassesPath)
+
         try {
           const parsed = JSON.parse(json)
           const routines = parsed?.state?.routines || parsed?.routines
           if (Array.isArray(routines) && routines.length > 0) {
             const routinesPath = `${slug}/routines.json`
-            await writeTextFile(handle, routinesPath, JSON.stringify({ routines }, null, 2))
+            const routinesPretty = JSON.stringify({ routines }, null, 2)
+            await writeTextFile(handle, routinesPath, routinesPretty)
             fileMtimeCache.delete(routinesPath)
             ownWriteAt.set(routinesPath, Date.now())
             knownVaultFiles.add(routinesPath)
+
+            const rootRoutinesPath = 'routines.json'
+            await writeTextFile(handle, rootRoutinesPath, routinesPretty)
+            fileMtimeCache.delete(rootRoutinesPath)
+            ownWriteAt.set(rootRoutinesPath, Date.now())
+            knownVaultFiles.add(rootRoutinesPath)
           }
         } catch { /* ignore */ }
       }
@@ -579,6 +641,17 @@ async function handleStoreRemove(key: string): Promise<void> {
 /** Write all debounced changes immediately (call on page hide). */
 export async function flushVaultWrites(): Promise<void> {
   if (!isWriteAllowed()) return
+  if (!handle) {
+    try {
+      const saved = await loadVaultHandle()
+      if (saved && (await hasPermission(saved))) {
+        handle = saved
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  if (!handle) return
   const entries = Array.from(pendingWrites.entries())
   pendingWrites.clear()
   for (const [path, entry] of entries) {
@@ -605,7 +678,8 @@ export async function watchTick(): Promise<void> {
   // 1. Detect DELETED files from local disk (Obsidian-style deletion)
   // -------------------------------------------------------------------------
   for (const knownPath of Array.from(knownVaultFiles)) {
-    if (!knownPath.startsWith(`${slug}/`)) continue
+    const isRootJson = !knownPath.includes('/') && knownPath.endsWith('.json')
+    if (!knownPath.startsWith(`${slug}/`) && !isRootJson) continue
     if (currentPathSet.has(knownPath)) continue
 
     // File is GONE from disk!

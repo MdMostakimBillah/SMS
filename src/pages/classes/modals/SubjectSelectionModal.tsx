@@ -5,6 +5,8 @@ import { useNavChain } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
 import type { Subject } from '@/pages/teachers/types'
 import type { ClassSection } from '@/store/classStore'
+import { flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 
 interface SubjectSelectionModalProps {
   subjects: Subject[]
@@ -179,6 +181,8 @@ export function SubjectSelectionModal({
             onClick={() => {
               if (showSubjectModal) {
                 updateSection(showSubjectModal.classId, showSubjectModal.sectionId, { subjectIds: tempSelectedSubjects })
+                flushPendingWrites()
+                void flushVaultWrites()
               }
               setShowSubjectModal(null)
             }}

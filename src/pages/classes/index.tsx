@@ -17,7 +17,8 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/lib/api'
-import { getSlug } from '@/lib/storage'
+import { getSlug, flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { setLocalStorageMode } from '@/lib/storageMode'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { useAppStore } from '@/store/appStore'
@@ -129,6 +130,8 @@ export default function ClassesPage() {
     setEditingInst(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+    flushPendingWrites()
+    await flushVaultWrites()
 
     try {
       const viewingId = useSuperAdminStore.getState().viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)

@@ -3,6 +3,8 @@ import { Clock, Trash2, Save, Plus, ChevronDown, ChevronUp, Pencil, X } from 'lu
 import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
+import { flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { inputClass } from '../constants'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { ClassTimeEditForm } from './ClassTimeEditForm'
@@ -180,7 +182,14 @@ export const ClassCard = React.memo(function ClassCard({
             )}
             {canDelete('classes.classes') && (
               <button
-                onClick={(e) => { e.stopPropagation(); if (confirm(isBn ? 'এই শ্রেণি মুছে ফেলতে চান?' : 'Delete this class?')) deleteClass(cls.id) }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (confirm(isBn ? 'এই শ্রেণি মুছে ফেলতে চান?' : 'Delete this class?')) {
+                    deleteClass(cls.id)
+                    flushPendingWrites()
+                    void flushVaultWrites()
+                  }
+                }}
                 style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--red-light)', border: '1px solid var(--red)', cursor: 'pointer', fontSize: '0.625rem', color: 'var(--red)', fontFamily: 'inherit' }}
               >
                 <Trash2 size={11} />

@@ -418,6 +418,43 @@ describe('vault — Mode C (local-first browser sync)', () => {
     expect(updatedParsed.state.students[0].photo).toContain('data:image/png;base64,')
   }, 12000)
 
+  it('writes classes instantly to disk at both {slug}/classes.json and root classes.json', async () => {
+    await vaultConnectFolder()
+    registerReloadRequester(() => undefined)
+
+    const json = JSON.stringify({
+      state: {
+        classes: [
+          {
+            id: 'CLS-01',
+            name: 'Class 1',
+            nameBn: 'শ্রেণি ১',
+            sections: [{ id: 'SEC-CLS-01-A', name: 'A', seatQuantity: 40 }],
+          },
+        ],
+        routines: [{ classId: 'CLS-01', sectionId: 'SEC-CLS-01-A', periodDuration: 40 }],
+      },
+      version: 7,
+    })
+
+    notifyVaultWrite('edutech-classes_demo', json)
+    await flushVaultWrites()
+
+    const slugClasses = await readTextFile(pickHandle, 'demo/classes.json')
+    expect(slugClasses).toContain('Class 1')
+    expect(slugClasses).toContain('SEC-CLS-01-A')
+
+    const rootClasses = await readTextFile(pickHandle, 'classes.json')
+    expect(rootClasses).toContain('Class 1')
+    expect(rootClasses).toContain('SEC-CLS-01-A')
+
+    const slugRoutines = await readTextFile(pickHandle, 'demo/routines.json')
+    expect(slugRoutines).toContain('CLS-01')
+
+    const rootRoutines = await readTextFile(pickHandle, 'routines.json')
+    expect(rootRoutines).toContain('CLS-01')
+  })
+
   it('disconnects and clears status', async () => {
     await vaultConnectFolder()
     await vaultDisconnect()

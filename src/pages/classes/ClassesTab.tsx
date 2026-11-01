@@ -2,6 +2,8 @@ import { useState, useCallback, useMemo } from 'react'
 import { CalendarDays, Download } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { type ClassSection, type ClassInfo, type InstitutionSettings } from '@/store/classStore'
+import { flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import type { StudentAdmission } from '@/pages/students/admission/types'
@@ -104,6 +106,8 @@ export default function ClassesTab({
       }
     }
     addClass({ id, name: newClassName.trim(), nameBn: newClassNameBn.trim() || newClassName.trim(), startTime: institution.startTime, endTime: institution.endTime, sections, subjectIds, createdAt: now, updatedAt: now })
+    flushPendingWrites()
+    void flushVaultWrites()
     setNewClassName(''); setNewClassNameBn(''); setCopyFromClassId(''); setShowAddClass(false)
   }
 
@@ -114,11 +118,15 @@ export default function ClassesTab({
     const nextLetter = secLetters[cls.sections.length] || 'A'
     const secId = `SEC-${classId}-${nextLetter}`
     addSection(classId, { id: secId, name: nextLetter, seatQuantity: 40, classTeacherId: '', subjectIds: [] })
+    flushPendingWrites()
+    void flushVaultWrites()
   }
 
   const handleSaveClassName = (classId: string) => {
     if (!classNameForm.name.trim()) return
     updateClass(classId, { name: classNameForm.name.trim(), nameBn: classNameForm.nameBn.trim() || classNameForm.name.trim() })
+    flushPendingWrites()
+    void flushVaultWrites()
     setEditingClassName(null)
   }
 
@@ -133,11 +141,15 @@ export default function ClassesTab({
     const nextLetter = secLetters[targetClass.sections.length] || 'A'
     const newSecId = `SEC-${copyTarget.classId}-${nextLetter}`
     addSection(copyTarget.classId, { id: newSecId, name: nextLetter, seatQuantity: sourceSection.seatQuantity, classTeacherId: '', subjectIds: [...(sourceSection.subjectIds || [])] })
+    flushPendingWrites()
+    void flushVaultWrites()
     setCopySectionModal(null); setCopyTarget({ classId: '', sectionId: '' })
   }
 
   const handleSaveClassTime = (classId: string) => {
     updateClass(classId, classTimeForm)
+    flushPendingWrites()
+    void flushVaultWrites()
     setEditingClassTime(null)
   }
 
@@ -151,6 +163,8 @@ export default function ClassesTab({
 
   const handleBulkTimeApply = () => {
     selectedClasses.forEach((classId) => { updateClass(classId, { startTime: bulkTimeForm.startTime, endTime: bulkTimeForm.endTime }) })
+    flushPendingWrites()
+    void flushVaultWrites()
     setShowBulkTime(false); setSelectedClasses([]); setBulkMode(false)
   }
 
@@ -164,6 +178,8 @@ export default function ClassesTab({
         updateSection(classId, sec.id, { subjectIds: merged })
       })
     })
+    flushPendingWrites()
+    void flushVaultWrites()
     setShowBulkSubject(false); setSelectedClasses([]); setBulkMode(false)
   }
 
@@ -179,6 +195,8 @@ export default function ClassesTab({
         addSection(classId, { id: secId, name: letter, seatQuantity: bulkSeatQuantity, classTeacherId: '', subjectIds: [] })
       }
     })
+    flushPendingWrites()
+    void flushVaultWrites()
     setShowBulkSection(false); setSelectedClasses([]); setBulkMode(false)
   }
 

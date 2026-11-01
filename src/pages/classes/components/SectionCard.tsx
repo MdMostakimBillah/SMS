@@ -2,6 +2,8 @@ import { Trash2, Save, Copy, BookOpen, X } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
+import { flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { TeacherPreviewCard } from './TeacherPreviewCard'
 
 interface SectionCardProps {
@@ -156,7 +158,11 @@ export function SectionCard({
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                deleteSection(cls.id, sec.id)
+                if (confirm(isBn ? 'এই সেকশন মুছে ফেলতে চান?' : 'Delete this section?')) {
+                  deleteSection(cls.id, sec.id)
+                  flushPendingWrites()
+                  void flushVaultWrites()
+                }
               }}
               style={{
                 padding: '0.25rem',
@@ -224,6 +230,8 @@ export function SectionCard({
                         onClick={() => {
                           const updated = sec.subjectIds.filter((s) => s !== sid)
                           updateSection(cls.id, sec.id, { subjectIds: updated })
+                          flushPendingWrites()
+                          void flushVaultWrites()
                           setSecForm((p) => ({ ...p, subjectIds: updated }))
                         }}
                         style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
@@ -255,6 +263,8 @@ export function SectionCard({
             <button
               onClick={() => {
                 updateSection(cls.id, sec.id, { name: secForm.name || sec.name, seatQuantity: secForm.seatQuantity, classTeacherId: secForm.classTeacherId })
+                flushPendingWrites()
+                void flushVaultWrites()
                 setEditingSection(null)
               }}
               style={{ flex: 1, padding: '0.4375rem', borderRadius: '0.4375rem', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '0.6875rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}

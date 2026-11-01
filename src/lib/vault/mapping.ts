@@ -108,6 +108,12 @@ export function vaultPathToKey(
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
 
+  // Root files: classes.json, teachers.json, students.json, routines.json
+  if (segments.length === 1 && segments[0].endsWith('.json') && scope?.slug) {
+    const base = segments[0].slice(0, -'.json'.length)
+    return toKey(base, scope.slug, scope.userId ?? undefined)
+  }
+
   // {slug}/{base}.json — institution-wide data
   if (segments.length === 2 && segments[1].endsWith('.json')) {
     const base = segments[1].slice(0, -'.json'.length)
@@ -167,11 +173,16 @@ export function isVaultImagePath(path: string): boolean {
 export function parseVaultImagePath(path: string, scopeSlug?: string): VaultImageTarget | null {
   const segments = path.split('/').filter(Boolean)
   if (segments.length < 2) return null
-  const slug = segments[0]
-  if (scopeSlug && slug !== scopeSlug) return null
+  let slug = segments[0]
 
-  // Allow {slug}/images/... or direct {slug}/...
+  // Allow root images folder when scopeSlug is provided: images/logo.png, images/teachers/ET0001.png
   let relSegments = segments.slice(1)
+  if (slug === 'images' && scopeSlug) {
+    slug = scopeSlug
+    relSegments = segments
+  } else if (scopeSlug && slug !== scopeSlug) {
+    return null
+  }
   if (relSegments[0] === 'images') {
     relSegments = relSegments.slice(1)
   }

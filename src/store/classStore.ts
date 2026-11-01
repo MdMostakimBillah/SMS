@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { classesApi } from '@/lib/api'
 
@@ -369,10 +370,16 @@ export const useClassStore = create<ClassState>()(
       serverSynced: false,
       syncing: false,
 
-      updateInstitution: (data) => set((state) => ({ institution: { ...state.institution, ...data } })),
+      updateInstitution: (data) => {
+        set((state) => ({ institution: { ...state.institution, ...data } }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
       addClass: (cls) => {
         set((state) => ({ classes: [...state.classes, cls] }))
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -380,11 +387,15 @@ export const useClassStore = create<ClassState>()(
         set((state) => ({
           classes: state.classes.map((c) => (c.id === id ? { ...c, ...data, updatedAt: new Date().toISOString().split('T')[0] } : c)),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
       deleteClass: (id) => {
         set((state) => ({ classes: state.classes.filter((c) => c.id !== id) }))
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -394,6 +405,8 @@ export const useClassStore = create<ClassState>()(
             c.id === classId ? { ...c, sections: [...c.sections, section], updatedAt: new Date().toISOString().split('T')[0] } : c
           ),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -409,6 +422,8 @@ export const useClassStore = create<ClassState>()(
               : c
           ),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -420,6 +435,8 @@ export const useClassStore = create<ClassState>()(
               : c
           ),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -442,6 +459,8 @@ export const useClassStore = create<ClassState>()(
             ],
           }
         })
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -462,6 +481,8 @@ export const useClassStore = create<ClassState>()(
           routines[idx] = { ...routines[idx], periods }
           return { routines }
         })
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -478,6 +499,8 @@ export const useClassStore = create<ClassState>()(
           routines[idx] = { ...routines[idx], periods }
           return { routines }
         })
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -497,6 +520,8 @@ export const useClassStore = create<ClassState>()(
             sessionRoutines: newSessionRoutines,
           }
         })
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -504,12 +529,15 @@ export const useClassStore = create<ClassState>()(
         set((state) => {
           const { institution } = state
           if (institution.sessions.includes(session)) return state
-          return {
+          const next = {
             institution: {
               ...institution,
               sessions: [...institution.sessions, session],
             },
           }
+          flushPendingWrites()
+          void flushVaultWrites()
+          return next
         }),
 
       removeSession: (session) =>
@@ -523,13 +551,16 @@ export const useClassStore = create<ClassState>()(
           const newCurrent = institution.currentSession === session ? newSessions[0] || '' : institution.currentSession
           const targetClasses = newSessionClasses[newCurrent] || state.classes
           const targetRoutines = newSessionRoutines[newCurrent] || state.routines
-          return {
+          const next = {
             institution: { ...institution, sessions: newSessions, currentSession: newCurrent },
             classes: targetClasses,
             routines: targetRoutines,
             sessionClasses: newSessionClasses,
             sessionRoutines: newSessionRoutines,
           }
+          flushPendingWrites()
+          void flushVaultWrites()
+          return next
         }),
 
       importFromSession: (fromSession) => {
@@ -564,6 +595,8 @@ export const useClassStore = create<ClassState>()(
             sessionRoutines: { ...sessionRoutines, [currentSession]: newRoutines },
           }
         })
+        flushPendingWrites()
+        void flushVaultWrites()
         queueServerSync(_get)
       },
 
@@ -635,7 +668,7 @@ export const useClassStore = create<ClassState>()(
     }),
     {
       name: 'edutech-classes',
-      storage: createNamespacedStorage('edutech-classes', undefined, { debounce: true }),
+      storage: createNamespacedStorage('edutech-classes'),
       version: 7,
       migrate: (persistedState: any, version: number) => {
         if (version === 0) {
