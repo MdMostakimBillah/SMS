@@ -148,6 +148,10 @@ export function syncUserSchool(school: any, u: SessionUser | User): void {
     sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
     sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
   }
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+    if (mapped.serverUrl) localStorage.setItem('edutech_server_url', mapped.serverUrl)
+  }
 
   const brandColor = school.brandColor || '#6366f1'
   const currentTheme = useAppStore.getState().theme

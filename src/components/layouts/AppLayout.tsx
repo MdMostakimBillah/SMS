@@ -75,6 +75,10 @@ export default function AppLayout() {
             sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
             sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
           }
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+            if (mapped.serverUrl) localStorage.setItem('edutech_server_url', mapped.serverUrl)
+          }
           const brand = res.school.brandColor || '#6366f1'
           const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
           applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
@@ -99,6 +103,10 @@ export default function AppLayout() {
         sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
         sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
       }
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+        if (mapped.serverUrl) localStorage.setItem('edutech_server_url', mapped.serverUrl)
+      }
       const brand = user.school.brandColor || '#6366f1'
       const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
       applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
@@ -117,6 +125,10 @@ export default function AppLayout() {
             if (typeof sessionStorage !== 'undefined') {
               sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
               sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
+            }
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+              if (mapped.serverUrl) localStorage.setItem('edutech_server_url', mapped.serverUrl)
             }
             const brand = res.school.brandColor || '#6366f1'
             const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)

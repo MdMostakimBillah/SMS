@@ -147,7 +147,31 @@ export function generateDarkColors(brandHex: string): ThemeColors {
 
 export function mapSchoolToInstitutionSettings(school: any, current?: InstitutionSettings): InstitutionSettings {
   const brand = school.brandColor || current?.lightColors?.brand || '#6366f1'
-  const isLocalComp = school.storageMode === 'local_computer' || current?.storageMode === 'local_computer'
+  const localSettingMode =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('edutech_storage_mode') : null
+  const sessSettingMode =
+    typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_storage_mode') : null
+
+  const isLocalComp =
+    school.storageMode === 'local_computer' ||
+    current?.storageMode === 'local_computer' ||
+    localSettingMode === 'local_computer' ||
+    sessSettingMode === 'local_computer'
+
+  const isLocalServ =
+    school.storageMode === 'local_server' ||
+    current?.storageMode === 'local_server' ||
+    localSettingMode === 'local_server' ||
+    sessSettingMode === 'local_server'
+
+  const effectiveStorageMode: 'cloud' | 'local_computer' | 'local_server' = isLocalComp
+    ? 'local_computer'
+    : isLocalServ
+    ? 'local_server'
+    : (school.storageMode === 'cloud' || school.storageMode === 'local_computer' || school.storageMode === 'local_server'
+        ? school.storageMode
+        : current?.storageMode || 'cloud')
+
   return {
     name: school.name || current?.name || '',
     nameBn: school.nameBn || current?.nameBn || school.name || '',
@@ -181,7 +205,7 @@ export function mapSchoolToInstitutionSettings(school: any, current?: Institutio
     sessions: school.sessions
       ? (typeof school.sessions === 'string' ? JSON.parse(school.sessions) : school.sessions)
       : current?.sessions?.length ? current.sessions : ['2025-26'],
-    storageMode: school.storageMode || current?.storageMode || 'cloud',
+    storageMode: effectiveStorageMode,
     serverUrl: school.serverUrl || current?.serverUrl || '',
     folderName: school.folderName || current?.folderName || '',
     storageBytes: (school as any)?.storageBytes ?? (current as any)?.storageBytes ?? 0,

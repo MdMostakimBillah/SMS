@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import {
   vaultConnectFolder,
+  vaultReconnect,
   vaultDisconnect,
   vaultSyncNow,
   getVaultStatus,
@@ -534,6 +535,54 @@ describe('vault — Mode C (local-first browser sync)', () => {
     expect(parsed.state.departments[0].name).toBe('Robotics')
     expect(reloads).toBeGreaterThan(0)
   }, 12000)
+
+  it('preserves manually added teacher across reload when both root and scoped files exist', async () => {
+    await vaultConnectFolder()
+
+    // 1. Browser sets initial teacher
+    localStorage.setItem(
+      'edutech-teachers_demo',
+      JSON.stringify({
+        state: {
+          teachers: [{ id: 'ET0001', nameEn: 'Browser Teacher' }],
+          departments: [],
+          subjects: [],
+          designations: [],
+        },
+        version: 0,
+      })
+    )
+    await vaultSyncNow()
+
+    // Verify both files exist
+    expect(await readTextFile(pickHandle, 'demo/teachers.json')).toBeTruthy()
+    expect(await readTextFile(pickHandle, 'teachers.json')).toBeTruthy()
+
+    // 2. User manually edits teachers.json on disk to add teacher ET0002
+    await sleep(200)
+    await writeTextFile(
+      pickHandle,
+      'teachers.json',
+      JSON.stringify([
+        { id: 'ET0001', nameEn: 'Browser Teacher' },
+        { id: 'ET0002', nameEn: 'Manual Teacher' },
+      ])
+    )
+
+    // 3. Simulate page reload / vault reconnect (hydrateFromVault)
+    await vaultReconnect()
+
+    // Both teachers must be preserved in localStorage and scoped file
+    const raw = localStorage.getItem('edutech-teachers_demo')
+    expect(raw).toBeTruthy()
+    const parsed = JSON.parse(raw!)
+    expect(parsed.state.teachers).toHaveLength(2)
+    expect(parsed.state.teachers.map((t: any) => t.id)).toEqual(['ET0001', 'ET0002'])
+
+    // Twin scoped file must also be updated
+    const scopedRaw = await readTextFile(pickHandle, 'demo/teachers.json')
+    expect(scopedRaw).toContain('Manual Teacher')
+  })
 
   it('disconnects and clears status', async () => {
     await vaultConnectFolder()

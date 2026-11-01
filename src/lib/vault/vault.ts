@@ -44,6 +44,7 @@ import {
   writeBinaryFile,
   readBinaryFile,
   listAllVaultFiles,
+  type VaultFileInfo,
   type VfsDirectoryHandle,
 } from './fsAccess'
 
@@ -354,6 +355,35 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
 // Hydration: folder files → localStorage → live stores
 // ---------------------------------------------------------------------------
 
+function getDomainSlot(path: string): string {
+  if (path.includes('/users/')) return path
+  const baseName = (path.split('/').pop() || path).toLowerCase()
+  if (baseName === 'admissions.json') return 'students.json'
+  if (baseName === 'staff.json') return 'teachers.json'
+  return baseName
+}
+
+function getTwinPaths(path: string, slug: string): string[] {
+  const parts = path.split('/')
+  const baseName = parts[parts.length - 1]
+  const isRoot = parts.length === 1
+
+  const twins: string[] = []
+  if (isRoot) {
+    twins.push(`${slug}/${baseName}`)
+    if (baseName === 'students.json') twins.push(`${slug}/admissions.json`)
+  } else if (parts.length === 2 && parts[0] === slug) {
+    twins.push(baseName)
+    if (baseName === 'admissions.json') {
+      twins.push('students.json')
+      twins.push(`${slug}/students.json`)
+    } else if (baseName === 'students.json') {
+      twins.push(`${slug}/admissions.json`)
+    }
+  }
+  return twins.filter((t) => t !== path)
+}
+
 async function hydrateFromVault(): Promise<number> {
   if (!handle) return 0
   const slug = currentSlug()
@@ -382,24 +412,55 @@ async function hydrateFromVault(): Promise<number> {
     }
   }
 
-  // 2. Load all JSON store files
+  // 2. Load all JSON store files, grouped by domain slot so that duplicate twin
+  // files (e.g. root teachers.json vs {slug}/teachers.json) are deduplicated by mtime.
+  // The newest file wins, and the older twin is updated so disk files stay in sync.
+  const jsonGroups = new Map<string, VaultFileInfo[]>()
   for (const file of files) {
     if (!file.path.endsWith('.json') || isBackupBundlePath(file.path)) continue
     const key = vaultPathToKey(file.path, { slug, userId: currentUserId() })
     if (!key) continue
-    const text = await readTextFile(handle, file.path)
+    const slot = getDomainSlot(file.path)
+    const existing = jsonGroups.get(slot) || []
+    existing.push(file)
+    jsonGroups.set(slot, existing)
+  }
+
+  for (const [, group] of jsonGroups) {
+    // Sort descending by lastModified: most recently edited file first
+    group.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0))
+    const winner = group[0]
+    const key = vaultPathToKey(winner.path, { slug, userId: currentUserId() })
+    if (!key) continue
+
+    const text = await readTextFile(handle, winner.path)
     if (text === null) continue
     try {
       JSON.parse(text) // validate — never load a hand-broken file
     } catch {
       continue
     }
-    const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key), file.path)
+
+    const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key), winner.path)
     localStorage.setItem(key, normalized)
-    fileContentCache.set(file.path, compactJson(normalized))
-    fileMtimeCache.set(file.path, file.lastModified)
-    knownVaultFiles.add(file.path)
+    fileContentCache.set(winner.path, compactJson(normalized))
+    fileMtimeCache.set(winner.path, winner.lastModified)
+    knownVaultFiles.add(winner.path)
     applied++
+
+    // Sync winner's text to older twin files in the group so they don't stay stale on disk
+    for (let i = 1; i < group.length; i++) {
+      const loser = group[i]
+      try {
+        await writeTextFile(handle, loser.path, text)
+        fileContentCache.set(loser.path, compactJson(text))
+        fileMtimeCache.delete(loser.path)
+        ownWriteAt.set(loser.path, Date.now())
+        knownVaultFiles.add(loser.path)
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   // 3. Load any standalone image files found in the vault
@@ -858,6 +919,20 @@ export async function watchTick(): Promise<void> {
       localStorage.setItem(key, normalized)
       fileContentCache.set(file.path, fileCompact)
       changed = true
+
+      // Immediately sync this external edit to twin files so disk files stay in sync
+      const twins = getTwinPaths(file.path, slug)
+      for (const twin of twins) {
+        try {
+          await writeTextFile(handle, twin, text)
+          fileContentCache.set(twin, fileCompact)
+          fileMtimeCache.delete(twin)
+          ownWriteAt.set(twin, Date.now())
+          knownVaultFiles.add(twin)
+        } catch {
+          /* ignore */
+        }
+      }
       continue
     }
 

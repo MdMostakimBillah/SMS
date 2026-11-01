@@ -36,6 +36,13 @@ export function getActiveStorageMode(): StorageMode {
   }
 
   try {
+    if (typeof localStorage !== 'undefined') {
+      const loc = localStorage.getItem('edutech_storage_mode')
+      if (loc === 'local_computer' || loc === 'local_server') {
+        return loc as StorageMode
+      }
+    }
+
     if (typeof sessionStorage !== 'undefined') {
       const sess = sessionStorage.getItem('edutech_storage_mode')
       if (sess === 'cloud' || sess === 'local_computer' || sess === 'local_server') {
@@ -45,7 +52,7 @@ export function getActiveStorageMode(): StorageMode {
 
     if (typeof localStorage !== 'undefined') {
       const loc = localStorage.getItem('edutech_storage_mode')
-      if (loc === 'cloud' || loc === 'local_computer' || loc === 'local_server') {
+      if (loc === 'cloud') {
         return loc as StorageMode
       }
 
