@@ -12,6 +12,8 @@ import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { teachersApi } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage, generateSimpleTeacherId } from '@/lib/teacherMappers'
+import { flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 import { FormField } from '@/components/ui/FormField'
 import { usePermission } from '@/hooks/usePermission'
@@ -242,6 +244,8 @@ export default function AddTeacherPage() {
           updatedAt: new Date().toISOString(),
         }
         upsertServerTeacher(localTeacher)
+        flushPendingWrites()
+        await flushVaultWrites()
         setDoneId(localId)
         setDone(true)
         return
@@ -249,6 +253,8 @@ export default function AddTeacherPage() {
 
       const created = await teachersApi.create(payload)
       upsertServerTeacher(serverTeacherToTeacher(created))
+      flushPendingWrites()
+      await flushVaultWrites()
       setDoneId(created.id)
       setDone(true)
     } catch (err) {

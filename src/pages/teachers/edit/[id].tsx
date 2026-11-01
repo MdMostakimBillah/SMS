@@ -11,6 +11,8 @@ import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
 import { teachersApi } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { teacherToPayload, serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
+import { flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES } from '@/lib/constants'
 import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
@@ -245,109 +247,86 @@ export default function EditTeacherPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
-      if (!teacher || !nameEn.trim() || !phone.trim() || !departmentId) {
+      if (!teacher || !nameEn.trim() || !phone.trim()) {
         alert(isBn ? 'অনুগ্রহ করে প্রয়োজনীয় তথ্য পূরণ করুন' : 'Please fill in required fields')
         return
       }
       setSaving(true)
       setSubmitError('')
       try {
+        const resolvedDeptId = departmentId || teacher.departmentId || ''
+        const updatedTeacherData: Teacher = {
+          ...teacher,
+          id: teacher.id,
+          nameEn: nameEn.trim(),
+          nameBn: nameBn.trim(),
+          gender,
+          dob,
+          bloodGroup,
+          religion,
+          phone: phone.trim(),
+          email: email.trim(),
+          address: address.trim(),
+          nid: nid.trim(),
+          emergencyPhone: emergencyPhone.trim(),
+          photo,
+          departmentId: resolvedDeptId,
+          subjectIds,
+          designation,
+          category,
+          qualification: qualification.trim(),
+          experience: experience.trim(),
+          joiningDate,
+          salary: Number(salary) || 0,
+          salaryStartDate: salaryStartDate || undefined,
+          overtime: Number(overtime) || 0,
+          status,
+          inTime,
+          outTime,
+          fatherNameEn: fatherNameEn.trim(),
+          fatherNameBn: fatherNameBn.trim(),
+          fatherPhone: fatherPhone.trim(),
+          fatherNid: fatherNid.trim(),
+          motherNameEn: motherNameEn.trim(),
+          motherNameBn: motherNameBn.trim(),
+          motherPhone: motherPhone.trim(),
+          guardianName: guardianName.trim(),
+          guardianPhone: guardianPhone.trim(),
+          guardianRelation: guardianRelation.trim(),
+          parentAddress: parentAddress.trim(),
+          signature,
+          createdAt: teacher.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+
+        // Always update teacherStore and flush local storage & vault immediately
+        upsertServerTeacher(updatedTeacherData)
+        flushPendingWrites()
+        await flushVaultWrites()
+
         if (isLocalComputerMode()) {
-          const localTeacher: Teacher = {
-            id: teacher.id,
-            nameEn: nameEn.trim(),
-            nameBn: nameBn.trim(),
-            gender,
-            dob,
-            bloodGroup,
-            religion,
-            phone: phone.trim(),
-            email: email.trim(),
-            address: address.trim(),
-            nid: nid.trim(),
-            emergencyPhone: emergencyPhone.trim(),
-            photo,
-            departmentId,
-            subjectIds,
-            designation,
-            category,
-            qualification: qualification.trim(),
-            experience: experience.trim(),
-            joiningDate,
-            salary: Number(salary) || 0,
-            salaryStartDate: salaryStartDate || undefined,
-            overtime: Number(overtime) || 0,
-            status,
-            inTime,
-            outTime,
-            fatherNameEn: fatherNameEn.trim(),
-            fatherNameBn: fatherNameBn.trim(),
-            fatherPhone: fatherPhone.trim(),
-            fatherNid: fatherNid.trim(),
-            motherNameEn: motherNameEn.trim(),
-            motherNameBn: motherNameBn.trim(),
-            motherPhone: motherPhone.trim(),
-            guardianName: guardianName.trim(),
-            guardianPhone: guardianPhone.trim(),
-            guardianRelation: guardianRelation.trim(),
-            parentAddress: parentAddress.trim(),
-            signature,
-            createdAt: teacher.createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-          upsertServerTeacher(localTeacher)
           setSaved(true)
-          setTimeout(() => navigate(nav(`/teachers/all`)), 1200)
+          setTimeout(() => navigate(nav(`/teachers/all`)), 1000)
           return
         }
 
-        // Server-authoritative update (Phase 7): single API write — no local
-        // duplicate. The response row replaces the store entry.
-        const updated = await teachersApi.update(
-          teacher.id,
-          teacherToPayload({
-            photo,
-            nameEn: nameEn.trim(),
-            nameBn: nameBn.trim(),
-            gender,
-            dob,
-            bloodGroup,
-            religion,
-            phone: phone.trim(),
-            email: email.trim(),
-            address: address.trim(),
-            nid: nid.trim(),
-            emergencyPhone: emergencyPhone.trim(),
-            departmentId,
-            subjectIds,
-            designation,
-            category,
-            qualification: qualification.trim(),
-            experience: experience.trim(),
-            joiningDate,
-            salary: Number(salary) || 0,
-            salaryStartDate: salaryStartDate || undefined,
-            overtime: Number(overtime) || 0,
-            status,
-            inTime,
-            outTime,
-            fatherNameEn: fatherNameEn.trim(),
-            fatherNameBn: fatherNameBn.trim(),
-            fatherPhone: fatherPhone.trim(),
-            fatherNid: fatherNid.trim(),
-            motherNameEn: motherNameEn.trim(),
-            motherNameBn: motherNameBn.trim(),
-            motherPhone: motherPhone.trim(),
-            guardianName: guardianName.trim(),
-            guardianPhone: guardianPhone.trim(),
-            guardianRelation: guardianRelation.trim(),
-            parentAddress: parentAddress.trim(),
-            signature,
-          })
-        )
-        upsertServerTeacher(serverTeacherToTeacher(updated))
+        // In database / provider mode, also update server database
+        try {
+          const updated = await teachersApi.update(
+            teacher.id,
+            teacherToPayload(updatedTeacherData)
+          )
+          upsertServerTeacher(serverTeacherToTeacher(updated))
+          flushPendingWrites()
+          await flushVaultWrites()
+        } catch (apiErr) {
+          console.warn('API update failed, local copy preserved:', apiErr)
+          // If server failed, rethrow or inform unless already saved locally
+          throw apiErr
+        }
+
         setSaved(true)
-        setTimeout(() => navigate(nav(`/teachers/all`)), 1200)
+        setTimeout(() => navigate(nav(`/teachers/all`)), 1000)
       } catch (err) {
         setSubmitError(apiErrorMessage(err, isBn))
       } finally {
@@ -588,13 +567,13 @@ export default function EditTeacherPage() {
           <FormField
             labelEn="Department"
             labelBn="বিভাগ"
-            value={departmentMap.get(departmentId)?.name || ''}
+            value={departmentMap.get(departmentId)?.name || departmentByNameMap.get(departmentId)?.name || departmentId || ''}
             onChange={(v) => {
               const dept = departmentByNameMap.get(v)
-              setDepartmentId(dept?.id || '')
+              setDepartmentId(dept?.id || v)
               setSubjectIds([])
             }}
-            required
+            required={departments.length > 0}
             isBn={isBn}
             options={departments.map((d) => d.name)}
           />

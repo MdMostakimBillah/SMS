@@ -26,6 +26,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { teachersApi, type TeacherData } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
+import { flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
@@ -204,6 +206,8 @@ export default function TeacherBulkUpdatePage() {
           })
         }
       }
+      flushPendingWrites()
+      await flushVaultWrites()
       setApplied(true)
       setApplying(false)
       setTimeout(() => setApplied(false), 3000)
@@ -220,6 +224,8 @@ export default function TeacherBulkUpdatePage() {
         upsertServerTeacher(serverTeacherToTeacher(updated))
         done++
       }
+      flushPendingWrites()
+      await flushVaultWrites()
       setApplied(true)
       setTimeout(() => setApplied(false), 3000)
     } catch (err) {

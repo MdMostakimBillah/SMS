@@ -276,6 +276,16 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
               await writeBinaryFile(handle, directPath, img.bytes)
               knownVaultFiles.add(directPath)
               ownWriteAt.set(directPath, Date.now())
+
+              const rootImgPath = `images/teachers/${t.id}_photo.${img.ext}`
+              await writeBinaryFile(handle, rootImgPath, img.bytes)
+              knownVaultFiles.add(rootImgPath)
+              ownWriteAt.set(rootImgPath, Date.now())
+
+              const rootDirectPath = `images/teachers/${t.id}.${img.ext}`
+              await writeBinaryFile(handle, rootDirectPath, img.bytes)
+              knownVaultFiles.add(rootDirectPath)
+              ownWriteAt.set(rootDirectPath, Date.now())
             }
           }
           if (typeof t.signature === 'string' && t.signature.startsWith('data:')) {
@@ -285,6 +295,11 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
               await writeBinaryFile(handle, imgPath, img.bytes)
               knownVaultFiles.add(imgPath)
               ownWriteAt.set(imgPath, Date.now())
+
+              const rootSigPath = `images/teachers/${t.id}_signature.${img.ext}`
+              await writeBinaryFile(handle, rootSigPath, img.bytes)
+              knownVaultFiles.add(rootSigPath)
+              ownWriteAt.set(rootSigPath, Date.now())
             }
           }
         }
@@ -428,6 +443,19 @@ async function seedVaultFromStorage(): Promise<number> {
       fileContentCache.set(studentsPath, compactJson(raw))
       ownWriteAt.set(studentsPath, Date.now())
       knownVaultFiles.add(studentsPath)
+
+      const rootStudents = 'students.json'
+      await writeTextFile(handle, rootStudents, pretty)
+      fileContentCache.set(rootStudents, compactJson(raw))
+      ownWriteAt.set(rootStudents, Date.now())
+      knownVaultFiles.add(rootStudents)
+    }
+    if (path === `${slug}/teachers.json`) {
+      const rootTeachers = 'teachers.json'
+      await writeTextFile(handle, rootTeachers, pretty)
+      fileContentCache.set(rootTeachers, compactJson(raw))
+      ownWriteAt.set(rootTeachers, Date.now())
+      knownVaultFiles.add(rootTeachers)
     }
     await exportStoreImages(slug, path, raw)
     seeded++
@@ -441,7 +469,20 @@ async function seedVaultFromStorage(): Promise<number> {
 // ---------------------------------------------------------------------------
 
 function handleStoreWrite(key: string, json: string): void {
-  if (!handle) return
+  if (!handle) {
+    void (async () => {
+      try {
+        const saved = await loadVaultHandle()
+        if (saved && (await hasPermission(saved))) {
+          handle = saved
+          handleStoreWrite(key, json)
+        }
+      } catch {
+        /* ignore */
+      }
+    })()
+    return
+  }
   const slug = currentSlug()
   if (!slug || !keyMatchesInstitution(key, slug, currentUserId())) return
   const path = keyToVaultPath(key)
@@ -457,6 +498,16 @@ function handleStoreWrite(key: string, json: string): void {
 }
 
 async function writePath(path: string, json: string): Promise<void> {
+  if (!handle) {
+    try {
+      const saved = await loadVaultHandle()
+      if (saved && (await hasPermission(saved))) {
+        handle = saved
+      }
+    } catch {
+      /* ignore */
+    }
+  }
   if (!handle) return
   const slug = currentSlug()
   try {
@@ -467,6 +518,14 @@ async function writePath(path: string, json: string): Promise<void> {
     knownVaultFiles.add(path)
     if (slug) {
       await exportStoreImages(slug, path, json)
+      if (path === `${slug}/teachers.json`) {
+        const rootTeachersPath = 'teachers.json'
+        await writeTextFile(handle, rootTeachersPath, prettifyJson(json))
+        fileContentCache.set(rootTeachersPath, json)
+        fileMtimeCache.delete(rootTeachersPath)
+        ownWriteAt.set(rootTeachersPath, Date.now())
+        knownVaultFiles.add(rootTeachersPath)
+      }
       if (path === `${slug}/admissions.json`) {
         const studentsPath = `${slug}/students.json`
         await writeTextFile(handle, studentsPath, prettifyJson(json))
@@ -474,6 +533,13 @@ async function writePath(path: string, json: string): Promise<void> {
         fileMtimeCache.delete(studentsPath)
         ownWriteAt.set(studentsPath, Date.now())
         knownVaultFiles.add(studentsPath)
+
+        const rootStudentsPath = 'students.json'
+        await writeTextFile(handle, rootStudentsPath, prettifyJson(json))
+        fileContentCache.set(rootStudentsPath, json)
+        fileMtimeCache.delete(rootStudentsPath)
+        ownWriteAt.set(rootStudentsPath, Date.now())
+        knownVaultFiles.add(rootStudentsPath)
       }
       if (path === `${slug}/classes.json`) {
         try {

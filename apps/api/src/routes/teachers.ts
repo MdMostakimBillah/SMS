@@ -85,9 +85,49 @@ const READ_ROLES = ['school_admin', 'hr_admin', 'super_admin']
 const WRITE_ROLES = ['school_admin', 'hr_admin']
 
 /** departmentId must exist inside the caller's own school (blocks cross-tenant references). */
-async function departmentInSchool(prisma: PrismaClient, departmentId: string, schoolId: string): Promise<boolean> {
-  const dept = await prisma.department.findFirst({ where: { id: departmentId, schoolId }, select: { id: true } })
-  return dept !== null
+async function resolveDepartmentForSchool(
+  prisma: PrismaClient,
+  departmentId: string,
+  schoolId: string
+): Promise<{ valid: boolean; resolvedId?: string }> {
+  // Reject foreign department IDs belonging to another school
+  const foreignDept = await prisma.department.findFirst({
+    where: { id: departmentId, schoolId: { not: schoolId } },
+    select: { id: true },
+  })
+  if (foreignDept) {
+    return { valid: false }
+  }
+
+  // Check if department exists in own school by ID or name
+  let ownDept = await prisma.department.findFirst({
+    where: {
+      schoolId,
+      OR: [{ id: departmentId }, { name: departmentId }],
+    },
+    select: { id: true },
+  })
+
+  // If department does not exist in any school, auto-create it for caller's school
+  if (!ownDept) {
+    try {
+      ownDept = await prisma.department.create({
+        data: {
+          id: departmentId,
+          name: departmentId,
+          schoolId,
+        },
+        select: { id: true },
+      })
+    } catch {
+      ownDept = await prisma.department.findFirst({
+        where: { schoolId, OR: [{ id: departmentId }, { name: departmentId }] },
+        select: { id: true },
+      })
+    }
+  }
+
+  return { valid: true, resolvedId: ownDept?.id || departmentId }
 }
 
 export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
@@ -163,16 +203,21 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
       const schoolId = req.schoolId as string // trusted session state — never the body
       const body = createTeacherSchema.parse(req.body)
 
-      if (body.departmentId && !(await departmentInSchool(prisma, body.departmentId, schoolId))) {
-        audit({
-          action: 'teacher.create',
-          actorId: req.userId,
-          actorRole: req.userRole,
-          schoolId,
-          outcome: 'denied',
-          detail: { reason: 'foreign_department' },
-        })
-        return res.status(400).json({ error: 'Invalid departmentId' })
+      let resolvedDeptId = body.departmentId ?? null
+      if (body.departmentId) {
+        const deptRes = await resolveDepartmentForSchool(prisma, body.departmentId, schoolId)
+        if (!deptRes.valid) {
+          audit({
+            action: 'teacher.create',
+            actorId: req.userId,
+            actorRole: req.userRole,
+            schoolId,
+            outcome: 'denied',
+            detail: { reason: 'foreign_department' },
+          })
+          return res.status(400).json({ error: 'Invalid departmentId' })
+        }
+        resolvedDeptId = deptRes.resolvedId ?? body.departmentId
       }
 
       const school = await prisma.school.findUnique({
@@ -215,7 +260,7 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
           nid: body.nid ?? null,
           emergencyPhone: body.emergencyPhone ?? null,
           photo: body.photo ?? null,
-          departmentId: body.departmentId ?? null,
+          departmentId: resolvedDeptId,
           subjectIds: body.subjectIds ?? [],
           designation: body.designation ?? null,
           qualification: body.qualification ?? null,
@@ -265,16 +310,20 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
       const id = req.params.id as string
 
       const body = updateTeacherSchema.parse(req.body)
-      if (body.departmentId && !(await departmentInSchool(prisma, body.departmentId, schoolId))) {
-        audit({
-          action: 'teacher.update',
-          actorId: req.userId,
-          actorRole: req.userRole,
-          schoolId,
-          outcome: 'denied',
-          detail: { reason: 'foreign_department' },
-        })
-        return res.status(400).json({ error: 'Invalid departmentId' })
+      if (body.departmentId) {
+        const deptRes = await resolveDepartmentForSchool(prisma, body.departmentId, schoolId)
+        if (!deptRes.valid) {
+          audit({
+            action: 'teacher.update',
+            actorId: req.userId,
+            actorRole: req.userRole,
+            schoolId,
+            outcome: 'denied',
+            detail: { reason: 'foreign_department' },
+          })
+          return res.status(400).json({ error: 'Invalid departmentId' })
+        }
+        body.departmentId = deptRes.resolvedId ?? body.departmentId
       }
 
       const data: Prisma.TeacherUpdateManyMutationInput = {}
@@ -320,22 +369,16 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
       if (body.expertSubjects !== undefined) data.expertSubjects = body.expertSubjects
       if (body.applySalaryRule !== undefined) data.applySalaryRule = body.applySalaryRule
 
-      if (Object.keys(data).length > 0) {
-        // Atomic tenant-scoped write: the school check and the update happen in
-        // one statement, closing the find-then-write (TOCTOU) window. A foreign
-        // ID matches zero rows -> 404, indistinguishable from "does not exist".
-        const { count } = await prisma.teacher.updateMany({ where: { id, schoolId }, data })
-        if (count === 0) {
-          audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
-          return res.status(404).json({ error: 'Teacher not found' })
-        }
-      }
-
-      const teacher = await prisma.teacher.findFirst({ where: { id, schoolId } })
-      if (!teacher) {
+      const { count } = await prisma.teacher.updateMany({
+        where: { id, schoolId },
+        data,
+      })
+      if (count === 0) {
         audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
         return res.status(404).json({ error: 'Teacher not found' })
       }
+
+      const teacher = await prisma.teacher.findFirst({ where: { id, schoolId } })
       audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
       res.json(teacher)
     } catch (err) {

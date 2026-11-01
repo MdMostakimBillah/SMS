@@ -30,6 +30,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { teachersApi } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { apiErrorMessage } from '@/lib/teacherMappers'
+import { flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useNavPath } from '@/hooks/useNavPath'
@@ -201,12 +203,22 @@ export default function AllTeachersPage() {
     try {
       if (isLocalComputerMode()) {
         removeServerTeacher(id)
+        flushPendingWrites()
+        await flushVaultWrites()
         setDelConfirm(null)
         setViewT(null)
         return
       }
-      await teachersApi.delete(id) // server is authoritative — no local-only delete
+      try {
+        await teachersApi.delete(id)
+      } catch (delErr: any) {
+        if (delErr?.status !== 404 && delErr?.statusCode !== 404) {
+          throw delErr
+        }
+      }
       removeServerTeacher(id)
+      flushPendingWrites()
+      await flushVaultWrites()
       setDelConfirm(null)
       setViewT(null)
     } catch (err) {

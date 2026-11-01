@@ -283,7 +283,7 @@ function cancelWrite(key: string): void {
   }
 }
 
-function flushPendingWrites(): void {
+export function flushPendingWrites(): void {
   pendingWrites.forEach((entry, key) => {
     clearTimeout(entry.timer)
     if (!isWriteAllowed()) return
