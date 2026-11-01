@@ -286,6 +286,7 @@ export async function listAllVaultFiles(
           }
         }
       } else if (entry.kind === 'directory') {
+        if (entry.name.startsWith('.') || entry.name === 'node_modules') continue
         await walk(entry as VfsDirectoryHandle, [...parts, entry.name])
       }
     }

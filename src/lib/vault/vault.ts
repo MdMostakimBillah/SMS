@@ -75,6 +75,12 @@ let status: VaultStatus = {
 
 const listeners = new Set<(s: VaultStatus) => void>()
 const pendingWrites = new Map<string, { timer: ReturnType<typeof setTimeout>; content: string }>()
+const inFlightWrites = new Set<Promise<void>>()
+
+function trackInFlight(p: Promise<void>): void {
+  inFlightWrites.add(p)
+  p.finally(() => inFlightWrites.delete(p))
+}
 const fileContentCache = new Map<string, string>() // path → compact content we last saw/wrote
 const fileMtimeCache = new Map<string, number>() // path → last known mtime
 const ownWriteAt = new Map<string, number>() // path → when we last wrote it
@@ -353,7 +359,7 @@ async function hydrateFromVault(): Promise<number> {
   const slug = currentSlug()
   if (!slug) return 0
 
-  const files = await listAllVaultFiles(handle, [slug])
+  const files = await listAllVaultFiles(handle)
   let applied = 0
 
   // 1. Check for bundle file first (backup.json or {slug}/backup.json)
@@ -366,7 +372,7 @@ async function hydrateFromVault(): Promise<number> {
           if (parsedBundle?.stores) {
             for (const [sBase, sVal] of Object.entries(parsedBundle.stores)) {
               const sKey = sBase.endsWith(`_${slug}`) ? sBase : `${sBase}_${slug}`
-              const norm = normalizeVaultJsonForStore(sKey, JSON.stringify(sVal), localStorage.getItem(sKey))
+              const norm = normalizeVaultJsonForStore(sKey, JSON.stringify(sVal), localStorage.getItem(sKey), file.path)
               localStorage.setItem(sKey, norm)
               applied++
             }
@@ -388,7 +394,7 @@ async function hydrateFromVault(): Promise<number> {
     } catch {
       continue
     }
-    const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key))
+    const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key), file.path)
     localStorage.setItem(key, normalized)
     fileContentCache.set(file.path, compactJson(normalized))
     fileMtimeCache.set(file.path, file.lastModified)
@@ -396,7 +402,7 @@ async function hydrateFromVault(): Promise<number> {
     applied++
   }
 
-  // 2. Load any standalone image files found in the vault
+  // 3. Load any standalone image files found in the vault
   for (const file of files) {
     const imgTarget = parseVaultImagePath(file.path, slug)
     if (!imgTarget) continue
@@ -425,8 +431,91 @@ async function hydrateFromVault(): Promise<number> {
 }
 
 // ---------------------------------------------------------------------------
-// Seeding: localStorage → folder files
+// Seeding & Writing individual clean JSON files
 // ---------------------------------------------------------------------------
+
+async function writeVaultFile(subPath: string, content: string): Promise<void> {
+  if (!handle) return
+  await writeTextFile(handle, subPath, content)
+  fileContentCache.set(subPath, compactJson(content))
+  fileMtimeCache.delete(subPath)
+  ownWriteAt.set(subPath, Date.now())
+  knownVaultFiles.add(subPath)
+}
+
+async function syncIndividualDomainFiles(slug: string, path: string, rawJson: string): Promise<void> {
+  if (path === `${slug}/teachers.json`) {
+    await writeVaultFile('teachers.json', prettifyJson(rawJson))
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+
+      const departments = state.departments ?? []
+      const deptsPretty = JSON.stringify(departments, null, 2)
+      await writeVaultFile(`${slug}/departments.json`, deptsPretty)
+      await writeVaultFile('departments.json', deptsPretty)
+
+      const subjects = state.subjects ?? []
+      const subjectsPretty = JSON.stringify(subjects, null, 2)
+      await writeVaultFile(`${slug}/subjects.json`, subjectsPretty)
+      await writeVaultFile('subjects.json', subjectsPretty)
+
+      const designations = state.designations ?? []
+      const designationsPretty = JSON.stringify(designations, null, 2)
+      await writeVaultFile(`${slug}/designations.json`, designationsPretty)
+      await writeVaultFile('designations.json', designationsPretty)
+    } catch { /* ignore */ }
+  }
+
+  if (path === `${slug}/admissions.json`) {
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+      const students = state.students ?? []
+      const studentsPretty = JSON.stringify(students, null, 2)
+      await writeVaultFile(`${slug}/students.json`, studentsPretty)
+      await writeVaultFile('students.json', studentsPretty)
+    } catch {
+      await writeVaultFile(`${slug}/students.json`, prettifyJson(rawJson))
+      await writeVaultFile('students.json', prettifyJson(rawJson))
+    }
+  }
+
+  if (path === `${slug}/classes.json`) {
+    await writeVaultFile('classes.json', prettifyJson(rawJson))
+
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+
+      // 1. routines.json
+      const routines = state.routines ?? []
+      const routinesPretty = JSON.stringify(routines, null, 2)
+      await writeVaultFile(`${slug}/routines.json`, routinesPretty)
+      await writeVaultFile('routines.json', routinesPretty)
+
+      // 2. sections.json
+      const classes = state.classes ?? []
+      const sections = classes.flatMap((c: any) =>
+        (c.sections || []).map((s: any) => ({
+          classId: c.id,
+          className: c.name,
+          ...s,
+        }))
+      )
+      const sectionsPretty = JSON.stringify(sections, null, 2)
+      await writeVaultFile(`${slug}/sections.json`, sectionsPretty)
+      await writeVaultFile('sections.json', sectionsPretty)
+
+      // 3. institution.json
+      if (state.institution) {
+        const instPretty = JSON.stringify(state.institution, null, 2)
+        await writeVaultFile(`${slug}/institution.json`, instPretty)
+        await writeVaultFile('institution.json', instPretty)
+      }
+    } catch { /* ignore */ }
+  }
+}
 
 async function seedVaultFromStorage(): Promise<number> {
   if (!handle) return 0
@@ -443,56 +532,8 @@ async function seedVaultFromStorage(): Promise<number> {
     const raw = localStorage.getItem(key)
     if (!path || raw === null) continue
     const pretty = prettifyJson(raw)
-    await writeTextFile(handle, path, pretty)
-    fileContentCache.set(path, compactJson(raw))
-    ownWriteAt.set(path, Date.now())
-    knownVaultFiles.add(path)
-    if (path === `${slug}/admissions.json`) {
-      const studentsPath = `${slug}/students.json`
-      await writeTextFile(handle, studentsPath, pretty)
-      fileContentCache.set(studentsPath, compactJson(raw))
-      ownWriteAt.set(studentsPath, Date.now())
-      knownVaultFiles.add(studentsPath)
-
-      const rootStudents = 'students.json'
-      await writeTextFile(handle, rootStudents, pretty)
-      fileContentCache.set(rootStudents, compactJson(raw))
-      ownWriteAt.set(rootStudents, Date.now())
-      knownVaultFiles.add(rootStudents)
-    }
-    if (path === `${slug}/teachers.json`) {
-      const rootTeachers = 'teachers.json'
-      await writeTextFile(handle, rootTeachers, pretty)
-      fileContentCache.set(rootTeachers, compactJson(raw))
-      ownWriteAt.set(rootTeachers, Date.now())
-      knownVaultFiles.add(rootTeachers)
-    }
-    if (path === `${slug}/classes.json`) {
-      const rootClasses = 'classes.json'
-      await writeTextFile(handle, rootClasses, pretty)
-      fileContentCache.set(rootClasses, compactJson(raw))
-      ownWriteAt.set(rootClasses, Date.now())
-      knownVaultFiles.add(rootClasses)
-
-      try {
-        const parsed = JSON.parse(raw)
-        const routines = parsed?.state?.routines || parsed?.routines
-        if (Array.isArray(routines) && routines.length > 0) {
-          const routinesPath = `${slug}/routines.json`
-          const prettyRoutines = JSON.stringify({ routines }, null, 2)
-          await writeTextFile(handle, routinesPath, prettyRoutines)
-          fileContentCache.set(routinesPath, compactJson(prettyRoutines))
-          ownWriteAt.set(routinesPath, Date.now())
-          knownVaultFiles.add(routinesPath)
-
-          const rootRoutines = 'routines.json'
-          await writeTextFile(handle, rootRoutines, prettyRoutines)
-          fileContentCache.set(rootRoutines, compactJson(prettyRoutines))
-          ownWriteAt.set(rootRoutines, Date.now())
-          knownVaultFiles.add(rootRoutines)
-        }
-      } catch { /* ignore */ }
-    }
+    await writeVaultFile(path, pretty)
+    await syncIndividualDomainFiles(slug, path, raw)
     await exportStoreImages(slug, path, raw)
     seeded++
   }
@@ -532,7 +573,7 @@ function handleStoreWrite(key: string, json: string): void {
     const existing = pendingWrites.get(path)
     if (existing) clearTimeout(existing.timer)
     pendingWrites.delete(path)
-    void writePath(path, json)
+    trackInFlight(writePath(path, json))
     return
   }
 
@@ -540,7 +581,7 @@ function handleStoreWrite(key: string, json: string): void {
   if (existing) clearTimeout(existing.timer)
   const timer = setTimeout(() => {
     pendingWrites.delete(path)
-    void writePath(path, json)
+    trackInFlight(writePath(path, json))
   }, WRITE_DEBOUNCE_MS)
   pendingWrites.set(path, { timer, content: json })
 }
@@ -559,63 +600,10 @@ async function writePath(path: string, json: string): Promise<void> {
   if (!handle) return
   const slug = currentSlug()
   try {
-    await writeTextFile(handle, path, prettifyJson(json))
-    fileContentCache.set(path, json)
-    fileMtimeCache.delete(path) // force watcher to accept our own write
-    ownWriteAt.set(path, Date.now())
-    knownVaultFiles.add(path)
+    await writeVaultFile(path, prettifyJson(json))
     if (slug) {
       await exportStoreImages(slug, path, json)
-      if (path === `${slug}/teachers.json`) {
-        const rootTeachersPath = 'teachers.json'
-        await writeTextFile(handle, rootTeachersPath, prettifyJson(json))
-        fileContentCache.set(rootTeachersPath, json)
-        fileMtimeCache.delete(rootTeachersPath)
-        ownWriteAt.set(rootTeachersPath, Date.now())
-        knownVaultFiles.add(rootTeachersPath)
-      }
-      if (path === `${slug}/admissions.json`) {
-        const studentsPath = `${slug}/students.json`
-        await writeTextFile(handle, studentsPath, prettifyJson(json))
-        fileContentCache.set(studentsPath, json)
-        fileMtimeCache.delete(studentsPath)
-        ownWriteAt.set(studentsPath, Date.now())
-        knownVaultFiles.add(studentsPath)
-
-        const rootStudentsPath = 'students.json'
-        await writeTextFile(handle, rootStudentsPath, prettifyJson(json))
-        fileContentCache.set(rootStudentsPath, json)
-        fileMtimeCache.delete(rootStudentsPath)
-        ownWriteAt.set(rootStudentsPath, Date.now())
-        knownVaultFiles.add(rootStudentsPath)
-      }
-      if (path === `${slug}/classes.json`) {
-        const rootClassesPath = 'classes.json'
-        await writeTextFile(handle, rootClassesPath, prettifyJson(json))
-        fileContentCache.set(rootClassesPath, json)
-        fileMtimeCache.delete(rootClassesPath)
-        ownWriteAt.set(rootClassesPath, Date.now())
-        knownVaultFiles.add(rootClassesPath)
-
-        try {
-          const parsed = JSON.parse(json)
-          const routines = parsed?.state?.routines || parsed?.routines
-          if (Array.isArray(routines) && routines.length > 0) {
-            const routinesPath = `${slug}/routines.json`
-            const routinesPretty = JSON.stringify({ routines }, null, 2)
-            await writeTextFile(handle, routinesPath, routinesPretty)
-            fileMtimeCache.delete(routinesPath)
-            ownWriteAt.set(routinesPath, Date.now())
-            knownVaultFiles.add(routinesPath)
-
-            const rootRoutinesPath = 'routines.json'
-            await writeTextFile(handle, rootRoutinesPath, routinesPretty)
-            fileMtimeCache.delete(rootRoutinesPath)
-            ownWriteAt.set(rootRoutinesPath, Date.now())
-            knownVaultFiles.add(rootRoutinesPath)
-          }
-        } catch { /* ignore */ }
-      }
+      await syncIndividualDomainFiles(slug, path, json)
     }
     emit({ lastSyncAt: Date.now(), error: null })
   } catch {
@@ -656,7 +644,10 @@ export async function flushVaultWrites(): Promise<void> {
   pendingWrites.clear()
   for (const [path, entry] of entries) {
     clearTimeout(entry.timer)
-    await writePath(path, entry.content)
+    trackInFlight(writePath(path, entry.content))
+  }
+  if (inFlightWrites.size > 0) {
+    await Promise.all(Array.from(inFlightWrites))
   }
 }
 
@@ -671,8 +662,9 @@ export async function watchTick(): Promise<void> {
   const userId = currentUserId()
 
   let changed = false
-  const currentFiles = await listAllVaultFiles(handle, [slug])
+  const currentFiles = await listAllVaultFiles(handle)
   const currentPathSet = new Set(currentFiles.map((f) => f.path))
+  const deletedKeys = new Set<string>()
 
   // -------------------------------------------------------------------------
   // 1. Detect DELETED files from local disk (Obsidian-style deletion)
@@ -692,8 +684,103 @@ export async function watchTick(): Promise<void> {
     if (knownPath.endsWith('.json')) {
       const jsonKey = vaultPathToKey(knownPath, { slug, userId })
       if (jsonKey) {
-        localStorage.removeItem(jsonKey)
-        changed = true
+        if (knownPath.includes('departments')) {
+          const raw = localStorage.getItem(jsonKey)
+          if (raw) {
+            try {
+              const p = JSON.parse(raw)
+              if (p?.state) {
+                p.state.departments = []
+                localStorage.setItem(jsonKey, JSON.stringify(p))
+                changed = true
+              }
+            } catch { /* ignore */ }
+          }
+        } else if (knownPath.includes('subjects')) {
+          const raw = localStorage.getItem(jsonKey)
+          if (raw) {
+            try {
+              const p = JSON.parse(raw)
+              if (p?.state) {
+                p.state.subjects = []
+                localStorage.setItem(jsonKey, JSON.stringify(p))
+                changed = true
+              }
+            } catch { /* ignore */ }
+          }
+        } else if (knownPath.includes('designations')) {
+          const raw = localStorage.getItem(jsonKey)
+          if (raw) {
+            try {
+              const p = JSON.parse(raw)
+              if (p?.state) {
+                p.state.designations = []
+                localStorage.setItem(jsonKey, JSON.stringify(p))
+                changed = true
+              }
+            } catch { /* ignore */ }
+          }
+        } else if (knownPath.includes('routines')) {
+          const raw = localStorage.getItem(jsonKey)
+          if (raw) {
+            try {
+              const p = JSON.parse(raw)
+              if (p?.state) {
+                p.state.routines = []
+                const curSession = p.state.institution?.currentSession || '2025-26'
+                if (p.state.sessionRoutines) p.state.sessionRoutines[curSession] = []
+                localStorage.setItem(jsonKey, JSON.stringify(p))
+                changed = true
+              }
+            } catch { /* ignore */ }
+          }
+        } else if (knownPath.includes('sections')) {
+          const raw = localStorage.getItem(jsonKey)
+          if (raw) {
+            try {
+              const p = JSON.parse(raw)
+              if (p?.state?.classes) {
+                p.state.classes = p.state.classes.map((c: any) => ({ ...c, sections: [] }))
+                const curSession = p.state.institution?.currentSession || '2025-26'
+                if (p.state.sessionClasses?.[curSession]) {
+                  p.state.sessionClasses[curSession] = p.state.sessionClasses[curSession].map((c: any) => ({ ...c, sections: [] }))
+                }
+                localStorage.setItem(jsonKey, JSON.stringify(p))
+                changed = true
+              }
+            } catch { /* ignore */ }
+          }
+        } else {
+          localStorage.removeItem(jsonKey)
+          deletedKeys.add(jsonKey)
+          if (knownPath === `${slug}/classes.json`) {
+            await deleteTextFile(handle, 'classes.json')
+            knownVaultFiles.delete('classes.json')
+            fileContentCache.delete('classes.json')
+            fileMtimeCache.delete('classes.json')
+          } else if (knownPath === 'classes.json') {
+            await deleteTextFile(handle, `${slug}/classes.json`)
+            knownVaultFiles.delete(`${slug}/classes.json`)
+            fileContentCache.delete(`${slug}/classes.json`)
+            fileMtimeCache.delete(`${slug}/classes.json`)
+          } else if (knownPath === `${slug}/teachers.json`) {
+            await deleteTextFile(handle, 'teachers.json')
+            knownVaultFiles.delete('teachers.json')
+            fileContentCache.delete('teachers.json')
+            fileMtimeCache.delete('teachers.json')
+          } else if (knownPath === 'teachers.json') {
+            await deleteTextFile(handle, `${slug}/teachers.json`)
+            knownVaultFiles.delete(`${slug}/teachers.json`)
+            fileContentCache.delete(`${slug}/teachers.json`)
+            fileMtimeCache.delete(`${slug}/teachers.json`)
+          } else if (knownPath === `${slug}/admissions.json`) {
+            await deleteTextFile(handle, 'students.json')
+            knownVaultFiles.delete('students.json')
+            fileContentCache.delete('students.json')
+            fileMtimeCache.delete('students.json')
+          }
+          changed = true
+        }
       }
       continue
     }
@@ -735,12 +822,15 @@ export async function watchTick(): Promise<void> {
         const text = await readTextFile(handle, file.path)
         if (text === null) continue
         fileMtimeCache.set(file.path, file.lastModified)
+        const fileCompact = compactJson(text)
+        if (fileContentCache.get(file.path) === fileCompact) continue
+        fileContentCache.set(file.path, fileCompact)
         try {
           const parsedBundle = JSON.parse(text)
           if (parsedBundle?.stores) {
             for (const [sBase, sVal] of Object.entries(parsedBundle.stores)) {
               const sKey = sBase.endsWith(`_${slug}`) ? sBase : `${sBase}_${slug}`
-              const norm = normalizeVaultJsonForStore(sKey, JSON.stringify(sVal), localStorage.getItem(sKey))
+              const norm = normalizeVaultJsonForStore(sKey, JSON.stringify(sVal), localStorage.getItem(sKey), file.path)
               localStorage.setItem(sKey, norm)
               changed = true
             }
@@ -752,23 +842,21 @@ export async function watchTick(): Promise<void> {
       }
 
       const key = vaultPathToKey(file.path, { slug, userId })
-      if (!key) continue
+      if (!key || deletedKeys.has(key)) continue
       const text = await readTextFile(handle, file.path)
       if (text === null) continue
       fileMtimeCache.set(file.path, file.lastModified)
+      const fileCompact = compactJson(text)
+      if (fileContentCache.get(file.path) === fileCompact) continue
+
       try {
         JSON.parse(text)
       } catch {
         continue // user is mid-edit — try again next tick
       }
-      const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key))
-      const compact = compactJson(normalized)
-      if (localStorage.getItem(key) === compact) {
-        fileContentCache.set(file.path, compact)
-        continue
-      }
+      const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key), file.path)
       localStorage.setItem(key, normalized)
-      fileContentCache.set(file.path, compact)
+      fileContentCache.set(file.path, fileCompact)
       changed = true
       continue
     }

@@ -102,16 +102,16 @@ export function vaultPathToKey(
     }
     let storeBase = base
     if (base === 'students') storeBase = 'admissions'
-    else if (base === 'routines') storeBase = 'classes'
-    else if (base === 'staff') storeBase = 'teachers'
+    else if (base === 'routines' || base === 'sections' || base === 'institution') storeBase = 'classes'
+    else if (base === 'staff' || base === 'departments' || base === 'subjects' || base === 'designations') storeBase = 'teachers'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
 
-  // Root files: classes.json, teachers.json, students.json, routines.json
+  // Root files: classes.json, teachers.json, students.json, routines.json, departments.json, etc.
   if (segments.length === 1 && segments[0].endsWith('.json') && scope?.slug) {
     const base = segments[0].slice(0, -'.json'.length)
-    return toKey(base, scope.slug, scope.userId ?? undefined)
+    return toKey(base, scope.slug)
   }
 
   // {slug}/{base}.json — institution-wide data
@@ -297,7 +297,8 @@ export function dataUrlToUint8Array(dataUrl: string): { bytes: Uint8Array; mime:
 export function normalizeVaultJsonForStore(
   key: string,
   text: string,
-  existingRaw?: string | null
+  existingRaw?: string | null,
+  filePath?: string
 ): string {
   let parsed: any
   try {
@@ -413,6 +414,81 @@ export function normalizeVaultJsonForStore(
   }
 
   if (key.includes('teachers') || key.includes('staff')) {
+    const isDept =
+      filePath?.includes('departments') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].head !== undefined && parsed[0].salary === undefined) ||
+      (parsed && typeof parsed === 'object' && parsed.departments && !parsed.teachers)
+
+    if (isDept) {
+      const rawDepts = Array.isArray(parsed)
+        ? parsed
+        : (parsed.departments || parsed.state?.departments || [])
+      const normalizedDepts = rawDepts.map((raw: any, index: number) => ({
+        id: String(raw.id || `DEP-${String(index + 1).padStart(2, '0')}`).trim(),
+        name: String(raw.name || raw.nameEn || '').trim(),
+        nameBn: String(raw.nameBn || '').trim(),
+        head: String(raw.head || raw.headTeacherId || '').trim(),
+      }))
+      const finalState = {
+        ...existingState,
+        departments: normalizedDepts,
+        serverSynced: true,
+        syncing: false,
+        syncError: null,
+      }
+      return JSON.stringify({ state: finalState, version: existingVersion })
+    }
+
+    const isSub =
+      filePath?.includes('subjects') ||
+      (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].code !== undefined || parsed[0].type !== undefined) && parsed[0].salary === undefined) ||
+      (parsed && typeof parsed === 'object' && parsed.subjects && !parsed.teachers)
+
+    if (isSub) {
+      const rawSubs = Array.isArray(parsed)
+        ? parsed
+        : (parsed.subjects || parsed.state?.subjects || [])
+      const normalizedSubs = rawSubs.map((raw: any, index: number) => ({
+        id: String(raw.id || `SUB-${String(index + 1).padStart(2, '0')}`).trim(),
+        name: String(raw.name || raw.nameEn || '').trim(),
+        nameBn: String(raw.nameBn || '').trim(),
+        code: String(raw.code || '').trim(),
+        departmentId: String(raw.departmentId || '').trim(),
+        type: raw.type === 'optional' ? 'optional' : 'mandatory',
+      }))
+      const finalState = {
+        ...existingState,
+        subjects: normalizedSubs,
+        serverSynced: true,
+        syncing: false,
+        syncError: null,
+      }
+      return JSON.stringify({ state: finalState, version: existingVersion })
+    }
+
+    const isDes =
+      filePath?.includes('designations') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].title !== undefined && parsed[0].salary === undefined) ||
+      (parsed && typeof parsed === 'object' && parsed.designations && !parsed.teachers)
+
+    if (isDes) {
+      const rawDes = Array.isArray(parsed)
+        ? parsed
+        : (parsed.designations || parsed.state?.designations || [])
+      const normalizedDes = rawDes.map((raw: any, index: number) => ({
+        id: String(raw.id || `DES-${String(index + 1).padStart(2, '0')}`).trim(),
+        title: String(raw.title || raw.name || '').trim(),
+      }))
+      const finalState = {
+        ...existingState,
+        designations: normalizedDes,
+        serverSynced: true,
+        syncing: false,
+        syncError: null,
+      }
+      return JSON.stringify({ state: finalState, version: existingVersion })
+    }
+
     let rawTeachers: any[] = []
     if (Array.isArray(parsed)) {
       rawTeachers = parsed
@@ -495,11 +571,100 @@ export function normalizeVaultJsonForStore(
   }
 
   if (key.includes('classes') || key.includes('routines')) {
+    const isRoutine =
+      filePath?.includes('routines') ||
+      (Array.isArray(parsed) && (parsed.length === 0 || parsed[0].periodDuration !== undefined || parsed[0].periods !== undefined) && !filePath?.includes('classes') && !filePath?.includes('sections')) ||
+      (parsed && typeof parsed === 'object' && parsed.routines && !parsed.classes)
+
+    if (isRoutine && (filePath?.includes('routines') || !Array.isArray(parsed) || (parsed.length > 0 && parsed[0].periodDuration !== undefined))) {
+      const rawRoutines = Array.isArray(parsed)
+        ? parsed
+        : (parsed.routines || parsed.state?.routines || [])
+      const normalizedRoutines = rawRoutines.map((raw: any) => ({
+        classId: String(raw.classId || '').trim(),
+        sectionId: String(raw.sectionId || '').trim(),
+        periodDuration: Number(raw.periodDuration) || 40,
+        weekendDays: Array.isArray(raw.weekendDays) ? raw.weekendDays : [5],
+        periods: Array.isArray(raw.periods) ? raw.periods : [],
+      }))
+      const curSession = existingState.institution?.currentSession || '2025-26'
+      const finalState = {
+        ...existingState,
+        routines: normalizedRoutines,
+        sessionRoutines: {
+          ...(existingState.sessionRoutines || {}),
+          [curSession]: normalizedRoutines,
+        },
+        serverSynced: true,
+        syncing: false,
+      }
+      return JSON.stringify({ state: finalState, version: existingVersion })
+    }
+
+    const isSection =
+      filePath?.includes('sections') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].seatQuantity !== undefined && parsed[0].startTime === undefined) ||
+      (parsed && typeof parsed === 'object' && parsed.sections && !parsed.classes)
+
+    if (isSection) {
+      const rawSections = Array.isArray(parsed)
+        ? parsed
+        : (parsed.sections || parsed.state?.sections || [])
+      const classMap = new Map<string, any[]>()
+      for (const sec of rawSections) {
+        const cId = String(sec.classId || '').trim()
+        if (!classMap.has(cId)) classMap.set(cId, [])
+        classMap.get(cId)!.push({
+          id: String(sec.id || `SEC-${cId}-${sec.name || 'A'}`).trim(),
+          name: String(sec.name || '').trim(),
+          seatQuantity: Number(sec.seatQuantity) || 40,
+          classTeacherId: String(sec.classTeacherId || '').trim(),
+          subjectIds: Array.isArray(sec.subjectIds) ? sec.subjectIds : [],
+        })
+      }
+      const updatedClasses = (existingState.classes || []).map((c: any) => {
+        if (classMap.has(c.id)) {
+          return { ...c, sections: classMap.get(c.id)! }
+        }
+        return c
+      })
+      const curSession = existingState.institution?.currentSession || '2025-26'
+      const finalState = {
+        ...existingState,
+        classes: updatedClasses,
+        sessionClasses: {
+          ...(existingState.sessionClasses || {}),
+          [curSession]: updatedClasses,
+        },
+        serverSynced: true,
+        syncing: false,
+      }
+      return JSON.stringify({ state: finalState, version: existingVersion })
+    }
+
+    const isInst =
+      filePath?.includes('institution') ||
+      (parsed && typeof parsed === 'object' && (parsed.brandName !== undefined || parsed.nameEn !== undefined || parsed.eiin !== undefined) && !parsed.classes)
+
+    if (isInst) {
+      const inst = parsed.state?.institution || parsed.institution || parsed
+      const finalState = {
+        ...existingState,
+        institution: {
+          ...existingState.institution,
+          ...inst,
+        },
+        serverSynced: true,
+        syncing: false,
+      }
+      return JSON.stringify({ state: finalState, version: existingVersion })
+    }
+
     let rawClasses: any[] | null = null
     let rawRoutines: any[] | null = null
 
     if (Array.isArray(parsed)) {
-      if (key.includes('routines') || (parsed.length > 0 && parsed[0].periodDuration !== undefined)) {
+      if (parsed.length > 0 && parsed[0].periodDuration !== undefined) {
         rawRoutines = parsed
       } else {
         rawClasses = parsed
@@ -548,12 +713,23 @@ export function normalizeVaultJsonForStore(
       }))
     }
 
+    const curSession = existingState.institution?.currentSession || '2025-26'
+    const finalSessionClasses = {
+      ...(existingState.sessionClasses || {}),
+      [curSession]: normalizedClasses,
+    }
+    const finalSessionRoutines = rawRoutines
+      ? { ...(existingState.sessionRoutines || {}), [curSession]: normalizedRoutines }
+      : (existingState.sessionRoutines || {})
+
     const parsedInner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
     const finalState = {
       ...existingState,
       ...parsedInner,
       classes: normalizedClasses,
       routines: normalizedRoutines,
+      sessionClasses: finalSessionClasses,
+      sessionRoutines: finalSessionRoutines,
       serverSynced: true,
       syncing: false,
     }

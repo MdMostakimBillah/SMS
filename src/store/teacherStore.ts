@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Teacher, Department, Subject, Designation } from '@/pages/teachers/types'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { teachersApi, departmentsApi, subjectsApi, designationsApi, type TeacherData } from '@/lib/api'
 import {
   serverTeacherToTeacher,
@@ -222,65 +223,111 @@ export const useTeacherStore = create<TeacherState>()(
         return syncPromise
       },
 
-      upsertServerTeacher: (teacher) =>
+      upsertServerTeacher: (teacher) => {
         set((state) => ({
           teachers: state.teachers.some((t) => t.id === teacher.id)
             ? state.teachers.map((t) => (t.id === teacher.id ? teacher : t))
             : [teacher, ...state.teachers],
-        })),
+        }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      removeServerTeacher: (id) =>
-        set((state) => ({ teachers: state.teachers.filter((t) => t.id !== id) })),
+      removeServerTeacher: (id) => {
+        set((state) => ({ teachers: state.teachers.filter((t) => t.id !== id) }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      upsertServerDepartment: (dept) =>
+      upsertServerDepartment: (dept) => {
         set((state) => ({
           departments: state.departments.some((d) => d.id === dept.id)
             ? state.departments.map((d) => (d.id === dept.id ? dept : d))
             : [...state.departments, dept],
-        })),
+        }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      removeServerDepartment: (id) =>
-        set((state) => ({ departments: state.departments.filter((d) => d.id !== id) })),
+      removeServerDepartment: (id) => {
+        set((state) => ({ departments: state.departments.filter((d) => d.id !== id) }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      upsertServerSubject: (sub) =>
+      upsertServerSubject: (sub) => {
         set((state) => ({
           subjects: state.subjects.some((s) => s.id === sub.id)
             ? state.subjects.map((s) => (s.id === sub.id ? sub : s))
             : [...state.subjects, sub],
-        })),
+        }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      removeServerSubject: (id) =>
-        set((state) => ({ subjects: state.subjects.filter((s) => s.id !== id) })),
+      removeServerSubject: (id) => {
+        set((state) => ({ subjects: state.subjects.filter((s) => s.id !== id) }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      upsertServerDesignation: (des) =>
+      upsertServerDesignation: (des) => {
         set((state) => ({
           designations: state.designations.some((d) => d.id === des.id)
             ? state.designations.map((d) => (d.id === des.id ? des : d))
             : [...state.designations, des],
-        })),
+        }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      removeServerDesignation: (id) =>
-        set((state) => ({ designations: state.designations.filter((d) => d.id !== id) })),
+      removeServerDesignation: (id) => {
+        set((state) => ({ designations: state.designations.filter((d) => d.id !== id) }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      addSubject: (sub) => set((state) => ({ subjects: [...state.subjects, sub] })),
+      addSubject: (sub) => {
+        set((state) => ({ subjects: [...state.subjects, sub] }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      updateSubject: (id, data) =>
+      updateSubject: (id, data) => {
         set((state) => ({
           subjects: state.subjects.map((s) => (s.id === id ? { ...s, ...data, updatedAt: new Date().toISOString().split('T')[0] } : s)),
-        })),
+        }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      deleteSubject: (id) => set((state) => ({ subjects: state.subjects.filter((s) => s.id !== id) })),
+      deleteSubject: (id) => {
+        set((state) => ({ subjects: state.subjects.filter((s) => s.id !== id) }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      addDesignation: (des) => set((state) => ({ designations: [...state.designations, des] })),
+      addDesignation: (des) => {
+        set((state) => ({ designations: [...state.designations, des] }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      updateDesignation: (id, data) =>
+      updateDesignation: (id, data) => {
         set((state) => ({
           designations: state.designations.map((d) => (d.id === id ? { ...d, ...data, updatedAt: new Date().toISOString().split('T')[0] } : d)),
-        })),
+        }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      deleteDesignation: (id) => set((state) => ({ designations: state.designations.filter((d) => d.id !== id) })),
+      deleteDesignation: (id) => {
+        set((state) => ({ designations: state.designations.filter((d) => d.id !== id) }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      markAttendance: (date, teacherId, status) =>
+      markAttendance: (date, teacherId, status) => {
         set((state) => {
           const dayAtt = state.attendance[date] || {}
           const existing = dayAtt[teacherId]
@@ -297,9 +344,12 @@ export const useTeacherStore = create<TeacherState>()(
               },
             }),
           }
-        }),
+        })
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
-      markAllPresent: (date) =>
+      markAllPresent: (date) => {
         set((state) => {
           const dayAtt: Record<string, DayAttendance> = {}
           const now = new Date()
@@ -310,7 +360,10 @@ export const useTeacherStore = create<TeacherState>()(
               dayAtt[t.id] = { status: 'present', punches: [{ time, type: 'in' }] }
             })
           return { attendance: pruneAttendance({ ...state.attendance, [date]: dayAtt }) }
-        }),
+        })
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
 
       getAttendanceStats: (date) => {
         const dayAtt = get().attendance[date] || {}

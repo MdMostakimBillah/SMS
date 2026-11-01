@@ -3,7 +3,8 @@ import { persist } from 'zustand/middleware'
 import { useMemo } from 'react'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { useClassStore } from './classStore'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { studentsApi } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverStudentToStudent, studentToPayload } from '@/lib/studentMappers'
@@ -96,6 +97,8 @@ export const useAdmissionStore = create<AdmissionState>()(
 
       addStudent: (student) => {
         set((state) => ({ students: [student, ...state.students] }))
+        flushPendingWrites()
+        void flushVaultWrites()
         if (!isLocalComputerMode()) {
           studentsApi.create(studentToPayload(student)).catch((err) => {
             console.error('[admissionStore] background create failed:', err)
@@ -111,6 +114,8 @@ export const useAdmissionStore = create<AdmissionState>()(
           }
           return { students: Array.from(map.values()) }
         })
+        flushPendingWrites()
+        void flushVaultWrites()
         if (!isLocalComputerMode()) {
           studentsApi.bulkSave(newStudents.map(studentToPayload)).catch((err) => {
             console.error('[admissionStore] background bulkSave failed:', err)
@@ -123,6 +128,8 @@ export const useAdmissionStore = create<AdmissionState>()(
         set((state) => ({
           students: state.students.map((s) => (s.id === id ? { ...s, ...data, updatedAt: today } : s)),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         if (!isLocalComputerMode()) {
           studentsApi.update(id, studentToPayload(data)).catch((err) => {
             console.error('[admissionStore] background update failed:', err)
@@ -134,6 +141,8 @@ export const useAdmissionStore = create<AdmissionState>()(
         set((state) => ({
           students: state.students.filter((s) => s.id !== id),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         if (!isLocalComputerMode()) {
           studentsApi.delete(id).catch((err) => {
             console.error('[admissionStore] background delete failed:', err)
@@ -157,6 +166,8 @@ export const useAdmissionStore = create<AdmissionState>()(
               : s
           ),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         if (!isLocalComputerMode()) {
           studentsApi.update(id, {
             status: 'approved',
@@ -176,6 +187,8 @@ export const useAdmissionStore = create<AdmissionState>()(
             s.id === id ? { ...s, status: 'rejected', updatedAt: today } : s
           ),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         if (!isLocalComputerMode()) {
           studentsApi.update(id, { status: 'rejected' }).catch((err) => {
             console.error('[admissionStore] background reject failed:', err)
@@ -195,6 +208,8 @@ export const useAdmissionStore = create<AdmissionState>()(
             return s
           }),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         if (!isLocalComputerMode()) {
           studentsApi.update(id, { active: newActive }).catch((err) => {
             console.error('[admissionStore] background toggleActive failed:', err)
@@ -211,6 +226,8 @@ export const useAdmissionStore = create<AdmissionState>()(
               : s
           ),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         if (!isLocalComputerMode()) {
           studentsApi.update(id, { active: false, inactiveAt, inactiveReason }).catch((err) => {
             console.error('[admissionStore] background deactivate failed:', err)
@@ -227,6 +244,8 @@ export const useAdmissionStore = create<AdmissionState>()(
               : s
           ),
         }))
+        flushPendingWrites()
+        void flushVaultWrites()
         if (!isLocalComputerMode()) {
           studentsApi.update(id, { active: true, billingDate: billingDate || undefined, inactiveAt: null, inactiveReason: null }).catch((err) => {
             console.error('[admissionStore] background reactivate failed:', err)

@@ -230,14 +230,27 @@ describe('vault image mapping & conversion', () => {
 describe('vaultPathToKey aliases', () => {
   it('maps students.json to edutech-admissions', () => {
     expect(vaultPathToKey('demo/students.json', { slug: 'demo' })).toBe('edutech-admissions_demo')
+    expect(vaultPathToKey('students.json', { slug: 'demo' })).toBe('edutech-admissions_demo')
   })
 
-  it('maps routines.json to edutech-classes', () => {
+  it('maps routines.json, sections.json, and institution.json to edutech-classes', () => {
     expect(vaultPathToKey('demo/routines.json', { slug: 'demo' })).toBe('edutech-classes_demo')
+    expect(vaultPathToKey('routines.json', { slug: 'demo' })).toBe('edutech-classes_demo')
+    expect(vaultPathToKey('demo/sections.json', { slug: 'demo' })).toBe('edutech-classes_demo')
+    expect(vaultPathToKey('sections.json', { slug: 'demo' })).toBe('edutech-classes_demo')
+    expect(vaultPathToKey('demo/institution.json', { slug: 'demo' })).toBe('edutech-classes_demo')
+    expect(vaultPathToKey('institution.json', { slug: 'demo' })).toBe('edutech-classes_demo')
   })
 
-  it('maps staff.json to edutech-teachers', () => {
+  it('maps staff.json, departments.json, subjects.json, and designations.json to edutech-teachers', () => {
     expect(vaultPathToKey('demo/staff.json', { slug: 'demo' })).toBe('edutech-teachers_demo')
+    expect(vaultPathToKey('staff.json', { slug: 'demo' })).toBe('edutech-teachers_demo')
+    expect(vaultPathToKey('demo/departments.json', { slug: 'demo' })).toBe('edutech-teachers_demo')
+    expect(vaultPathToKey('departments.json', { slug: 'demo' })).toBe('edutech-teachers_demo')
+    expect(vaultPathToKey('demo/subjects.json', { slug: 'demo' })).toBe('edutech-teachers_demo')
+    expect(vaultPathToKey('subjects.json', { slug: 'demo' })).toBe('edutech-teachers_demo')
+    expect(vaultPathToKey('demo/designations.json', { slug: 'demo' })).toBe('edutech-teachers_demo')
+    expect(vaultPathToKey('designations.json', { slug: 'demo' })).toBe('edutech-teachers_demo')
   })
 })
 
@@ -308,6 +321,108 @@ describe('normalizeVaultJsonForStore', () => {
     const normalized = normalizeVaultJsonForStore('edutech-admissions_demo', raw)
     const parsed = JSON.parse(normalized)
     expect(parsed.state.students[0].nameEn).toBe('Bundle Student')
+  })
+
+  it('normalizes departments.json into teacher store without wiping teachers', () => {
+    const existing = JSON.stringify({
+      state: {
+        teachers: [{ id: 'ET0001', nameEn: 'Existing Teacher' }],
+        departments: [],
+        subjects: [],
+        designations: [],
+      },
+      version: 0,
+    })
+    const deptsRaw = JSON.stringify([
+      { id: 'DEP-01', name: 'Science', nameBn: 'বিজ্ঞান' },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-teachers_demo', deptsRaw, existing, 'demo/departments.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.teachers).toHaveLength(1)
+    expect(parsed.state.teachers[0].nameEn).toBe('Existing Teacher')
+    expect(parsed.state.departments).toHaveLength(1)
+    expect(parsed.state.departments[0].name).toBe('Science')
+  })
+
+  it('normalizes subjects.json into teacher store without wiping teachers', () => {
+    const existing = JSON.stringify({
+      state: {
+        teachers: [{ id: 'ET0001', nameEn: 'Existing Teacher' }],
+        departments: [],
+        subjects: [],
+      },
+      version: 0,
+    })
+    const subjectsRaw = JSON.stringify([
+      { id: 'SUB-01', name: 'Mathematics', code: '101' },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-teachers_demo', subjectsRaw, existing, 'subjects.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.teachers).toHaveLength(1)
+    expect(parsed.state.subjects).toHaveLength(1)
+    expect(parsed.state.subjects[0].name).toBe('Mathematics')
+    expect(parsed.state.subjects[0].code).toBe('101')
+  })
+
+  it('normalizes designations.json into teacher store without wiping teachers', () => {
+    const existing = JSON.stringify({
+      state: {
+        teachers: [{ id: 'ET0001', nameEn: 'Existing Teacher' }],
+        designations: [],
+      },
+      version: 0,
+    })
+    const desRaw = JSON.stringify([
+      { id: 'DES-01', title: 'Senior Teacher' },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-teachers_demo', desRaw, existing, 'designations.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.teachers).toHaveLength(1)
+    expect(parsed.state.designations).toHaveLength(1)
+    expect(parsed.state.designations[0].title).toBe('Senior Teacher')
+  })
+
+  it('normalizes routines.json into class store without wiping classes', () => {
+    const existing = JSON.stringify({
+      state: {
+        institution: { currentSession: '2025-26' },
+        classes: [{ id: 'CLS-01', name: 'Ten', sections: [] }],
+        routines: [],
+      },
+      version: 7,
+    })
+    const routinesRaw = JSON.stringify([
+      { classId: 'CLS-01', sectionId: 'SEC-A', periodDuration: 45 },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-classes_demo', routinesRaw, existing, 'demo/routines.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.classes).toHaveLength(1)
+    expect(parsed.state.classes[0].name).toBe('Ten')
+    expect(parsed.state.routines).toHaveLength(1)
+    expect(parsed.state.routines[0].periodDuration).toBe(45)
+    expect(parsed.state.sessionRoutines['2025-26']).toHaveLength(1)
+  })
+
+  it('normalizes sections.json into class store and assigns to matching class', () => {
+    const existing = JSON.stringify({
+      state: {
+        institution: { currentSession: '2025-26' },
+        classes: [
+          { id: 'CLS-01', name: 'Ten', sections: [] },
+          { id: 'CLS-02', name: 'Nine', sections: [] },
+        ],
+      },
+      version: 7,
+    })
+    const sectionsRaw = JSON.stringify([
+      { classId: 'CLS-01', id: 'SEC-CLS-01-A', name: 'Section A', seatQuantity: 50 },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-classes_demo', sectionsRaw, existing, 'sections.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.classes[0].sections).toHaveLength(1)
+    expect(parsed.state.classes[0].sections[0].name).toBe('Section A')
+    expect(parsed.state.classes[0].sections[0].seatQuantity).toBe(50)
+    expect(parsed.state.classes[1].sections).toHaveLength(0)
   })
 })
 

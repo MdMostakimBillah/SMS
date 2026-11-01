@@ -453,7 +453,87 @@ describe('vault — Mode C (local-first browser sync)', () => {
 
     const rootRoutines = await readTextFile(pickHandle, 'routines.json')
     expect(rootRoutines).toContain('CLS-01')
+
+    const slugSections = await readTextFile(pickHandle, 'demo/sections.json')
+    expect(slugSections).toContain('SEC-CLS-01-A')
+
+    const rootSections = await readTextFile(pickHandle, 'sections.json')
+    expect(rootSections).toContain('SEC-CLS-01-A')
   })
+
+  it('writes teachers and individual files instantly to disk (departments, subjects, designations)', async () => {
+    await vaultConnectFolder()
+    registerReloadRequester(() => undefined)
+
+    const json = JSON.stringify({
+      state: {
+        teachers: [{ id: 'ET0001', nameEn: 'John Doe', phone: '01711111111' }],
+        departments: [{ id: 'DEP-01', name: 'Science' }],
+        subjects: [{ id: 'SUB-01', name: 'Math', code: '101' }],
+        designations: [{ id: 'DES-01', title: 'Principal' }],
+      },
+      version: 0,
+    })
+
+    notifyVaultWrite('edutech-teachers_demo', json)
+    await flushVaultWrites()
+
+    expect(await readTextFile(pickHandle, 'demo/teachers.json')).toContain('ET0001')
+    expect(await readTextFile(pickHandle, 'teachers.json')).toContain('ET0001')
+
+    const slugDepts = await readTextFile(pickHandle, 'demo/departments.json')
+    expect(slugDepts).toContain('Science')
+    const rootDepts = await readTextFile(pickHandle, 'departments.json')
+    expect(rootDepts).toContain('Science')
+
+    const slugSubs = await readTextFile(pickHandle, 'demo/subjects.json')
+    expect(slugSubs).toContain('Math')
+    const rootSubs = await readTextFile(pickHandle, 'subjects.json')
+    expect(rootSubs).toContain('Math')
+
+    const slugDes = await readTextFile(pickHandle, 'demo/designations.json')
+    expect(slugDes).toContain('Principal')
+    const rootDes = await readTextFile(pickHandle, 'designations.json')
+    expect(rootDes).toContain('Principal')
+  })
+
+  it('pulls hand-edits from individual departments.json back into teacher store', async () => {
+    await vaultConnectFolder()
+    let reloads = 0
+    registerReloadRequester(() => {
+      reloads++
+    })
+
+    localStorage.setItem(
+      'edutech-teachers_demo',
+      JSON.stringify({
+        state: {
+          teachers: [{ id: 'ET0001', nameEn: 'Main Teacher' }],
+          departments: [],
+        },
+        version: 0,
+      })
+    )
+    await vaultSyncNow()
+
+    // User edits departments.json on disk
+    await sleep(4200)
+    await writeTextFile(
+      pickHandle,
+      'departments.json',
+      JSON.stringify([{ id: 'DEP-99', name: 'Robotics' }])
+    )
+    await watchTick()
+
+    const raw = localStorage.getItem('edutech-teachers_demo')
+    expect(raw).toBeTruthy()
+    const parsed = JSON.parse(raw!)
+    expect(parsed.state.teachers).toHaveLength(1)
+    expect(parsed.state.teachers[0].nameEn).toBe('Main Teacher')
+    expect(parsed.state.departments).toHaveLength(1)
+    expect(parsed.state.departments[0].name).toBe('Robotics')
+    expect(reloads).toBeGreaterThan(0)
+  }, 12000)
 
   it('disconnects and clears status', async () => {
     await vaultConnectFolder()
