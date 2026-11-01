@@ -27,6 +27,8 @@ import {
   mimeFromExt,
   uint8ArrayToDataUrl,
   dataUrlToUint8Array,
+  isBackupBundlePath,
+  normalizeVaultJsonForStore,
 } from './mapping'
 import {
   isVaultSupported,
@@ -265,6 +267,11 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
               await writeBinaryFile(handle, imgPath, img.bytes)
               knownVaultFiles.add(imgPath)
               ownWriteAt.set(imgPath, Date.now())
+
+              const directPath = `${slug}/images/teachers/${t.id}.${img.ext}`
+              await writeBinaryFile(handle, directPath, img.bytes)
+              knownVaultFiles.add(directPath)
+              ownWriteAt.set(directPath, Date.now())
             }
           }
           if (typeof t.signature === 'string' && t.signature.startsWith('data:')) {
@@ -280,8 +287,8 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
       }
     }
 
-    // 3. edutech-admissions_{slug} or {slug}/admissions.json
-    if (keyOrPath.includes('admissions')) {
+    // 3. edutech-admissions_{slug} or {slug}/admissions.json or {slug}/students.json
+    if (keyOrPath.includes('admissions') || keyOrPath.includes('students')) {
       const students = state.students
       if (Array.isArray(students)) {
         for (const s of students) {
@@ -293,6 +300,11 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
               await writeBinaryFile(handle, imgPath, img.bytes)
               knownVaultFiles.add(imgPath)
               ownWriteAt.set(imgPath, Date.now())
+
+              const directPath = `${slug}/images/students/${s.id}.${img.ext}`
+              await writeBinaryFile(handle, directPath, img.bytes)
+              knownVaultFiles.add(directPath)
+              ownWriteAt.set(directPath, Date.now())
             }
           }
         }
@@ -315,9 +327,29 @@ async function hydrateFromVault(): Promise<number> {
   const files = await listAllVaultFiles(handle, [slug])
   let applied = 0
 
-  // 1. Load all JSON store files
+  // 1. Check for bundle file first (backup.json or {slug}/backup.json)
   for (const file of files) {
-    if (!file.path.endsWith('.json')) continue
+    if (isBackupBundlePath(file.path)) {
+      const text = await readTextFile(handle, file.path)
+      if (text) {
+        try {
+          const parsedBundle = JSON.parse(text)
+          if (parsedBundle?.stores) {
+            for (const [sBase, sVal] of Object.entries(parsedBundle.stores)) {
+              const sKey = sBase.endsWith(`_${slug}`) ? sBase : `${sBase}_${slug}`
+              const norm = normalizeVaultJsonForStore(sKey, JSON.stringify(sVal), localStorage.getItem(sKey))
+              localStorage.setItem(sKey, norm)
+              applied++
+            }
+          }
+        } catch { /* ignore */ }
+      }
+    }
+  }
+
+  // 2. Load all JSON store files
+  for (const file of files) {
+    if (!file.path.endsWith('.json') || isBackupBundlePath(file.path)) continue
     const key = vaultPathToKey(file.path, { slug, userId: currentUserId() })
     if (!key) continue
     const text = await readTextFile(handle, file.path)
@@ -327,8 +359,9 @@ async function hydrateFromVault(): Promise<number> {
     } catch {
       continue
     }
-    localStorage.setItem(key, text)
-    fileContentCache.set(file.path, compactJson(text))
+    const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key))
+    localStorage.setItem(key, normalized)
+    fileContentCache.set(file.path, compactJson(normalized))
     fileMtimeCache.set(file.path, file.lastModified)
     knownVaultFiles.add(file.path)
     applied++
@@ -385,6 +418,13 @@ async function seedVaultFromStorage(): Promise<number> {
     fileContentCache.set(path, compactJson(raw))
     ownWriteAt.set(path, Date.now())
     knownVaultFiles.add(path)
+    if (path === `${slug}/admissions.json`) {
+      const studentsPath = `${slug}/students.json`
+      await writeTextFile(handle, studentsPath, pretty)
+      fileContentCache.set(studentsPath, compactJson(raw))
+      ownWriteAt.set(studentsPath, Date.now())
+      knownVaultFiles.add(studentsPath)
+    }
     await exportStoreImages(slug, path, raw)
     seeded++
   }
@@ -423,6 +463,27 @@ async function writePath(path: string, json: string): Promise<void> {
     knownVaultFiles.add(path)
     if (slug) {
       await exportStoreImages(slug, path, json)
+      if (path === `${slug}/admissions.json`) {
+        const studentsPath = `${slug}/students.json`
+        await writeTextFile(handle, studentsPath, prettifyJson(json))
+        fileContentCache.set(studentsPath, json)
+        fileMtimeCache.delete(studentsPath)
+        ownWriteAt.set(studentsPath, Date.now())
+        knownVaultFiles.add(studentsPath)
+      }
+      if (path === `${slug}/classes.json`) {
+        try {
+          const parsed = JSON.parse(json)
+          const routines = parsed?.state?.routines || parsed?.routines
+          if (Array.isArray(routines) && routines.length > 0) {
+            const routinesPath = `${slug}/routines.json`
+            await writeTextFile(handle, routinesPath, JSON.stringify({ routines }, null, 2))
+            fileMtimeCache.delete(routinesPath)
+            ownWriteAt.set(routinesPath, Date.now())
+            knownVaultFiles.add(routinesPath)
+          }
+        } catch { /* ignore */ }
+      }
     }
     emit({ lastSyncAt: Date.now(), error: null })
   } catch {
@@ -526,6 +587,26 @@ export async function watchTick(): Promise<void> {
 
     // A) Handle JSON file changes
     if (file.path.endsWith('.json')) {
+      if (isBackupBundlePath(file.path)) {
+        const text = await readTextFile(handle, file.path)
+        if (text === null) continue
+        fileMtimeCache.set(file.path, file.lastModified)
+        try {
+          const parsedBundle = JSON.parse(text)
+          if (parsedBundle?.stores) {
+            for (const [sBase, sVal] of Object.entries(parsedBundle.stores)) {
+              const sKey = sBase.endsWith(`_${slug}`) ? sBase : `${sBase}_${slug}`
+              const norm = normalizeVaultJsonForStore(sKey, JSON.stringify(sVal), localStorage.getItem(sKey))
+              localStorage.setItem(sKey, norm)
+              changed = true
+            }
+          }
+        } catch {
+          continue // mid-edit
+        }
+        continue
+      }
+
       const key = vaultPathToKey(file.path, { slug, userId })
       if (!key) continue
       const text = await readTextFile(handle, file.path)
@@ -536,12 +617,13 @@ export async function watchTick(): Promise<void> {
       } catch {
         continue // user is mid-edit — try again next tick
       }
-      const compact = compactJson(text)
+      const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key))
+      const compact = compactJson(normalized)
       if (localStorage.getItem(key) === compact) {
         fileContentCache.set(file.path, compact)
         continue
       }
-      localStorage.setItem(key, text)
+      localStorage.setItem(key, normalized)
       fileContentCache.set(file.path, compact)
       changed = true
       continue

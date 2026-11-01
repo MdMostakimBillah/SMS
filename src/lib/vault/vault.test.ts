@@ -380,6 +380,44 @@ describe('vault — Mode C (local-first browser sync)', () => {
     expect(reloads).toBeGreaterThan(0)
   }, 10000)
 
+  it('pulls manual students.json edits and direct student image from disk into admissions store', async () => {
+    await vaultConnectFolder()
+
+    let reloads = 0
+    registerReloadRequester(() => {
+      reloads++
+    })
+
+    // 1. User writes students directly into demo/students.json as array
+    await writeTextFile(
+      pickHandle,
+      'demo/students.json',
+      JSON.stringify([
+        { id: 'ET-2026-00001', nameEn: 'Manual Student', class: 'Ten', roll: '01' },
+      ])
+    )
+
+    await sleep(4200)
+    await watchTick()
+
+    const rawAdmissions = localStorage.getItem('edutech-admissions_demo')
+    expect(rawAdmissions).toBeTruthy()
+    const parsed = JSON.parse(rawAdmissions!)
+    expect(parsed.state).toBeDefined()
+    expect(parsed.state.students).toHaveLength(1)
+    expect(parsed.state.students[0].nameEn).toBe('Manual Student')
+    expect(reloads).toBeGreaterThan(0)
+
+    // 2. User drops direct photo ET-2026-00001.png
+    const photoBytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10, 5, 6, 7])
+    await writeBinaryFile(pickHandle, 'demo/images/students/ET-2026-00001.png', photoBytes)
+    await watchTick()
+
+    const updatedRaw = localStorage.getItem('edutech-admissions_demo')
+    const updatedParsed = JSON.parse(updatedRaw!)
+    expect(updatedParsed.state.students[0].photo).toContain('data:image/png;base64,')
+  }, 12000)
+
   it('disconnects and clears status', async () => {
     await vaultConnectFolder()
     await vaultDisconnect()

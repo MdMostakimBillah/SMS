@@ -8,6 +8,8 @@ import {
   compactJson,
   parseVaultImagePath,
   isVaultImagePath,
+  isBackupBundlePath,
+  normalizeVaultJsonForStore,
   mimeFromExt,
   uint8ArrayToDataUrl,
   dataUrlToUint8Array,
@@ -195,6 +197,117 @@ describe('vault image mapping & conversion', () => {
     expect(mimeFromExt('webp')).toBe('image/webp')
     expect(mimeFromExt('svg')).toBe('image/svg+xml')
     expect(mimeFromExt('gif')).toBe('image/gif')
+  })
+
+  it('maps direct image paths without _photo suffix and outside images/ subfolder', () => {
+    expect(parseVaultImagePath('demo/images/students/S-101.jpg')).toEqual({
+      type: 'student_photo',
+      slug: 'demo',
+      id: 'S-101',
+      ext: 'jpg',
+    })
+    expect(parseVaultImagePath('demo/students/S-101.png')).toEqual({
+      type: 'student_photo',
+      slug: 'demo',
+      id: 'S-101',
+      ext: 'png',
+    })
+    expect(parseVaultImagePath('demo/images/teachers/ET0001.png')).toEqual({
+      type: 'teacher_photo',
+      slug: 'demo',
+      id: 'ET0001',
+      ext: 'png',
+    })
+    expect(parseVaultImagePath('demo/teachers/ET0001.jpg')).toEqual({
+      type: 'teacher_photo',
+      slug: 'demo',
+      id: 'ET0001',
+      ext: 'jpg',
+    })
+  })
+})
+
+describe('vaultPathToKey aliases', () => {
+  it('maps students.json to edutech-admissions', () => {
+    expect(vaultPathToKey('demo/students.json', { slug: 'demo' })).toBe('edutech-admissions_demo')
+  })
+
+  it('maps routines.json to edutech-classes', () => {
+    expect(vaultPathToKey('demo/routines.json', { slug: 'demo' })).toBe('edutech-classes_demo')
+  })
+
+  it('maps staff.json to edutech-teachers', () => {
+    expect(vaultPathToKey('demo/staff.json', { slug: 'demo' })).toBe('edutech-teachers_demo')
+  })
+})
+
+describe('isBackupBundlePath', () => {
+  it('identifies backup.json and {slug}/backup.json', () => {
+    expect(isBackupBundlePath('backup.json')).toBe(true)
+    expect(isBackupBundlePath('demo/backup.json')).toBe(true)
+    expect(isBackupBundlePath('demo/classes.json')).toBe(false)
+  })
+})
+
+describe('normalizeVaultJsonForStore', () => {
+  it('normalizes a pure array of students into Zustand persist format', () => {
+    const raw = JSON.stringify([
+      { id: 'ET-2026-00001', nameEn: 'Rahim Khan', roll: '01', class: 'Six' },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-admissions_demo', raw)
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state).toBeDefined()
+    expect(parsed.state.students).toHaveLength(1)
+    expect(parsed.state.students[0].nameEn).toBe('Rahim Khan')
+    expect(parsed.state.students[0].status).toBe('approved')
+    expect(parsed.state.students[0].active).toBe(true)
+  })
+
+  it('normalizes an object with students array', () => {
+    const raw = JSON.stringify({
+      students: [{ id: 'ET-2026-00002', nameEn: 'Karim', nameBn: 'করিম' }],
+    })
+    const normalized = normalizeVaultJsonForStore('edutech-admissions_demo', raw)
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.students[0].nameEn).toBe('Karim')
+    expect(parsed.state.students[0].nameBn).toBe('করিম')
+  })
+
+  it('normalizes an array of teachers into Zustand format', () => {
+    const raw = JSON.stringify([
+      { id: 'ET0001', nameEn: 'Teacher A', phone: '01700000000' },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-teachers_demo', raw)
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.teachers).toHaveLength(1)
+    expect(parsed.state.teachers[0].id).toBe('ET0001')
+    expect(parsed.state.teachers[0].status).toBe('active')
+  })
+
+  it('normalizes an array of classes into Zustand format', () => {
+    const raw = JSON.stringify([
+      { id: 'CLS-01', name: 'Play', nameBn: 'প্লে' },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-classes_demo', raw)
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.classes).toHaveLength(1)
+    expect(parsed.state.classes[0].name).toBe('Play')
+  })
+
+  it('unpacks from a full backup bundle format', () => {
+    const raw = JSON.stringify({
+      metadata: { slug: 'demo' },
+      stores: {
+        'edutech-admissions': {
+          state: {
+            students: [{ id: 'ET-2026-00003', nameEn: 'Bundle Student' }],
+          },
+        },
+      },
+    })
+    const normalized = normalizeVaultJsonForStore('edutech-admissions_demo', raw)
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.students[0].nameEn).toBe('Bundle Student')
   })
 })
 
