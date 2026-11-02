@@ -458,76 +458,76 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-[0.625rem]">
         <div
-          className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
+          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
         >
-          <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--green-light)' }}>
-            <DollarSign size={18} style={{ color: 'var(--green)' }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--green-light)' }}>
+            <DollarSign size={15} style={{ color: 'var(--green)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{fmt(totalCollected)}</div>
-            <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'মোট সংগ্রহ' : 'Total Collected'}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalCollected)}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট সংগ্রহ' : 'Total Collected'}</div>
           </div>
         </div>
         <div
-          className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
+          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
         >
-          <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
-            <CreditCard size={18} style={{ color: 'var(--brand)' }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
+            <CreditCard size={15} style={{ color: 'var(--brand)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{batches.length}</div>
-            <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'মোট পেমেন্ট' : 'Total Payments'}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{batches.length}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট পেমেন্ট' : 'Total Payments'}</div>
           </div>
         </div>
         <div
-          className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
+          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
         >
-          <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--amber-light)' }}>
-            <Calendar size={18} style={{ color: 'var(--amber)' }} />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--amber-light)' }}>
+            <Calendar size={15} style={{ color: 'var(--amber)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{fmt(todayCollected)}</div>
-            <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'আজকের সংগ্রহ' : 'Today Collected'}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(todayCollected)}</div>
+            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'আজকের সংগ্রহ' : 'Today Collected'}</div>
           </div>
         </div>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="p-3 lg:p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-3">
+      <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-            <input type="text" placeholder={bn ? 'পেমেন্ট খুঁজুন...' : 'Search payments...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${inputCls} w-full pl-9 h-10 text-sm`} />
+          <div className="relative flex-1 min-w-[180px]">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input type="text" placeholder={bn ? 'পেমেন্ট খুঁজুন...' : 'Search payments...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${inputCls} w-full pl-9 h-8 text-xs`} />
           </div>
           <div className="flex items-center gap-1.5">
-            <Calendar size={14} className="text-[var(--text-muted)]" />
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${inputCls} h-10 text-sm w-[140px]`} />
-            <span className="text-[var(--text-muted)] text-sm">—</span>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${inputCls} h-10 text-sm w-[140px]`} />
+            <Calendar size={12} className="text-[var(--text-muted)]" />
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
+            <span className="text-[var(--text-muted)] text-xs">—</span>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
           </div>
-          <button onClick={toggleDateRange} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs lg:text-sm font-semibold border cursor-pointer transition-all bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)]/20 hover:bg-[var(--brand)]/20">
+          <button onClick={toggleDateRange} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)]/20 hover:bg-[var(--brand)]/20">
             {isTodayRange ? (bn ? 'এই মাস' : 'This Month') : (bn ? 'আজ' : 'Today')}
           </button>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <Filter size={14} className="text-[var(--text-muted)]" />
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Filter size={11} className="text-[var(--text-muted)]" />
             {(['', 'cash', 'bank', 'mobile', 'other'] as const).map((m) => (
-              <button key={m} onClick={() => setFMethod(m)} className={`px-3 py-1.5 rounded-lg text-xs lg:text-sm font-semibold border cursor-pointer transition-all ${fMethod === m ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
+              <button key={m} onClick={() => setFMethod(m)} className={`px-2.5 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${fMethod === m ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
                 {m ? methodLabel(m) : (bn ? 'সব' : 'All')}
               </button>
             ))}
           </div>
           {uniqueCollectors.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs lg:text-sm text-[var(--text-muted)]">{bn ? 'সংগ্রাহক:' : 'Collector:'}</span>
-              <select value={fCollector} onChange={(e) => setFCollector(e.target.value)} className={`${inputCls} h-9 text-sm px-2.5 min-w-[110px]`}>
+            <div className="flex items-center gap-1">
+              <span className="text-[0.65rem] text-[var(--text-muted)]">{bn ? 'সংগ্রাহক:' : 'Collector:'}</span>
+              <select value={fCollector} onChange={(e) => setFCollector(e.target.value)} className={`${inputCls} h-7 text-[0.65rem] px-2 min-w-[100px]`}>
                 <option value="">{bn ? 'সব' : 'All'}</option>
                 {uniqueCollectors.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -535,24 +535,24 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
           )}
           <div className="h-4 w-px bg-[var(--border)]" />
           <div className="flex items-center gap-1">
-            <Calendar size={13} className="text-[var(--text-muted)]" />
+            <Calendar size={11} className="text-[var(--text-muted)]" />
             {([
               { val: 'date-desc', en: 'New → Old', bn: 'নতুন → পুরাতন' },
               { val: 'date-asc', en: 'Old → New', bn: 'পুরাতন → নতুন' },
             ] as const).map((o) => (
-              <button key={o.val} onClick={() => setSortBy(o.val)} className={`px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-semibold border cursor-pointer transition-all ${sortBy === o.val ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
+              <button key={o.val} onClick={() => setSortBy(o.val)} className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${sortBy === o.val ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
                 {bn ? o.bn : o.en}
               </button>
             ))}
           </div>
           <div className="h-4 w-px bg-[var(--border)]" />
           <div className="flex items-center gap-1">
-            <DollarSign size={13} className="text-[var(--text-muted)]" />
+            <DollarSign size={11} className="text-[var(--text-muted)]" />
             {([
               { val: 'amount-desc', en: 'High → Low', bn: 'বেশি → কম' },
               { val: 'amount-asc', en: 'Low → High', bn: 'কম → বেশি' },
             ] as const).map((o) => (
-              <button key={o.val} onClick={() => setSortBy(o.val)} className={`px-2.5 py-1.5 rounded-lg text-xs lg:text-sm font-semibold border cursor-pointer transition-all ${sortBy === o.val ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
+              <button key={o.val} onClick={() => setSortBy(o.val)} className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${sortBy === o.val ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
                 {bn ? o.bn : o.en}
               </button>
             ))}
@@ -560,7 +560,7 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
           <div className="flex-1" />
           {batches.length > 0 && (
             <div className="relative">
-              <button onClick={() => setShowActionMenu(!showActionMenu)} className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--brand)] cursor-pointer transition-all">
+              <button onClick={() => setShowActionMenu(!showActionMenu)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--brand)] cursor-pointer transition-all">
                 <MoreVertical size={14} />{bn ? 'অ্যাকশন' : 'Actions'}
               </button>
               {showActionMenu && (
@@ -568,15 +568,15 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
                   <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
                   <div className="absolute right-0 top-full mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-[100] overflow-hidden">
                     {canExport('finance.fees.payments') && (
-                      <button onClick={() => { setShowActionMenu(false); exportExcel() }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
-                        <FileSpreadsheet size={15} className="text-[var(--green)]" />
+                      <button onClick={() => { setShowActionMenu(false); exportExcel() }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                        <FileSpreadsheet size={14} className="text-[var(--green)]" />
                         {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
                       </button>
                     )}
                     <div className="h-px bg-[var(--border)] mx-2" />
                     {canExport('finance.fees.payments') && (
-                      <button onClick={() => { setShowActionMenu(false); setShowPdfModal(true) }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
-                        <FileText size={15} className="text-[var(--red)]" />
+                      <button onClick={() => { setShowActionMenu(false); setShowPdfModal(true) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                        <FileText size={14} className="text-[var(--red)]" />
                         {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
                       </button>
                     )}
@@ -591,59 +591,59 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       {/* Table */}
       <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
         {batches.length === 0 ? (
-          <div className="text-center py-12 text-[var(--text-muted)] text-base">
+          <div className="text-center py-12 text-[var(--text-muted)] text-sm">
             {bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm lg:text-base">
+            <table className="w-full text-xs">
               <thead>
                 <tr className="bg-[var(--bg-secondary)]">
-                  <th className="text-center px-2 py-2.5 w-[36px]">
+                  <th className="text-center px-2 py-2 w-[36px]">
                     <ModernCheckbox checked={batches.length > 0 && selectedRows.size === batches.length} onChange={() => toggleAllRows()} color="brand" size="xs" />
                   </th>
-                  <th className="text-center px-2 py-2.5 w-[36px] text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">#</th>
-                  <th className="text-left px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                  <th className="text-left px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
-                  <th className="text-center px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
-                  <th className="text-right px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                  <th className="text-right px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'ছাড়' : 'Disc.'}</th>
-                  <th className="text-left px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                  <th className="text-left px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'সংগ্রাহক' : 'Receipted By'}</th>
-                  <th className="text-right px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'কাজ' : 'Actions'}</th>
+                  <th className="text-center px-2 py-2 w-[36px] text-[10px] uppercase text-[var(--text-muted)] font-bold">#</th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
+                  <th className="text-center px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'তারিখ' : 'Date'}</th>
+                  <th className="text-right px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                  <th className="text-right px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ছাড়' : 'Disc.'}</th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                  <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'সংগ্রাহক' : 'Receipted By'}</th>
+                  <th className="text-right px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'কাজ' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
                 {batches.map((b, idx) => (
                   <tr key={b.batchKey} className={`border-t border-[var(--border)] transition-colors ${selectedRows.has(b.batchKey) ? 'bg-[var(--brand-light)]/60' : 'hover:bg-[var(--brand-light)]/30'}`}>
-                    <td className="text-center px-2 py-2.5">
+                    <td className="text-center px-2 py-2">
                       <ModernCheckbox checked={selectedRows.has(b.batchKey)} onChange={() => toggleRowSelection(b.batchKey)} color="brand" size="xs" />
                     </td>
-                    <td className="text-center px-2 py-2.5 text-[var(--text-muted)] text-sm lg:text-base">{idx + 1}</td>
-                    <td className="px-3 py-2.5">
-                      <p className="font-semibold text-[var(--text-primary)] text-sm lg:text-base">{bn ? b.studentNameBn || b.studentName : b.studentName}</p>
-                      {b.class && <p className="text-xs lg:text-sm text-[var(--text-muted)]">{b.class}{b.section ? `-${b.section}` : ''}</p>}
+                    <td className="text-center px-2 py-2 text-[var(--text-muted)] text-[11px]">{idx + 1}</td>
+                    <td className="px-3 py-2">
+                      <p className="font-semibold text-[var(--text-primary)] text-[11px]">{bn ? b.studentNameBn || b.studentName : b.studentName}</p>
+                      {b.class && <p className="text-[9px] text-[var(--text-muted)]">{b.class}{b.section ? `-${b.section}` : ''}</p>}
                     </td>
-                    <td className="px-3 py-2.5 font-mono text-xs lg:text-sm text-[var(--brand)] font-semibold">{b.receiptNo}</td>
-                    <td className="px-3 py-2.5 text-center text-[var(--text-secondary)] text-sm lg:text-base">
-                      <div className="flex items-center justify-center gap-1.5"><Calendar size={14} />{b.paidAt}</div>
+                    <td className="px-3 py-2 font-mono text-[10px] text-[var(--brand)]">{b.receiptNo}</td>
+                    <td className="px-3 py-2 text-center text-[var(--text-secondary)]">
+                      <div className="flex items-center justify-center gap-1"><Calendar size={10} />{b.paidAt}</div>
                     </td>
-                    <td className="px-3 py-2.5 text-right font-bold text-[var(--green)] text-sm lg:text-base">{fmt(b.totalAmount)}</td>
-                    <td className="px-3 py-2.5 text-right font-medium text-[var(--amber)] text-sm lg:text-base">{b.totalDiscount ? fmt(b.totalDiscount) : '-'}</td>
-                    <td className="px-3 py-2.5">
-                      <span className="text-xs lg:text-sm font-semibold px-2.5 py-0.5 rounded-full" style={{ background: `${methodColor(b.method)}12`, color: methodColor(b.method) }}>
+                    <td className="px-3 py-2 text-right font-bold text-[var(--green)]">{fmt(b.totalAmount)}</td>
+                    <td className="px-3 py-2 text-right font-medium text-[var(--amber)]">{b.totalDiscount ? fmt(b.totalDiscount) : '-'}</td>
+                    <td className="px-3 py-2">
+                      <span className="text-[0.65rem] font-medium px-2 py-0.5 rounded-full" style={{ background: `${methodColor(b.method)}12`, color: methodColor(b.method) }}>
                         {methodLabel(b.method)}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-sm lg:text-base text-[var(--text-secondary)]">{b.collectedBy || '—'}</td>
-                    <td className="px-3 py-2.5 text-right">
+                    <td className="px-3 py-2 text-[11px] text-[var(--text-secondary)]">{b.collectedBy || '—'}</td>
+                    <td className="px-3 py-2 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => generateReceipt(b)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'রসিদ দেখুন' : 'View Receipt'}>
-                          <Eye size={16} />
+                        <button onClick={() => generateReceipt(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'রসিদ দেখুন' : 'View Receipt'}>
+                          <Eye size={12} />
                         </button>
                         {canDelete('finance.fees.payments') && (
-                          <button onClick={() => handleDeleteBatch(b)} className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)]/20 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                            <Trash2 size={16} />
+                          <button onClick={() => handleDeleteBatch(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)]/20 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                            <Trash2 size={12} />
                           </button>
                         )}
                       </div>
@@ -652,16 +652,16 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold text-sm lg:text-base">
-                  <td className="px-2 py-2.5" />
-                  <td className="px-2 py-2.5" />
-                  <td className="px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)]" colSpan={2}>{bn ? 'মোট' : 'Total'} ({batches.length})</td>
-                  <td className="px-3 py-2.5" />
-                  <td className="px-3 py-2.5 text-right text-sm lg:text-base text-[var(--green)] font-bold">{fmt(totalCollected)}</td>
-                  <td className="px-3 py-2.5 text-right text-sm lg:text-base text-[var(--amber)] font-bold">{totalDiscount ? fmt(totalDiscount) : '-'}</td>
-                  <td className="px-3 py-2.5" />
-                  <td className="px-3 py-2.5" />
-                  <td className="px-3 py-2.5" />
+                <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold">
+                  <td className="px-2 py-1.5" />
+                  <td className="px-2 py-1.5" />
+                  <td className="px-3 py-1.5 text-[9px] uppercase text-[var(--text-muted)]" colSpan={2}>{bn ? 'মোট' : 'Total'} ({batches.length})</td>
+                  <td className="px-3 py-1.5" />
+                  <td className="px-3 py-1.5 text-right text-[11px] text-[var(--green)]">{fmt(totalCollected)}</td>
+                  <td className="px-3 py-1.5 text-right text-[11px] text-[var(--amber)]">{totalDiscount ? fmt(totalDiscount) : '-'}</td>
+                  <td className="px-3 py-1.5" />
+                  <td className="px-3 py-1.5" />
+                  <td className="px-3 py-1.5" />
                 </tr>
               </tfoot>
             </table>

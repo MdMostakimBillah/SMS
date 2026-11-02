@@ -269,7 +269,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRestoreFailed(true)
       }
     } finally {
-      setLoading(false)
+      if (typeof window !== 'undefined') {
+        setLoading(false)
+      }
     }
   }, [])
 

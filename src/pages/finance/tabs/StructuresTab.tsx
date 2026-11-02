@@ -134,25 +134,25 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-lg lg:text-xl font-bold text-[var(--text-primary)]">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">
             {feeType === 'monthly' ? (bn ? 'মাসিক ফি' : 'Monthly Fees') : (bn ? 'এককালীন ফি' : 'One-Time Fees')}
           </h3>
-          <p className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5">
+          <p className="text-[0.7rem] text-[var(--text-muted)] mt-0.5">
             {bn ? `${toBnNum(filtered.length)}টি ফি কাঠামো • মোট ${fmt(totalAmount)}` : `${filtered.length} structures • Total ${fmt(totalAmount)}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {canEdit('finance.fees.structures') && (
-            <button onClick={onBulkAssign} className={`${btnSecondary} h-9 px-3 text-sm font-medium`}>
-              <Copy size={15} /> {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
+            <button onClick={onBulkAssign} className={`${btnSecondary} text-xs`}>
+              <Copy size={12} /> {bn ? 'বাল্ক আপডেট' : 'Bulk Update'}
             </button>
           )}
           {selectedIds.size > 0 && canDelete('finance.fees.structures') && (
             <button
               onClick={handleBulkDelete}
-              className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg text-sm font-medium bg-[var(--red)] text-white border-0 cursor-pointer hover:bg-[var(--red)]/80 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--red)] text-white border-0 cursor-pointer hover:bg-[var(--red)]/80 transition-colors"
             >
-              <Trash2 size={15} />
+              <Trash2 size={12} />
               {bn ? `মুছুন (${toBnNum(selectedIds.size)})` : `Delete (${selectedIds.size})`}
             </button>
           )}
@@ -173,20 +173,20 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
         <button
           ref={(el) => { if (el) tabRefs.current.set('monthly', el) }}
           onClick={() => setFeeType('monthly')}
-          className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-[0.5625rem] text-sm font-semibold cursor-pointer border-none transition-colors duration-200 ${feeType === 'monthly' ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+          className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[0.5625rem] text-xs font-semibold cursor-pointer border-none transition-colors duration-200 ${feeType === 'monthly' ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
         >
-          <Repeat size={15} />
+          <Repeat size={12} />
           {bn ? 'মাসিক' : 'Monthly'}
-          <span className="text-xs lg:text-sm opacity-75">({bn ? toBnNum(monthlyCount) : monthlyCount})</span>
+          <span className="text-[0.6rem] opacity-70">({bn ? toBnNum(monthlyCount) : monthlyCount})</span>
         </button>
         <button
           ref={(el) => { if (el) tabRefs.current.set('onetime', el) }}
           onClick={() => setFeeType('onetime')}
-          className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-[0.5625rem] text-sm font-semibold cursor-pointer border-none transition-colors duration-200 ${feeType === 'onetime' ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+          className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[0.5625rem] text-xs font-semibold cursor-pointer border-none transition-colors duration-200 ${feeType === 'onetime' ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
         >
-          <Zap size={15} />
+          <Zap size={12} />
           {bn ? 'এককালীন' : 'One-Time'}
-          <span className="text-xs lg:text-sm opacity-75">({bn ? toBnNum(onetimeCount) : onetimeCount})</span>
+          <span className="text-[0.6rem] opacity-70">({bn ? toBnNum(onetimeCount) : onetimeCount})</span>
         </button>
       </div>
 
@@ -194,54 +194,54 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
       {showQuickAdd && (
         <div className="mb-4 p-4 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand-light)]/20">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-[var(--brand-light)] flex items-center justify-center">
-              <Plus size={16} className="text-[var(--brand)]" />
+            <div className="w-7 h-7 rounded-lg bg-[var(--brand-light)] flex items-center justify-center">
+              <Plus size={13} className="text-[var(--brand)]" />
             </div>
-            <p className="text-base font-semibold text-[var(--text-primary)]">
+            <p className="text-xs font-semibold text-[var(--text-primary)]">
               {feeType === 'monthly'
                 ? (bn ? 'মাসিক ফি যোগ করুন' : 'Add Monthly Fee')
                 : (bn ? 'এককালীন ফি যোগ করুন' : 'Add One-Time Fee')}
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 mb-2.5">
+          <div className="grid grid-cols-2 gap-2 mb-2">
             <div>
-              <label className="text-xs lg:text-sm font-medium text-[var(--text-muted)] block mb-1">{bn ? 'নাম (EN) *' : 'Name *'}</label>
-              <input value={qName} onChange={(e) => setQName(e.target.value)} className={`${inputCls} w-full h-10 text-sm`} placeholder={feeType === 'monthly' ? 'Tuition Fee' : 'Admission Fee'} />
+              <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'নাম (EN) *' : 'Name *'}</label>
+              <input value={qName} onChange={(e) => setQName(e.target.value)} className={`${inputCls} w-full h-8 text-xs`} placeholder={feeType === 'monthly' ? 'Tuition Fee' : 'Admission Fee'} />
             </div>
             <div>
-              <label className="text-xs lg:text-sm font-medium text-[var(--text-muted)] block mb-1">{bn ? 'নাম (BN)' : 'Name (BN)'}</label>
-              <input value={qNameBn} onChange={(e) => setQNameBn(e.target.value)} className={`${inputCls} w-full h-10 text-sm`} placeholder={feeType === 'monthly' ? 'টিউশন ফি' : 'ভর্তি ফি'} />
+              <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'নাম (BN)' : 'Name (BN)'}</label>
+              <input value={qNameBn} onChange={(e) => setQNameBn(e.target.value)} className={`${inputCls} w-full h-8 text-xs`} placeholder={feeType === 'monthly' ? 'টিউশন ফি' : 'ভর্তি ফি'} />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2.5 mb-2.5">
+          <div className="grid grid-cols-3 gap-2 mb-2">
             <div>
-              <label className="text-xs lg:text-sm font-medium text-[var(--text-muted)] block mb-1">{bn ? 'শ্রেণি *' : 'Class *'}</label>
-              <select value={qClass} onChange={(e) => { setQClass(e.target.value); setQSection('') }} className={`${selectCls} w-full h-10 text-sm`}>
+              <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'শ্রেণি *' : 'Class *'}</label>
+              <select value={qClass} onChange={(e) => { setQClass(e.target.value); setQSection('') }} className={`${selectCls} w-full h-8 text-xs`}>
                 <option value="">{bn ? 'বাছাই' : 'Select'}</option>
                 {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs lg:text-sm font-medium text-[var(--text-muted)] block mb-1">{bn ? 'সেকশন' : 'Section'}</label>
-              <select value={qSection} onChange={(e) => setQSection(e.target.value)} className={`${selectCls} w-full h-10 text-sm`}>
+              <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'সেকশন' : 'Section'}</label>
+              <select value={qSection} onChange={(e) => setQSection(e.target.value)} className={`${selectCls} w-full h-8 text-xs`}>
                 <option value="">{bn ? 'সব' : 'All'}</option>
                 {qSectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs lg:text-sm font-medium text-[var(--text-muted)] block mb-1">{bn ? 'পরিমাণ *' : 'Amount *'}</label>
-              <input type="number" min="0" value={qAmount} onChange={(e) => setQAmount(e.target.value)} className={`${inputCls} w-full h-10 text-sm`} placeholder="5000" />
+              <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'পরিমাণ *' : 'Amount *'}</label>
+              <input type="number" min="0" value={qAmount} onChange={(e) => setQAmount(e.target.value)} className={`${inputCls} w-full h-8 text-xs`} placeholder="5000" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 mb-2.5">
+          <div className="grid grid-cols-2 gap-2 mb-2">
             <div>
-              <label className="text-xs lg:text-sm font-medium text-[var(--text-muted)] block mb-1">{bn ? 'বিবরণ' : 'Description'}</label>
-              <input value={qDesc} onChange={(e) => setQDesc(e.target.value)} className={`${inputCls} w-full h-10 text-sm`} placeholder={bn ? 'ঐচ্ছিক' : 'Optional'} />
+              <label className="text-[0.65rem] font-medium text-[var(--text-muted)] block mb-0.5">{bn ? 'বিবরণ' : 'Description'}</label>
+              <input value={qDesc} onChange={(e) => setQDesc(e.target.value)} className={`${inputCls} w-full h-8 text-xs`} placeholder={bn ? 'ঐচ্ছিক' : 'Optional'} />
             </div>
           </div>
           <div className="flex items-center justify-end">
             {canCreate('finance.fees.structures') && (
-              <button onClick={handleQuickAdd} disabled={!canQuickAdd} className={`${btnPrimary} h-10 px-4 text-sm font-semibold disabled:opacity-50`}>
+              <button onClick={handleQuickAdd} disabled={!canQuickAdd} className={`${btnPrimary} h-8 text-xs disabled:opacity-50`}>
                 {saved ? (bn ? 'যোগ হয়েছে!' : 'Added!') : (bn ? 'যোগ করুন' : 'Add')}
               </button>
             )}
@@ -252,16 +252,16 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
       {/* Filter Bar */}
       <div className="flex items-center gap-2 mb-3">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             type="text"
             placeholder={bn ? 'ফি খুঁজুন...' : 'Search fees...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className={`${inputCls} w-full pl-9 h-10 text-sm`}
+            className={`${inputCls} w-full pl-9 h-8 text-xs`}
           />
         </div>
-        <select value={fClass} onChange={(e) => setFClass(e.target.value)} className={`${selectCls} h-10 text-sm w-auto`}>
+        <select value={fClass} onChange={(e) => setFClass(e.target.value)} className={`${selectCls} h-8 text-xs w-auto`}>
           <option value="">{bn ? 'সব শ্রেণি' : 'All Classes'}</option>
           {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -273,18 +273,18 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
           <div className="w-14 h-14 rounded-2xl bg-[var(--bg-secondary)] flex items-center justify-center mx-auto mb-3">
             <DollarSign size={24} className="text-[var(--text-muted)]" />
           </div>
-          <p className="text-base text-[var(--text-muted)] mb-1">
+          <p className="text-sm text-[var(--text-muted)] mb-1">
             {feeType === 'monthly'
               ? (bn ? 'কোনো মাসিক ফি নেই' : 'No monthly fees yet')
               : (bn ? 'কোনো এককালীন ফি নেই' : 'No one-time fees yet')}
           </p>
-          <p className="text-xs lg:text-sm text-[var(--text-muted)]">
+          <p className="text-[0.7rem] text-[var(--text-muted)]">
             {bn ? '"ফি যোগ" বাটনে ক্লিক করে প্রথম ফি তৈরি করুন' : 'Click "Add Fee" to create your first fee structure'}
           </p>
         </div>
       ) : (
         <div className="rounded-xl border border-[var(--border)] overflow-hidden">
-          <table className="w-full text-sm lg:text-base">
+          <table className="w-full text-xs">
             <thead>
               <tr className="bg-[var(--bg-secondary)]">
                 <th className="w-10 px-2 py-2.5">
@@ -295,11 +295,11 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
                     size="xs"
                   />
                 </th>
-                <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'নাম' : 'Name'}</th>
-                <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'শ্রেণি' : 'Class'}</th>
-                <th className="text-right px-4 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                <th className="text-center px-4 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'অবস্থা' : 'Status'}</th>
-                <th className="text-right px-4 py-2.5 font-semibold text-[var(--text-secondary)] w-[100px] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'কাজ' : 'Actions'}</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'নাম' : 'Name'}</th>
+                <th className="text-left px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Class'}</th>
+                <th className="text-right px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                <th className="text-center px-4 py-2.5 font-semibold text-[var(--text-secondary)]">{bn ? 'অবস্থা' : 'Status'}</th>
+                <th className="text-right px-4 py-2.5 font-semibold text-[var(--text-secondary)] w-[100px]">{bn ? 'কাজ' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
@@ -308,7 +308,7 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
                   key={s.id}
                   className={`border-t border-[var(--border)] transition-colors duration-150 ${idx % 2 === 0 ? 'bg-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)]/40'} ${selectedIds.has(s.id) ? 'bg-[var(--brand-light)]/30' : ''} ${s.isActive ? 'hover:bg-[var(--brand-light)]/50 hover:shadow-[inset_0_0_0_1px_var(--brand)]/10' : 'opacity-50'}`}
                 >
-                  <td className="px-2 py-2.5 text-center">
+                  <td className="px-2 py-2 text-center">
                     <ModernCheckbox
                       checked={selectedIds.has(s.id)}
                       onChange={() => toggleSelect(s.id)}
@@ -316,48 +316,48 @@ export const StructuresTab = React.memo(function StructuresTab({ onEdit, onBulkA
                       size="xs"
                     />
                   </td>
-                  <td className="px-3 py-2.5">
-                    <p className="font-semibold text-[var(--text-primary)] truncate text-sm lg:text-base">{bn && s.nameBn ? s.nameBn : s.name}</p>
-                    {s.description && <p className="text-xs lg:text-sm text-[var(--text-muted)] truncate mt-0.5">{s.description}</p>}
+                  <td className="px-3 py-2">
+                    <p className="font-medium text-[var(--text-primary)] truncate">{bn && s.nameBn ? s.nameBn : s.name}</p>
+                    {s.description && <p className="text-[0.65rem] text-[var(--text-muted)] truncate mt-0.5">{s.description}</p>}
                   </td>
-                  <td className="px-3 py-2.5">
-                    <span className="text-[var(--text-secondary)] bg-[var(--bg-secondary)] px-2.5 py-1 rounded-md text-xs lg:text-sm">
+                  <td className="px-3 py-2">
+                    <span className="text-[var(--text-secondary)] bg-[var(--bg-secondary)] px-2 py-0.5 rounded-md text-[0.7rem]">
                       {s.class}{s.section ? ` - ${s.section}` : ''}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 text-right font-bold text-[var(--text-primary)] text-sm lg:text-base">{fmt(s.amount)}</td>
-                  <td className="px-3 py-2.5 text-center">
-                    <span className={`inline-block text-xs lg:text-sm font-semibold px-2.5 py-0.5 rounded-full ${s.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
+                  <td className="px-3 py-2 text-right font-semibold text-[var(--text-primary)]">{fmt(s.amount)}</td>
+                  <td className="px-3 py-2 text-center">
+                    <span className={`inline-block text-[0.65rem] font-semibold px-2.5 py-0.5 rounded-full ${s.isActive ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
                       {s.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive')}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-3 py-2 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {canEdit('finance.fees.structures') && (
                         <button
                           onClick={() => toggleStructureActive(s.id)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--brand)] hover:bg-[var(--brand-light)] transition-colors"
                           title={s.isActive ? (bn ? 'নিষ্ক্রিয়' : 'Deactivate') : (bn ? 'সক্রিয়' : 'Activate')}
                         >
-                          {s.isActive ? <ToggleRight size={17} /> : <ToggleLeft size={17} />}
+                          {s.isActive ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
                         </button>
                       )}
                       {canEdit('finance.fees.structures') && (
                         <button
                           onClick={() => onEdit(s)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--amber)] hover:bg-[var(--amber-light)] transition-colors"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--amber)] hover:bg-[var(--amber-light)] transition-colors"
                           title={bn ? 'সম্পাদনা' : 'Edit'}
                         >
-                          <Edit2 size={15} />
+                          <Edit2 size={13} />
                         </button>
                       )}
                       {canDelete('finance.fees.structures') && (
                         <button
                           onClick={() => { if (confirm(bn ? 'আপনি কি নিশ্চিত?' : 'Are you sure?')) deleteStructure(s.id) }}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--red)] hover:bg-[var(--red-light)] transition-colors"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] border-0 bg-transparent cursor-pointer hover:text-[var(--red)] hover:bg-[var(--red-light)] transition-colors"
                           title={bn ? 'মুছুন' : 'Delete'}
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={13} />
                         </button>
                       )}
                     </div>

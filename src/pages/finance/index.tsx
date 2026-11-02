@@ -327,30 +327,30 @@ export default function FeeManagementPage() {
         <div className="gsap-fade-up flex items-center gap-2 mb-4">
           <button
             onClick={() => navigateToView(null)}
-            className="flex items-center gap-1.5 text-sm lg:text-base font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+            className="flex items-center gap-1 text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={14} />
             {bn ? 'ফি ব্যবস্থাপনা' : 'Fee Management'}
           </button>
         </div>
 
         <div className="gsap-fade-up flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <div
-              className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center"
+              className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{ background: viewOption?.iconBg }}
             >
-              <ViewIcon size={18} style={{ color: viewOption?.iconColor }} />
+              <ViewIcon size={15} style={{ color: viewOption?.iconColor }} />
             </div>
             <div>
-              <h1 className="text-xl lg:text-2xl font-bold text-[var(--text-primary)]">
+              <h1 className="text-lg font-bold text-[var(--text-primary)]">
                 {bn ? viewOption?.titleBn : viewOption?.titleEn}
               </h1>
             </div>
           </div>
           {activeView === 'structures' && canCreate('finance.fees.structures') && (
-            <button onClick={() => setShowBatchCreate(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm lg:text-base font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity cursor-pointer">
-              <Plus size={16} />
+            <button onClick={() => setShowBatchCreate(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--brand)] text-white hover:opacity-90 transition-opacity">
+              <Plus size={13} />
               {bn ? 'ফি যোগ করুন' : 'Add Fee'}
             </button>
           )}
@@ -473,10 +473,10 @@ export default function FeeManagementPage() {
   return (
     <div ref={containerRef}>
       <div className={`gsap-fade-up ${isMobile ? 'mb-4' : 'mb-5'}`}>
-        <h1 className={`text-[var(--text-primary)] font-bold tracking-[-0.3px] ${isMobile ? 'text-xl' : 'text-2xl lg:text-3xl'}`}>
+        <h1 className={`text-[var(--text-primary)] font-semibold tracking-[-0.3px] ${isMobile ? 'text-lg' : 'text-xl'}`}>
           {bn ? 'ফি ব্যবস্থাপনা' : 'Fee Management'}
         </h1>
-        <p className="text-sm lg:text-base text-[var(--text-secondary)] mt-1">
+        <p className="text-xs text-[var(--text-secondary)] mt-1">
           {bn ? 'নিচের অপশন বেছে নিন' : 'Select an option below'}
         </p>
       </div>
@@ -489,7 +489,7 @@ export default function FeeManagementPage() {
           return (
             <div
               key={s.labelEn}
-              className={`glass rounded-[0.75rem] flex items-center ${isMobile ? 'gap-2' : 'gap-3'} cursor-default transition-all duration-200 ${isMobile ? 'p-3' : 'p-3.5 lg:p-4'}`}
+              className={`glass rounded-[0.75rem] flex items-center ${isMobile ? 'gap-2' : 'gap-[0.625rem]'} cursor-default transition-all duration-200 ${isMobile ? 'p-3' : 'p-[0.875rem]'}`}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)'
                 e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)'
@@ -500,23 +500,23 @@ export default function FeeManagementPage() {
               }}
             >
               <div
-                className={`rounded-lg flex items-center justify-center flex-shrink-0 ${isMobile ? 'w-8 h-8' : 'w-10 h-10'}`}
+                className={`rounded-lg flex items-center justify-center flex-shrink-0 ${isMobile ? 'w-7 h-7' : 'w-8 h-8'}`}
                 style={{ background: s.bg }}
               >
-                <IconComp size={isMobile ? 15 : 18} style={{ color: s.color }} />
+                <IconComp size={isMobile ? 13 : 15} style={{ color: s.color }} />
               </div>
               <div className="min-w-0">
-                <div className={`text-[var(--text-primary)] leading-none font-bold ${isMobile ? 'text-base' : 'text-lg lg:text-xl'}`}>
+                <div className={`text-[var(--text-primary)] leading-none font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>
                   {bn ? s.valueBn : s.valueEn}
                 </div>
-                <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? s.labelBn : s.labelEn}</div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? s.labelBn : s.labelEn}</div>
               </div>
             </div>
           )
         })}
       </div>
 
-      <div className="gsap-fade-up text-xs lg:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2.5">
+      <div className="gsap-fade-up text-xs font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-[0.625rem]">
         {bn ? 'কী করতে চান?' : 'Quick Actions'}
       </div>
 

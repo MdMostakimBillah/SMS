@@ -164,25 +164,25 @@ export const ReportsTab = React.memo(function ReportsTab() {
   return (
     <div>
       {/* Overview Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-3 gap-[0.625rem] mb-5">
         {stats.map((s, i) => {
           const IconComp = s.icon
           return (
             <div
               key={i}
-              className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
+              className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
             >
               <div
-                className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                 style={{ background: s.bg }}
               >
-                <IconComp size={18} style={{ color: s.color }} />
+                <IconComp size={15} style={{ color: s.color }} />
               </div>
               <div className="min-w-0">
-                <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{s.value}</div>
-                <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{s.label}</div>
+                <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{s.value}</div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{s.label}</div>
               </div>
             </div>
           )
@@ -190,10 +190,10 @@ export const ReportsTab = React.memo(function ReportsTab() {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="p-3 lg:p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] mb-4 flex items-center gap-2.5 flex-wrap">
+      <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] mb-4 flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-1.5">
-          <Filter size={15} className="text-[var(--text-muted)]" />
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortMode)} className={`${inputCls} h-10 text-sm px-3`}>
+          <Filter size={11} className="text-[var(--text-muted)]" />
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortMode)} className={`${inputCls} h-7 text-[0.65rem] px-2`}>
             <option value="default">{bn ? 'সব' : 'All'}</option>
             <option value="col-asc">{bn ? 'সংগ্রহ: কম → বেশি' : 'Collected: Min → Max'}</option>
             <option value="col-desc">{bn ? 'সংগ্রহ: বেশি → কম' : 'Collected: Max → Min'}</option>
@@ -203,8 +203,8 @@ export const ReportsTab = React.memo(function ReportsTab() {
         </div>
         {classNames.length > 0 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-xs lg:text-sm text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span>
-            <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection('') }} className={`${inputCls} h-10 text-sm px-3`}>
+            <span className="text-[0.65rem] text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span>
+            <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection('') }} className={`${inputCls} h-7 text-[0.65rem] px-2`}>
               <option value="">{bn ? 'সব' : 'All'}</option>
               {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -212,22 +212,22 @@ export const ReportsTab = React.memo(function ReportsTab() {
         )}
         {sections.length > 0 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-xs lg:text-sm text-[var(--text-muted)]">{bn ? 'শাখা:' : 'Section:'}</span>
-            <select value={fSection} onChange={(e) => setFSection(e.target.value)} className={`${inputCls} h-10 text-sm px-3`}>
+            <span className="text-[0.65rem] text-[var(--text-muted)]">{bn ? 'শাখা:' : 'Section:'}</span>
+            <select value={fSection} onChange={(e) => setFSection(e.target.value)} className={`${inputCls} h-7 text-[0.65rem] px-2`}>
               <option value="">{bn ? 'সব' : 'All'}</option>
               {sections.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
         )}
         {hasFilter && (
-          <button onClick={() => { setSortBy('default'); setFClass(''); setFSection('') }} className="h-10 px-3 rounded-lg text-xs lg:text-sm font-semibold bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer transition-all hover:bg-[var(--red)]/20">
+          <button onClick={() => { setSortBy('default'); setFClass(''); setFSection('') }} className="px-2 py-1 rounded-lg text-[0.65rem] font-medium bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer transition-all hover:bg-[var(--red)]/20">
             {bn ? 'মুছুন' : 'Clear'}
           </button>
         )}
         <div className="flex-1" />
         {sortedSummary.length > 0 && canPrint('finance.fees.reports.print') && (
-          <button onClick={() => setShowPdfModal(true)} className="flex items-center gap-1.5 h-10 px-4 rounded-lg text-sm font-semibold border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--red)] hover:text-[var(--red)] cursor-pointer transition-all">
-            <FileText size={15} />
+          <button onClick={() => setShowPdfModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--red)] hover:text-[var(--red)] cursor-pointer transition-all">
+            <FileText size={13} />
             {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
           </button>
         )}
@@ -236,44 +236,44 @@ export const ReportsTab = React.memo(function ReportsTab() {
       {/* Class-wise Summary */}
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-2">
-          <BarChart3 size={18} className="text-[var(--brand)]" />
-          <h3 className="text-base font-semibold text-[var(--text-primary)]">{bn ? 'শ্রেণি অনুযায়ী সারসংক্ষেপ' : 'Class-wise Summary'}</h3>
-          {hasFilter && <span className="ml-auto text-xs lg:text-sm text-[var(--text-muted)]">{sortedSummary.length} {bn ? 'টি শ্রেণি' : 'classes'}</span>}
+          <BarChart3 size={16} className="text-[var(--brand)]" />
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">{bn ? 'শ্রেণি অনুযায়ী সারসংক্ষেপ' : 'Class-wise Summary'}</h3>
+          {hasFilter && <span className="ml-auto text-[0.65rem] text-[var(--text-muted)]">{sortedSummary.length} {bn ? 'টি শ্রেণি' : 'classes'}</span>}
         </div>
         {sortedSummary.length === 0 ? (
-          <div className="text-center py-10 text-[var(--text-muted)] text-base">
+          <div className="text-center py-10 text-[var(--text-muted)] text-sm">
             {bn ? 'কোনো ডেটা নেই' : 'No data available'}
           </div>
         ) : (
-          <table className="w-full text-sm lg:text-base">
+          <table className="w-full text-xs">
             <thead>
               <tr className="bg-[var(--bg-secondary)]">
-                <th className="text-left px-4 py-2.5 font-semibold text-xs lg:text-sm uppercase tracking-wider text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Class'}</th>
-                <th className="text-left px-4 py-2.5 font-semibold text-xs lg:text-sm uppercase tracking-wider text-[var(--text-secondary)]">{bn ? 'শাখা' : 'Section'}</th>
-                <th className="text-center px-4 py-2.5 font-semibold text-xs lg:text-sm uppercase tracking-wider text-[var(--text-secondary)]">{bn ? 'শিক্ষার্থী' : 'Students'}</th>
-                <th className="text-right px-4 py-2.5 font-semibold text-xs lg:text-sm uppercase tracking-wider text-[var(--text-secondary)]">{bn ? 'মোট ফি' : 'Total Fee'}</th>
-                <th className="text-right px-4 py-2.5 font-semibold text-xs lg:text-sm uppercase tracking-wider text-[var(--text-secondary)]">{bn ? 'সংগৃহীত' : 'Collected'}</th>
-                <th className="text-right px-4 py-2.5 font-semibold text-xs lg:text-sm uppercase tracking-wider text-[var(--text-secondary)]">{bn ? 'বকেয়' : 'Pending'}</th>
-                <th className="text-right px-4 py-2.5 font-semibold text-xs lg:text-sm uppercase tracking-wider text-[var(--text-secondary)]">{bn ? 'সংগ্রহ হার' : 'Collection %'}</th>
+                <th className="text-left px-4 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Class'}</th>
+                <th className="text-left px-4 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শাখা' : 'Section'}</th>
+                <th className="text-center px-4 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শিক্ষার্থী' : 'Students'}</th>
+                <th className="text-right px-4 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'মোট ফি' : 'Total Fee'}</th>
+                <th className="text-right px-4 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'সংগৃহীত' : 'Collected'}</th>
+                <th className="text-right px-4 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'বকেয়' : 'Pending'}</th>
+                <th className="text-right px-4 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'সংগ্রহ হার' : 'Collection %'}</th>
               </tr>
             </thead>
             <tbody>
               {sortedSummary.map((c) => (
                 <tr key={`${c.className}-${c.section}`} className="border-t border-[var(--border)] hover:bg-[var(--bg-secondary)]/50 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-[var(--text-primary)]">{c.className}</td>
-                  <td className="px-4 py-3 text-[var(--text-secondary)]">{c.section || '—'}</td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-flex items-center gap-1.5 text-[var(--text-secondary)]"><Users size={14} />{c.studentCount}</span>
+                  <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{c.className}</td>
+                  <td className="px-4 py-2.5 text-[var(--text-secondary)]">{c.section || '—'}</td>
+                  <td className="px-4 py-2.5 text-center">
+                    <span className="inline-flex items-center gap-1 text-[var(--text-secondary)]"><Users size={11} />{c.studentCount}</span>
                   </td>
-                  <td className="px-4 py-3 text-right text-[var(--text-secondary)] font-medium">{fmt(c.totalDue)}</td>
-                  <td className="px-4 py-3 text-right font-bold text-[var(--green)]">{fmt(c.totalPaid)}</td>
-                  <td className="px-4 py-3 text-right font-bold" style={{ color: c.pending > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{fmt(c.pending)}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-2.5 text-right text-[var(--text-secondary)]">{fmt(c.totalDue)}</td>
+                  <td className="px-4 py-2.5 text-right font-medium text-[var(--green)]">{fmt(c.totalPaid)}</td>
+                  <td className="px-4 py-2.5 text-right font-medium" style={{ color: c.pending > 0 ? 'var(--red)' : 'var(--text-muted)' }}>{fmt(c.pending)}</td>
+                  <td className="px-4 py-2.5 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <div className="w-16 h-2 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
+                      <div className="w-16 h-1.5 rounded-full bg-[var(--bg-secondary)] overflow-hidden">
                         <div className="h-full rounded-full transition-all" style={{ width: `${c.pct}%`, background: c.pct >= 80 ? 'var(--green)' : c.pct >= 50 ? 'var(--amber)' : 'var(--red)' }} />
                       </div>
-                      <span className="text-xs lg:text-sm font-semibold" style={{ color: c.pct >= 80 ? 'var(--green)' : c.pct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{c.pct}%</span>
+                      <span className="text-[0.65rem] font-medium" style={{ color: c.pct >= 80 ? 'var(--green)' : c.pct >= 50 ? 'var(--amber)' : 'var(--red)' }}>{c.pct}%</span>
                     </div>
                   </td>
                 </tr>

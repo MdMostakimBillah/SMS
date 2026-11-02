@@ -36,7 +36,7 @@ const MONTH_LABELS = [
   { en: 'Dec', bn: 'ডিসেম্বর' },
 ]
 
-const selectCls = 'h-10 text-sm px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer'
+const selectCls = 'h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer'
 
 const CATEGORY_ICON_KEYWORDS: { icon: LucideIcon; keywords: string[] }[] = [
   { icon: Award, keywords: ['scholarship', 'বৃত্তি', 'merit', 'সুমেরু', 'award', 'পুরস্কার'] },
@@ -454,18 +454,18 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--purple-light)' }}>
-              <Gift size={18} style={{ color: 'var(--purple)' }} />
+          <div className="flex items-center gap-[0.625rem]">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--purple-light)' }}>
+              <Gift size={15} style={{ color: 'var(--purple)' }} />
             </div>
             <div className="min-w-0">
-              <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{fmt(totalWaived)}</div>
-              <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'মোট ছাড়' : 'Total Waived'}</div>
+              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalWaived)}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট ছাড়' : 'Total Waived'}</div>
             </div>
           </div>
         {canCreate('finance.fees.waivers') && (
-          <button onClick={() => subTab === 'students' ? onAddStudentWaiver() : onAddWaiver('category')} className="flex items-center gap-1.5 py-2 px-4 rounded-lg bg-[var(--brand)] border-none text-white text-sm font-semibold cursor-pointer hover:opacity-90 transition-opacity">
-            <Plus size={16} /> {subTab === 'students' ? (bn ? 'শিক্ষার্থী যোগ করুন' : 'Add Student') : (bn ? 'ক্যাটাগরি যোগ করুন' : 'Add Category')}
+          <button onClick={() => subTab === 'students' ? onAddStudentWaiver() : onAddWaiver('category')} className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-xs font-medium cursor-pointer">
+            <Plus size={13} /> {subTab === 'students' ? (bn ? 'শিক্ষার্থী যোগ করুন' : 'Add Student') : (bn ? 'ক্যাটাগরি যোগ করুন' : 'Add Category')}
           </button>
         )}
         </div>
@@ -485,21 +485,21 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
         <button
           ref={(el) => { if (el) tabRefs.current.set('categories', el) }}
           onClick={() => setSubTab('categories')}
-          className={`relative z-10 flex-1 py-2.5 rounded-[0.5625rem] text-sm font-semibold cursor-pointer border-none transition-colors duration-200 ${
+          className={`relative z-10 flex-1 py-2 rounded-[0.5625rem] text-xs font-semibold cursor-pointer border-none transition-colors duration-200 ${
             subTab === 'categories' ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          <Tag size={15} className="inline mr-1.5" />
+          <Tag size={12} className="inline mr-1" />
           {bn ? 'ক্যাটাগরি' : 'Categories'}
         </button>
         <button
           ref={(el) => { if (el) tabRefs.current.set('students', el) }}
           onClick={() => setSubTab('students')}
-          className={`relative z-10 flex-1 py-2.5 rounded-[0.5625rem] text-sm font-semibold cursor-pointer border-none transition-colors duration-200 ${
+          className={`relative z-10 flex-1 py-2 rounded-[0.5625rem] text-xs font-semibold cursor-pointer border-none transition-colors duration-200 ${
             subTab === 'students' ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
           }`}
         >
-          <Gift size={15} className="inline mr-1.5" />
+          <Gift size={12} className="inline mr-1" />
           {bn ? 'শিক্ষার্থী' : 'Students'}
         </button>
       </div>
@@ -508,7 +508,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
         /* Categories View */
         <div className="space-y-2">
           {categoryStats.length === 0 ? (
-            <div className="text-center py-12 text-[var(--text-muted)] text-base">
+            <div className="text-center py-12 text-[var(--text-muted)] text-sm">
               {bn ? 'কোনো ক্যাটাগরি নেই। "ছাড় যোগ করুন" এ ক্লিক করে প্রথম ক্যাটাগরি তৈরি করুন।' : 'No categories yet. Click "Add Waiver" to create the first category.'}
             </div>
           ) : (
@@ -516,49 +516,49 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
               const CatIcon = getCategoryIcon(cat.name, cat.nameBn)
               const isEditing = editingCatId === cat.id
               return (
-                <div key={cat.id} className={`p-3.5 rounded-xl border transition-all ${cat.isActive ? 'border-[var(--border)] bg-[var(--bg-primary)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] opacity-60'}`}>
+                <div key={cat.id} className={`p-3 rounded-xl border transition-all ${cat.isActive ? 'border-[var(--border)] bg-[var(--bg-primary)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] opacity-60'}`}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--purple-light)] flex items-center justify-center flex-shrink-0">
-                      <CatIcon size={18} className="text-[var(--purple)]" />
+                    <div className="w-9 h-9 rounded-lg bg-[var(--purple-light)] flex items-center justify-center flex-shrink-0">
+                      <CatIcon size={16} className="text-[var(--purple)]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
-                        <div className="space-y-2">
-                          <div className="grid grid-cols-2 gap-2">
-                            <input value={editName} onChange={(e) => setEditName(e.target.value)} className={`${selectCls} w-full !h-9 text-sm`} placeholder="Name *" />
-                            <input value={editNameBn} onChange={(e) => setEditNameBn(e.target.value)} className={`${selectCls} w-full !h-9 text-sm`} placeholder="নাম" />
+                        <div className="space-y-1.5">
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <input value={editName} onChange={(e) => setEditName(e.target.value)} className={`${selectCls} w-full !h-7 !text-[0.65rem]`} placeholder="Name *" />
+                            <input value={editNameBn} onChange={(e) => setEditNameBn(e.target.value)} className={`${selectCls} w-full !h-7 !text-[0.65rem]`} placeholder="নাম" />
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className={`${selectCls} w-full !h-9 text-sm`} placeholder="Description" />
-                            <input value={editDescBn} onChange={(e) => setEditDescBn(e.target.value)} className={`${selectCls} w-full !h-9 text-sm`} placeholder="বিবরণ" />
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className={`${selectCls} w-full !h-7 !text-[0.65rem]`} placeholder="Description" />
+                            <input value={editDescBn} onChange={(e) => setEditDescBn(e.target.value)} className={`${selectCls} w-full !h-7 !text-[0.65rem]`} placeholder="বিবরণ" />
                           </div>
                         </div>
                       ) : (
                         <>
-                          <p className="text-base font-semibold text-[var(--text-primary)]">{bn ? cat.nameBn || cat.name : cat.name}</p>
-                          {cat.description && <p className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5">{bn ? cat.descriptionBn || cat.description : cat.description}</p>}
+                          <p className="text-xs font-semibold text-[var(--text-primary)]">{bn ? cat.nameBn || cat.name : cat.name}</p>
+                          {cat.description && <p className="text-[0.65rem] text-[var(--text-muted)] mt-0.5">{bn ? cat.descriptionBn || cat.description : cat.description}</p>}
                         </>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <div className="text-right">
-                        <p className="text-xs lg:text-sm text-[var(--text-muted)]">{cat.entryCount} {bn ? 'জন শিক্ষার্থী' : 'students'}</p>
-                        <p className="text-base lg:text-lg font-bold text-[var(--purple)]">{fmt(cat.totalWaived)}</p>
+                        <p className="text-[0.65rem] text-[var(--text-muted)]">{cat.entryCount} {bn ? 'জন শিক্ষার্থী' : 'students'}</p>
+                        <p className="text-xs font-bold text-[var(--purple)]">{fmt(cat.totalWaived)}</p>
                       </div>
                       {isEditing ? (
                         <div className="flex items-center gap-1">
-                          <button onClick={saveEditCat} disabled={!editName} className="w-7 h-7 rounded flex items-center justify-center bg-[var(--green-light)] text-[var(--green)] border-0 cursor-pointer disabled:opacity-40" title={bn ? 'সংরক্ষণ' : 'Save'}>
-                            <Check size={14} />
+                          <button onClick={saveEditCat} disabled={!editName} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--green-light)] text-[var(--green)] border-0 cursor-pointer disabled:opacity-40" title={bn ? 'সংরক্ষণ' : 'Save'}>
+                            <Check size={11} />
                           </button>
-                          <button onClick={cancelEditCat} className="w-7 h-7 rounded flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] border-0 cursor-pointer" title={bn ? 'বাতিল' : 'Cancel'}>
-                            <X size={14} />
+                          <button onClick={cancelEditCat} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] border-0 cursor-pointer" title={bn ? 'বাতিল' : 'Cancel'}>
+                            <X size={11} />
                           </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1">
                           {canEdit('finance.fees.waivers') && (
-                            <button onClick={() => startEditCat(cat)} className="w-7 h-7 rounded flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer" title={bn ? 'সম্পাদনা' : 'Edit'}>
-                              <Edit2 size={13} />
+                            <button onClick={() => startEditCat(cat)} className="w-6 h-6 rounded flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer" title={bn ? 'সম্পাদনা' : 'Edit'}>
+                              <Edit2 size={11} />
                             </button>
                           )}
                           {canDelete('finance.fees.waivers') && (
@@ -568,9 +568,9 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                                   deleteWaiverCategory(cat.id)
                                 }
                               }}
-                              className="w-7 h-7 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer"
+                              className="w-6 h-6 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={11} />
                             </button>
                           )}
                         </div>
@@ -586,7 +586,7 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
         /* Students View */
         <>
           {/* Filters */}
-          <div className="p-3.5 lg:p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-3 mb-3">
+          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-2.5 mb-3">
             <div className="flex items-center gap-2 flex-wrap">
               <select value={fSession} onChange={(e) => setFSession(e.target.value)} className={selectCls}>
                 <option value="">{bn ? 'সব সেশন' : 'All Sessions'}</option>
@@ -606,14 +606,14 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
               </select>
             </div>
             <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-              <input type="text" placeholder={bn ? 'শিক্ষার্থী খুঁজুন...' : 'Search students...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${inputCls} w-full pl-9 h-10 text-sm`} />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+              <input type="text" placeholder={bn ? 'শিক্ষার্থী খুঁজুন...' : 'Search students...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${inputCls} w-full pl-9 h-8 text-xs`} />
             </div>
           </div>
 
           {/* Action Bar */}
           <div className="flex items-center justify-between px-3 py-2 mt-3">
-            <span className="text-sm lg:text-base text-[var(--text-muted)]">
+            <span className="text-[0.65rem] text-[var(--text-muted)]">
               {selectedRows.size > 0
                 ? `${selectedRows.size} ${bn ? 'নির্বাচিত' : 'selected'} / ${groupedStudents.length} ${bn ? 'শিক্ষার্থী' : 'students'}`
                 : `${groupedStudents.length} ${bn ? 'শিক্ষার্থী' : 'students'}`}
@@ -622,27 +622,27 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
               <div className="relative" ref={actionMenuRef}>
                 <button
                   onClick={() => setShowActionMenu(!showActionMenu)}
-                  className="flex items-center gap-1.5 py-2 px-3.5 rounded-lg bg-[var(--brand)] border-none text-white text-sm font-semibold cursor-pointer hover:opacity-90 transition-opacity"
+                  className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-[0.65rem] font-medium cursor-pointer hover:opacity-90 transition-opacity"
                 >
-                  <MoreVertical size={14} />
+                  <MoreVertical size={12} />
                   {bn ? 'অ্যাকশন' : 'Action'}
-                  <ChevronDown size={14} />
+                  <ChevronDown size={11} />
                 </button>
                 {showActionMenu && (
                   <div className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-[100] overflow-hidden">
                     <button
                       onClick={() => { exportExcel(); setShowActionMenu(false) }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
                     >
-                      <FileSpreadsheet size={15} className="text-[var(--green)]" />
+                      <FileSpreadsheet size={14} className="text-[var(--green)]" />
                       {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
                     </button>
                     <div className="h-px bg-[var(--border)] mx-2" />
                     <button
                       onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
-                      className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
                     >
-                      <FileText size={15} className="text-[var(--red)]" />
+                      <FileText size={14} className="text-[var(--red)]" />
                       {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
                     </button>
                     </div>
@@ -654,27 +654,27 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
           {/* Grouped Table */}
           <div className="border border-[var(--border)] rounded-xl overflow-hidden mt-2">
             {groupedStudents.length === 0 ? (
-              <div className="text-center py-12 text-[var(--text-muted)] text-base">
+              <div className="text-center py-12 text-[var(--text-muted)] text-sm">
                 {bn ? 'কোনো ছাড় নেই' : 'No waivers found'}
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm lg:text-base">
+                <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-[var(--bg-secondary)]">
-                      <th className="w-8 px-2 py-2.5">
+                      <th className="w-8 px-2 py-2">
                         <ModernCheckbox checked={groupedStudents.length > 0 && selectedRows.size === groupedStudents.length} onChange={() => toggleAllRows()} color="brand" size="xs" />
                       </th>
-                      <th className="w-8 px-2 py-2.5"></th>
-                      <th className="w-10 px-2 py-2.5"></th>
-                      <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
-                      <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                      <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'শ্রেণি' : 'Class'}</th>
-                      <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
-                      <th className="text-left px-3 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'ফি' : 'Fee'}</th>
-                      <th className="text-right px-3 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'প্রতি মাসে' : 'Per Month'}</th>
-                      <th className="text-right px-3 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'মোট ছাড়' : 'Total Waived'}</th>
-                      <th className="text-right px-3 py-2.5 font-semibold text-[var(--text-secondary)] text-xs lg:text-sm uppercase tracking-wider">{bn ? 'কাজ' : 'Actions'}</th>
+                      <th className="w-8 px-2 py-2"></th>
+                      <th className="w-10 px-2 py-2"></th>
+                      <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
+                      <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                      <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Class'}</th>
+                      <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'ক্যাটাগরি' : 'Category'}</th>
+                      <th className="text-left px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'ফি' : 'Fee'}</th>
+                      <th className="text-right px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'প্রতি মাসে' : 'Per Month'}</th>
+                      <th className="text-right px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'মোট ছাড়' : 'Total Waived'}</th>
+                      <th className="text-right px-3 py-2 font-semibold text-[var(--text-secondary)]">{bn ? 'কাজ' : 'Actions'}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -698,40 +698,40 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
                       return (
                         <React.Fragment key={group.studentId}>
                           <tr className={`border-t border-[var(--border)] transition-colors cursor-pointer ${idx % 2 === 0 ? 'bg-[var(--bg-primary)]' : 'bg-[var(--bg-secondary)]/40'} hover:bg-[var(--brand-light)]/50 ${selectedRows.has(group.studentId) ? 'bg-[var(--brand-light)]/20' : ''}`} onClick={() => setExpandedId(isExpanded ? null : group.studentId)}>
-                            <td className="px-2 py-2.5">
+                            <td className="px-2 py-2">
                               <ModernCheckbox checked={selectedRows.has(group.studentId)} onChange={() => toggleRow(group.studentId)} onClick={(e) => e.stopPropagation()} color="brand" size="xs" />
                             </td>
-                            <td className="px-2 py-2.5 text-[var(--text-muted)]">
-                              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                            <td className="px-2 py-2 text-[var(--text-muted)]">
+                              {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
                             </td>
-                            <td className="px-2 py-2.5">
+                            <td className="px-2 py-2">
                               <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center flex-shrink-0">
                                 {group.photo ? (
                                    <img src={group.photo} alt={group.studentName || 'Student'} className="w-full h-full object-cover" />
                                 ) : (
-                                  <span className="text-xs font-bold text-[var(--brand)]">{group.studentName.charAt(0).toUpperCase()}</span>
+                                  <span className="text-[11px] font-bold text-[var(--brand)]">{group.studentName.charAt(0).toUpperCase()}</span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-3 py-2.5 text-xs lg:text-sm font-mono text-[var(--text-muted)]">{group.studentId.slice(-6).toUpperCase()}</td>
-                            <td className="px-3 py-2.5">
-                              <p className="font-semibold text-[var(--text-primary)] text-sm lg:text-base">{bn ? group.studentNameBn || group.studentName : group.studentName}</p>
-                              <p className="text-xs lg:text-sm text-[var(--text-muted)]">Roll: {group.roll}</p>
+                            <td className="px-3 py-2 text-[0.65rem] font-mono text-[var(--text-muted)]">{group.studentId.slice(-6).toUpperCase()}</td>
+                            <td className="px-3 py-2">
+                              <p className="font-medium text-[var(--text-primary)]">{bn ? group.studentNameBn || group.studentName : group.studentName}</p>
+                              <p className="text-[0.65rem] text-[var(--text-muted)]">Roll: {group.roll}</p>
                             </td>
-                            <td className="px-3 py-2.5 text-[var(--text-secondary)] text-sm lg:text-base">{group.class} - {group.section}</td>
-                            <td className="px-3 py-2.5">
-                              <span className="inline-block px-2.5 py-0.5 rounded-md bg-[var(--purple-light)] text-[var(--purple)] text-xs lg:text-sm font-medium">
+                            <td className="px-3 py-2 text-[var(--text-secondary)]">{group.class} - {group.section}</td>
+                            <td className="px-3 py-2">
+                              <span className="inline-block px-2 py-0.5 rounded-md bg-[var(--purple-light)] text-[var(--purple)] text-[0.65rem] font-medium">
                                 {catName ? (bn ? catName.nameBn || catName.name : catName.name) : '—'}
                               </span>
                             </td>
-                            <td className="px-3 py-2.5 text-[var(--text-secondary)] text-sm lg:text-base">{feeNames.join(', ')}</td>
-                            <td className="px-3 py-2.5 text-right text-[var(--text-secondary)] text-sm lg:text-base">{fmt(perMonthTotal)}</td>
-                            <td className="px-3 py-2.5 text-right font-bold text-[var(--purple)] text-sm lg:text-base">{fmt(group.totalWaived)}</td>
-                            <td className="px-3 py-2.5">
+                            <td className="px-3 py-2 text-[var(--text-secondary)]">{feeNames.join(', ')}</td>
+                            <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{fmt(perMonthTotal)}</td>
+                            <td className="px-3 py-2 text-right font-semibold text-[var(--purple)]">{fmt(group.totalWaived)}</td>
+                            <td className="px-3 py-2">
                               <div className="flex items-center justify-end">
                               {canDelete('finance.fees.waivers') && (
-                                <button onClick={(e) => { e.stopPropagation(); if (confirm(bn ? 'এই শিক্ষার্থীর সব ছাড় মুছে ফেলতে চান?' : 'Delete all waivers for this student?')) { group.entries.forEach((en) => { if (en.source === 'legacy') deleteWaiverEntry(en.originalId) }); const swForStudent = studentWaivers.filter((w) => w.studentId === group.studentId); swForStudent.forEach((w) => deleteStudentWaiver(w.id)) } }} className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)] hover:text-white transition-colors">
-                                  <Trash2 size={15} />
+                                <button onClick={(e) => { e.stopPropagation(); if (confirm(bn ? 'এই শিক্ষার্থীর সব ছাড় মুছে ফেলতে চান?' : 'Delete all waivers for this student?')) { group.entries.forEach((en) => { if (en.source === 'legacy') deleteWaiverEntry(en.originalId) }); const swForStudent = studentWaivers.filter((w) => w.studentId === group.studentId); swForStudent.forEach((w) => deleteStudentWaiver(w.id)) } }} className="w-7 h-7 rounded flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)] hover:text-white transition-colors">
+                                  <Trash2 size={13} />
                                 </button>
                               )}
                               </div>
@@ -750,63 +750,63 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
 
                                     if (isEditing) {
                                       return (
-                                        <div key={entry.id} className="p-3 rounded-lg bg-[var(--purple-light)]/20 border border-[var(--purple)]/30 space-y-2">
+                                        <div key={entry.id} className="p-2.5 rounded-lg bg-[var(--purple-light)]/20 border border-[var(--purple)]/30 space-y-2">
                                           <div className="flex items-center gap-3">
-                                            <p className="text-sm font-semibold text-[var(--text-primary)] flex-1">
+                                            <p className="text-[0.7rem] font-medium text-[var(--text-primary)] flex-1">
                                               {struct ? (bn ? struct.nameBn || struct.name : struct.name) : '—'}
                                             </p>
                                           </div>
                                           <div className="flex gap-2 items-center">
                                             <div className="flex gap-1">
-                                              <button type="button" onClick={() => setEditMode('amount')} className={`px-2.5 py-1 rounded text-xs lg:text-sm font-medium border cursor-pointer transition-all ${editMode === 'amount' ? 'bg-[var(--purple)] text-white border-[var(--purple)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
+                                              <button type="button" onClick={() => setEditMode('amount')} className={`px-2 py-0.5 rounded text-[0.6rem] font-medium border cursor-pointer transition-all ${editMode === 'amount' ? 'bg-[var(--purple)] text-white border-[var(--purple)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
                                                 {bn ? 'পরিমাণ' : 'Amount'}
                                               </button>
-                                              <button type="button" onClick={() => setEditMode('percent')} className={`px-2.5 py-1 rounded text-xs lg:text-sm font-medium border cursor-pointer transition-all ${editMode === 'percent' ? 'bg-[var(--purple)] text-white border-[var(--purple)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
+                                              <button type="button" onClick={() => setEditMode('percent')} className={`px-2 py-0.5 rounded text-[0.6rem] font-medium border cursor-pointer transition-all ${editMode === 'percent' ? 'bg-[var(--purple)] text-white border-[var(--purple)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
                                                 {bn ? 'শতাংশ' : 'Percent'}
                                               </button>
                                             </div>
-                                            <input type="number" min="1" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-9 text-sm px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--purple)] w-24" placeholder={editMode === 'percent' ? '%' : '৳'} />
-                                            {editMode === 'percent' && <span className="text-sm text-[var(--text-muted)]">%</span>}
+                                            <input type="number" min="1" value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-[26px] text-[0.65rem] px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--purple)] w-20" placeholder={editMode === 'percent' ? '%' : '৳'} />
+                                            {editMode === 'percent' && <span className="text-[0.65rem] text-[var(--text-muted)]">%</span>}
                                           </div>
                                           <div className="flex gap-2">
-                                            <input type="text" value={editReason} onChange={(e) => setEditReason(e.target.value)} className="h-9 text-sm px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--purple)] flex-1" placeholder={bn ? 'কারণ (EN)' : 'Reason (EN)'} />
-                                            <input type="text" value={editReasonBn} onChange={(e) => setEditReasonBn(e.target.value)} className="h-9 text-sm px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--purple)] flex-1" placeholder={bn ? 'কারণ (BN)' : 'Reason (BN)'} />
+                                            <input type="text" value={editReason} onChange={(e) => setEditReason(e.target.value)} className="h-[26px] text-[0.65rem] px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--purple)] flex-1" placeholder={bn ? 'কারণ (EN)' : 'Reason (EN)'} />
+                                            <input type="text" value={editReasonBn} onChange={(e) => setEditReasonBn(e.target.value)} className="h-[26px] text-[0.65rem] px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--purple)] flex-1" placeholder={bn ? 'কারণ (BN)' : 'Reason (BN)'} />
                                           </div>
                                           <div className="flex gap-1.5 justify-end">
-                                            <button type="button" onClick={cancelEditEntry} className="px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-primary)]">{bn ? 'বাতিল' : 'Cancel'}</button>
-                                            <button type="button" onClick={saveEditEntry} disabled={!editValue || Number(editValue) <= 0 || !editReason} className="px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium bg-[var(--purple)] text-white border-0 cursor-pointer disabled:opacity-50">{bn ? 'সংরক্ষণ' : 'Save'}</button>
+                                            <button type="button" onClick={cancelEditEntry} className="px-2 py-0.5 rounded text-[0.6rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--bg-primary)]">{bn ? 'বাতিল' : 'Cancel'}</button>
+                                            <button type="button" onClick={saveEditEntry} disabled={!editValue || Number(editValue) <= 0 || !editReason} className="px-2 py-0.5 rounded text-[0.6rem] font-medium bg-[var(--purple)] text-white border-0 cursor-pointer disabled:opacity-50">{bn ? 'সংরক্ষণ' : 'Save'}</button>
                                           </div>
                                         </div>
                                       )
                                     }
 
                                     return (
-                                      <div key={entry.id} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
+                                      <div key={entry.id} className="flex items-center gap-3 p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
                                         <div className="flex-1">
-                                          <p className="text-sm font-semibold text-[var(--text-primary)]">
+                                          <p className="text-[0.7rem] font-medium text-[var(--text-primary)]">
                                             {struct ? (bn ? struct.nameBn || struct.name : struct.name) : '—'}
                                           </p>
-                                          <p className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5">
+                                          <p className="text-[0.6rem] text-[var(--text-muted)]">
                                             {entry.mode === 'amount'
                                               ? `${fmt(entry.value)} ${bn ? 'প্রতি মাসে' : 'per month'}`
                                               : `${entry.value}% = ${fmt(perPeriod)} ${bn ? 'প্রতি মাসে' : 'per month'}`
                                             }
                                           </p>
-                                          {entry.reason && <p className="text-xs text-[var(--text-muted)] italic mt-0.5">{bn ? `কারণ: ${entry.reasonBn || entry.reason}` : `Reason: ${entry.reason}`}</p>}
+                                          {entry.reason && <p className="text-[0.55rem] text-[var(--text-muted)] italic">{bn ? `কারণ: ${entry.reasonBn || entry.reason}` : `Reason: ${entry.reason}`}</p>}
                                         </div>
                                         {months.length > 0 && (
                                           <div className="flex flex-wrap gap-1">
                                             {months.sort((a, b) => a - b).map((m) => (
-                                              <span key={m} className="inline-block px-2 py-0.5 rounded bg-[var(--purple-light)] text-[var(--purple)] text-xs font-medium">
+                                              <span key={m} className="inline-block px-1.5 py-0.5 rounded bg-[var(--purple-light)] text-[var(--purple)] text-[0.55rem] font-medium">
                                                 {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
                                               </span>
                                             ))}
                                           </div>
                                         )}
-                                        <span className="text-sm lg:text-base font-bold text-[var(--purple)]">{fmt(totalForEntry)}</span>
+                                        <span className="text-[0.7rem] font-semibold text-[var(--purple)]">{fmt(totalForEntry)}</span>
                                         {canEdit('finance.fees.waivers') && (
-                                          <button onClick={(e) => { e.stopPropagation(); startEditEntry(entry) }} className="w-7 h-7 rounded flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] border-0 cursor-pointer transition-colors">
-                                            <Edit2 size={13} />
+                                          <button onClick={(e) => { e.stopPropagation(); startEditEntry(entry) }} className="w-5 h-5 rounded flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] border-0 cursor-pointer transition-colors">
+                                            <Edit2 size={10} />
                                           </button>
                                         )}
                                       </div>
