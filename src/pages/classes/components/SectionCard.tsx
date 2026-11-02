@@ -12,7 +12,7 @@ interface SectionCardProps {
   isEditing: boolean
   isBn: boolean
   getTeacher: (id: string) => Teacher | undefined
-  getStudentCount: (classNum: string, sectionName: string) => number
+  getStudentCount: (cls: ClassInfo | string, sec: ClassSection | string) => number
   subjectMap: Map<string, Subject>
   teachers: Teacher[]
   institution: InstitutionSettings
@@ -105,9 +105,9 @@ export function SectionCard({
             }}
           >
             {(() => {
-              const count = getStudentCount(cls.id.replace('CLS-', '').replace(/^0/, ''), sec.name)
-              const available = sec.seatQuantity - count
-              const isFull = available <= 0
+              const count = getStudentCount(cls, sec)
+              const available = Math.max(0, sec.seatQuantity - count)
+              const isFull = count >= sec.seatQuantity
               return (
                 <>
                   <span style={{ color: isFull ? 'var(--red)' : 'var(--green)', fontWeight: 600 }}>

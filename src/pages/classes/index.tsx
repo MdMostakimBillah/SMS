@@ -121,8 +121,9 @@ export default function ClassesPage() {
         .catch(() => {})
     }
 
-    // Load classes and routines from database
+    // Load classes and routines from database, and students for section capacity counts
     useClassStore.getState().syncFromServer(slug || undefined).catch(() => {})
+    useAdmissionStore.getState().syncFromServer().catch(() => {})
   }, [user?.subdomain, user?.schoolId, user?.role])
 
   const handleSaveInstitution = async () => {

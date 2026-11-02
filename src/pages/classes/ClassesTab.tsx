@@ -7,6 +7,11 @@ import { flushVaultWrites } from '@/lib/vault/vault'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import type { StudentAdmission } from '@/pages/students/admission/types'
+import {
+  getSectionStudentCount,
+  getClassStudentCount,
+  isStudentInClass,
+} from '@/lib/classStudentCount'
 import { TopBar } from './components/TopBar'
 import { AddClassForm } from './components/AddClassForm'
 import { ClassCard } from './components/ClassCard'
@@ -84,12 +89,42 @@ export default function ClassesTab({
   const getTeacher = useCallback((id: string) => teacherMap.get(id), [teacherMap])
 
   const getStudentCount = useCallback(
-    (classNum: string, sectionName: string) => {
-      return students.filter(
-        (s) => s.status === 'approved' && s.class === classNum && s.section === sectionName && s.academicYear === institution.currentSession
-      ).length
+    (targetClass: ClassInfo | string, targetSection?: ClassSection | string) => {
+      const clsObj = typeof targetClass === 'object'
+        ? targetClass
+        : classes.find((c) => isStudentInClass({ class: targetClass }, c) || c.id === targetClass || c.name === targetClass)
+
+      if (clsObj) {
+        if (targetSection) {
+          const secObj = typeof targetSection === 'object'
+            ? targetSection
+            : clsObj.sections.find((s) => s.name === targetSection || s.id === targetSection || s.name.toLowerCase() === targetSection.toLowerCase())
+          if (secObj) {
+            return getSectionStudentCount(students, clsObj, secObj, institution.currentSession)
+          }
+        } else {
+          return getClassStudentCount(students, clsObj, institution.currentSession)
+        }
+      }
+
+      // Fallback for direct string matching
+      const classStr = typeof targetClass === 'string' ? targetClass : targetClass.name
+      const secStr = targetSection ? (typeof targetSection === 'string' ? targetSection : targetSection.name) : undefined
+
+      return students.filter((s) => {
+        if (s.active === false || s.status === 'rejected') return false
+        if (s.academicYear && institution.currentSession && !s.academicYear.startsWith(institution.currentSession.slice(0, 4))) return false
+        const sc = (s.class || '').trim().toLowerCase()
+        const matchClass = sc === classStr.toLowerCase() || sc.replace(/^class\s*/i, '') === classStr.replace(/^class\s*/i, '').toLowerCase()
+        if (!matchClass) return false
+        if (secStr) {
+          const ss = (s.section || '').trim().toLowerCase()
+          return ss === secStr.toLowerCase() || ss.replace(/^section\s*/i, '') === secStr.replace(/^section\s*/i, '').toLowerCase()
+        }
+        return true
+      }).length
     },
-    [students, institution.currentSession]
+    [students, classes, institution.currentSession]
   )
 
   const handleAddClass = () => {

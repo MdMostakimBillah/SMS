@@ -38,7 +38,7 @@ interface ClassCardProps {
   teachers: Teacher[]
   institution: InstitutionSettings
   getTeacher: (id: string) => Teacher | undefined
-  getStudentCount: (classNum: string, sectionName: string) => number
+  getStudentCount: (cls: ClassInfo | string, sec?: ClassSection | string) => number
   subjectMap: Map<string, Subject>
   updateSection: (classId: string, sectionId: string, data: Partial<ClassSection>) => void
   deleteSection: (classId: string, sectionId: string) => void
@@ -87,6 +87,7 @@ export const ClassCard = React.memo(function ClassCard({
 }: ClassCardProps) {
   const { canCreate, canEdit, canDelete } = usePermission()
   const totalSeats = cls.sections.reduce((s, sec) => s + sec.seatQuantity, 0)
+  const classCount = getStudentCount(cls)
 
   return (
     <div
@@ -161,9 +162,11 @@ export const ClassCard = React.memo(function ClassCard({
               )}
             </div>
           )}
-          <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', display: 'flex', gap: '0.625rem', flexWrap: 'wrap', marginTop: '0.125rem' }}>
+          <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', display: 'flex', gap: '0.625rem', flexWrap: 'wrap', marginTop: '0.125rem', alignItems: 'center' }}>
             <span>{cls.sections.length} {isBn ? 'সেকশন' : 'sections'}</span>
-            <span>{totalSeats} {isBn ? 'আসন' : 'seats'}</span>
+            <span>
+              <strong style={{ color: classCount > 0 ? 'var(--brand)' : 'inherit', fontWeight: 600 }}>{classCount}</strong>/{totalSeats} {isBn ? 'আসন' : 'seats'}
+            </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.1875rem' }}>
               <Clock size={10} />
               {cls.startTime} - {cls.endTime}

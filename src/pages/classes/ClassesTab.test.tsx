@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import ClassesTab from './ClassesTab'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 
@@ -70,5 +70,55 @@ describe('ClassesTab Component', () => {
     expect(screen.getByText('2025-26')).toBeInTheDocument()
     expect(screen.getByText('বর্তমান সেশন')).toBeInTheDocument()
     expect(screen.queryByText('ডাটাবেজ সিঙ্ক')).not.toBeInTheDocument()
+  })
+
+  it('displays section student count and remaining capacity when students are added to class & section', () => {
+    const testClass = {
+      id: 'CLS-01',
+      name: 'PSC',
+      nameBn: 'পিএসসি',
+      startTime: '07:30',
+      endTime: '14:30',
+      subjectIds: [],
+      sections: [
+        {
+          id: 'SEC-CLS-01-General',
+          name: 'General',
+          seatQuantity: 250,
+          classTeacherId: '',
+          subjectIds: [],
+        },
+      ],
+    }
+
+    const testStudent: any = {
+      id: 'ET-2026-00001',
+      nameEn: 'Karim Rahman',
+      class: 'PSC',
+      section: 'General',
+      academicYear: '2025-26',
+      status: 'pending',
+      active: true,
+    }
+
+    render(
+      <ClassesTab
+        {...baseProps}
+        classes={[testClass]}
+        students={[testStudent]}
+      />
+    )
+
+    // Class header should show 1/250 seats
+    expect(screen.getByText('1')).toBeInTheDocument()
+    expect(screen.getByText(/\/250 seats/)).toBeInTheDocument()
+
+    // Expand the class to view sections
+    const classCard = screen.getByText('PSC').closest('div[style*="cursor: pointer"]')!
+    fireEvent.click(classCard)
+
+    // Section card should now show the 1/250 student count and 249 seats left
+    expect(screen.getByText('1/250')).toBeInTheDocument()
+    expect(screen.getByText('249 seats left')).toBeInTheDocument()
   })
 })
