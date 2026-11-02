@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getSlug } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { isLocalComputerMode } from '@/lib/storageMode'
@@ -782,27 +782,15 @@ registerStoreReset(() => {
 })
 
 registerStoreLoad(() => {
-  const slug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
-  if (!slug) return
+  const slug = getSlug()
   try {
-    const raw = localStorage.getItem(`edutech-classes_${slug}`)
+    const key = slug ? `edutech-classes_${slug}` : 'edutech-classes'
+    const raw = localStorage.getItem(key) || (slug ? localStorage.getItem('edutech-classes') : null)
     if (raw) {
       const parsed = JSON.parse(raw)
       if (parsed?.state) useClassStore.setState(parsed.state)
-    } else {
-      useClassStore.setState({
-        classes: [],
-        routines: [],
-        sessionClasses: {},
-        sessionRoutines: {},
-      })
     }
   } catch {
-    useClassStore.setState({
-      classes: [],
-      routines: [],
-      sessionClasses: {},
-      sessionRoutines: {},
-    })
+    /* ignore */
   }
 })

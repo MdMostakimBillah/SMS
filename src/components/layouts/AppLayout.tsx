@@ -13,10 +13,11 @@ import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import CommandPalette from '@/components/shared/CommandPalette'
 import QuickAccessFAB from '@/components/shared/QuickAccessFAB'
-import { Crown, X } from 'lucide-react'
+import { Crown, X, FolderSync } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { clearSlug, setSlug } from '@/lib/storage'
 import { useBn } from '@/hooks/useBn'
+import { getVaultStatus, subscribeVault, vaultReconnect, type VaultStatus } from '@/lib/vault/vault'
 
 export default function AppLayout() {
   const isBn = useBn()
@@ -42,6 +43,11 @@ export default function AppLayout() {
 
   useThemeColors()
   const [isLoading, setIsLoading] = useState(true)
+  const [vaultStatus, setVaultStatus] = useState<VaultStatus>(() => getVaultStatus())
+
+  useEffect(() => {
+    return subscribeVault(setVaultStatus)
+  }, [])
   const [loadingLogoErr, setLoadingLogoErr] = useState(false)
   const backdropRef = useRef<HTMLDivElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
@@ -272,6 +278,24 @@ export default function AppLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 relative">
         <Topbar />
+        {vaultStatus.needsReconnect && user?.role !== 'super_admin' && (
+          <div className="flex items-center justify-between px-4 py-2 bg-emerald-500/10 border-b border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[0.8125rem]">
+            <div className="flex items-center gap-2">
+              <FolderSync size={16} className="text-emerald-500 shrink-0" />
+              <span>
+                {isBn
+                  ? `আপনার লোকাল পিসি ফোল্ডার "${vaultStatus.folderName || 'Vault'}" সংরক্ষিত আছে। ফাইল সিঙ্ক ও ডেটা দেখতে অনুমতি দিন:`
+                  : `Local PC data folder "${vaultStatus.folderName || 'Vault'}" detected. Allow access to restore and sync:`}
+              </span>
+            </div>
+            <button
+              onClick={() => void vaultReconnect()}
+              className="px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-[0.75rem] cursor-pointer transition-colors border-none shrink-0"
+            >
+              {isBn ? 'ফোল্ডার রিকানেক্ট করুন' : 'Reconnect Folder'}
+            </button>
+          </div>
+        )}
         {viewedInst && (
           <div className="flex items-center justify-between px-4 py-2 bg-amber-500/10 border-b border-amber-500/20">
             <div className="flex items-center gap-2 text-[0.75rem] text-amber-600 font-medium">

@@ -755,6 +755,47 @@ describe('vault — Mode C (local-first browser sync)', () => {
     expect(teachersOnDisk).toContain('John Vault Teacher')
   })
 
+  it('safeguards teachers.json against empty teachers overwrite even when departments or other arrays are present in payload', async () => {
+    await vaultConnectFolder()
+
+    // 1. Setup non-empty teachers on disk
+    await writeTextFile(
+      pickHandle,
+      'teachers.json',
+      JSON.stringify([
+        { id: 'ET0001', nameEn: 'Master Teacher', designation: 'Senior Teacher' },
+        { id: 'ET0002', nameEn: 'Second Teacher', designation: 'Assistant Teacher' },
+      ])
+    )
+
+    // 2. Simulate store attempting to write empty teachers with populated departments
+    // (the exact bug that was bypassing getItemCount check!)
+    const emptyPayload = JSON.stringify({
+      state: {
+        teachers: [], // empty teachers
+        departments: [{ id: 'DEP-01', name: 'Science' }], // non-empty departments
+        subjects: [],
+        designations: [],
+      },
+      version: 3,
+    })
+    localStorage.setItem('edutech-teachers_demo', emptyPayload)
+    notifyVaultWrite('edutech-teachers_demo', emptyPayload)
+
+    // 3. Flush writes (startup/hard-refresh scenario without explicit user delete)
+    await flushVaultWrites()
+
+    // 4. Verify teachers.json on disk was NOT wiped
+    const diskContent = await readTextFile(pickHandle, 'teachers.json')
+    expect(diskContent).toContain('Master Teacher')
+    expect(diskContent).toContain('Second Teacher')
+
+    // 5. Verify localStorage was restored from disk
+    const restored = JSON.parse(localStorage.getItem('edutech-teachers_demo') || '{}')
+    expect(restored?.state?.teachers).toHaveLength(2)
+    expect(restored?.state?.teachers[0].nameEn).toBe('Master Teacher')
+  })
+
   it('disconnects and clears status', async () => {
     await vaultConnectFolder()
     await vaultDisconnect()

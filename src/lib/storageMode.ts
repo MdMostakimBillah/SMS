@@ -1,5 +1,6 @@
 import { useClassStore } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
+import { getVaultStatus } from './vault/vault'
 
 export type StorageMode = 'cloud' | 'local_computer' | 'local_server'
 
@@ -48,6 +49,15 @@ export function getActiveStorageMode(): StorageMode {
       if (sess === 'cloud' || sess === 'local_computer' || sess === 'local_server') {
         return sess as StorageMode
       }
+    }
+
+    try {
+      const vaultStat = getVaultStatus()
+      if (vaultStat.connected || vaultStat.needsReconnect) {
+        return 'local_computer'
+      }
+    } catch {
+      /* ignore */
     }
 
     if (typeof localStorage !== 'undefined') {

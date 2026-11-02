@@ -173,8 +173,22 @@ export const useTeacherStore = create<TeacherState>()(
 
             const prev = get()
             let attendance = prev.attendance
+
+            // Safe sync: if server returned teachers, use them. If server returned empty,
+            // keep local teachers (never wipe existing teachers when server is empty)!
+            const finalTeachers = serverTeachers.length > 0 ? serverTeachers : (prev.teachers.length > 0 ? prev.teachers : [])
+            const finalDepartments = serverDepts.length > 0 ? serverDepts : prev.departments
             const finalSubjects = serverSubjects.length > 0 ? serverSubjects : prev.subjects
-            const finalDesignations = serverDesignations.length > 0 ? serverDesignations : prev.designations
+
+            // Safe merge for designations: NEVER reset user designations automatically!
+            const serverDesMap = new Map(serverDesignations.map((d) => [d.id, d]))
+            const mergedDes = [...serverDesignations]
+            for (const ld of prev.designations) {
+              if (!serverDesMap.has(ld.id) && !mergedDes.some((d) => d.name.toLowerCase() === ld.name.toLowerCase())) {
+                mergedDes.push(ld)
+              }
+            }
+            const finalDesignations = mergedDes.length > 0 ? mergedDes : prev.designations
 
             // One-time legacy backup — only on the first successful sync of a
             // store that has never been server-synced (serverSynced persists),
@@ -199,8 +213,8 @@ export const useTeacherStore = create<TeacherState>()(
 
             lastSyncAt = Date.now()
             set({
-              teachers: serverTeachers,
-              departments: serverDepts,
+              teachers: finalTeachers,
+              departments: finalDepartments,
               subjects: finalSubjects,
               designations: finalDesignations,
               attendance,
@@ -212,8 +226,7 @@ export const useTeacherStore = create<TeacherState>()(
             })
           } catch (err) {
             // Never replace local rows with an error: a failed sync leaves the
-            // store untouched and surfaces syncError instead (pages must not
-            // render local rows as if they were server data).
+            // store untouched and surfaces syncError instead.
             if (!get().serverSynced) {
               set({ syncing: false, syncError: apiErrorMessage(err, false) })
             }
@@ -439,12 +452,12 @@ registerStoreReset(() => {
 
 registerStoreLoad(() => {
   const slug = getSlug()
-  if (!slug) return
   try {
-    const raw = localStorage.getItem(`edutech-teachers_${slug}`)
+    const key = slug ? `edutech-teachers_${slug}` : 'edutech-teachers'
+    const raw = localStorage.getItem(key) || (slug ? localStorage.getItem('edutech-teachers') : null)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed.state) {
+      if (parsed?.state) {
         useTeacherStore.setState({
           ...parsed.state,
           attendance: pruneAttendance(parsed.state.attendance || {}),
@@ -454,16 +467,8 @@ registerStoreLoad(() => {
           legacyDepartments: readLegacy<LegacyDepartmentsBackup>(legacyDepartmentsBackupKey())?.departments ?? [],
         })
       }
-    } else {
-      useTeacherStore.setState({
-        teachers: [], subjects: [], departments: [], designations: [], attendance: {},
-        serverSynced: false, syncing: false, syncError: null, legacyTeachers: [], legacyDepartments: [],
-      })
     }
   } catch {
-    useTeacherStore.setState({
-      teachers: [], subjects: [], departments: [], designations: [], attendance: {},
-      serverSynced: false, syncing: false, syncError: null, legacyTeachers: [], legacyDepartments: [],
-    })
+    /* ignore parse error */
   }
 })

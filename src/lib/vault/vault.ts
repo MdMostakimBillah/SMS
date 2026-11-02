@@ -165,6 +165,117 @@ export function getItemCount(content: string): number {
   }
 }
 
+export interface DomainCounts {
+  teachers: number
+  students: number
+  classes: number
+  routines: number
+  departments: number
+  subjects: number
+  designations: number
+  structures: number
+  payments: number
+  waivers: number
+}
+
+export function extractDomainCounts(text: string, path = ''): DomainCounts {
+  const counts: DomainCounts = {
+    teachers: -1,
+    students: -1,
+    classes: -1,
+    routines: -1,
+    departments: -1,
+    subjects: -1,
+    designations: -1,
+    structures: -1,
+    payments: -1,
+    waivers: -1,
+  }
+  if (!text || !text.trim()) return counts
+
+  try {
+    const parsed = JSON.parse(text)
+    const state = parsed?.state ?? parsed
+    const base = path.split('/').pop()?.toLowerCase() || ''
+
+    if (Array.isArray(state)) {
+      if (base.includes('teacher') || base.includes('staff')) counts.teachers = state.length
+      else if (base.includes('student') || base.includes('admission')) counts.students = state.length
+      else if (base.includes('class')) counts.classes = state.length
+      else if (base.includes('routine')) counts.routines = state.length
+      else if (base.includes('department')) counts.departments = state.length
+      else if (base.includes('subject')) counts.subjects = state.length
+      else if (base.includes('designation')) counts.designations = state.length
+      else if (base.includes('structure')) counts.structures = state.length
+      else if (base.includes('payment')) counts.payments = state.length
+      else if (base.includes('waiver')) counts.waivers = state.length
+      return counts
+    }
+
+    if (typeof state === 'object' && state !== null) {
+      if (Array.isArray(state.teachers)) counts.teachers = state.teachers.length
+      if (Array.isArray(state.students)) counts.students = state.students.length
+      if (Array.isArray(state.classes)) counts.classes = state.classes.length
+      if (Array.isArray(state.routines)) counts.routines = state.routines.length
+      if (Array.isArray(state.departments)) counts.departments = state.departments.length
+      if (Array.isArray(state.subjects)) counts.subjects = state.subjects.length
+      if (Array.isArray(state.designations)) counts.designations = state.designations.length
+      if (Array.isArray(state.structures)) counts.structures = state.structures.length
+      if (Array.isArray(state.payments)) counts.payments = state.payments.length
+      if (Array.isArray(state.waiverEntries) || Array.isArray(state.waivers)) {
+        counts.waivers = (state.waiverEntries || state.waivers).length
+      }
+    }
+  } catch {
+    /* ignore parse error */
+  }
+  return counts
+}
+
+export function shouldBlockDomainOverwrite(subPath: string, incomingText: string, diskText: string): { blocked: boolean; reason?: string } {
+  const inCounts = extractDomainCounts(incomingText, subPath)
+  const diskCounts = extractDomainCounts(diskText, subPath)
+
+  if (diskCounts.teachers > 0 && inCounts.teachers === 0) {
+    return { blocked: true, reason: `teachers on disk (${diskCounts.teachers}) vs incoming (0)` }
+  }
+  if (diskCounts.students > 0 && inCounts.students === 0) {
+    return { blocked: true, reason: `students on disk (${diskCounts.students}) vs incoming (0)` }
+  }
+  if (diskCounts.classes > 0 && inCounts.classes === 0) {
+    return { blocked: true, reason: `classes on disk (${diskCounts.classes}) vs incoming (0)` }
+  }
+  if (diskCounts.routines > 0 && inCounts.routines === 0) {
+    return { blocked: true, reason: `routines on disk (${diskCounts.routines}) vs incoming (0)` }
+  }
+  if (diskCounts.departments > 0 && inCounts.departments === 0) {
+    return { blocked: true, reason: `departments on disk (${diskCounts.departments}) vs incoming (0)` }
+  }
+  if (diskCounts.subjects > 0 && inCounts.subjects === 0) {
+    return { blocked: true, reason: `subjects on disk (${diskCounts.subjects}) vs incoming (0)` }
+  }
+  if (diskCounts.designations > 0 && inCounts.designations === 0) {
+    return { blocked: true, reason: `designations on disk (${diskCounts.designations}) vs incoming (0)` }
+  }
+  if (diskCounts.structures > 0 && inCounts.structures === 0) {
+    return { blocked: true, reason: `fee structures on disk (${diskCounts.structures}) vs incoming (0)` }
+  }
+  if (diskCounts.payments > 0 && inCounts.payments === 0) {
+    return { blocked: true, reason: `payments on disk (${diskCounts.payments}) vs incoming (0)` }
+  }
+  if (diskCounts.waivers > 0 && inCounts.waivers === 0) {
+    return { blocked: true, reason: `waivers on disk (${diskCounts.waivers}) vs incoming (0)` }
+  }
+
+  const inItemCount = getItemCount(incomingText)
+  const diskItemCount = getItemCount(diskText)
+  if (diskItemCount > 0 && inItemCount === 0) {
+    return { blocked: true, reason: `total items on disk (${diskItemCount}) vs incoming (0)` }
+  }
+
+  return { blocked: false }
+}
+
 function emit(patch: Partial<VaultStatus>): void {
   status = { ...status, ...patch }
   listeners.forEach((fn) => fn(status))
@@ -660,20 +771,19 @@ async function hydrateFromVault(): Promise<number> {
 async function writeVaultFile(subPath: string, content: string): Promise<void> {
   if (!handle) return
 
-  // Safeguard: Never overwrite a non-empty file on disk with an empty payload
+  // Safeguard: Never overwrite a non-empty file on disk with an empty domain payload
   // unless this was preceded by an explicit user deletion in the UI within the grace window.
   // This guarantees that hard refresh, page reload, or localStorage clearing CANNOT wipe disk files!
-  const incomingCount = getItemCount(content)
-  if (incomingCount === 0 && !isRecentExplicitDelete()) {
+  if (!isRecentExplicitDelete()) {
     const slug = currentSlug() || 'demo'
     const candidatePaths = [subPath, ...getTwinPaths(subPath, slug)]
     for (const candPath of candidatePaths) {
       try {
         const diskText = await readTextFile(handle, candPath)
         if (diskText !== null) {
-          const diskCount = getItemCount(diskText)
-          if (diskCount > 0) {
-            console.warn(`[vault] Refusing to overwrite non-empty ${candPath} (${diskCount} items) with empty state (0 items) on startup/refresh. Restoring store from disk.`)
+          const check = shouldBlockDomainOverwrite(subPath, content, diskText)
+          if (check.blocked) {
+            console.warn(`[vault] Refusing to overwrite non-empty ${candPath} (${check.reason}) with empty state on startup/refresh. Restoring store from disk.`)
             const key = vaultPathToKey(candPath, { slug, userId: currentUserId() }) || vaultPathToKey(subPath, { slug, userId: currentUserId() })
             if (key) {
               const normalized = normalizeVaultJsonForStore(key, diskText, localStorage.getItem(key), candPath)
@@ -1259,11 +1369,37 @@ export async function vaultInit(): Promise<void> {
   }
   const saved = await loadVaultHandle()
   if (!saved) return
-  if (await hasPermission(saved)) {
+
+  // Automatically mark local_computer mode since a local PC folder handle is registered in IndexedDB
+  try {
+    localStorage.setItem('edutech_storage_mode', 'local_computer')
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+  } catch { /* ignore */ }
+
+  const hasWrite = await hasPermission(saved, 'readwrite')
+  if (hasWrite) {
     await activate(saved, false)
-  } else {
-    emit({ needsReconnect: true, folderName: saved.name })
+    return
   }
+
+  // If readwrite is not granted yet, check if read access is granted
+  const hasRead = await hasPermission(saved, 'read')
+  if (hasRead) {
+    handle = saved
+    registerVaultHooks({ onWrite: handleStoreWrite, onRemove: (k) => void handleStoreRemove(k) })
+    await hydrateFromVault()
+    startWatcher()
+    emit({
+      connected: true,
+      needsReconnect: true,
+      folderName: saved.name,
+      error: null,
+      lastSyncAt: Date.now(),
+    })
+    return
+  }
+
+  emit({ needsReconnect: true, folderName: saved.name })
 }
 
 /** User gesture required. Pick a folder and start syncing into it. */

@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { useMemo } from 'react'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { useClassStore } from './classStore'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getSlug } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete } from '@/lib/vault/bridge'
 import { studentsApi } from '@/lib/api'
@@ -300,17 +300,15 @@ registerStoreReset(() => {
 })
 
 registerStoreLoad(() => {
-  const slug = sessionStorage.getItem('edutech_inst_slug')
-  if (!slug) return
+  const slug = getSlug()
   try {
-    const raw = localStorage.getItem(`edutech-admissions_${slug}`)
+    const key = slug ? `edutech-admissions_${slug}` : 'edutech-admissions'
+    const raw = localStorage.getItem(key) || (slug ? localStorage.getItem('edutech-admissions') : null)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed.state) useAdmissionStore.setState(parsed.state)
-    } else {
-      useAdmissionStore.setState({ students: [] })
+      if (parsed?.state) useAdmissionStore.setState(parsed.state)
     }
   } catch {
-    useAdmissionStore.setState({ students: [] })
+    /* ignore */
   }
 })

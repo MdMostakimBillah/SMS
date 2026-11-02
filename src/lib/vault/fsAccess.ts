@@ -50,11 +50,15 @@ export async function pickDirectory(): Promise<VfsDirectoryHandle> {
   return picker({ id: 'edutech-vault', mode: 'readwrite' })
 }
 
-/** true when the handle currently has readwrite access without prompting. */
-export async function hasPermission(handle: VfsDirectoryHandle): Promise<boolean> {
+/** true when the handle currently has access without prompting. Defaults to checking readwrite, or specify mode. */
+export async function hasPermission(handle: VfsDirectoryHandle, mode: 'read' | 'readwrite' = 'readwrite'): Promise<boolean> {
   if (!handle.queryPermission) return true
-  const state = await handle.queryPermission({ mode: 'readwrite' })
-  return state === 'granted'
+  try {
+    const state = await handle.queryPermission({ mode })
+    return state === 'granted'
+  } catch {
+    return false
+  }
 }
 
 /** Ask the user to (re)grant access. Must be called from a user gesture. */
