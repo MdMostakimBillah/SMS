@@ -5,6 +5,7 @@ import { Pagination } from './Pagination'
 import type { StudentAdmission } from '../types'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { usePermission } from '@/hooks/usePermission'
+import { isFemale, formatGender } from '@/lib/gender'
 
 const actBtn = (bg: string, color: string): React.CSSProperties => ({
   width: '1.625rem', height: '1.625rem', borderRadius: '0.375rem',
@@ -189,13 +190,13 @@ export function AdmissionTable({
                         fontSize: '0.625rem',
                         padding: '2px 6px',
                         borderRadius: '0.3125rem',
-                        background: s.gender.includes('Female') ? 'var(--purple-light)' : 'var(--teal-light)',
-                        color: s.gender.includes('Female') ? 'var(--purple)' : 'var(--teal)',
+                        background: isFemale(s.gender) ? 'var(--purple-light)' : 'var(--teal-light)',
+                        color: isFemale(s.gender) ? 'var(--purple)' : 'var(--teal)',
                         fontWeight: 500,
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {s.gender.includes('Female') ? (isBn ? 'মেয়ে' : 'Female') : isBn ? 'ছেলে' : 'Male'}
+                      {formatGender(s.gender, isBn, true)}
                     </span>
                   </td>
                   <td

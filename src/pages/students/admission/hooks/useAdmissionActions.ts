@@ -5,6 +5,7 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { generateListPDF } from '../listPdfTemplate'
 import { printRawHTML } from '@/lib/pdf'
+import { formatGender } from '@/lib/gender'
 import type { ListPDFOptions } from '../listPdfTemplate'
 import type { StudentAdmission } from '../types'
 
@@ -45,7 +46,7 @@ export function useAdmissionActions() {
         Class: s.class,
         Section: s.section,
         Roll: s.roll,
-        Gender: s.gender.split(' / ')[0],
+        Gender: formatGender(s.gender),
         DOB: s.dob,
         'Blood Group': s.bloodGroup,
         Religion: s.religion.split(' / ')[0],

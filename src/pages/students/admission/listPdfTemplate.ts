@@ -2,6 +2,7 @@ import type { StudentAdmission } from './types'
 import type { Teacher } from '@/pages/teachers/types'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { escapeHtml } from '@/lib/sanitize'
+import { formatGender } from '@/lib/gender'
 
 export interface PDFColumn {
   key: string
@@ -47,7 +48,7 @@ export interface ListPDFOptions {
 function getCellValue(s: StudentAdmission, key: string, idx: number, teachers?: Teacher[]): string {
   if (key === 'serial') return String(idx + 1)
   if (key === 'class') return s.class ? escapeHtml(`Class ${s.class}`) : '—'
-  if (key === 'gender') return escapeHtml((s.gender || '').split(' / ')[0] || '—')
+  if (key === 'gender') return escapeHtml(formatGender(s.gender))
   if (key === 'religion') return escapeHtml((s.religion || '').split(' / ')[0] || '—')
   if (key === 'teacherId') {
     if (!s.teacherId || !teachers) return '—'

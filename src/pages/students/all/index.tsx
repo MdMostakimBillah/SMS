@@ -22,6 +22,7 @@ import {
   MoreVertical,
 } from 'lucide-react'
 import { XLSX } from '@/lib/excelExport'
+import { isMale, isFemale, matchesGender, formatGender } from '@/lib/gender'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useScrollLock } from '@/hooks/useScrollLock'
@@ -138,7 +139,7 @@ export default function AllStudentsPage() {
         }
         if (fClass && s.class !== fClass) return false
         if (fSection && s.section !== fSection) return false
-        if (fGender && !s.gender.includes(fGender)) return false
+        if (fGender && !matchesGender(s.gender, fGender)) return false
         if (fActive === 'active' && s.active === false) return false
         if (fActive === 'inactive' && s.active !== false) return false
         if (fReligion && !s.religion.includes(fReligion)) return false
@@ -167,8 +168,8 @@ export default function AllStudentsPage() {
       approved: filtered.filter((s) => s.status === 'approved').length,
       pending: filtered.filter((s) => s.status === 'pending').length,
       rejected: filtered.filter((s) => s.status === 'rejected').length,
-      male: filtered.filter((s) => s.gender.includes('Male')).length,
-      female: filtered.filter((s) => s.gender.includes('Female')).length,
+      male: filtered.filter((s) => isMale(s.gender)).length,
+      female: filtered.filter((s) => isFemale(s.gender)).length,
     }),
     [filtered]
   )
@@ -189,7 +190,7 @@ export default function AllStudentsPage() {
       Class: classNameMap[s.class] ? (isBn ? classNameMap[s.class].bn : classNameMap[s.class].en) : s.class,
       Section: s.section,
       Roll: s.roll,
-      Gender: s.gender.split(' / ')[0],
+      Gender: formatGender(s.gender),
       DOB: s.dob,
       Blood: s.bloodGroup,
       Religion: s.religion.split(' / ')[0],
@@ -317,7 +318,7 @@ export default function AllStudentsPage() {
                   <div className="flex gap-[0.3125rem] mt-1.5 flex-wrap">
                     {[
                       { t: `${classNameMap[viewSt.class] ? (isBn ? classNameMap[viewSt.class].bn : classNameMap[viewSt.class].en) : viewSt.class}-${viewSt.section}`, c: 'var(--brand)', b: 'var(--brand-light)' },
-                      { t: viewSt.gender.split(' / ')[0], c: 'var(--teal)', b: 'var(--teal-light)' },
+                      { t: formatGender(viewSt.gender, isBn, true), c: isFemale(viewSt.gender) ? 'var(--purple)' : 'var(--teal)', b: isFemale(viewSt.gender) ? 'var(--purple-light)' : 'var(--teal-light)' },
                       { t: viewSt.bloodGroup, c: 'var(--red)', b: 'var(--red-light)' },
                     ]
                       .filter((x) => x.t)
@@ -796,11 +797,11 @@ export default function AllStudentsPage() {
                       <span
                         className="text-[0.625rem] px-[0.375rem] py-[0.125rem] rounded-[0.3125rem] font-medium"
                         style={{
-                          background: s.gender.includes('Female') ? 'var(--purple-light)' : 'var(--teal-light)',
-                          color: s.gender.includes('Female') ? 'var(--purple)' : 'var(--teal)',
+                          background: isFemale(s.gender) ? 'var(--purple-light)' : 'var(--teal-light)',
+                          color: isFemale(s.gender) ? 'var(--purple)' : 'var(--teal)',
                         }}
                       >
-                        {s.gender.includes('Female') ? (isBn ? 'মেয়ে' : 'Female') : isBn ? 'ছেলে' : 'Male'}
+                        {formatGender(s.gender, isBn, true)}
                       </span>
                     </td>
                     <td className="p-2 text-[0.6875rem] text-[var(--red)] font-medium">{s.bloodGroup || '—'}</td>

@@ -6,6 +6,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { useTeacherStore } from '@/store/teacherStore'
 import type { StudentAdmission } from '../types'
 import { EField } from './EField'
+import { toStudentFormGender } from '@/lib/gender'
 
 interface EditModalProps {
   student: StudentAdmission
@@ -14,7 +15,7 @@ interface EditModalProps {
   onSave: (d: Partial<StudentAdmission>) => void
 }
 export const EditModal = React.memo(function EditModal({ student, isBn, onClose, onSave }: EditModalProps) {
-  const [f, setF] = useState({ ...student })
+  const [f, setF] = useState({ ...student, gender: toStudentFormGender(student.gender) })
   const s = useCallback((k: keyof StudentAdmission, v: string) => setF((p) => ({ ...p, [k]: v })), [])
   const { isMobile } = useWindowSize()
   const { classes } = useClassStore()

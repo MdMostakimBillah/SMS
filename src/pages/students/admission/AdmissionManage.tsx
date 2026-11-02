@@ -5,6 +5,7 @@ import { useScrollLock } from '@/hooks/useScrollLock'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
+import { isMale, isFemale, matchesGender } from '@/lib/gender'
 import { useTeacherStore } from '@/store/teacherStore'
 import type { StudentAdmission } from './types'
 import { ApproveModal } from './modals/ApproveModal'
@@ -77,7 +78,7 @@ export default function AdmissionManage() {
       }
       if (fClass && s.class !== fClass) return false
       if (fSection && s.section !== fSection) return false
-      if (fGender && !s.gender.includes(fGender)) return false
+      if (fGender && !matchesGender(s.gender, fGender)) return false
       if (fReligion && !s.religion.includes(fReligion)) return false
       if (fStatus && s.status !== fStatus) return false
       if (fDate) {
@@ -101,8 +102,8 @@ export default function AdmissionManage() {
     pending: filtered.filter((s) => s.status === 'pending').length,
     approved: filtered.filter((s) => s.status === 'approved').length,
     rejected: filtered.filter((s) => s.status === 'rejected').length,
-    male: filtered.filter((s) => s.gender.includes('Male')).length,
-    female: filtered.filter((s) => s.gender.includes('Female')).length,
+    male: filtered.filter((s) => isMale(s.gender)).length,
+    female: filtered.filter((s) => isFemale(s.gender)).length,
   }), [filtered])
 
   const pageIds = paginated.map((s) => s.id)

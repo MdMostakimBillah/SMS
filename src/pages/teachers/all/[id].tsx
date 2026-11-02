@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { formatGender, isFemale } from '@/lib/gender'
 
 export default function TeacherDetailPage() {
   const navigate = useNavigate()
@@ -73,7 +74,7 @@ ${photoHtml}
   <div><span class="lbl">${isBn ? 'পদবি' : 'Designation'}</span><span class="val">${teacher.designation || '—'}</span></div>
   <div><span class="lbl">${isBn ? 'বিভাগ' : 'Department'}</span><span class="val">${getDeptName(teacher.departmentId)}</span></div>
   <div><span class="lbl">${isBn ? 'বিষয়' : 'Subjects'}</span><span class="val">${getSubjectNames(teacher.subjectIds)}</span></div>
-  <div><span class="lbl">${isBn ? 'লিঙ্গ' : 'Gender'}</span><span class="val">${teacher.gender === 'Male' ? (isBn ? 'পুরুষ' : 'Male') : isBn ? 'মহিলা' : 'Female'}</span></div>
+  <div><span class="lbl">${isBn ? 'লিঙ্গ' : 'Gender'}</span><span class="val">${formatGender(teacher.gender, isBn, false)}</span></div>
   <div><span class="lbl">${isBn ? 'মোবাইল' : 'Phone'}</span><span class="val">${teacher.phone}</span></div>
   <div><span class="lbl">Email</span><span class="val">${teacher.email}</span></div>
   <div><span class="lbl">${isBn ? 'ঠিকানা' : 'Address'}</span><span class="val">${teacher.address}</span></div>
@@ -226,9 +227,9 @@ ${photoHtml}
                 { t: getDeptName(teacher.departmentId), c: 'var(--brand)', b: 'var(--brand-light)' },
                 { t: teacher.designation, c: 'var(--teal)', b: 'var(--teal-light)' },
                 {
-                  t: teacher.gender === 'Male' ? (isBn ? 'পুরুষ' : 'Male') : isBn ? 'মহিলা' : 'Female',
-                  c: 'var(--purple)',
-                  b: 'var(--purple-light)',
+                  t: formatGender(teacher.gender, isBn, false),
+                  c: isFemale(teacher.gender) ? 'var(--purple)' : 'var(--teal)',
+                  b: isFemale(teacher.gender) ? 'var(--purple-light)' : 'var(--teal-light)',
                 },
                 { t: teacher.bloodGroup, c: 'var(--red)', b: 'var(--red-light)' },
               ]

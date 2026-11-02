@@ -28,6 +28,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { teachersApi } from '@/lib/api'
+import { isFemale, matchesGender, formatGender } from '@/lib/gender'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { apiErrorMessage } from '@/lib/teacherMappers'
 import { flushPendingWrites } from '@/lib/storage'
@@ -131,7 +132,7 @@ export default function AllTeachersPage() {
             return false
         }
         if (fDept && t.departmentId !== fDept) return false
-        if (fGender && t.gender !== fGender) return false
+        if (fGender && !matchesGender(t.gender, fGender)) return false
         if (fStatus && t.status !== fStatus) return false
         if (fBlood && t.bloodGroup !== fBlood) return false
         if (fReligion && !t.religion.includes(fReligion)) return false
@@ -256,7 +257,7 @@ export default function AllTeachersPage() {
       'Teacher ID': t.id,
       'Name EN': t.nameEn,
       'Name BN': t.nameBn,
-      Gender: t.gender,
+      Gender: formatGender(t.gender, false, false),
       Phone: t.phone,
       Email: t.email,
       Department: getDeptName(t.departmentId),
@@ -315,7 +316,7 @@ ${photoHtml}
   <div><span class="lbl">${isBn ? 'পদবি' : 'Designation'}</span><span class="val">${escapeHtml(t.designation) || '—'}</span></div>
   <div><span class="lbl">${isBn ? 'বিভাগ' : 'Department'}</span><span class="val">${escapeHtml(getDeptName(t.departmentId))}</span></div>
   <div><span class="lbl">${isBn ? 'বিষয়' : 'Subjects'}</span><span class="val">${escapeHtml(getSubjectNames(t.subjectIds))}</span></div>
-  <div><span class="lbl">${isBn ? 'লিঙ্গ' : 'Gender'}</span><span class="val">${t.gender === 'Male' ? (isBn ? 'পুরুষ' : 'Male') : isBn ? 'মহিলা' : 'Female'}</span></div>
+  <div><span class="lbl">${isBn ? 'লিঙ্গ' : 'Gender'}</span><span class="val">${formatGender(t.gender, isBn, false)}</span></div>
   <div><span class="lbl">${isBn ? 'মোবাইল' : 'Phone'}</span><span class="val">${escapeHtml(t.phone)}</span></div>
   <div><span class="lbl">Email</span><span class="val">${escapeHtml(t.email)}</span></div>
   <div><span class="lbl">${isBn ? 'ঠিকানা' : 'Address'}</span><span class="val">${escapeHtml(t.address)}</span></div>
@@ -406,9 +407,9 @@ ${photoHtml}
                       { t: getDeptName(viewT.departmentId), c: 'var(--brand)', b: 'var(--brand-light)' },
                       { t: viewT.designation, c: 'var(--teal)', b: 'var(--teal-light)' },
                       {
-                        t: viewT.gender === 'Male' ? (isBn ? 'পুরুষ' : 'Male') : isBn ? 'মহিলা' : 'Female',
-                        c: 'var(--purple)',
-                        b: 'var(--purple-light)',
+                        t: formatGender(viewT.gender, isBn, false),
+                        c: isFemale(viewT.gender) ? 'var(--purple)' : 'var(--teal)',
+                        b: isFemale(viewT.gender) ? 'var(--purple-light)' : 'var(--teal-light)',
                       },
                       { t: viewT.bloodGroup, c: 'var(--red)', b: 'var(--red-light)' },
                     ]
@@ -915,11 +916,11 @@ ${photoHtml}
                       <span
                         className="text-[0.625rem] px-[0.375rem] py-[0.125rem] rounded-[0.3125rem] font-medium"
                         style={{
-                          background: t.gender === 'Female' ? 'var(--purple-light)' : 'var(--teal-light)',
-                          color: t.gender === 'Female' ? 'var(--purple)' : 'var(--teal)',
+                          background: isFemale(t.gender) ? 'var(--purple-light)' : 'var(--teal-light)',
+                          color: isFemale(t.gender) ? 'var(--purple)' : 'var(--teal)',
                         }}
                       >
-                        {t.gender === 'Female' ? (isBn ? 'মহিলা' : 'Female') : isBn ? 'পুরুষ' : 'Male'}
+                        {formatGender(t.gender, isBn, false)}
                       </span>
                     </td>
                     <td className="p-2 text-[0.6875rem] text-[var(--red)] font-medium">{t.bloodGroup || '—'}</td>

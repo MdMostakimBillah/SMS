@@ -9,6 +9,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { MAX_IMAGE_SIZE_KB } from '@/lib/constants'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
+import { toStudentFormGender } from '@/lib/gender'
 
 interface FP {
   l: string
@@ -20,6 +21,7 @@ interface FP {
 }
 const F = React.memo(function F({ l, v, onChange, type = 'text', opts, req }: FP) {
   if (opts) {
+    const val = opts.includes('Male / পুরুষ') ? toStudentFormGender(v) : v
     return (
       <div>
         <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
@@ -27,7 +29,7 @@ const F = React.memo(function F({ l, v, onChange, type = 'text', opts, req }: FP
           {req && <span className="text-[var(--red)] ml-0.5">*</span>}
         </label>
         <select
-          value={v}
+          value={val}
           onChange={(e) => onChange(e.target.value)}
           required={req}
           className="w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 cursor-pointer"
@@ -87,7 +89,7 @@ export default function UpdateStudentPage() {
       const s = students.find((x) => x.id === sid)
       if (s) {
         setChosen(s)
-        setForm({ ...s })
+        setForm({ ...s, gender: toStudentFormGender(s.gender) })
       }
     }
   }, [location.state, students])
@@ -110,7 +112,7 @@ export default function UpdateStudentPage() {
 
   const selectStudent = useCallback((s: StudentAdmission) => {
     setChosen(s)
-    setForm({ ...s })
+    setForm({ ...s, gender: toStudentFormGender(s.gender) })
     setSearch('')
     setSaved(false)
   }, [])
@@ -275,7 +277,7 @@ export default function UpdateStudentPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    setForm({ ...chosen! })
+                    setForm({ ...chosen!, gender: toStudentFormGender(chosen!.gender) })
                     setSaved(false)
                   }}
                   className="py-2 px-3.5 rounded-[0.5625rem] bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]"

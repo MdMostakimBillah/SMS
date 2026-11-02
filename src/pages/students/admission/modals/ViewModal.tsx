@@ -5,6 +5,7 @@ import { useClassStore } from '@/store/classStore'
 import QRCode from 'qrcode'
 import { generateA4HTML } from '../a4Template'
 import { printRawHTML } from '@/lib/pdf'
+import { formatGender } from '@/lib/gender'
 import type { StudentAdmission } from '../types'
 
 export const ViewModal = React.memo(function ViewModal({
@@ -142,7 +143,7 @@ export const ViewModal = React.memo(function ViewModal({
                     border: '1px solid var(--border)',
                   }}
                 >
-                  {student.gender.split(' / ')[0]}
+                  {formatGender(student.gender, isBn, true)}
                 </span>
                 {student.bloodGroup && (
                   <span

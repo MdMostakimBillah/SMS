@@ -16,6 +16,7 @@ import { flushVaultWrites } from '@/lib/vault/vault'
 import { BLOOD_GROUPS, TEACHER_CATEGORIES, MAX_IMAGE_SIZE_KB } from '@/lib/constants'
 import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
+import { toTeacherFormGender } from '@/lib/gender'
 
 // ─── FormField (outside parent component — fixes input focus loss) ───────────
 interface FieldProps {
@@ -32,6 +33,7 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
   const inputClass = 'w-full h-[2.75rem] px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.1)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-sm)] transition-all duration-200'
 
   if (options) {
+    const val = options.includes('Male') ? toTeacherFormGender(value) : value
     return (
       <div className="mb-[0.625rem]">
         <label className="block text-[0.8125rem] font-medium text-[var(--text-primary)] mb-1.5">
@@ -39,7 +41,7 @@ function FormField({ labelEn, labelBn, value, onChange, type = 'text', required 
           {required && <span className="text-[var(--red)] ml-0.5">*</span>}
         </label>
         <select
-          value={value}
+          value={val}
           onChange={(e) => onChange(e.target.value)}
           required={required}
           className={inputClass}
@@ -170,7 +172,7 @@ export default function EditTeacherPage() {
     setPhoto(teacher.photo || '')
     setNameEn(teacher.nameEn)
     setNameBn(teacher.nameBn)
-    setGender(teacher.gender)
+    setGender(toTeacherFormGender(teacher.gender))
     setDob(teacher.dob || '')
     setBloodGroup(teacher.bloodGroup || '')
     setReligion(teacher.religion || '')

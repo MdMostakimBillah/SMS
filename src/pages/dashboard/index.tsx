@@ -28,6 +28,7 @@ import { useFeeStore } from '@/store/feeStore'
 import { useTodoStore } from '@/store/todoStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import CircularChart from '@/components/ui/CircularChart'
+import { isMale, isFemale } from '@/lib/gender'
 import gsap from 'gsap'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { CreateTaskModal } from './modals/CreateTaskModal'
@@ -116,8 +117,8 @@ export default function DashboardPage() {
       if (s.status === 'approved') approved++
       else if (s.status === 'pending') pending++
       else if (s.status === 'rejected') rejected++
-      if (s.gender?.includes('Male')) male++
-      else if (s.gender?.includes('Female')) female++
+      if (isMale(s.gender)) male++
+      else if (isFemale(s.gender)) female++
     }
     return { approved, pending, rejected, male, female }
   }, [students])
@@ -128,8 +129,8 @@ export default function DashboardPage() {
       if (t.status === 'active') active++
       else if (t.status === 'on-leave') onLeave++
       else if (t.status === 'inactive') inactive++
-      if (t.gender === 'Male') male++
-      else if (t.gender === 'Female') female++
+      if (isMale(t.gender)) male++
+      else if (isFemale(t.gender)) female++
       if (t.status !== 'inactive') totalSalary += t.salary || 0
     }
     return { active, onLeave, inactive, male, female, totalSalary }

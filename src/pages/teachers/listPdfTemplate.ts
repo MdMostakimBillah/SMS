@@ -1,5 +1,6 @@
 import type { Teacher } from './types'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
+import { formatGender } from '@/lib/gender'
 
 export interface TeacherPDFColumn {
   key: string
@@ -52,7 +53,7 @@ function getCellValue(
     const d = departments.find((x) => x.id === t.departmentId)
     return d ? (isBn ? d.nameBn : d.name) : '—'
   }
-  if (key === 'gender') return t.gender === 'Male' ? (isBn ? 'পুরুষ' : 'Male') : isBn ? 'মহিলা' : 'Female'
+  if (key === 'gender') return formatGender(t.gender, isBn, false)
   if (key === 'status') {
     const m: Record<string, string> = {
       active: isBn ? 'সক্রিয়' : 'Active',

@@ -18,6 +18,7 @@ import { useAppStore } from '@/store/appStore'
 import { useNavPath } from '@/hooks/useNavPath'
 import { usePermission } from '@/hooks/usePermission'
 import { QuickAccessGrid } from '@/components/shared/QuickAccessGrid'
+import { isMale, isFemale } from '@/lib/gender'
 
 import gsap from 'gsap'
 
@@ -190,8 +191,8 @@ export default function TeachersPage() {
   }, [isLoading])
 
   const activeTeachers = teachers.filter((t) => t.status === 'active').length
-  const maleTeachers = teachers.filter((t) => t.gender === 'Male').length
-  const femaleTeachers = teachers.filter((t) => t.gender === 'Female').length
+  const maleTeachers = teachers.filter((t) => isMale(t.gender)).length
+  const femaleTeachers = teachers.filter((t) => isFemale(t.gender)).length
   const totalSalary = teachers.reduce((sum, t) => sum + t.salary, 0)
 
   const currentMonth = new Date().toISOString().slice(0, 7)
