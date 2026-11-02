@@ -104,6 +104,7 @@ export function vaultPathToKey(
     if (base === 'students') storeBase = 'admissions'
     else if (base === 'routines' || base === 'sections' || base === 'institution') storeBase = 'classes'
     else if (base === 'staff' || base === 'departments' || base === 'subjects' || base === 'designations') storeBase = 'teachers'
+    else if (base === 'fee_structures' || base === 'payments' || base === 'waivers') storeBase = 'fees'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -402,10 +403,11 @@ export function normalizeVaultJsonForStore(
       }
     })
 
+    const finalStudents = normalizedStudents.length > 0 ? normalizedStudents : (existingState.students || [])
     const finalState = {
       ...existingState,
       ...(parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})),
-      students: normalizedStudents,
+      students: finalStudents,
       serverSynced: true,
       syncing: false,
       syncError: null,
@@ -468,17 +470,25 @@ export function normalizeVaultJsonForStore(
 
     const isDes =
       filePath?.includes('designations') ||
-      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].title !== undefined && parsed[0].salary === undefined) ||
+      (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].title !== undefined || parsed[0].name !== undefined) && parsed[0].salary === undefined) ||
       (parsed && typeof parsed === 'object' && parsed.designations && !parsed.teachers)
 
     if (isDes) {
       const rawDes = Array.isArray(parsed)
         ? parsed
         : (parsed.designations || parsed.state?.designations || [])
-      const normalizedDes = rawDes.map((raw: any, index: number) => ({
-        id: String(raw.id || `DES-${String(index + 1).padStart(2, '0')}`).trim(),
-        title: String(raw.title || raw.name || '').trim(),
-      }))
+      const today = new Date().toISOString().split('T')[0]
+      const normalizedDes = rawDes.map((raw: any, index: number) => {
+        const nameVal = String(raw.name || raw.title || '').trim()
+        return {
+          id: String(raw.id || `DES-${String(index + 1).padStart(2, '0')}`).trim(),
+          name: nameVal,
+          nameBn: String(raw.nameBn || '').trim(),
+          title: nameVal,
+          createdAt: String(raw.createdAt || today).trim(),
+          updatedAt: String(raw.updatedAt || today).trim(),
+        }
+      })
       const finalState = {
         ...existingState,
         designations: normalizedDes,
@@ -555,13 +565,39 @@ export function normalizeVaultJsonForStore(
     })
 
     const parsedInner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const existingDepts = existingState.departments || []
+    const existingSubs = existingState.subjects || []
+    const existingDes = existingState.designations || []
+
+    const incomingDepts = Array.isArray(parsedInner.departments) && parsedInner.departments.length > 0 ? parsedInner.departments : null
+    const incomingSubs = Array.isArray(parsedInner.subjects) && parsedInner.subjects.length > 0 ? parsedInner.subjects : null
+    const incomingDes = Array.isArray(parsedInner.designations) && parsedInner.designations.length > 0 ? parsedInner.designations : null
+
+    const finalDepts = incomingDepts || existingDepts
+    const finalSubs = incomingSubs || existingSubs
+    const finalDes = incomingDes
+      ? incomingDes.map((raw: any, index: number) => {
+          const nameVal = String(raw.name || raw.title || '').trim()
+          return {
+            id: String(raw.id || `DES-${String(index + 1).padStart(2, '0')}`).trim(),
+            name: nameVal,
+            nameBn: String(raw.nameBn || '').trim(),
+            title: nameVal,
+            createdAt: String(raw.createdAt || today).trim(),
+            updatedAt: String(raw.updatedAt || today).trim(),
+          }
+        })
+      : existingDes
+
+    const finalTeachers = normalizedTeachers.length > 0 ? normalizedTeachers : (existingState.teachers || [])
+
     const finalState = {
       ...existingState,
       ...parsedInner,
-      teachers: normalizedTeachers,
-      departments: Array.isArray(parsedInner.departments) ? parsedInner.departments : (existingState.departments || []),
-      subjects: Array.isArray(parsedInner.subjects) ? parsedInner.subjects : (existingState.subjects || []),
-      designations: Array.isArray(parsedInner.designations) ? parsedInner.designations : (existingState.designations || []),
+      teachers: finalTeachers,
+      departments: finalDepts,
+      subjects: finalSubs,
+      designations: finalDes,
       attendance: parsedInner.attendance || existingState.attendance || {},
       serverSynced: true,
       syncing: false,
@@ -713,23 +749,188 @@ export function normalizeVaultJsonForStore(
       }))
     }
 
+    const finalClasses = normalizedClasses.length > 0 ? normalizedClasses : (existingState.classes || [])
+    const finalRoutines = normalizedRoutines.length > 0 ? normalizedRoutines : (existingState.routines || [])
+
     const curSession = existingState.institution?.currentSession || '2025-26'
     const finalSessionClasses = {
       ...(existingState.sessionClasses || {}),
-      [curSession]: normalizedClasses,
+      [curSession]: finalClasses,
     }
-    const finalSessionRoutines = rawRoutines
-      ? { ...(existingState.sessionRoutines || {}), [curSession]: normalizedRoutines }
-      : (existingState.sessionRoutines || {})
+    const finalSessionRoutines = {
+      ...(existingState.sessionRoutines || {}),
+      [curSession]: finalRoutines,
+    }
 
     const parsedInner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
     const finalState = {
       ...existingState,
       ...parsedInner,
-      classes: normalizedClasses,
-      routines: normalizedRoutines,
+      classes: finalClasses,
+      routines: finalRoutines,
       sessionClasses: finalSessionClasses,
       sessionRoutines: finalSessionRoutines,
+      serverSynced: true,
+      syncing: false,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion })
+  }
+
+  if (key.includes('fees')) {
+    const isPayment =
+      filePath?.includes('payments') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].paidAt !== undefined) ||
+      (parsed && typeof parsed === 'object' && parsed.payments && !parsed.structures)
+
+    if (isPayment) {
+      const rawPayments = Array.isArray(parsed)
+        ? parsed
+        : (parsed.payments || parsed.state?.payments || [])
+      const today = new Date().toISOString().split('T')[0]
+      const normalizedPayments = rawPayments.map((raw: any, index: number) => ({
+        id: String(raw.id || `PAY-${Date.now()}-${index}`).trim(),
+        studentId: String(raw.studentId || '').trim(),
+        feeStructureId: String(raw.feeStructureId || '').trim(),
+        amount: Number(raw.amount) || 0,
+        discount: Number(raw.discount) || 0,
+        paidAt: String(raw.paidAt || today).trim(),
+        method: raw.method || 'cash',
+        reference: String(raw.reference || '').trim(),
+        note: String(raw.note || '').trim(),
+        collectedBy: String(raw.collectedBy || '').trim(),
+        createdAt: String(raw.createdAt || today).trim(),
+        batchId: raw.batchId ? String(raw.batchId) : undefined,
+        forMonth: raw.forMonth ? String(raw.forMonth) : undefined,
+      }))
+      const finalState = {
+        ...existingState,
+        payments: normalizedPayments,
+        serverSynced: true,
+        syncing: false,
+      }
+      return JSON.stringify({ state: finalState, version: existingVersion })
+    }
+
+    const isWaiver =
+      filePath?.includes('waivers') ||
+      (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].mode !== undefined || parsed[0].waiverCategoryId !== undefined)) ||
+      (parsed && typeof parsed === 'object' && (parsed.waiverEntries || parsed.studentWaivers) && !parsed.structures)
+
+    if (isWaiver) {
+      const rawWaivers = Array.isArray(parsed)
+        ? parsed
+        : (parsed.waiverEntries || parsed.waivers || parsed.state?.waiverEntries || [])
+      const today = new Date().toISOString().split('T')[0]
+      const normalizedWaivers = rawWaivers.map((raw: any, index: number) => ({
+        id: String(raw.id || `WVR-${Date.now()}-${index}`).trim(),
+        categoryId: String(raw.categoryId || raw.waiverCategoryId || '').trim(),
+        studentId: String(raw.studentId || '').trim(),
+        feeStructureId: String(raw.feeStructureId || '').trim(),
+        mode: raw.mode === 'percent' ? 'percent' : 'amount',
+        value: Number(raw.value) || 0,
+        months: Array.isArray(raw.months) ? raw.months : [],
+        reason: String(raw.reason || '').trim(),
+        reasonBn: String(raw.reasonBn || '').trim(),
+        notes: raw.notes ? String(raw.notes) : undefined,
+        approvedBy: String(raw.approvedBy || '').trim(),
+        createdAt: String(raw.createdAt || today).trim(),
+      }))
+      const finalState = {
+        ...existingState,
+        waiverEntries: normalizedWaivers,
+        serverSynced: true,
+        syncing: false,
+      }
+      return JSON.stringify({ state: finalState, version: existingVersion })
+    }
+
+    const isStructureOnly =
+      filePath?.includes('fee_structures') ||
+      filePath?.includes('structures') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].amount !== undefined && parsed[0].studentId === undefined)
+
+    if (isStructureOnly) {
+      const rawStructures = Array.isArray(parsed)
+        ? parsed
+        : (parsed.structures || parsed.state?.structures || [])
+      const today = new Date().toISOString().split('T')[0]
+      const normalizedStructures = rawStructures.map((raw: any, index: number) => ({
+        id: String(raw.id || `FEE-${Date.now()}-${index}`).trim(),
+        name: String(raw.name || '').trim(),
+        nameBn: String(raw.nameBn || '').trim(),
+        class: String(raw.class || '').trim(),
+        section: raw.section ? String(raw.section).trim() : undefined,
+        academicYear: String(raw.academicYear || '2025-26').trim(),
+        amount: Number(raw.amount) || 0,
+        description: String(raw.description || '').trim(),
+        descriptionBn: String(raw.descriptionBn || '').trim(),
+        isActive: raw.isActive !== false,
+        type: raw.type === 'monthly' ? 'monthly' : 'onetime',
+        categoryId: raw.categoryId ? String(raw.categoryId) : undefined,
+        studentId: raw.studentId ? String(raw.studentId) : undefined,
+        applicableMonths: Array.isArray(raw.applicableMonths) ? raw.applicableMonths : undefined,
+        createdAt: String(raw.createdAt || today).trim(),
+      }))
+      const finalState = {
+        ...existingState,
+        structures: normalizedStructures,
+        serverSynced: true,
+        syncing: false,
+      }
+      return JSON.stringify({ state: finalState, version: existingVersion })
+    }
+
+    // Full fees object
+    const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const today = new Date().toISOString().split('T')[0]
+    let structures = existingState.structures || []
+    if (Array.isArray(inner.structures)) {
+      structures = inner.structures.map((raw: any, index: number) => ({
+        id: String(raw.id || `FEE-${Date.now()}-${index}`).trim(),
+        name: String(raw.name || '').trim(),
+        nameBn: String(raw.nameBn || '').trim(),
+        class: String(raw.class || '').trim(),
+        section: raw.section ? String(raw.section).trim() : undefined,
+        academicYear: String(raw.academicYear || '2025-26').trim(),
+        amount: Number(raw.amount) || 0,
+        description: String(raw.description || '').trim(),
+        descriptionBn: String(raw.descriptionBn || '').trim(),
+        isActive: raw.isActive !== false,
+        type: raw.type === 'monthly' ? 'monthly' : 'onetime',
+        categoryId: raw.categoryId ? String(raw.categoryId) : undefined,
+        studentId: raw.studentId ? String(raw.studentId) : undefined,
+        applicableMonths: Array.isArray(raw.applicableMonths) ? raw.applicableMonths : undefined,
+        createdAt: String(raw.createdAt || today).trim(),
+      }))
+    }
+    let payments = existingState.payments || []
+    if (Array.isArray(inner.payments)) {
+      payments = inner.payments.map((raw: any, index: number) => ({
+        id: String(raw.id || `PAY-${Date.now()}-${index}`).trim(),
+        studentId: String(raw.studentId || '').trim(),
+        feeStructureId: String(raw.feeStructureId || '').trim(),
+        amount: Number(raw.amount) || 0,
+        discount: Number(raw.discount) || 0,
+        paidAt: String(raw.paidAt || today).trim(),
+        method: raw.method || 'cash',
+        reference: String(raw.reference || '').trim(),
+        note: String(raw.note || '').trim(),
+        collectedBy: String(raw.collectedBy || '').trim(),
+        createdAt: String(raw.createdAt || today).trim(),
+        batchId: raw.batchId ? String(raw.batchId) : undefined,
+        forMonth: raw.forMonth ? String(raw.forMonth) : undefined,
+      }))
+    }
+
+    const finalState = {
+      ...existingState,
+      ...inner,
+      structures,
+      payments,
+      feeCategories: Array.isArray(inner.feeCategories) ? inner.feeCategories : (existingState.feeCategories || []),
+      waiverCategories: Array.isArray(inner.waiverCategories) ? inner.waiverCategories : (existingState.waiverCategories || []),
+      waiverEntries: Array.isArray(inner.waiverEntries) ? inner.waiverEntries : (existingState.waiverEntries || []),
+      studentWaivers: Array.isArray(inner.studentWaivers) ? inner.studentWaivers : (existingState.studentWaivers || []),
       serverSynced: true,
       syncing: false,
     }

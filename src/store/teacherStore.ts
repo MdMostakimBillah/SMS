@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Teacher, Department, Subject, Designation } from '@/pages/teachers/types'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getSlug } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
+import { markExplicitUserDelete } from '@/lib/vault/bridge'
 import { teachersApi, departmentsApi, subjectsApi, designationsApi, type TeacherData } from '@/lib/api'
 import {
   serverTeacherToTeacher,
@@ -234,6 +235,7 @@ export const useTeacherStore = create<TeacherState>()(
       },
 
       removeServerTeacher: (id) => {
+        markExplicitUserDelete()
         set((state) => ({ teachers: state.teachers.filter((t) => t.id !== id) }))
         flushPendingWrites()
         void flushVaultWrites()
@@ -250,6 +252,7 @@ export const useTeacherStore = create<TeacherState>()(
       },
 
       removeServerDepartment: (id) => {
+        markExplicitUserDelete()
         set((state) => ({ departments: state.departments.filter((d) => d.id !== id) }))
         flushPendingWrites()
         void flushVaultWrites()
@@ -266,6 +269,7 @@ export const useTeacherStore = create<TeacherState>()(
       },
 
       removeServerSubject: (id) => {
+        markExplicitUserDelete()
         set((state) => ({ subjects: state.subjects.filter((s) => s.id !== id) }))
         flushPendingWrites()
         void flushVaultWrites()
@@ -282,6 +286,7 @@ export const useTeacherStore = create<TeacherState>()(
       },
 
       removeServerDesignation: (id) => {
+        markExplicitUserDelete()
         set((state) => ({ designations: state.designations.filter((d) => d.id !== id) }))
         flushPendingWrites()
         void flushVaultWrites()
@@ -302,6 +307,7 @@ export const useTeacherStore = create<TeacherState>()(
       },
 
       deleteSubject: (id) => {
+        markExplicitUserDelete()
         set((state) => ({ subjects: state.subjects.filter((s) => s.id !== id) }))
         flushPendingWrites()
         void flushVaultWrites()
@@ -322,6 +328,7 @@ export const useTeacherStore = create<TeacherState>()(
       },
 
       deleteDesignation: (id) => {
+        markExplicitUserDelete()
         set((state) => ({ designations: state.designations.filter((d) => d.id !== id) }))
         flushPendingWrites()
         void flushVaultWrites()
@@ -431,7 +438,7 @@ registerStoreReset(() => {
 })
 
 registerStoreLoad(() => {
-  const slug = sessionStorage.getItem('edutech_inst_slug')
+  const slug = getSlug()
   if (!slug) return
   try {
     const raw = localStorage.getItem(`edutech-teachers_${slug}`)

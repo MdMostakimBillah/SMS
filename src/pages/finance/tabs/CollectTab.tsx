@@ -205,8 +205,8 @@ function generateMonthRows(
   return rows
 }
 
-const labelCls = 'block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.03em] mb-[5px]'
-const fieldInputCls = 'w-full border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] text-[var(--text-primary)] bg-[var(--bg-primary)] outline-none transition-colors focus:border-[var(--brand)]'
+const labelCls = 'block text-xs lg:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5'
+const fieldInputCls = 'w-full border border-[var(--border)] rounded-lg px-3 py-2 text-sm lg:text-base text-[var(--text-primary)] bg-[var(--bg-primary)] outline-none transition-colors focus:border-[var(--brand)]'
 
 export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect, initialStudentId, initialFeeStructureId, onClearCollectFromDue }: Props) {
   const bn = useBn()
@@ -857,94 +857,94 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       {/* Today's Summary Cards */}
       <div className="grid grid-cols-3 gap-[0.625rem]">
         <div
-          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+          className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
         >
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'var(--green-light)' }}
           >
-            <Receipt size={15} style={{ color: 'var(--green)' }} />
+            <Receipt size={18} style={{ color: 'var(--green)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(todayIncome + todayOtherIncome + todayShopIncome)}</div>
-            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'আজকের আয়' : "Today's income"}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{fmt(todayIncome + todayOtherIncome + todayShopIncome)}</div>
+            <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'আজকের আয়' : "Today's income"}</div>
           </div>
         </div>
         <div
-          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+          className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
         >
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'var(--amber-light)' }}
           >
-            <Ban size={15} style={{ color: 'var(--amber)' }} />
+            <Ban size={18} style={{ color: 'var(--amber)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(todayDiscount)}</div>
-            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'আজকের ছাড়' : "Today's discount"}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{fmt(todayDiscount)}</div>
+            <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'আজকের ছাড়' : "Today's discount"}</div>
           </div>
         </div>
         <div
-          className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+          className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
           onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
         >
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+            className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0"
             style={{ background: 'var(--brand-light)' }}
           >
-            <CheckCircle2 size={15} style={{ color: 'var(--brand)' }} />
+            <CheckCircle2 size={18} style={{ color: 'var(--brand)' }} />
           </div>
           <div className="min-w-0">
-            <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(todayWaiver)}</div>
-            <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'আজকের মওকুফ' : "Today's waiver"}</div>
+            <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{fmt(todayWaiver)}</div>
+            <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'আজকের মওকুফ' : "Today's waiver"}</div>
           </div>
         </div>
       </div>
 
       {/* Compact Toolbar */}
-      <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-2.5">
+      <div className="p-3 lg:p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-3">
         {/* Row 1: Filters + Find Due */}
         <div className="flex items-center gap-2 flex-wrap">
           <select value={fSession} onChange={(e) => { setFSession(e.target.value); setSelectedStudentId(null) }}
-            className="h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
+            className="h-10 text-sm lg:text-base px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
             {(institution?.sessions || []).map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <select value={fStatus} onChange={(e) => setFStatus(e.target.value)}
-            className="h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
+            className="h-10 text-sm lg:text-base px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
             <option value="all">{bn ? 'সব' : 'All'}</option>
             <option value="active">{bn ? 'সক্রিয়' : 'Active'}</option>
             <option value="inactive">{bn ? 'নিষ্ক্রিয়' : 'Inactive'}</option>
           </select>
           <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentId(null) }}
-            className="h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
+            className="h-10 text-sm lg:text-base px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
             <option value="">{bn ? 'সব শ্রেণি' : 'All classes'}</option>
             {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentId(null) }}
-            className="h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
+            className="h-10 text-sm lg:text-base px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer">
             <option value="">{bn ? 'সব সেকশন' : 'All sections'}</option>
             {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <div className="ml-auto">
             <button onClick={() => setFindDueTrigger((t) => t + 1)} disabled={!selectedStudentId}
-              className="h-[34px] px-4 rounded-lg bg-[var(--brand)] text-white font-semibold text-[13px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
-              <Search size={14} />{bn ? 'বকেয়' : 'Find due'}
+              className="h-10 px-4 rounded-lg bg-[var(--brand)] text-white font-semibold text-sm lg:text-base border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+              <Search size={16} />{bn ? 'বকেয়' : 'Find due'}
             </button>
           </div>
         </div>
 
         {/* Row 2: Student Info Strip or Search Input */}
         {selectedStudent ? (
-          <div className="flex items-center gap-2.5 py-2 px-3 rounded-lg bg-[var(--bg-secondary)]">
+          <div className="flex items-center gap-2.5 py-2.5 px-3.5 rounded-lg bg-[var(--bg-secondary)] flex-wrap">
             {/* Photo with hover zoom */}
             <div className="relative group flex-shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center cursor-pointer">
-                {selectedStudent.photo ? <img src={selectedStudent.photo} alt={selectedStudent.nameEn || 'Student'} className="w-full h-full object-cover" /> : <span className="text-[12px] font-bold text-[var(--brand)]">{initials(selectedStudent.nameEn)}</span>}
+              <div className="w-9 h-9 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center cursor-pointer">
+                {selectedStudent.photo ? <img src={selectedStudent.photo} alt={selectedStudent.nameEn || 'Student'} className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-[var(--brand)]">{initials(selectedStudent.nameEn)}</span>}
               </div>
               {selectedStudent.photo && (
                 <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block z-50 pointer-events-none">
@@ -955,43 +955,43 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               )}
             </div>
             {/* Info */}
-            <span className="text-[13px] font-bold text-[var(--text-primary)]">{selectedStudent.nameEn}</span>
-            <span className="text-[11px] text-[var(--text-muted)]">·</span>
-            <span className="text-[12px] text-[var(--text-muted)]">{selectedStudent.class}{selectedStudent.section ? ` - ${selectedStudent.section}` : ''}</span>
-            <span className="text-[11px] text-[var(--text-muted)]">·</span>
-            <span className="text-[12px] text-[var(--text-muted)]">{selectedStudent.id}</span>
-            {selectedStudent.phone && <><span className="text-[11px] text-[var(--text-muted)]">·</span><span className="text-[12px] text-[var(--text-muted)]">{selectedStudent.phone}</span></>}
-            {selectedStudent.fatherNameEn && <><span className="text-[11px] text-[var(--text-muted)]">·</span><span className="text-[12px] text-[var(--text-muted)]">{bn ? 'বাবা:' : 'Father:'} {selectedStudent.fatherNameEn}</span></>}
-            {selectedStudent.motherNameEn && <><span className="text-[11px] text-[var(--text-muted)]">·</span><span className="text-[12px] text-[var(--text-muted)]">{bn ? 'মা:' : 'Mother:'} {selectedStudent.motherNameEn}</span></>}
+            <span className="text-base lg:text-lg font-bold text-[var(--text-primary)]">{selectedStudent.nameEn}</span>
+            <span className="text-sm text-[var(--text-muted)]">·</span>
+            <span className="text-sm lg:text-base text-[var(--text-muted)]">{selectedStudent.class}{selectedStudent.section ? ` - ${selectedStudent.section}` : ''}</span>
+            <span className="text-sm text-[var(--text-muted)]">·</span>
+            <span className="text-sm lg:text-base text-[var(--text-muted)]">{selectedStudent.id}</span>
+            {selectedStudent.phone && <><span className="text-sm text-[var(--text-muted)]">·</span><span className="text-sm lg:text-base text-[var(--text-muted)]">{selectedStudent.phone}</span></>}
+            {selectedStudent.fatherNameEn && <><span className="text-sm text-[var(--text-muted)]">·</span><span className="text-sm lg:text-base text-[var(--text-muted)]">{bn ? 'বাবা:' : 'Father:'} {selectedStudent.fatherNameEn}</span></>}
+            {selectedStudent.motherNameEn && <><span className="text-sm text-[var(--text-muted)]">·</span><span className="text-sm lg:text-base text-[var(--text-muted)]">{bn ? 'মা:' : 'Mother:'} {selectedStudent.motherNameEn}</span></>}
             <button onClick={() => { setSelectedStudentId(null); setStudentSearch(''); setFSession(institution?.currentSession || ''); setFStatus('active'); setFClass(''); setFSection('') }}
-              className="ml-auto w-6 h-6 rounded-md hover:bg-[var(--border)] flex items-center justify-center cursor-pointer border-0 bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
-              <X size={14} />
+              className="ml-auto w-7 h-7 rounded-md hover:bg-[var(--border)] flex items-center justify-center cursor-pointer border-0 bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+              <X size={16} />
             </button>
           </div>
         ) : (
           <div className="relative" ref={dropdownRef}>
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
             <input ref={inputRef} type="text"
               value={isDropdownOpen ? studentSearch : ''}
               placeholder={bn ? 'নাম বা আইডি দিয়ে শিক্ষার্থী খুঁজুন...' : 'Search student by name or ID...'}
               onChange={(e) => { setStudentSearch(e.target.value); setSelectedStudentId(null); setIsDropdownOpen(true); setHighlightedIndex(0) }}
               onFocus={() => { setIsDropdownOpen(true); setHighlightedIndex(0) }}
               onKeyDown={handleKeyDown}
-              className="w-full h-9 pl-9 pr-3 text-[13px] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]"
+              className="w-full h-10 pl-10 pr-3 text-sm lg:text-base rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]"
             />
             {isDropdownOpen && (
               <div className="absolute z-50 mt-1 w-full max-h-[260px] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)]">
                 {dropdownStudents.length === 0 ? (
-                  <div className="px-3 py-2.5 text-[13px] text-[var(--text-muted)]">{bn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}</div>
+                  <div className="px-4 py-3 text-sm lg:text-base text-[var(--text-muted)]">{bn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}</div>
                 ) : dropdownStudents.map((s, i) => (
                   <button key={s.id} data-index={i} onClick={() => selectStudent(s.id)} onMouseEnter={() => setHighlightedIndex(i)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left border-0 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${i === highlightedIndex ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--brand-light)]'}`}>
-                    <div className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center text-[10px] font-bold flex-shrink-0 overflow-hidden">
+                    className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left border-0 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${i === highlightedIndex ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--brand-light)]'}`}>
+                    <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center text-xs lg:text-sm font-bold flex-shrink-0 overflow-hidden">
                        {s.photo ? <img src={s.photo} alt={s.nameEn || 'Student'} className="w-full h-full object-cover" /> : initials(s.nameEn)}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-[var(--text-primary)]">{s.nameEn}</p>
-                      <p className="text-[11px] text-[var(--text-muted)]">{s.class} &middot; {s.id}</p>
+                      <p className="text-sm lg:text-base font-semibold text-[var(--text-primary)]">{s.nameEn}</p>
+                      <p className="text-xs lg:text-sm text-[var(--text-muted)]">{s.class} &middot; {s.id}</p>
                     </div>
                   </button>
                 ))}
@@ -1022,28 +1022,28 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   <CheckCircle2 size={18} className="text-[var(--green)]" />
                 </div>
                 <div>
-                  <p className="font-bold text-[13px] text-[var(--text-primary)]">{bn ? 'সব বকেয় পরিশোধিত' : 'All dues cleared'}</p>
-                  <p className="text-[11px] text-[var(--text-muted)]">{bn ? 'কোনো বকেয় নেই' : 'No outstanding dues'}</p>
+                  <p className="font-bold text-base lg:text-lg text-[var(--text-primary)]">{bn ? 'সব বকেয় পরিশোধিত' : 'All dues cleared'}</p>
+                  <p className="text-xs lg:text-sm text-[var(--text-muted)]">{bn ? 'কোনো বকেয় নেই' : 'No outstanding dues'}</p>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="border border-[var(--border)] rounded-xl overflow-hidden max-h-[360px] overflow-y-auto bg-[var(--bg-primary)]">
-              <table className="w-full text-[12.5px] lg:text-[14px] table-fixed">
+            <div className="border border-[var(--border)] rounded-xl overflow-hidden max-h-[380px] overflow-y-auto bg-[var(--bg-primary)]">
+              <table className="w-full text-sm lg:text-base table-fixed">
                 <thead>
                   <tr className="bg-[var(--bg-secondary)]">
-                    <th className="text-center py-2.5 px-3 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
+                    <th className="text-center py-2.5 px-3 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
                       <ModernCheckbox checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
                         onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); const newChecked = !ac; next[r.key] = { ...e, checked: newChecked, receive: newChecked ? Math.max(0, r.receivable - e.discount) : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
                         color="brand" size="xs" />
                     </th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[28%]">{bn ? 'বিবরণ' : 'Particular'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'ছাড়' : 'Waiver'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'ডিসকাউন্ট' : 'Discount'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
-                    <th className="text-center px-3 py-2.5 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
+                    <th className="text-center px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[28%]">{bn ? 'বিবরণ' : 'Particular'}</th>
+                    <th className="text-center px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                    <th className="text-center px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'ছাড়' : 'Waiver'}</th>
+                    <th className="text-center px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'ডিসকাউন্ট' : 'Discount'}</th>
+                    <th className="text-center px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
+                    <th className="text-center px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
+                    <th className="text-center px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1060,9 +1060,9 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           }} color="brand" size="xs" />
                         </td>
                         <td className="text-center px-3 py-3">
-                          <span className="font-semibold text-[var(--text-primary)] text-[12px] lg:text-[13.5px]">{bn ? row.feeNameBn : row.feeName}</span>
+                          <span className="font-semibold text-[var(--text-primary)] text-sm lg:text-base">{bn ? row.feeNameBn : row.feeName}</span>
                           {row.isOnetime && (
-                            <span className={`ml-1 inline-block text-[9px] lg:text-[10px] font-bold uppercase px-1 py-px rounded ${
+                            <span className={`ml-1.5 inline-block text-xs font-bold uppercase px-1.5 py-0.5 rounded ${
                               row.structureId.startsWith('FEE-OTHER-')
                                 ? 'bg-[var(--purple-light)] text-[var(--purple)]'
                                 : 'bg-[var(--amber-light)] text-[var(--amber)]'
@@ -1070,21 +1070,21 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                               {row.structureId.startsWith('FEE-OTHER-') ? (bn ? 'অন্যান্য আয়' : 'Others Income') : 'One-time'}
                             </span>
                           )}
-                          <div className="text-[10px] lg:text-[11px] text-[var(--text-muted)]">{bn ? row.dateRangeBn : row.dateRange}</div>
+                          <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5">{bn ? row.dateRangeBn : row.dateRange}</div>
                         </td>
-                        <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)] text-[12px]">{fmt(row.amount)}</span></td>
+                        <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)] text-sm lg:text-base">{fmt(row.amount)}</span></td>
                         <td className="text-center px-3 py-3">
                           {row.waivedAmount > 0 ? (
                             <div className="inline-flex flex-col items-center">
-                              <span className="text-[11px] font-bold text-[var(--purple)]">-{fmt(row.waivedAmount)}</span>
+                              <span className="text-xs lg:text-sm font-bold text-[var(--purple)]">-{fmt(row.waivedAmount)}</span>
                               {(row.waiverReason || row.waiverReasonBn) && (
-                                <span className="text-[8px] text-[var(--text-muted)] mt-0.5 max-w-[80px] truncate" title={bn ? row.waiverReasonBn || row.waiverReason : row.waiverReason}>
+                                <span className="text-xs text-[var(--text-muted)] mt-0.5 max-w-[80px] truncate" title={bn ? row.waiverReasonBn || row.waiverReason : row.waiverReason}>
                                   {bn ? row.waiverReasonBn || row.waiverReason : row.waiverReason}
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-[11px] text-[var(--text-muted)]">—</span>
+                            <span className="text-xs lg:text-sm text-[var(--text-muted)]">—</span>
                           )}
                         </td>
                         <td className="text-center px-3 py-3">
@@ -1095,16 +1095,16 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                               return { ...prev, [row.key]: { ...c, discount, receive: c.checked ? Math.max(0, row.receivable - discount) : c.receive } }
                             })
                           }}
-                            className="h-6 lg:h-7 w-full text-[11px] lg:text-[12px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder="0" max={row.receivable} />
+                            className="h-9 w-full text-sm lg:text-base text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder="0" max={row.receivable} />
                         </td>
                         <td className="text-center px-3 py-3">
                           <input type="text" value={edit.remarks} onChange={(e) => updateRow(row.key, 'remarks', e.target.value)}
-                            className="h-6 lg:h-7 w-full text-[11px] lg:text-[12px] text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder={bn ? '...' : '...'} />
+                            className="h-9 w-full text-sm lg:text-base text-center px-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" placeholder={bn ? '...' : '...'} />
                         </td>
-                        <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)] text-[12px] lg:text-[13.5px]">{fmt(row.receivable)}</span></td>
+                        <td className="text-center px-3 py-3"><span className="font-semibold text-[var(--text-primary)] text-sm lg:text-base">{fmt(row.receivable)}</span></td>
                         <td className="text-center px-3 py-3">
                           <input type="number" value={edit.receive} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
-                            className="h-6 lg:h-7 w-full text-[11px] lg:text-[12px] text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
+                            className="h-9 w-full text-sm lg:text-base text-center px-1 rounded border border-[var(--brand-light)] bg-[var(--bg-primary)] text-[var(--brand)] font-bold outline-none focus:border-[var(--brand)]" placeholder="0" />
                         </td>
                       </tr>
                     )
@@ -1116,20 +1116,20 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
           {/* Totals Strip */}
           {displayRows.length > 0 && (
-            <div className="flex items-center gap-3 py-2">
+            <div className="flex items-center gap-3 py-2.5">
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'মোট:' : 'Total:'}</span>
-                <span className="font-semibold text-sm text-[var(--text-primary)]">{fmt(totalAmount)}</span>
+                <span className="text-xs lg:text-sm text-[var(--text-muted)]">{bn ? 'মোট:' : 'Total:'}</span>
+                <span className="font-semibold text-sm lg:text-base text-[var(--text-primary)]">{fmt(totalAmount)}</span>
               </div>
               <div className="w-px h-4 bg-[var(--border)]" />
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-[var(--text-muted)]">{bn ? 'ছাড়:' : 'Discount:'}</span>
-                <span className="font-bold text-sm text-[var(--amber)]">{fmt(totalDiscount)}</span>
+                <span className="text-xs lg:text-sm text-[var(--text-muted)]">{bn ? 'ছাড়:' : 'Discount:'}</span>
+                <span className="font-bold text-sm lg:text-base text-[var(--amber)]">{fmt(totalDiscount)}</span>
               </div>
               <div className="w-px h-4 bg-[var(--border)]" />
               <div className="ml-auto flex items-center gap-1.5 bg-[var(--brand-light)] rounded-lg px-3 py-1.5">
-                <span className="text-[11px] text-[var(--brand)] font-semibold">{bn ? 'গ্রহণ:' : 'Receiving:'}</span>
-                <span className="font-extrabold text-base text-[var(--brand)]">{fmt(totalReceive)}</span>
+                <span className="text-xs lg:text-sm text-[var(--brand)] font-semibold">{bn ? 'গ্রহণ:' : 'Receiving:'}</span>
+                <span className="font-extrabold text-base lg:text-lg text-[var(--brand)]">{fmt(totalReceive)}</span>
               </div>
             </div>
           )}
@@ -1138,18 +1138,18 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           {displayRows.length > 0 && (
             <div className="flex items-center gap-4 py-3 border-t border-[var(--border)]">
               <div className="flex items-center gap-2">
-                <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'তারিখ' : 'Date'}</label>
+                <label className="text-xs lg:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'তারিখ' : 'Date'}</label>
                 <input type="date" value={receivedDate} onChange={(e) => setReceivedDate(e.target.value)}
-                  className="h-8 w-[140px] text-[12px] px-2 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
+                  className="h-10 w-[150px] text-sm lg:text-base px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
               </div>
-              <label className="flex items-center gap-1.5 text-[12px] text-[var(--text-muted)] cursor-pointer">
+              <label className="flex items-center gap-1.5 text-sm lg:text-base text-[var(--text-muted)] cursor-pointer">
                 <ModernCheckbox checked={sendSms} onChange={(c) => setSendSms(c)} color="brand" size="xs" />
                 {bn ? 'এসএমএস' : 'SMS'}
               </label>
               <div className="ml-auto flex items-center gap-3">
                 <button onClick={handleReceiveFee} disabled={!displayRows.some((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })}
-                  className="h-10 px-6 rounded-lg bg-[var(--brand)] text-white font-bold text-[13px] border-0 cursor-pointer flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-                  <CircleCheck size={16} />{bn ? 'প্রাপ্ত' : 'Receive'}
+                  className="h-10 px-6 rounded-lg bg-[var(--brand)] text-white font-bold text-sm lg:text-base border-0 cursor-pointer flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  <CircleCheck size={18} />{bn ? 'প্রাপ্ত' : 'Receive'}
                 </button>
               </div>
             </div>
@@ -1157,10 +1157,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
           {/* Success Banner */}
           {showSuccess && (
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-600 text-[13px] font-semibold">
-              <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-600 text-sm lg:text-base font-semibold">
+              <CheckCircle2 size={18} className="text-green-500 flex-shrink-0" />
               <span>{bn ? 'পেমেন্ট সফলভাবে গৃহীত হয়েছে!' : 'Payment received successfully!'}</span>
-              <button onClick={() => setShowSuccess(false)} className="ml-auto text-green-500/60 hover:text-green-600 cursor-pointer border-0 bg-transparent"><X size={14} /></button>
+              <button onClick={() => setShowSuccess(false)} className="ml-auto text-green-500/60 hover:text-green-600 cursor-pointer border-0 bg-transparent"><X size={16} /></button>
             </div>
           )}
 
@@ -1169,33 +1169,33 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] overflow-hidden">
               <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
                 <div className="flex items-center gap-2">
-                  <Receipt size={15} className="text-[var(--brand)]" />
-                  <span className="text-[13px] font-bold text-[var(--text-primary)]">{receiptData.receiptNo}</span>
-                  <span className="text-[11px] text-[var(--text-muted)]">· {receiptData.date}</span>
+                  <Receipt size={16} className="text-[var(--brand)]" />
+                  <span className="text-sm lg:text-base font-bold text-[var(--text-primary)]">{receiptData.receiptNo}</span>
+                  <span className="text-xs lg:text-sm text-[var(--text-muted)]">· {receiptData.date}</span>
                 </div>
                 {canPrint('finance.fees.collect') && (
                   <button onClick={handleDownloadReceipt}
-                    className="h-7 px-3 rounded-lg bg-[var(--brand)] text-white text-[11px] font-semibold border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity">
-                    <Download size={12} />{bn ? 'রসিদ ডাউনলোড' : 'Download Receipt'}
+                    className="h-9 px-3 rounded-lg bg-[var(--brand)] text-white text-xs lg:text-sm font-semibold border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity">
+                    <Download size={14} />{bn ? 'রসিদ ডাউনলোড' : 'Download Receipt'}
                   </button>
                 )}
               </div>
-              <div className="p-4" style={{ fontSize: '10px' }}>
+              <div className="p-4 text-xs lg:text-sm">
                 {/* Two-column receipt */}
                 <div className="flex gap-5">
                   {/* Student Copy */}
                   <div className="flex-1 border-r border-dashed border-[var(--border)] pr-5">
                     <div className="flex items-center gap-3 pb-2 mb-2 border-b-2 border-[var(--brand)]">
-                       {institution?.logo ? <img src={institution.logo} alt={institution?.name || 'School logo'} className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
+                       {institution?.logo ? <img src={institution.logo} alt={institution?.name || 'School logo'} className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-sm font-bold">ET</div>}
                       <div className="text-center flex-1">
-                        <div className="text-[13px] font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
-                        <div className="text-[9px] text-[var(--text-muted)]">{institution?.address}</div>
+                        <div className="text-sm lg:text-base font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
+                        <div className="text-xs text-[var(--text-muted)]">{institution?.address}</div>
                       </div>
                     </div>
-                    <div className="text-center text-[11px] font-bold text-[var(--brand)] bg-[var(--brand)]/5 border border-[var(--brand)]/20 rounded px-2 py-1 mb-2">
+                    <div className="text-center text-xs lg:text-sm font-bold text-[var(--brand)] bg-[var(--brand)]/5 border border-[var(--brand)]/20 rounded px-2 py-1 mb-2">
                       {bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [{bn ? 'শিক্ষার্থী কপি' : 'Student Copy'}]
                     </div>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[9px] mb-2">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs lg:text-sm mb-2">
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span> {receiptData.session}</div>
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'তারিখ:' : 'Date:'}</span> {receiptData.date}</div>
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'নাম:' : 'Name:'}</span> {bn ? receiptData.studentNameBn : receiptData.studentName}</div>
@@ -1203,7 +1203,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span> {receiptData.class}</div>
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেকশন:' : 'Section:'}</span> {receiptData.section}</div>
                     </div>
-                    <table className="w-full border-collapse mb-2 text-[9px]">
+                    <table className="w-full border-collapse mb-2 text-xs lg:text-sm">
                       <thead><tr className="bg-[var(--brand)] text-white">
                         <th className="px-2 py-1 text-center font-semibold">S.No</th>
                         <th className="px-2 py-1 text-left font-semibold">{bn ? 'ফি শিরোনাম' : 'Fee Head'}</th>
@@ -1214,21 +1214,21 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <tr key={i} className="border-b border-[var(--border)]">
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
-                              <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.waived && f.waived > 0 && <div className="text-[8px] text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
-                              {f.discount && f.discount > 0 && <div className="text-[8px] text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
+                              <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-xs text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
+                              {f.waived && f.waived > 0 && <div className="text-xs text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
+                              {f.discount && f.discount > 0 && <div className="text-xs text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    <div className="flex justify-end text-[9px]">
+                    <div className="flex justify-end text-xs lg:text-sm">
                       <div className="space-y-0.5">
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
                         {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
-                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Balance:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
+                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়া:' : 'Balance:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
                         {receiptData.comment && <div className="flex justify-between gap-4 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মন্তব্য:' : 'Comment:'}</span><span className="text-[var(--text-secondary)]">{receiptData.comment}</span></div>}
                       </div>
                     </div>
@@ -1237,16 +1237,16 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   {/* Institute Copy */}
                   <div className="flex-1 pl-5">
                     <div className="flex items-center gap-3 pb-2 mb-2 border-b-2 border-[var(--brand)]">
-                       {institution?.logo ? <img src={institution.logo} alt={institution?.name || 'School logo'} className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
+                       {institution?.logo ? <img src={institution.logo} alt={institution?.name || 'School logo'} className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-sm font-bold">ET</div>}
                       <div className="text-center flex-1">
-                        <div className="text-[13px] font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
-                        <div className="text-[9px] text-[var(--text-muted)]">{institution?.address}</div>
+                        <div className="text-sm lg:text-base font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
+                        <div className="text-xs text-[var(--text-muted)]">{institution?.address}</div>
                       </div>
                     </div>
-                    <div className="text-center text-[11px] font-bold text-[var(--brand)] bg-[var(--brand)]/5 border border-[var(--brand)]/20 rounded px-2 py-1 mb-2">
+                    <div className="text-center text-xs lg:text-sm font-bold text-[var(--brand)] bg-[var(--brand)]/5 border border-[var(--brand)]/20 rounded px-2 py-1 mb-2">
                       {bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [{bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy'}]
                     </div>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[9px] mb-2">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs lg:text-sm mb-2">
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span> {receiptData.session}</div>
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'তারিখ:' : 'Date:'}</span> {receiptData.date}</div>
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'নাম:' : 'Name:'}</span> {bn ? receiptData.studentNameBn : receiptData.studentName}</div>
@@ -1254,7 +1254,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span> {receiptData.class}</div>
                       <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেকশন:' : 'Section:'}</span> {receiptData.section}</div>
                     </div>
-                    <table className="w-full border-collapse mb-2 text-[9px]">
+                    <table className="w-full border-collapse mb-2 text-xs lg:text-sm">
                       <thead><tr className="bg-[var(--brand)] text-white">
                         <th className="px-2 py-1 text-center font-semibold">S.No</th>
                         <th className="px-2 py-1 text-left font-semibold">{bn ? 'ফি শিরোনাম' : 'Fee Head'}</th>
@@ -1265,21 +1265,21 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                           <tr key={i} className="border-b border-[var(--border)]">
                             <td className="px-2 py-1 text-center">{i + 1}</td>
                             <td className="px-2 py-1 text-left">
-                              <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.waived && f.waived > 0 && <div className="text-[8px] text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
-                              {f.discount && f.discount > 0 && <div className="text-[8px] text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
+                              <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-xs text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
+                              {f.waived && f.waived > 0 && <div className="text-xs text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
+                              {f.discount && f.discount > 0 && <div className="text-xs text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
                             </td>
                             <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    <div className="flex justify-end text-[9px]">
+                    <div className="flex justify-end text-xs lg:text-sm">
                       <div className="space-y-0.5">
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
                         {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
-                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
+                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়া:' : 'Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
                         {receiptData.comment && <div className="flex justify-between gap-4 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মন্তব্য:' : 'Comment:'}</span><span className="text-[var(--text-secondary)]">{receiptData.comment}</span></div>}
                       </div>
                     </div>
@@ -1294,44 +1294,44 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         {/* Right Sidebar */}
           <div className="space-y-2">
             {hasClassLevelFees && (
-              <div className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
-                <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'অগ্রিম' : 'Advance'}</div>
+              <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2.5">
+                <div className="text-xs lg:text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'অগ্রিম' : 'Advance'}</div>
                 {monthlyStructures.map((s) => (
                   <div key={s.id} className="flex items-center gap-2">
-                    <span className="text-[12px] font-medium text-[var(--text-primary)] truncate flex-1">{bn ? s.nameBn : s.name}</span>
+                    <span className="text-sm lg:text-base font-medium text-[var(--text-primary)] truncate flex-1">{bn ? s.nameBn : s.name}</span>
                     <div className="flex items-center">
                       <input type="number" value={feeAdvanceMap[s.id] || 0} min={0} max={12}
                         onChange={(e) => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.max(0, Math.min(12, Number(e.target.value) || 0)) }))}
-                        className="w-9 h-7 text-[12px] text-center rounded-l-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                        className="w-10 h-9 text-sm text-center rounded-l-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                       <div className="flex flex-col">
-                        <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.min(12, (prev[s.id] || 0) + 1) }))} className="w-5 h-4 rounded-tr-md border border-l-0 border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[9px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)] transition-colors">&#9650;</button>
-                        <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.max(0, (prev[s.id] || 0) - 1) }))} className="w-5 h-4 rounded-br-md border border-l-0 border-t-0 border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-[9px] text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)] transition-colors">&#9660;</button>
+                        <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.min(12, (prev[s.id] || 0) + 1) }))} className="w-5 h-4.5 rounded-tr-md border border-l-0 border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-xs text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)] transition-colors">&#9650;</button>
+                        <button onClick={() => setFeeAdvanceMap((prev) => ({ ...prev, [s.id]: Math.max(0, (prev[s.id] || 0) - 1) }))} className="w-5 h-4.5 rounded-br-md border border-l-0 border-t-0 border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-center cursor-pointer text-xs text-[var(--text-muted)] leading-none hover:bg-[var(--bg-primary)] transition-colors">&#9660;</button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
+            <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2.5">
               {canCreate('finance.fees.collect') && (
                 <button onClick={() => setShowOneTimeModal(true)}
-                  className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[var(--brand)] text-white text-[12px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
-                  <Plus size={13} />{bn ? 'এককালীন ফি' : 'One-time fee'}
+                  className="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-[var(--brand)] text-white text-sm lg:text-base font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
+                  <Plus size={16} />{bn ? 'এককালীন ফি' : 'One-time fee'}
                 </button>
               )}
               {selectedStudent && classProducts.length > 0 && (
                 <button onClick={() => setShowShopModal(true)}
-                  className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg bg-[var(--teal)] text-white text-[12px] font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
-                  <ShoppingBag size={13} />{bn ? 'দোকান' : 'Shop'}
+                  className="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-[var(--teal)] text-white text-sm lg:text-base font-semibold border-0 cursor-pointer hover:opacity-90 transition-opacity">
+                  <ShoppingBag size={16} />{bn ? 'দোকান' : 'Shop'}
                 </button>
               )}
               <button onClick={() => setShowFineModal(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-transparent text-[var(--red)] text-[12px] font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/15 transition-colors">
-                <Ban size={13} />{bn ? 'জরিমানা' : 'Add fine'}
+                className="w-full flex items-center justify-center gap-2 h-10 rounded-lg border border-transparent text-[var(--red)] text-sm lg:text-base font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/15 transition-colors">
+                <Ban size={16} />{bn ? 'জরিমানা' : 'Add fine'}
               </button>
               <button onClick={() => setShowHistoryModal(true)}
-                className="w-full flex items-center justify-center gap-1.5 h-9 rounded-lg border border-transparent text-[var(--text-primary)] text-[12px] font-semibold cursor-pointer bg-[var(--bg-secondary)] hover:bg-[var(--border)] transition-colors">
-                <History size={13} />{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}
+                className="w-full flex items-center justify-center gap-2 h-10 rounded-lg border border-transparent text-[var(--text-primary)] text-sm lg:text-base font-semibold cursor-pointer bg-[var(--bg-secondary)] hover:bg-[var(--border)] transition-colors">
+                <History size={16} />{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}
               </button>
             </div>
           </div>
@@ -1345,15 +1345,15 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
               <div>
-                <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">{bn ? 'এককালীন ফি' : 'One-time Fee'}</h3>
-                <p className="text-[11px] text-[var(--text-muted)] mt-0.5 m-0">{bn ? `${selectedStudent?.nameBn || ''} — শ্রেণি ${selectedStudent?.class || ''}` : `${selectedStudent?.nameEn || ''} — Class ${selectedStudent?.class || ''}`}</p>
+                <h3 className="text-lg lg:text-xl font-bold text-[var(--text-primary)] m-0">{bn ? 'এককালীন ফি' : 'One-time Fee'}</h3>
+                <p className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5 m-0">{bn ? `${selectedStudent?.nameBn || ''} — শ্রেণি ${selectedStudent?.class || ''}` : `${selectedStudent?.nameEn || ''} — Class ${selectedStudent?.class || ''}`}</p>
               </div>
               <button onClick={() => setShowOneTimeModal(false)} className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)] transition-colors"><X size={15} /></button>
             </div>
             {/* Body */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {oneTimeStructures.length === 0 ? (
-                <p className="text-[13px] text-[var(--text-muted)] text-center py-10">{bn ? 'কোনো এককালীন ফি পাওয়া যায়নি' : 'No one-time fees found'}</p>
+                <p className="text-sm lg:text-base text-[var(--text-muted)] text-center py-10">{bn ? 'কোনো এককালীন ফি পাওয়া যায়নি' : 'No one-time fees found'}</p>
               ) : (
                 <div className="space-y-2">
                   {oneTimeStructures.map((s) => {
@@ -1361,13 +1361,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     const toggle = () => { const next = new Set(selectedOneTimeFees); if (isSelected) next.delete(s.id); else next.add(s.id); setSelectedOneTimeFees(next) }
                     return (
                       <div key={s.id} onClick={toggle}
-                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--brand)]/20 bg-[var(--brand)]/5' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)]'}`}>
+                        className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--brand)]/20 bg-[var(--brand)]/5' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)]'}`}>
                         <ModernCheckbox checked={isSelected} onChange={() => toggle()} />
                         <div className="flex-1 min-w-0 cursor-pointer">
-                          <div className="text-[13px] font-semibold text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
-                          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{s.descriptionBn || s.description || '—'}</div>
+                          <div className="text-sm lg:text-base font-semibold text-[var(--text-primary)]">{bn ? s.nameBn : s.name}</div>
+                          <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5">{s.descriptionBn || s.description || '—'}</div>
                         </div>
-                        <div className="text-[var(--brand)] text-[14px] font-bold">৳{s.amount.toLocaleString()}</div>
+                        <div className="text-[var(--brand)] text-base lg:text-lg font-bold">৳{s.amount.toLocaleString()}</div>
                       </div>
                     )
                   })}
@@ -1377,7 +1377,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             {/* Footer */}
             <div className="px-6 py-4 border-t border-[var(--border)]">
               <button onClick={handleAddOneTimeFees} disabled={selectedOneTimeFees.size === 0}
-                className="w-full h-11 rounded-xl bg-[var(--brand)] text-white font-bold text-[14px] border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+                className="w-full h-11 rounded-xl bg-[var(--brand)] text-white font-bold text-sm lg:text-base border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
                 {bn ? 'যোগ করুন' : 'Add selected'} ({selectedOneTimeFees.size})
               </button>
             </div>
@@ -1392,12 +1392,12 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--teal)]/10 text-[var(--teal)]">
-                  <ShoppingBag size={18} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[var(--teal)]/10 text-[var(--teal)]">
+                  <ShoppingBag size={20} />
                 </div>
                 <div>
-                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">{bn ? 'দোকান' : 'Shop'}</h3>
-                  <p className="text-[11px] text-[var(--text-muted)] mt-0.5 m-0">{bn ? `শ্রেণি ${selectedStudent?.class}` : `Class ${selectedStudent?.class}`}</p>
+                  <h3 className="text-lg lg:text-xl font-bold text-[var(--text-primary)] m-0">{bn ? 'দোকান' : 'Shop'}</h3>
+                  <p className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5 m-0">{bn ? `শ্রেণি ${selectedStudent?.class}` : `Class ${selectedStudent?.class}`}</p>
                 </div>
               </div>
               <button onClick={() => setShowShopModal(false)} className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)] transition-colors"><X size={15} /></button>
@@ -1405,7 +1405,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             {/* Body */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {classProducts.length === 0 ? (
-                <p className="text-[13px] text-[var(--text-muted)] text-center py-10">{bn ? 'এই শ্রেণিতে কোনো পণ্য নেই' : 'No products available for this class'}</p>
+                <p className="text-sm lg:text-base text-[var(--text-muted)] text-center py-10">{bn ? 'এই শ্রেণিতে কোনো পণ্য নেই' : 'No products available for this class'}</p>
               ) : (
                 <div className="space-y-2">
                   {classProducts.map((p) => {
@@ -1413,23 +1413,23 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     const isSelected = selectedShopProducts.has(p.id)
                     const toggle = () => { const next = new Set(selectedShopProducts); if (isSelected) next.delete(p.id); else next.add(p.id); setSelectedShopProducts(next) }
                     return (
-                      <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isSelected ? 'border-[var(--teal)]/20 bg-[var(--teal)]/5' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)]'}`}>
+                      <div key={p.id} className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${isSelected ? 'border-[var(--teal)]/20 bg-[var(--teal)]/5' : 'border-[var(--border)] hover:bg-[var(--bg-secondary)]'}`}>
                         <ModernCheckbox checked={isSelected} color="teal" onChange={() => toggle()} />
                         <div className="flex-1 min-w-0 cursor-pointer" onClick={toggle}>
-                          <div className="text-[13px] font-semibold text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</div>
-                          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{bn ? p.unitBn : p.unit} · {p.sku}</div>
+                          <div className="text-sm lg:text-base font-semibold text-[var(--text-primary)]">{bn ? p.nameBn : p.name}</div>
+                          <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5">{bn ? p.unitBn : p.unit} · {p.sku}</div>
                         </div>
-                        <div className="text-[var(--teal)] text-[14px] font-bold">৳{p.price}</div>
-                        <div className={`text-[11px] px-2 py-0.5 rounded-full ${p.stock <= p.minStock ? 'bg-red-500/10 text-red-500' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
+                        <div className="text-[var(--teal)] text-base lg:text-lg font-bold">৳{p.price}</div>
+                        <div className={`text-xs lg:text-sm px-2.5 py-0.5 rounded-full ${p.stock <= p.minStock ? 'bg-red-500/10 text-red-500' : 'bg-[var(--bg-secondary)] text-[var(--text-muted)]'}`}>
                           {bn ? `স্টক: ${p.stock}` : `Stock: ${p.stock}`}
                         </div>
                         {isSelected && (
-                          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] rounded-lg px-1 py-0.5">
+                          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] rounded-lg px-1.5 py-0.5">
                             <button onClick={() => setShopQtyMap((prev) => ({ ...prev, [p.id]: Math.max(1, (prev[p.id] || 1) - 1) }))}
-                              className="w-7 h-7 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[12px] font-bold hover:bg-[var(--border)] transition-colors">-</button>
-                            <span className="w-8 text-center text-[13px] font-bold text-[var(--text-primary)]">{qty}</span>
+                              className="w-7 h-7 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-sm font-bold hover:bg-[var(--border)] transition-colors">-</button>
+                            <span className="w-8 text-center text-sm lg:text-base font-bold text-[var(--text-primary)]">{qty}</span>
                             <button onClick={() => setShopQtyMap((prev) => ({ ...prev, [p.id]: Math.min(p.stock, (prev[p.id] || 1) + 1) }))}
-                              className="w-7 h-7 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[12px] font-bold hover:bg-[var(--border)] transition-colors">+</button>
+                              className="w-7 h-7 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-sm font-bold hover:bg-[var(--border)] transition-colors">+</button>
                           </div>
                         )}
                       </div>
@@ -1441,7 +1441,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             {/* Footer */}
             <div className="px-6 py-4 border-t border-[var(--border)]">
               <button onClick={handleAddShopProducts} disabled={selectedShopProducts.size === 0}
-                className="w-full h-11 rounded-xl bg-[var(--teal)] text-white font-bold text-[14px] border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
+                className="w-full h-11 rounded-xl bg-[var(--teal)] text-white font-bold text-sm lg:text-base border-0 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed">
                 {bn ? 'যোগ করুন' : 'Add selected'} ({selectedShopProducts.size})
               </button>
             </div>
@@ -1452,21 +1452,21 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       {/* Fine Modal */}
       {showFineModal && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 " onClick={() => setShowFineModal(false)}>
-          <div className="bg-[var(--bg-primary)] rounded-xl w-[340px] max-w-[90vw] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3.5">
-              <h3 className="text-[15px] font-bold text-[var(--text-primary)] m-0">{bn ? 'জরিমানা যোগ' : 'Add fine'}</h3>
-              <button onClick={() => setShowFineModal(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)]"><X size={14} /></button>
+          <div className="bg-[var(--bg-primary)] rounded-xl w-[380px] max-w-[90vw] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg lg:text-xl font-bold text-[var(--text-primary)] m-0">{bn ? 'জরিমানা যোগ' : 'Add fine'}</h3>
+              <button onClick={() => setShowFineModal(false)} className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)]"><X size={15} /></button>
             </div>
-            <div className="mb-2.5">
+            <div className="mb-3">
               <label className={labelCls}>{bn ? 'বিবরণ' : 'Description'}</label>
               <input type="text" value={fineDesc} onChange={(e) => setFineDesc(e.target.value)} className={fieldInputCls} placeholder="e.g. Late fee" />
             </div>
-            <div className="mb-3.5">
+            <div className="mb-4">
               <label className={labelCls}>{bn ? 'পরিমাণ' : 'Amount'} <span className="text-red-500">*</span></label>
               <input type="number" value={fineAmount} onChange={(e) => setFineAmount(e.target.value)} className={fieldInputCls} placeholder="0" min={0} />
             </div>
             <button onClick={handleAddFine} disabled={!fineDesc || !fineAmount || Number(fineAmount) <= 0}
-              className="w-full h-10 rounded-lg bg-[var(--brand)] text-white font-bold text-[13px] border-0 cursor-pointer hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
+              className="w-full h-11 rounded-lg bg-[var(--brand)] text-white font-bold text-sm lg:text-base border-0 cursor-pointer hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed">
               {bn ? 'যোগ করুন' : 'Add fine'}
             </button>
           </div>
@@ -1480,22 +1480,22 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             {/* Sticky Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
               <div>
-                <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0">{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}</h3>
-                <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{selectedStudent.nameEn} ({selectedStudent.id})</p>
+                <h3 className="text-lg lg:text-xl font-bold text-[var(--text-primary)] m-0">{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}</h3>
+                <p className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5">{selectedStudent.nameEn} ({selectedStudent.id})</p>
               </div>
-              <button onClick={() => setShowHistoryModal(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)]"><X size={14} /></button>
+              <button onClick={() => setShowHistoryModal(false)} className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-muted)] cursor-pointer flex items-center justify-center hover:bg-[var(--border)]"><X size={15} /></button>
             </div>
             {/* Filter Bar */}
-            <div className="flex items-center gap-2 px-5 py-2.5 border-b border-[var(--border)] flex-shrink-0 bg-[var(--bg-secondary)]/50">
-              <div className="relative flex-1 max-w-[200px]">
-                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <div className="flex items-center gap-2.5 px-5 py-3 border-b border-[var(--border)] flex-shrink-0 bg-[var(--bg-secondary)]/50">
+              <div className="relative flex-1 max-w-[220px]">
+                <Search size={15} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                 <input type="text" value={historySearch} onChange={(e) => setHistorySearch(e.target.value)}
                   placeholder={bn ? 'ফি অনুসন্ধান...' : 'Search fee...'}
-                  className="w-full h-7 pl-8 pr-2 text-[11px] lg:text-[12px] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
+                  className="w-full h-9 pl-9 pr-2.5 text-sm rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors" />
                 {historySearch && <button onClick={() => setHistorySearch('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[var(--border)] flex items-center justify-center cursor-pointer border-0 text-[var(--text-muted)] hover:bg-[var(--text-muted)] hover:text-white transition-colors"><X size={9} /></button>}
               </div>
               <select value={historyMethod} onChange={(e) => setHistoryMethod(e.target.value)}
-                className="h-7 px-2 text-[11px] lg:text-[12px] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none cursor-pointer focus:border-[var(--brand)] transition-colors">
+                className="h-9 px-3 text-sm rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none cursor-pointer focus:border-[var(--brand)] transition-colors">
                 <option value="all">{bn ? 'সব পদ্ধতি' : 'All methods'}</option>
                 <option value="cash">{bn ? 'নগদ' : 'Cash'}</option>
                 <option value="bank">{bn ? 'ব্যাংক' : 'Bank'}</option>
@@ -1503,8 +1503,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                 <option value="other">{bn ? 'অন্যান্য' : 'Other'}</option>
               </select>
               <button onClick={() => setHistorySort((s) => s === 'newest' ? 'oldest' : 'newest')}
-                className="h-7 px-2.5 text-[11px] lg:text-[12px] rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors flex items-center gap-1">
-                {historySort === 'newest' ? <ChevronDown size={12} /> : <ChevronDown size={12} className="rotate-180" />}
+                className="h-9 px-3 text-sm rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-muted)] cursor-pointer hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors flex items-center gap-1.5">
+                {historySort === 'newest' ? <ChevronDown size={14} /> : <ChevronDown size={14} className="rotate-180" />}
                 {bn ? 'তারিখ' : 'Date'}
               </button>
             </div>
@@ -1543,10 +1543,10 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   return true
                 }).sort((a, b) => historySort === 'newest' ? b.paidAt.localeCompare(a.paidAt) : a.paidAt.localeCompare(b.paidAt))
                 if (filtered.length === 0) {
-                  return <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}</p>
+                  return <p className="text-sm text-[var(--text-muted)] text-center py-8">{bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}</p>
                 }
                 return (
-                <table className="w-full text-[12px] lg:text-[13.5px]" style={{ tableLayout: 'fixed' }}>
+                <table className="w-full text-sm lg:text-base" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
                     <col style={{ width: '4%' }} />
                     <col style={{ width: '22%' }} />
@@ -1559,14 +1559,14 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   </colgroup>
                   <thead>
                     <tr className="bg-[var(--bg-secondary)] sticky top-0 z-10">
-                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">#</th>
-                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
-                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'তারিখ' : 'Date'}</th>
-                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
-                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মন্তব্য' : 'Comment'}</th>
-                      <th className="text-center px-2 lg:px-3 py-2.5 text-[10px] lg:text-[11px] uppercase text-[var(--text-muted)] font-bold"></th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">#</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'ফি' : 'Fee'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'মন্তব্য' : 'Comment'}</th>
+                      <th className="text-center px-2 lg:px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1609,29 +1609,29 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       const monthLabel = paidDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                       return (
                         <tr key={batch.batchId} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40">
-                          <td className="text-center px-2 lg:px-3 py-2.5 text-[var(--text-muted)]">{idx + 1}</td>
+                          <td className="text-center px-2 lg:px-3 py-2.5 text-[var(--text-muted)] text-sm lg:text-base">{idx + 1}</td>
                           <td className="text-center px-2 lg:px-3 py-2.5">
                             <div className="space-y-0.5">
-                              {uniqueNames.map((name, i) => <div key={i} className="font-semibold text-[var(--text-primary)] text-[11px] lg:text-[12.5px]">{name}</div>)}
+                              {uniqueNames.map((name, i) => <div key={i} className="font-semibold text-[var(--text-primary)] text-sm lg:text-base">{name}</div>)}
                             </div>
                           </td>
-                          <td className="text-center px-2 lg:px-3 py-2.5 text-[var(--text-muted)]">{monthLabel}</td>
-                          <td className="text-center px-2 lg:px-3 py-2.5"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-[11px] lg:text-[12px]">{batch.method}</span></td>
-                          <td className="text-center px-2 lg:px-3 py-2.5"><span className="text-[11px] lg:text-[12px] text-[var(--text-muted)]">{batch.invoiceNo}</span></td>
-                          <td className="text-center px-2 lg:px-3 py-2.5"><span className="font-bold text-[var(--brand)]">{fmt(batch.totalAmount)}</span></td>
+                          <td className="text-center px-2 lg:px-3 py-2.5 text-[var(--text-muted)] text-sm lg:text-base">{monthLabel}</td>
+                          <td className="text-center px-2 lg:px-3 py-2.5"><span className="inline-block px-2.5 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-xs lg:text-sm">{batch.method}</span></td>
+                          <td className="text-center px-2 lg:px-3 py-2.5"><span className="text-xs lg:text-sm text-[var(--text-muted)] font-mono">{batch.invoiceNo}</span></td>
+                          <td className="text-center px-2 lg:px-3 py-2.5"><span className="font-bold text-[var(--brand)] text-sm lg:text-base">{fmt(batch.totalAmount)}</span></td>
                           <td className="text-center px-2 lg:px-3 py-2.5">
-                            <span className="text-[11px] lg:text-[12px] text-[var(--text-muted)] truncate block" title={batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ')}>
+                            <span className="text-xs lg:text-sm text-[var(--text-muted)] truncate block" title={batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ')}>
                               {batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ') || '—'}
                             </span>
                           </td>
                           <td className="text-center px-2 lg:px-3 py-2.5">
                             <div className="flex items-center justify-center gap-1">
-                              <button onClick={() => generateBatchReceipt(batch)} className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border-0 hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
-                                <Receipt size={13} />
+                              <button onClick={() => generateBatchReceipt(batch)} className="w-8 h-8 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border-0 hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
+                                <Receipt size={14} />
                               </button>
                               {canDelete('finance.fees.collect') && (
-                                <button onClick={() => handleDeletePayment(batch.batchId)} className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                                  <Trash2 size={13} />
+                                <button onClick={() => handleDeletePayment(batch.batchId)} className="w-8 h-8 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
+                                  <Trash2 size={14} />
                                 </button>
                               )}
                             </div>

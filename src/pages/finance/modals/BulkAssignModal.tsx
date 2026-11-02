@@ -224,17 +224,17 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
         }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.875rem 1.25rem', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
           <div>
-            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            <h3 className="text-base lg:text-lg font-bold text-[var(--text-primary)] m-0">
               {bn ? 'বাল্ক ফি আপডেট' : 'Bulk Fee Update'}
             </h3>
-            <p style={{ fontSize: '0.625rem', color: 'var(--text-muted)', margin: '0.125rem 0 0' }}>
+            <p className="text-xs lg:text-sm text-[var(--text-muted)] mt-0.5">
               {bn ? `${selectedCount}টি শ্রেণি নির্বাচিত • ${totalStructures}টি কাঠামো আপডেট হবে` : `${selectedCount} classes selected • ${totalStructures} structures will be updated`}
             </p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '2px' }}>
-            <X size={16} />
+            <X size={20} />
           </button>
         </div>
 
@@ -244,53 +244,45 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
             <button
               onClick={() => { setFeeType('monthly'); setSourceFeeId(''); setClassEntries((prev) => { const n = { ...prev }; for (const c of classOptions) n[c] = { selected: false, sections: [], amount: '' }; return n }) }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.375rem',
-                padding: '0.4375rem 0.875rem', borderRadius: '0.5rem',
-                background: feeType === 'monthly' ? 'var(--brand)' : 'var(--bg-secondary)',
-                border: `1px solid ${feeType === 'monthly' ? 'var(--brand)' : 'var(--border)'}`,
-                color: feeType === 'monthly' ? 'white' : 'var(--text-secondary)',
-                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
-              }}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm lg:text-base font-semibold cursor-pointer transition-colors ${
+                feeType === 'monthly'
+                  ? 'bg-[var(--brand)] text-white border border-[var(--brand)]'
+                  : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]'
+              }`}
             >
-              <Repeat size={12} /> {bn ? 'মাসিক' : 'Monthly'}
+              <Repeat size={15} /> {bn ? 'মাসিক' : 'Monthly'}
             </button>
             <button
               onClick={() => { setFeeType('onetime'); setSourceFeeId(''); setClassEntries((prev) => { const n = { ...prev }; for (const c of classOptions) n[c] = { selected: false, sections: [], amount: '' }; return n }) }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.375rem',
-                padding: '0.4375rem 0.875rem', borderRadius: '0.5rem',
-                background: feeType === 'onetime' ? 'var(--brand)' : 'var(--bg-secondary)',
-                border: `1px solid ${feeType === 'onetime' ? 'var(--brand)' : 'var(--border)'}`,
-                color: feeType === 'onetime' ? 'white' : 'var(--text-secondary)',
-                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer',
-              }}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm lg:text-base font-semibold cursor-pointer transition-colors ${
+                feeType === 'onetime'
+                  ? 'bg-[var(--brand)] text-white border border-[var(--brand)]'
+                  : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]'
+              }`}
             >
-              <Zap size={12} /> {bn ? 'এককালীন' : 'One-Time'}
+              <Zap size={15} /> {bn ? 'এককালীন' : 'One-Time'}
             </button>
           </div>
 
           {/* Fee Selector */}
           <div style={{ marginBottom: '1rem' }}>
-            <label style={{ fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>{bn ? 'ফি নির্বাচন করুন *' : 'Select Fee *'}</label>
+            <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'ফি নির্বাচন করুন *' : 'Select Fee *'}</label>
             <div ref={feeDropdownRef} style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowFeeDropdown(!showFeeDropdown)}
+                className="flex items-center gap-2 w-full h-10 px-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-sm lg:text-base cursor-pointer text-left"
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '0.375rem', width: '100%',
-                  padding: '0.5rem 0.75rem', borderRadius: '0.5rem',
-                  background: 'var(--bg-secondary)', border: '1px solid var(--border)',
                   color: selectedFee ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  fontSize: '0.75rem', cursor: 'pointer', textAlign: 'left', fontWeight: selectedFee ? 600 : 400,
+                  fontWeight: selectedFee ? 600 : 400,
                 }}
               >
-                {selectedFee ? `${bn ? selectedFee.nameBn : selectedFee.name} (${selectedFee.structures.length} ${bn ? 'টি ক্লাস' : 'classes'})` : (bn ? 'ফি বাছাই করুন' : 'Select a fee')}
-                <ArrowRight size={10} style={{ marginLeft: 'auto', transform: showFeeDropdown ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
+                <span className="truncate">{selectedFee ? `${bn ? selectedFee.nameBn : selectedFee.name} (${selectedFee.structures.length} ${bn ? 'টি ক্লাস' : 'classes'})` : (bn ? 'ফি বাছাই করুন' : 'Select a fee')}</span>
+                <ArrowRight size={14} className="ml-auto shrink-0" style={{ transform: showFeeDropdown ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }} />
               </button>
               {showFeeDropdown && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', maxHeight: '12rem', overflow: 'auto', boxShadow: 'var(--shadow-md)', marginTop: '0.25rem' }}>
                   {existingFees.length === 0 ? (
-                    <div style={{ padding: '0.75rem', fontSize: '0.6875rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                    <div className="p-3 text-sm text-[var(--text-muted)] text-center">
                       {bn ? 'কোনো ফি নেই' : 'No fees found'}
                     </div>
                   ) : (
@@ -298,17 +290,12 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
                       <div
                         key={f.name}
                         onClick={() => handleSelectFee(f.name)}
-                        style={{
-                          padding: '0.5rem 0.75rem', fontSize: '0.6875rem', cursor: 'pointer',
-                          color: sourceFeeId === f.name ? 'var(--brand)' : 'var(--text-primary)',
-                          fontWeight: sourceFeeId === f.name ? 600 : 400,
-                          background: sourceFeeId === f.name ? 'var(--brand-light)' : 'transparent',
-                          borderBottom: '1px solid var(--border)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        }}
+                        className={`p-2.5 text-sm lg:text-base cursor-pointer border-b border-[var(--border)] last:border-b-0 flex items-center justify-between ${
+                          sourceFeeId === f.name ? 'text-[var(--brand)] font-semibold bg-[var(--brand-light)]' : 'text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
+                        }`}
                       >
                         <span>{bn ? f.nameBn : f.name}</span>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.625rem' }}>
+                        <span className="text-xs text-[var(--text-muted)]">
                           {f.structures.length} {bn ? 'টি' : ''}
                         </span>
                       </div>
@@ -324,33 +311,27 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
             <button
               onClick={applySameAmount}
               disabled={!classOptions.some((c) => classEntries[c]?.selected && classEntries[c]?.amount)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.375rem',
-                padding: '0.4375rem 0.75rem', borderRadius: '0.5rem',
-                background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-                color: 'var(--text-secondary)', fontSize: '0.6875rem', cursor: 'pointer', whiteSpace: 'nowrap',
-                opacity: classOptions.some((c) => classEntries[c]?.selected && classEntries[c]?.amount) ? 1 : 0.5,
-              }}
+              className="flex items-center gap-1.5 h-10 px-3.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-sm lg:text-base font-semibold cursor-pointer whitespace-nowrap disabled:opacity-50"
             >
               {bn ? 'একই পরিমাণ প্রয়োগ' : 'Apply same amount'}
             </button>
           </div>
 
           {/* Class Fee Table */}
-          <div style={{ border: '1px solid var(--border)', borderRadius: '0.5rem', overflow: 'hidden' }}>
+          <div className="border border-[var(--border)] rounded-xl overflow-hidden">
             {/* Table Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2rem 1fr 1fr 7rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', padding: '0.5rem 0.75rem', fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+            <div className="grid grid-cols-[2.5rem_1fr_1fr_8rem] bg-[var(--bg-secondary)] border-b border-[var(--border)] px-3 py-2.5 text-xs lg:text-sm font-semibold uppercase tracking-wider text-[var(--text-muted)] items-center">
               <div>
                 <ModernCheckbox
                   checked={classOptions.length > 0 && classOptions.every((c) => classEntries[c]?.selected)}
                   onChange={toggleAll}
                   color="brand"
-                  size="xs"
+                  size="sm"
                 />
               </div>
               <div>{bn ? 'শ্রেণি' : 'Class'}</div>
               <div>{bn ? 'সেকশন' : 'Sections'}</div>
-              <div style={{ textAlign: 'right' }}>{bn ? 'পরিমাণ *' : 'Amount *'}</div>
+              <div className="text-right">{bn ? 'পরিমাণ *' : 'Amount *'}</div>
             </div>
 
             {/* Table Rows */}
@@ -362,15 +343,9 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
               return (
                 <div
                   key={cls}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '2rem 1fr 1fr 7rem',
-                    alignItems: 'center',
-                    padding: '0.5rem 0.75rem',
-                    borderBottom: '1px solid var(--border)',
-                    background: entry.selected ? 'var(--brand-light)' : 'transparent',
-                    transition: 'background 0.15s',
-                  }}
+                  className={`grid grid-cols-[2.5rem_1fr_1fr_8rem] items-center px-3 py-2.5 border-b border-[var(--border)] last:border-b-0 transition-colors ${
+                    entry.selected ? 'bg-[var(--brand-light)]/40' : 'hover:bg-[var(--bg-secondary)]/30'
+                  }`}
                 >
                   {/* Checkbox */}
                   <div>
@@ -378,27 +353,26 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
                       checked={entry.selected}
                       onChange={() => toggleClass(cls)}
                       color="brand"
-                      size="xs"
+                      size="sm"
                     />
                   </div>
 
                   {/* Class Name */}
-                  <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                  <div className="text-sm lg:text-base font-semibold text-[var(--text-primary)]">
                     {bn ? `শ্রেণি ${cls}` : `Class ${cls}`}
                   </div>
 
                   {/* Section Buttons */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                  <div className="flex flex-wrap gap-1">
                     {secs.length > 0 ? (
                       <>
                         <button
                           onClick={() => toggleAllSections(cls)}
-                          style={{
-                            padding: '0.1875rem 0.375rem', borderRadius: '0.25rem', fontSize: '0.5625rem',
-                            fontWeight: 600, cursor: 'pointer', border: `1px solid ${allSecsSelected ? 'var(--brand)' : 'var(--border)'}`,
-                            background: allSecsSelected ? 'var(--brand)' : 'transparent',
-                            color: allSecsSelected ? 'white' : 'var(--text-secondary)',
-                          }}
+                          className={`px-2 py-1 rounded text-xs lg:text-sm font-semibold cursor-pointer border transition-colors ${
+                            allSecsSelected
+                              ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
+                              : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]'
+                          }`}
                         >
                           {bn ? 'সব' : 'All'}
                         </button>
@@ -406,37 +380,31 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
                           <button
                             key={sec}
                             onClick={() => toggleSection(cls, sec)}
-                            style={{
-                              padding: '0.1875rem 0.375rem', borderRadius: '0.25rem', fontSize: '0.5625rem',
-                              fontWeight: 600, cursor: 'pointer', border: `1px solid ${entry.sections.includes(sec) ? 'var(--brand)' : 'var(--border)'}`,
-                              background: entry.sections.includes(sec) ? 'var(--brand)' : 'transparent',
-                              color: entry.sections.includes(sec) ? 'white' : 'var(--text-secondary)',
-                            }}
+                            className={`px-2 py-1 rounded text-xs lg:text-sm font-semibold cursor-pointer border transition-colors ${
+                              entry.sections.includes(sec)
+                                ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
+                                : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:border-[var(--brand)]'
+                            }`}
                           >
                             {sec}
                           </button>
                         ))}
                       </>
                     ) : (
-                      <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>—</span>
+                      <span className="text-sm text-[var(--text-muted)]">—</span>
                     )}
                   </div>
 
                   {/* Amount */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginRight: '0.25rem' }}>৳</span>
+                  <div className="flex items-center justify-end">
+                    <span className="text-sm text-[var(--text-muted)] mr-1.5">৳</span>
                     <input
                       type="number"
                       min="0"
                       value={entry.amount}
                       onChange={(e) => setAmount(cls, e.target.value)}
                       disabled={!entry.selected}
-                      style={{
-                        width: '5rem', padding: '0.25rem 0.375rem', borderRadius: '0.25rem',
-                        border: '1px solid var(--border)', background: 'var(--bg-secondary)',
-                        color: 'var(--text-primary)', fontSize: '0.75rem', textAlign: 'right',
-                        opacity: entry.selected ? 1 : 0.5,
-                      }}
+                      className="w-24 h-9 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm lg:text-base font-semibold text-right disabled:opacity-50 focus:outline-none focus:border-[var(--brand)]"
                       placeholder="0"
                     />
                   </div>
@@ -447,27 +415,21 @@ export function BulkAssignModal({ onSaved, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1.25rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
+        <div className="flex justify-between items-center px-5 py-3.5 border-t border-[var(--border)] shrink-0 bg-[var(--surface)]">
+          <span className="text-xs lg:text-sm text-[var(--text-muted)]">
             {totalStructures > 0 ? (bn ? `${totalStructures}টি কাঠামো আপডেট হবে` : `${totalStructures} structures will be updated`) : (bn ? 'কোনো কাঠামো নির্বাচিত হয়নি' : 'No structures selected')}
           </span>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="flex gap-2">
             <button
               onClick={onClose}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.3125rem',
-                padding: '0.4375rem 0.875rem', borderRadius: '0.5rem',
-                background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-                color: 'var(--text-primary)', fontSize: '0.75rem', cursor: 'pointer',
-              }}
+              className="h-10 px-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-sm lg:text-base font-semibold cursor-pointer hover:bg-[var(--bg-primary)] transition-colors"
             >
               {bn ? 'বাতিল' : 'Cancel'}
             </button>
             <button
-              className={btnPrimary}
+              className={`${btnPrimary} h-10 px-5 text-sm lg:text-base font-semibold disabled:opacity-50`}
               onClick={handleSave}
               disabled={!canSave}
-              style={{ opacity: canSave ? 1 : 0.5 }}
             >
               {bn ? `সব আপডেট (${totalStructures})` : `Update All (${totalStructures})`}
             </button>

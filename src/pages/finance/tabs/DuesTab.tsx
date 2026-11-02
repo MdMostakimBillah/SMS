@@ -34,7 +34,7 @@ const MONTH_LABELS = [
   { en: 'Dec', bn: 'ডিসেম্বর' },
 ]
 
-const selectCls = 'h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer'
+const selectCls = 'h-10 text-sm px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer'
 
 interface MonthCell {
   paid: boolean
@@ -640,33 +640,33 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
           <div className="relative" ref={monthDropdownRef}>
             <button
               onClick={() => setShowMonthDropdown((p) => !p)}
-              className="h-[34px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] cursor-pointer flex items-center gap-1.5 min-w-[160px] outline-none focus:border-[var(--brand)]"
+              className="h-10 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm cursor-pointer flex items-center gap-1.5 min-w-[170px] outline-none focus:border-[var(--brand)]"
             >
-              <CalendarDays size={13} className="text-[var(--text-muted)] flex-shrink-0" />
+              <CalendarDays size={16} className="text-[var(--text-muted)] flex-shrink-0" />
               <span className="truncate text-left flex-1">{monthDisplayText}</span>
-              <ChevronDown size={13} className="text-[var(--text-muted)] flex-shrink-0" />
+              <ChevronDown size={15} className="text-[var(--text-muted)] flex-shrink-0" />
             </button>
             {showMonthDropdown && (
-              <div className="absolute z-50 mt-1 w-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)] p-2">
-                <div className="flex items-center gap-1 mb-1.5 pb-1.5 border-b border-[var(--border)]">
-                  <button onClick={selectAllMonths} className="text-[11px] font-semibold text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'সব নির্বাচন' : 'Select all'}</button>
+              <div className="absolute z-50 mt-1 w-[240px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)] p-2.5">
+                <div className="flex items-center gap-1 mb-2 pb-2 border-b border-[var(--border)]">
+                  <button onClick={selectAllMonths} className="text-xs lg:text-sm font-semibold text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'সব নির্বাচন' : 'Select all'}</button>
                   <span className="text-[var(--text-muted)]">·</span>
-                  <button onClick={clearAllMonths} className="text-[11px] font-semibold text-[var(--text-muted)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'পরিষ্কার' : 'Clear'}</button>
-                  <span className="text-[11px] text-[var(--text-muted)] ml-auto">{selectedMonths.size}/12</span>
+                  <button onClick={clearAllMonths} className="text-xs lg:text-sm font-semibold text-[var(--text-muted)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'পরিষ্কার' : 'Clear'}</button>
+                  <span className="text-xs lg:text-sm text-[var(--text-muted)] ml-auto">{selectedMonths.size}/12</span>
                 </div>
                 <div className="grid grid-cols-3 gap-1">
                   {MONTH_LABELS.map((m, i) => (
                     <button
                       key={i}
                       onClick={() => toggleMonth(i)}
-                      className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium border cursor-pointer transition-all ${
+                      className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs lg:text-sm font-medium border cursor-pointer transition-all ${
                         selectedMonths.has(i)
                           ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
                           : 'bg-transparent border-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
                       }`}
                     >
                       <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0 border ${selectedMonths.has(i) ? 'bg-[var(--brand)] border-[var(--brand)]' : 'border-[var(--border)]'}`}>
-                        {selectedMonths.has(i) && <CheckCircle2 size={9} className="text-white" />}
+                        {selectedMonths.has(i) && <CheckCircle2 size={10} className="text-white" />}
                       </div>
                       {bn ? m.bn : m.en}
                     </button>
@@ -702,62 +702,62 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder={bn ? 'শিক্ষার্থী খুঁজুন...' : 'Search student...'}
-              className="h-[34px] px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] outline-none focus:border-[var(--brand)] w-[180px]"
+              className="h-10 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm outline-none focus:border-[var(--brand)] w-[200px]"
             />
           )}
           <button
             onClick={handleFindDue}
-            className="h-[34px] px-4 rounded-lg bg-[var(--brand)] text-white font-semibold text-[13px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+            className="h-10 px-5 rounded-lg bg-[var(--brand)] text-white font-semibold text-sm border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
           >
-            <Search size={14} />{bn ? 'খুঁজুন' : 'Find'}
+            <Search size={16} />{bn ? 'খুঁজুন' : 'Find'}
           </button>
         </div>
       </div>
 
       {/* Stats — only shown after Find Due */}
       {showResults && results.length > 0 && (
-        <div className={fStatus === 'paiddue' ? 'grid grid-cols-3 gap-[0.625rem]' : 'grid grid-cols-2 gap-[0.625rem]'}>
+        <div className={fStatus === 'paiddue' ? 'grid grid-cols-3 gap-3' : 'grid grid-cols-2 gap-3'}>
           {(fStatus === 'due' || fStatus === 'paiddue' || fStatus === 'all') && (
           <div
-            className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+            className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
           >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--amber-light)' }}>
-              <DollarSign size={15} style={{ color: 'var(--amber)' }} />
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--amber-light)' }}>
+              <DollarSign size={18} style={{ color: 'var(--amber)' }} />
             </div>
             <div className="min-w-0">
-              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalDue)}</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট বকেয়' : 'Total Due'}</div>
+              <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{fmt(totalDue)}</div>
+              <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'মোট বকেয়' : 'Total Due'}</div>
             </div>
           </div>
           )}
           {(fStatus === 'paid' || fStatus === 'paiddue') && (
             <div
-              className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+              className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
             >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--green-light)' }}>
-                <DollarSign size={15} style={{ color: 'var(--green)' }} />
+              <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--green-light)' }}>
+                <DollarSign size={18} style={{ color: 'var(--green)' }} />
               </div>
               <div className="min-w-0">
-                <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalPaid)}</div>
-                <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</div>
+                <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{fmt(totalPaid)}</div>
+                <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</div>
               </div>
             </div>
           )}
           <div
-            className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+            className="glass rounded-[0.75rem] flex items-center gap-3 p-3.5 lg:p-4 cursor-default transition-all duration-200"
             onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
           >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
-              <Users size={15} style={{ color: 'var(--brand)' }} />
+            <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand-light)' }}>
+              <Users size={18} style={{ color: 'var(--brand)' }} />
             </div>
             <div className="min-w-0">
-              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{studentCount}</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'বকেয় শিক্ষার্থী' : 'Students with Dues'}</div>
+              <div className="text-[var(--text-primary)] leading-none font-bold text-lg lg:text-xl">{studentCount}</div>
+              <div className="text-xs lg:text-sm text-[var(--text-muted)] mt-1">{bn ? 'বকেয় শিক্ষার্থী' : 'Students with Dues'}</div>
             </div>
           </div>
         </div>
@@ -766,7 +766,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       {/* Action Bar — shown when results exist */}
       {showResults && results.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[12px] text-[var(--text-muted)]">
+          <span className="text-sm lg:text-base text-[var(--text-muted)]">
             {selectedRows.size > 0
               ? `${selectedRows.size} ${bn ? 'নির্বাচিত' : 'selected'}`
               : `${results.length} ${bn ? 'টি ফলাফল' : 'results'}`}
@@ -776,11 +776,11 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               <div className="relative">
                 <button
                   onClick={() => setShowActionMenu(!showActionMenu)}
-                  className="h-8 px-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-[12px] font-semibold cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+                  className="h-9 px-3.5 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-sm font-semibold cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
                 >
-                  <MoreVertical size={13} />
+                  <MoreVertical size={14} />
                   {bn ? 'অ্যাকশন' : 'Action'}
-                  <ChevronDown size={12} />
+                  <ChevronDown size={14} />
                 </button>
                 {showActionMenu && (
                   <div
@@ -790,9 +790,9 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     {canExport('finance.fees.dues.export') && (
                       <button
                         onClick={() => { exportExcel(); setShowActionMenu(false) }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors"
                       >
-                        <FileSpreadsheet size={14} className="text-[var(--green)]" />
+                        <FileSpreadsheet size={15} className="text-[var(--green)]" />
                         {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
                       </button>
                     )}
@@ -802,9 +802,9 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     {canPrint('finance.fees.dues.print') && (
                       <button
                         onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors"
                       >
-                        <FileText size={14} className="text-[var(--red)]" />
+                        <FileText size={15} className="text-[var(--red)]" />
                         {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
                       </button>
                     )}
@@ -834,10 +834,10 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       ) : (
         <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
           <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto' }}>
-          <table className="w-full text-[12.5px]" style={{ tableLayout: 'auto' }}>
+          <table className="w-full text-sm lg:text-base" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="bg-[var(--bg-secondary)] sticky top-0 z-20">
-                <th className="text-center px-2 py-2 bg-[var(--bg-secondary)] z-20" style={{ width: '36px', minWidth: '36px' }}>
+                <th className="text-center px-2 py-2.5 bg-[var(--bg-secondary)] z-20" style={{ width: '36px', minWidth: '36px' }}>
                   <ModernCheckbox
                     checked={results.length > 0 && selectedRows.size === results.length}
                     onChange={toggleAllRows}
@@ -845,27 +845,27 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     size="xs"
                   />
                 </th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]" style={{ width: '40px', minWidth: '40px' }}>{bn ? 'ক্রমিক' : 'S/N'}</th>
-                <th className="px-2 py-2 bg-[var(--bg-secondary)]" style={{ width: '40px', minWidth: '40px' }}></th>
-                <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky left-[76px] bg-[var(--bg-secondary)] z-20 whitespace-nowrap" style={{ width: '160px', minWidth: '160px' }}>{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '45px', minWidth: '45px' }}>{bn ? 'রোল' : 'Roll'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '95px', minWidth: '95px' }}>{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px', minWidth: '110px' }}>{bn ? 'শ্রেণি' : 'Class'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px', minWidth: '110px' }}>{bn ? 'ফি' : 'Fee'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '70px', minWidth: '70px' }}>{bn ? 'ধরন' : 'Type'}</th>
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '90px', minWidth: '90px' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
+                <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider bg-[var(--bg-secondary)]" style={{ width: '40px', minWidth: '40px' }}>{bn ? 'ক্রমিক' : 'S/N'}</th>
+                <th className="px-2 py-2.5 bg-[var(--bg-secondary)]" style={{ width: '40px', minWidth: '40px' }}></th>
+                <th className="text-left px-3 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider sticky left-[76px] bg-[var(--bg-secondary)] z-20 whitespace-nowrap" style={{ width: '160px', minWidth: '160px' }}>{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '50px', minWidth: '50px' }}>{bn ? 'রোল' : 'Roll'}</th>
+                <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '100px', minWidth: '100px' }}>{bn ? 'শিক্ষার্থী আইডি' : 'Student ID'}</th>
+                <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px', minWidth: '110px' }}>{bn ? 'শ্রেণি' : 'Class'}</th>
+                <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '110px', minWidth: '110px' }}>{bn ? 'ফি' : 'Fee'}</th>
+                <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '80px', minWidth: '80px' }}>{bn ? 'ধরন' : 'Type'}</th>
+                <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider bg-[var(--bg-secondary)] whitespace-nowrap" style={{ width: '95px', minWidth: '95px' }}>{bn ? 'ফির পরিমাণ' : 'Fee Amt'}</th>
                 {showMonthPicker && sortedMonths.map((m) => (
-                  <th key={m} className="text-center px-3 py-2 text-[10px] uppercase font-bold bg-[var(--bg-secondary)] whitespace-nowrap" style={{ color: 'var(--brand)', width: '90px', minWidth: '90px', maxWidth: '90px' }}>
+                  <th key={m} className="text-center px-3 py-2.5 text-xs lg:text-sm uppercase font-semibold tracking-wider bg-[var(--bg-secondary)] whitespace-nowrap" style={{ color: 'var(--brand)', width: '90px', minWidth: '90px', maxWidth: '90px' }}>
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
                   </th>
                 ))}
                 {!showMonthPicker && fStatus === 'paiddue' && (
-                  <th className="text-center px-2 py-2 text-[10px] uppercase font-bold whitespace-nowrap" style={{ width: '90px', minWidth: '90px', background: 'var(--green-light)', color: 'var(--green)' }}>{bn ? 'পরিশোধিত' : 'Paid'}</th>
+                  <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase font-semibold tracking-wider whitespace-nowrap" style={{ width: '95px', minWidth: '95px', background: 'var(--green-light)', color: 'var(--green)' }}>{bn ? 'পরিশোধিত' : 'Paid'}</th>
                 )}
                 {!showMonthPicker && (
-                  <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'বকেয়' : 'Due'}</th>
+                  <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider">{bn ? 'বকেয়' : 'Due'}</th>
                 )}
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap" style={{ width: '100px', minWidth: '100px', background: 'var(--amber-light)', color: 'var(--amber)' }}>{bn ? 'মোট বকেয়' : 'Total Due'}</th>
+                <th className="text-center px-2 py-2.5 text-xs lg:text-sm uppercase text-[var(--text-muted)] font-semibold tracking-wider whitespace-nowrap" style={{ width: '110px', minWidth: '110px', background: 'var(--amber-light)', color: 'var(--amber)' }}>{bn ? 'মোট বকেয়' : 'Total Due'}</th>
               </tr>
             </thead>
             <tbody>
@@ -882,27 +882,27 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         size="xs"
                       />
                     </td>
-                    <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-[12px]">{i + 1}</td>
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-sm lg:text-base">{i + 1}</td>
                     <td className="px-2 py-3">
                       <div className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] overflow-hidden flex items-center justify-center flex-shrink-0">
                         {row.photo ? (
                            <img src={row.photo} alt={row.studentName || 'Student'} className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-[11px] font-bold text-[var(--brand)]">{(row.studentName || '?').charAt(0).toUpperCase()}</span>
+                          <span className="text-xs font-bold text-[var(--brand)]">{(row.studentName || '?').charAt(0).toUpperCase()}</span>
                         )}
                       </div>
                     </td>
                     <td className="px-3 py-3 sticky left-[76px] bg-[var(--bg-primary)] z-10" style={{ background: isChecked ? 'var(--brand-light)' : 'var(--bg-primary)', width: '160px' }}>
-                      <p className="font-semibold text-[var(--text-primary)] text-[12px] whitespace-nowrap overflow-hidden text-ellipsis">{bn ? row.studentNameBn || row.studentName : row.studentName}</p>
+                      <p className="font-semibold text-[var(--text-primary)] text-sm lg:text-base whitespace-nowrap overflow-hidden text-ellipsis">{bn ? row.studentNameBn || row.studentName : row.studentName}</p>
                     </td>
-                    <td className="text-center px-2 py-3 text-[var(--text-secondary)]">{row.roll}</td>
-                    <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-[12px]">{row.studentId}</td>
-                    <td className="text-center px-2 py-3 text-[var(--text-secondary)]">{row.class}{row.section ? `-${row.section}` : ''}</td>
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-sm lg:text-base">{row.roll}</td>
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-sm lg:text-base">{row.studentId}</td>
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-sm lg:text-base">{row.class}{row.section ? `-${row.section}` : ''}</td>
                     <td className="text-center px-2 py-3">
-                      <span className="font-semibold text-[var(--text-primary)] text-[11px] whitespace-nowrap">{bn ? row.feeNameBn : row.feeName}</span>
+                      <span className="font-semibold text-[var(--text-primary)] text-xs lg:text-sm whitespace-nowrap">{bn ? row.feeNameBn : row.feeName}</span>
                     </td>
                     <td className="text-center px-2 py-3">
-                      <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded whitespace-nowrap" style={{
+                      <span className="inline-block text-xs font-bold uppercase px-1.5 py-0.5 rounded whitespace-nowrap" style={{
                         background: row.feeType === 'onetime' ? 'var(--amber-light)' : 'var(--brand-light)',
                         color: row.feeType === 'onetime' ? 'var(--amber)' : 'var(--brand)',
                       }}>
@@ -911,26 +911,26 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                           : (bn ? 'মাসিক' : 'Monthly')}
                       </span>
                     </td>
-                    <td className="text-center px-2 py-3 text-[var(--text-secondary)]">{fmt(row.totalAmount)}</td>
+                    <td className="text-center px-2 py-3 text-[var(--text-secondary)] text-sm lg:text-base font-medium">{fmt(row.totalAmount)}</td>
                     {showMonthPicker && sortedMonths.map((m) => {
                       const cell = row.months[m]
-                      if (!cell) return <td key={m} className="text-center px-2 py-2 text-[var(--text-muted)]">—</td>
+                      if (!cell) return <td key={m} className="text-center px-2 py-2 text-[var(--text-muted)] text-sm lg:text-base">—</td>
                       if (fStatus === 'paiddue') {
                         return (
-                          <td key={m} className="text-center px-2 py-3" style={{ minWidth: '90px' }}>
-                            {cell.paidAmount > 0 && <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>}
-                            {cell.paidAmount > 0 && cell.amount > 0 && <span className="text-[var(--text-muted)] text-[10px]"> / </span>}
+                          <td key={m} className="text-center px-2 py-3 text-sm lg:text-base" style={{ minWidth: '90px' }}>
+                            {cell.paidAmount > 0 && <span className="font-bold text-sm lg:text-base text-[var(--green)]">{fmt(cell.paidAmount)}</span>}
+                            {cell.paidAmount > 0 && cell.amount > 0 && <span className="text-[var(--text-muted)] text-xs lg:text-sm"> / </span>}
                             {cell.amount > 0 && canCreate('finance.fees.collect.create') && (
                               <button
                                 onClick={() => { const due = buildCollectDue(row, m); if (due) onCollect(due) }}
-                                className="font-bold text-[12px] text-[var(--amber)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-0 p-0 transition-colors"
+                                className="font-bold text-sm lg:text-base text-[var(--amber)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-0 p-0 transition-colors"
                                 title={bn ? 'পরিশোধ করুন' : 'Collect'}
                               >
                                 {fmt(cell.amount)}
                               </button>
                             )}
                             {cell.amount > 0 && !canCreate('finance.fees.collect.create') && (
-                              <span className="font-bold text-[12px] text-[var(--amber)]">{fmt(cell.amount)}</span>
+                              <span className="font-bold text-sm lg:text-base text-[var(--amber)]">{fmt(cell.amount)}</span>
                             )}
                             {cell.paidAmount === 0 && cell.amount === 0 && (
                               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)]">
@@ -942,17 +942,17 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                       }
                       if (fStatus === 'paid') {
                         return (
-                          <td key={m} className="text-center px-2 py-3" style={{ minWidth: '90px' }}>
+                          <td key={m} className="text-center px-2 py-3 text-sm lg:text-base" style={{ minWidth: '90px' }}>
                             {cell.paidAmount > 0 ? (
-                              <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>
+                              <span className="font-bold text-sm lg:text-base text-[var(--green)]">{fmt(cell.paidAmount)}</span>
                             ) : (
-                              <span className="text-[var(--text-muted)] text-[12px]">—</span>
+                              <span className="text-[var(--text-muted)] text-sm lg:text-base">—</span>
                             )}
                           </td>
                         )
                       }
                       return (
-                        <td key={m} className="text-center px-2 py-3">
+                        <td key={m} className="text-center px-2 py-3 text-sm lg:text-base">
                           {cell.paid ? (
                             <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)]">
                               <CircleCheck size={14} className="text-[var(--green)]" />
@@ -960,71 +960,71 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                           ) : canCreate('finance.fees.collect.create') ? (
                             <button
                               onClick={() => { const due = buildCollectDue(row, m); if (due) onCollect(due) }}
-                              className="font-bold text-[12px] text-[var(--amber)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-0 p-0 transition-colors"
+                              className="font-bold text-sm lg:text-base text-[var(--amber)] hover:text-[var(--brand)] cursor-pointer bg-transparent border-0 p-0 transition-colors"
                               title={bn ? 'পরিশোধ করুন' : 'Collect'}
                             >
                               {fmt(cell.amount)}
                             </button>
                           ) : (
-                            <span className="font-bold text-[12px] text-[var(--amber)]">{fmt(cell.amount)}</span>
+                            <span className="font-bold text-sm lg:text-base text-[var(--amber)]">{fmt(cell.amount)}</span>
                           )}
                         </td>
                       )
                     })}
                     {!showMonthPicker && fStatus === 'paiddue' && (
-                      <td className="text-center px-2 py-3 font-semibold text-[var(--green)]">{row.totalPaid > 0 ? fmt(row.totalPaid) : '—'}</td>
+                      <td className="text-center px-2 py-3 font-semibold text-sm lg:text-base text-[var(--green)]">{row.totalPaid > 0 ? fmt(row.totalPaid) : '—'}</td>
                     )}
                     {!showMonthPicker && (
-                      <td className="text-center px-2 py-3 font-bold text-[var(--amber)]">{fmt(row.totalDue)}</td>
+                      <td className="text-center px-2 py-3 font-bold text-sm lg:text-base text-[var(--amber)]">{fmt(row.totalDue)}</td>
                     )}
-                    <td className="text-center px-2 py-3 font-semibold text-[var(--amber)]" style={{ width: '100px', minWidth: '100px', background: 'var(--amber-light)' }}>{fmt(row.totalDue)}</td>
+                    <td className="text-center px-2 py-3 font-semibold text-sm lg:text-base text-[var(--amber)]" style={{ width: '110px', minWidth: '110px', background: 'var(--amber-light)' }}>{fmt(row.totalDue)}</td>
                   </tr>
                 )
               })}
               {fStatus !== 'all' && (
                 <>
                   {(fStatus === 'paid' || fStatus === 'paiddue') && (
-                  <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
+                  <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold text-sm lg:text-base">
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--green)] whitespace-nowrap">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</td>
+                    <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-sm lg:text-base text-[var(--green)] whitespace-nowrap">{bn ? 'মোট পরিশোধিত' : 'Total Paid'}</td>
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
+                    <td className="text-center px-2 py-2 text-sm lg:text-base text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
                     {!showMonthPicker && fStatus === 'paiddue' && <td className="px-2 py-2 bg-[var(--bg-secondary)]" />}
                     {!showMonthPicker && <td className="px-2 py-2 bg-[var(--bg-secondary)]" />}
                     {showMonthPicker && sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
+                      <td key={m} className="text-center px-2 py-2 text-sm lg:text-base text-[var(--green)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthPaidSums[m] > 0 ? fmt(monthPaidSums[m]) : '—'}
                       </td>
                     ))}
-                    <td className="text-center px-2 py-2 text-[12px] text-[var(--green)] font-bold" style={{ background: 'var(--green-light)' }}>{fmt(totalPaid)}</td>
+                    <td className="text-center px-2 py-2 text-sm lg:text-base text-[var(--green)] font-bold" style={{ background: 'var(--green-light)' }}>{fmt(totalPaid)}</td>
                   </tr>
                   )}
                   {(fStatus === 'due' || fStatus === 'paiddue') && (
-                  <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
+                  <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold text-sm lg:text-base">
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--amber)] whitespace-nowrap">{bn ? 'মোট বকেয়' : 'Total Due'}</td>
+                    <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-sm lg:text-base text-[var(--amber)] whitespace-nowrap">{bn ? 'মোট বকেয়' : 'Total Due'}</td>
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
-                    <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
+                    <td className="text-center px-2 py-2 text-sm lg:text-base text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
                     {!showMonthPicker && fStatus === 'paiddue' && <td className="px-2 py-2 bg-[var(--bg-secondary)]" />}
                     {!showMonthPicker && <td className="px-2 py-2 bg-[var(--bg-secondary)]" />}
                     {showMonthPicker && sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
+                      <td key={m} className="text-center px-2 py-2 text-sm lg:text-base text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
-                    <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
+                    <td className="text-center px-2 py-2 text-sm lg:text-base text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
                   </tr>
                   )}
                 </>
@@ -1032,23 +1032,23 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             </tbody>
             {showMonthPicker && sortedMonths.length > 0 && fStatus !== 'paiddue' && (
               <tfoot>
-                <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10">
+                <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-10 text-sm lg:text-base">
                     <td className="px-2 py-2 sticky left-0 bg-[var(--bg-secondary)] z-10" />
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
-                    <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-[12px] text-[var(--text-primary)] whitespace-nowrap">{bn ? 'মোট' : 'Total'}</td>
+                    <td className="px-3 py-2 sticky left-[76px] bg-[var(--bg-secondary)] z-10 text-sm lg:text-base text-[var(--text-primary)] whitespace-nowrap">{bn ? 'মোট' : 'Total'}</td>
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
                     <td className="px-2 py-2" />
-                    <td className="text-center px-2 py-2 text-[12px]" style={{ width: '90px' }}>{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
+                    <td className="text-center px-2 py-2 text-sm lg:text-base" style={{ width: '90px' }}>{fmt(results.reduce((s, r) => s + r.totalAmount, 0))}</td>
                     {sortedMonths.map((m) => (
-                      <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)]" style={{ minWidth: '90px' }}>
+                      <td key={m} className="text-center px-2 py-2 text-sm lg:text-base text-[var(--amber)]" style={{ minWidth: '90px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
-                    <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
+                    <td className="text-center px-2 py-2 text-sm lg:text-base text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
                   </tr>
               </tfoot>
             )}

@@ -54,18 +54,17 @@ const registerInstitutionSchema = z.object({
   logo: z.string().optional().or(z.literal('')).nullable(),
   adminEmail: z.string().email('Invalid admin email').max(254),
   adminPassword: z.string().min(8, 'Password must be at least 8 characters').max(128),
+  // Package is the registrant's plan *choice* only — it is whitelisted below
+  // and never grants status/billing/caps. The monetization fields (status,
+  // plan enforcement, paymentStatus, billingCycle, maxStudents, maxTeachers)
+  // are intentionally NOT accepted from anonymous callers; they are assigned
+  // by the server and managed afterwards by a super_admin.
   package: z.string().max(50).optional().nullable(),
-  status: z.string().max(50).optional().nullable(),
-  plan: z.string().max(50).optional().nullable(),
   sessions: z.union([z.array(z.string()), z.string()]).optional().nullable(),
   breaks: z.union([z.array(z.any()), z.string()]).optional().nullable(),
   storageMode: z.string().max(50).optional().nullable(),
   serverUrl: z.string().max(200).optional().nullable(),
   folderName: z.string().max(100).optional().nullable(),
-  maxStudents: z.coerce.number().optional().nullable(),
-  maxTeachers: z.coerce.number().optional().nullable(),
-  billingCycle: z.string().max(50).optional().nullable(),
-  paymentStatus: z.string().max(50).optional().nullable(),
   startTime: z.string().max(20).optional().nullable(),
   endTime: z.string().max(20).optional().nullable(),
 })
@@ -85,6 +84,15 @@ const ARGON2_OPTIONS = {
 
 /** Precomputed hash used to equalize timing when an account does not exist. */
 const DUMMY_PASSWORD_HASH = await hash(randomBytes(16), ARGON2_OPTIONS)
+
+/** Plan choices an anonymous registrant may pick; anything else → 'basic'. */
+const ALLOWED_PLAN_CHOICES = new Set(['basic', 'standard', 'premium', 'enterprise'])
+
+/** Whitelists the registrant's cosmetic package choice (display only — never a billing decision). */
+function normalizePlanChoice(raw: string | null | undefined): string {
+  const value = (raw || '').trim().toLowerCase()
+  return ALLOWED_PLAN_CHOICES.has(value) ? value : 'basic'
+}
 
 export interface PublicUser {
   id: string
@@ -119,7 +127,11 @@ function toPublicUser(user: User & { school?: any }): PublicUser {
 }
 
 function isCookieSecure(): boolean {
-  return process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production'
+  // Fail closed: session cookies are Secure by default so they can never be
+  // sent over plain HTTP, even when NODE_ENV isn't set to 'production'.
+  // Plain-HTTP deployments (local dev, HTTP-only self-host) must explicitly
+  // opt out with COOKIE_SECURE=false — see .env.example.
+  return process.env.COOKIE_SECURE !== 'false'
 }
 
 /** Database-level email uniqueness is authoritative under concurrency (P2002). */
@@ -446,8 +458,8 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
             address: parsed.data.address?.trim() || null,
             startTime: parsed.data.startTime?.trim() || '07:30',
             endTime: parsed.data.endTime?.trim() || '14:30',
-            status: parsed.data.status?.trim() || 'trial',
-            plan: parsed.data.plan?.trim() || parsed.data.package?.toLowerCase() || 'basic',
+            status: 'trial', // server-assigned — never caller-controlled
+            plan: normalizePlanChoice(parsed.data.package),
             sessions: parsed.data.sessions
               ? (typeof parsed.data.sessions === 'string' ? parsed.data.sessions : JSON.stringify(parsed.data.sessions))
               : '["2025-26"]',
@@ -457,10 +469,10 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
             storageMode: parsed.data.storageMode?.trim() || 'cloud',
             serverUrl: parsed.data.serverUrl?.trim() || null,
             folderName: parsed.data.folderName?.trim() || null,
-            maxStudents: parsed.data.maxStudents || 500,
-            maxTeachers: parsed.data.maxTeachers || 50,
-            billingCycle: parsed.data.billingCycle?.trim() || 'monthly',
-            paymentStatus: parsed.data.paymentStatus?.trim() || 'unpaid',
+            maxStudents: 500, // server-assigned license caps — adjusted by super_admin later
+            maxTeachers: 50,
+            billingCycle: 'monthly', // server-assigned — never caller-controlled
+            paymentStatus: 'unpaid', // server-assigned — never caller-controlled
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30-day initial trial
           },
         })

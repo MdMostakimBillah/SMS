@@ -26,10 +26,20 @@ const LICENSE_SECRET = process.env.LICENSE_SECRET || process.env.VITE_LICENSE_SE
 
 async function ensureSuperAdmin(prisma: PrismaClient) {
   const email = (process.env.SUPER_ADMIN_EMAIL || 'admin@edutech.local').toLowerCase()
-  const password = process.env.SUPER_ADMIN_PASSWORD || 'EduAdm!65fd6a1ecb74a0bd6f'
+  const password = process.env.SUPER_ADMIN_PASSWORD?.trim()
   try {
     const existing = await prisma.user.findFirst({ where: { role: 'super_admin' } })
     if (!existing) {
+      // Fail closed: never bootstrap a super admin with a known/default
+      // password. If no account exists yet, an explicit strong password MUST
+      // be provided via the environment.
+      if (!password || password.length < 12) {
+        console.error(
+          '[FATAL] No super admin exists and SUPER_ADMIN_PASSWORD is not set to a strong value (min 12 chars). ' +
+            'Refusing to create an account with a default password. Set SUPER_ADMIN_PASSWORD and restart.'
+        )
+        process.exit(1)
+      }
       console.log(`[bootstrap] Creating default encrypted super admin: ${email}`)
       const passwordHash = await hash(password, {
         algorithm: 2, // Argon2id
@@ -73,9 +83,10 @@ const sessionCleanup = setInterval(() => {
 }, 60 * 60 * 1000)
 sessionCleanup.unref()
 
-// Keep-alive self-ping: prevents free hosting tiers (e.g. Render) from sleeping after 15 mins
-const externalUrl = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_API_URL || 'https://edutech-api-86tl.onrender.com'
-if (process.env.NODE_ENV === 'production' || process.env.RENDER || Boolean(process.env.RENDER_EXTERNAL_URL)) {
+// Keep-alive self-ping: prevents free hosting tiers (e.g. Render) from sleeping after 15 mins.
+// No hardcoded default URL — the ping only runs when the deployment declares its own public URL.
+const externalUrl = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_API_URL || ''
+if (externalUrl && (process.env.NODE_ENV === 'production' || process.env.RENDER || Boolean(process.env.RENDER_EXTERNAL_URL))) {
   const KEEP_ALIVE_INTERVAL = 14 * 60 * 1000 // every 14 minutes (just before 15 min idle sleep)
   const keepAlive = setInterval(async () => {
     try {

@@ -50,26 +50,26 @@ export function FeeStructureModal({ existing, onSaved, onClose }: Props) {
 
   return createPortal(
     <div className={modalOverlayCls} onClick={onClose}>
-      <div className={`modal-content ${modalStyleCls} max-w-[32rem]`} onClick={(e) => e.stopPropagation()}>
+      <div className={`modal-content ${modalStyleCls} max-w-[34rem]`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)]">
+          <h3 className="text-lg font-bold text-[var(--text-primary)]">
             {existing ? (bn ? 'ফি সম্পাদনা' : 'Edit Fee') : (bn ? 'নতুন ফি কাঠামো' : 'New Fee Structure')}
           </h3>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer">
-            <X size={14} />
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer">
+            <X size={16} />
           </button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {/* Fee Type Toggle */}
           <div>
-            <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1.5">{bn ? 'ফির ধরন *' : 'Fee Type *'}</label>
+            <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1.5">{bn ? 'ফির ধরন *' : 'Fee Type *'}</label>
             <div className="flex gap-2">
-              <button type="button" onClick={() => setType('monthly')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border cursor-pointer transition-all ${type === 'monthly' ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
-                <Repeat size={12} />
+              <button type="button" onClick={() => setType('monthly')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold border cursor-pointer transition-all ${type === 'monthly' ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
+                <Repeat size={15} />
                 {bn ? 'মাসিক' : 'Monthly'}
               </button>
-              <button type="button" onClick={() => setType('onetime')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium border cursor-pointer transition-all ${type === 'onetime' ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
-                <Zap size={12} />
+              <button type="button" onClick={() => setType('onetime')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-sm font-semibold border cursor-pointer transition-all ${type === 'onetime' ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
+                <Zap size={15} />
                 {bn ? 'এককালীন' : 'One-Time'}
               </button>
             </div>
@@ -77,33 +77,33 @@ export function FeeStructureModal({ existing, onSaved, onClose }: Props) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'নাম (EN) *' : 'Name *'}</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} className={`${inputCls} w-full text-xs`} placeholder="Tuition Fee" />
+              <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'নাম (EN) *' : 'Name *'}</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} className={`${inputCls} w-full h-10 text-sm`} placeholder="Tuition Fee" />
             </div>
             <div>
-              <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'নাম (BN)' : 'Name (BN)'}</label>
-              <input value={nameBn} onChange={(e) => setNameBn(e.target.value)} className={`${inputCls} w-full text-xs`} placeholder="টিউশন ফি" />
+              <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'নাম (BN)' : 'Name (BN)'}</label>
+              <input value={nameBn} onChange={(e) => setNameBn(e.target.value)} className={`${inputCls} w-full h-10 text-sm`} placeholder="টিউশন ফি" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'শ্রেণি *' : 'Class *'}</label>
-              <select value={cls} onChange={(e) => { setCls(e.target.value); setSection('') }} className={`${selectCls} w-full text-xs`}>
+              <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'শ্রেণি *' : 'Class *'}</label>
+              <select value={cls} onChange={(e) => { setCls(e.target.value); setSection('') }} className={`${selectCls} w-full h-10 text-sm`}>
                 <option value="">{bn ? 'শ্রেণি বাছাই' : 'Select class'}</option>
                 {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'সেকশন' : 'Section'}</label>
-              <select value={section} onChange={(e) => setSection(e.target.value)} className={`${selectCls} w-full text-xs`}>
+              <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'সেকশন' : 'Section'}</label>
+              <select value={section} onChange={(e) => setSection(e.target.value)} className={`${selectCls} w-full h-10 text-sm`}>
                 <option value="">{bn ? 'সব সেকশন' : 'All Sections'}</option>
                 {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
           </div>
           <div>
-            <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'ক্যাটাগরি' : 'Category'}</label>
-            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={`${selectCls} w-full text-xs`}>
+            <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'ক্যাটাগরি' : 'Category'}</label>
+            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={`${selectCls} w-full h-10 text-sm`}>
               <option value="">{bn ? 'কোনো ক্যাটাগরি নেই' : 'No category'}</option>
               {feeCategories.filter((c) => c.isActive).map((c) => (
                 <option key={c.id} value={c.id}>{bn && c.nameBn ? c.nameBn : c.name}</option>
@@ -111,21 +111,21 @@ export function FeeStructureModal({ existing, onSaved, onClose }: Props) {
             </select>
           </div>
           <div>
-            <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'পরিমাণ (৳) *' : 'Amount (৳) *'}</label>
-            <input type="number" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} className={`${inputCls} w-full text-xs`} placeholder="5000" />
+            <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'পরিমাণ (৳) *' : 'Amount (৳) *'}</label>
+            <input type="number" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} className={`${inputCls} w-full h-10 text-sm`} placeholder="5000" />
           </div>
           <div>
-            <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'বিবরণ (EN)' : 'Description (EN)'}</label>
-            <input value={desc} onChange={(e) => setDesc(e.target.value)} className={`${inputCls} w-full text-xs`} placeholder={bn ? 'ফি সম্পর্কে বিবরণ' : 'Description of the fee'} />
+            <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'বিবরণ (EN)' : 'Description (EN)'}</label>
+            <input value={desc} onChange={(e) => setDesc(e.target.value)} className={`${inputCls} w-full h-10 text-sm`} placeholder={bn ? 'ফি সম্পর্কে বিবরণ' : 'Description of the fee'} />
           </div>
           <div>
-            <label className="text-[0.7rem] font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'বিবরণ (BN)' : 'Description (BN)'}</label>
-            <input value={descBn} onChange={(e) => setDescBn(e.target.value)} className={`${inputCls} w-full text-xs`} placeholder="ফি সম্পর্কে বিবরণ" />
+            <label className="text-xs lg:text-sm font-semibold text-[var(--text-secondary)] block mb-1">{bn ? 'বিবরণ (BN)' : 'Description (BN)'}</label>
+            <input value={descBn} onChange={(e) => setDescBn(e.target.value)} className={`${inputCls} w-full h-10 text-sm`} placeholder="ফি সম্পর্কে বিবরণ" />
           </div>
         </div>
         <div className="flex gap-2 justify-end mt-5">
-          <button onClick={onClose} className="py-2 px-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.8125rem] cursor-pointer font-[inherit]">{bn ? 'বাতিল' : 'Cancel'}</button>
-          <button onClick={handleSave} disabled={!name || !cls || !amount} className={`${btnPrimary} disabled:opacity-50`}>{bn ? 'সংরক্ষণ' : 'Save'}</button>
+          <button onClick={onClose} className="h-10 px-4 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-sm font-medium cursor-pointer font-[inherit]">{bn ? 'বাতিল' : 'Cancel'}</button>
+          <button onClick={handleSave} disabled={!name || !cls || !amount} className={`${btnPrimary} h-10 px-4 text-sm font-semibold disabled:opacity-50`}>{bn ? 'সংরক্ষণ' : 'Save'}</button>
         </div>
       </div>
     </div>,

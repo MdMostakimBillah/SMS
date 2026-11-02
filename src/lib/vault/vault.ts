@@ -16,6 +16,7 @@ import { isWriteAllowed } from '../writeGuard'
 import {
   registerVaultHooks,
   requestStoreReload,
+  isRecentExplicitDelete,
 } from './bridge'
 import {
   keyToVaultPath,
@@ -86,6 +87,83 @@ const fileContentCache = new Map<string, string>() // path → compact content w
 const fileMtimeCache = new Map<string, number>() // path → last known mtime
 const ownWriteAt = new Map<string, number>() // path → when we last wrote it
 const knownVaultFiles = new Set<string>() // all known paths currently present in the vault
+
+let isVaultHydrated = false
+
+export function isVaultReady(): boolean {
+  return isVaultHydrated
+}
+
+/**
+ * Counts items in a vault payload or file content. Returns -1 if not a domain collection file.
+ */
+export function getItemCount(content: string): number {
+  if (!content || !content.trim()) return 0
+  try {
+    const parsed = JSON.parse(content)
+    const state = parsed?.state ?? parsed
+
+    // 1. Array at top level (e.g. designations.json, departments.json, subjects.json, routines.json, sections.json, students.json, fee_structures.json, payments.json, waivers.json)
+    if (Array.isArray(state)) {
+      return state.length
+    }
+
+    // 2. Object with domain arrays (e.g. teachers.json, classes.json, admissions.json, fees.json)
+    if (typeof state === 'object' && state !== null) {
+      let count = 0
+      let hasDomainField = false
+
+      if (Array.isArray(state.teachers)) {
+        hasDomainField = true
+        count += state.teachers.length
+      }
+      if (Array.isArray(state.students)) {
+        hasDomainField = true
+        count += state.students.length
+      }
+      if (Array.isArray(state.classes)) {
+        hasDomainField = true
+        count += state.classes.length
+      }
+      if (Array.isArray(state.routines)) {
+        hasDomainField = true
+        count += state.routines.length
+      }
+      if (Array.isArray(state.structures)) {
+        hasDomainField = true
+        count += state.structures.length
+      }
+      if (Array.isArray(state.payments)) {
+        hasDomainField = true
+        count += state.payments.length
+      }
+      if (Array.isArray(state.waiverEntries)) {
+        hasDomainField = true
+        count += state.waiverEntries.length
+      }
+      if (Array.isArray(state.designations)) {
+        hasDomainField = true
+        count += state.designations.length
+      }
+      if (Array.isArray(state.departments)) {
+        hasDomainField = true
+        count += state.departments.length
+      }
+      if (Array.isArray(state.subjects)) {
+        hasDomainField = true
+        count += state.subjects.length
+      }
+
+      if (hasDomainField) {
+        return count
+      }
+    }
+
+    return -1
+  } catch {
+    return -1
+  }
+}
 
 function emit(patch: Partial<VaultStatus>): void {
   status = { ...status, ...patch }
@@ -384,12 +462,63 @@ function getTwinPaths(path: string, slug: string): string[] {
   return twins.filter((t) => t !== path)
 }
 
+async function resolveSlug(files: VaultFileInfo[]): Promise<string> {
+  const explicit = currentSlug()
+  if (explicit) return explicit
+
+  if (handle) {
+    // 1. Look for tenant directory names in files (e.g. "demo/teachers.json")
+    for (const file of files) {
+      const parts = file.path.split('/')
+      if (parts.length >= 2) {
+        const top = parts[0]
+        if (top && !['images', 'users', 'backups'].includes(top)) {
+          try {
+            sessionStorage.setItem('edutech_inst_slug', top)
+            localStorage.setItem('edutech_inst_slug', top)
+          } catch { /* ignore */ }
+          return top
+        }
+      }
+    }
+
+    // 2. Look for institution/classes json files to extract slug
+    for (const file of files) {
+      if (file.path === 'classes.json' || file.path.endsWith('/classes.json') || file.path === 'institution.json' || file.path.endsWith('/institution.json')) {
+        try {
+          const text = await readTextFile(handle, file.path)
+          if (text) {
+            const parsed = JSON.parse(text)
+            const state = parsed?.state ?? parsed
+            const foundSlug = state?.institution?.slug || state?.institution?.subdomain || parsed?.slug || parsed?.subdomain
+            if (typeof foundSlug === 'string' && foundSlug.trim()) {
+              const trimmed = foundSlug.trim()
+              try {
+                sessionStorage.setItem('edutech_inst_slug', trimmed)
+                localStorage.setItem('edutech_inst_slug', trimmed)
+              } catch { /* ignore */ }
+              return trimmed
+            }
+          }
+        } catch { /* ignore */ }
+      }
+    }
+  }
+
+  // 3. Fallback to 'demo' default institution
+  const fallback = 'demo'
+  try {
+    sessionStorage.setItem('edutech_inst_slug', fallback)
+    localStorage.setItem('edutech_inst_slug', fallback)
+  } catch { /* ignore */ }
+  return fallback
+}
+
 async function hydrateFromVault(): Promise<number> {
   if (!handle) return 0
-  const slug = currentSlug()
-  if (!slug) return 0
-
   const files = await listAllVaultFiles(handle)
+  const slug = await resolveSlug(files)
+
   let applied = 0
 
   // 1. Check for bundle file first (backup.json or {slug}/backup.json)
@@ -413,8 +542,9 @@ async function hydrateFromVault(): Promise<number> {
   }
 
   // 2. Load all JSON store files, grouped by domain slot so that duplicate twin
-  // files (e.g. root teachers.json vs {slug}/teachers.json) are deduplicated by mtime.
-  // The newest file wins, and the older twin is updated so disk files stay in sync.
+  // files (e.g. root teachers.json vs {slug}/teachers.json) are deduplicated safely.
+  // Files with non-empty items ALWAYS take priority over empty files, and within
+  // the same fullness, the most recently edited file wins.
   const jsonGroups = new Map<string, VaultFileInfo[]>()
   for (const file of files) {
     if (!file.path.endsWith('.json') || isBackupBundlePath(file.path)) continue
@@ -426,37 +556,68 @@ async function hydrateFromVault(): Promise<number> {
     jsonGroups.set(slot, existing)
   }
 
-  for (const [, group] of jsonGroups) {
-    // Sort descending by lastModified: most recently edited file first
-    group.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0))
-    const winner = group[0]
-    const key = vaultPathToKey(winner.path, { slug, userId: currentUserId() })
+  // Load primary store files first so individual slice files cleanly overlay on top
+  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json'])
+  const sortedEntries = Array.from(jsonGroups.entries()).sort(([slotA], [slotB]) => {
+    const isPriA = PRIMARY_SLOTS.has(slotA) ? 0 : 1
+    const isPriB = PRIMARY_SLOTS.has(slotB) ? 0 : 1
+    return isPriA - isPriB
+  })
+
+  for (const [, group] of sortedEntries) {
+    // Read text and item counts for each candidate in group
+    const details = await Promise.all(
+      group.map(async (file) => {
+        const text = await readTextFile(handle!, file.path)
+        let count = -1
+        let valid = false
+        if (text !== null) {
+          try {
+            JSON.parse(text) // validate — never load a hand-broken file
+            valid = true
+            count = getItemCount(text)
+          } catch {
+            valid = false
+          }
+        }
+        return { file, text, count, valid }
+      })
+    )
+
+    const validFiles = details.filter((d) => d.valid && d.text !== null)
+    if (validFiles.length === 0) continue
+
+    // Non-empty files (count > 0) ALWAYS beat empty files (count === 0).
+    // Among files with the same fullness, most recently edited file wins.
+    validFiles.sort((a, b) => {
+      const aHas = a.count > 0 ? 1 : 0
+      const bHas = b.count > 0 ? 1 : 0
+      if (aHas !== bHas) return bHas - aHas
+      return (b.file.lastModified || 0) - (a.file.lastModified || 0)
+    })
+
+    const winner = validFiles[0]
+    const key = vaultPathToKey(winner.file.path, { slug, userId: currentUserId() })
     if (!key) continue
 
-    const text = await readTextFile(handle, winner.path)
-    if (text === null) continue
-    try {
-      JSON.parse(text) // validate — never load a hand-broken file
-    } catch {
-      continue
-    }
-
-    const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key), winner.path)
+    const normalized = normalizeVaultJsonForStore(key, winner.text!, localStorage.getItem(key), winner.file.path)
     localStorage.setItem(key, normalized)
-    fileContentCache.set(winner.path, compactJson(normalized))
-    fileMtimeCache.set(winner.path, winner.lastModified)
-    knownVaultFiles.add(winner.path)
+    fileContentCache.set(winner.file.path, compactJson(normalized))
+    fileMtimeCache.set(winner.file.path, winner.file.lastModified)
+    knownVaultFiles.add(winner.file.path)
     applied++
 
-    // Sync winner's text to older twin files in the group so they don't stay stale on disk
-    for (let i = 1; i < group.length; i++) {
-      const loser = group[i]
+    // Sync winner's text to older twin files in the group so they don't stay stale on disk.
+    // Safeguard: An empty winner must NEVER overwrite a non-empty loser.
+    for (let i = 1; i < validFiles.length; i++) {
+      const loser = validFiles[i]
+      if (winner.count === 0 && loser.count > 0) continue
       try {
-        await writeTextFile(handle, loser.path, text)
-        fileContentCache.set(loser.path, compactJson(text))
-        fileMtimeCache.delete(loser.path)
-        ownWriteAt.set(loser.path, Date.now())
-        knownVaultFiles.add(loser.path)
+        await writeTextFile(handle!, loser.file.path, winner.text!)
+        fileContentCache.set(loser.file.path, compactJson(winner.text!))
+        fileMtimeCache.delete(loser.file.path)
+        ownWriteAt.set(loser.file.path, Date.now())
+        knownVaultFiles.add(loser.file.path)
       } catch {
         /* ignore */
       }
@@ -487,6 +648,7 @@ async function hydrateFromVault(): Promise<number> {
     }
   }
 
+  isVaultHydrated = true
   if (applied > 0) requestStoreReload()
   return applied
 }
@@ -497,6 +659,36 @@ async function hydrateFromVault(): Promise<number> {
 
 async function writeVaultFile(subPath: string, content: string): Promise<void> {
   if (!handle) return
+
+  // Safeguard: Never overwrite a non-empty file on disk with an empty payload
+  // unless this was preceded by an explicit user deletion in the UI within the grace window.
+  // This guarantees that hard refresh, page reload, or localStorage clearing CANNOT wipe disk files!
+  const incomingCount = getItemCount(content)
+  if (incomingCount === 0 && !isRecentExplicitDelete()) {
+    const slug = currentSlug() || 'demo'
+    const candidatePaths = [subPath, ...getTwinPaths(subPath, slug)]
+    for (const candPath of candidatePaths) {
+      try {
+        const diskText = await readTextFile(handle, candPath)
+        if (diskText !== null) {
+          const diskCount = getItemCount(diskText)
+          if (diskCount > 0) {
+            console.warn(`[vault] Refusing to overwrite non-empty ${candPath} (${diskCount} items) with empty state (0 items) on startup/refresh. Restoring store from disk.`)
+            const key = vaultPathToKey(candPath, { slug, userId: currentUserId() }) || vaultPathToKey(subPath, { slug, userId: currentUserId() })
+            if (key) {
+              const normalized = normalizeVaultJsonForStore(key, diskText, localStorage.getItem(key), candPath)
+              localStorage.setItem(key, normalized)
+              requestStoreReload()
+            }
+            return
+          }
+        }
+      } catch {
+        /* ignore read check */
+      }
+    }
+  }
+
   await writeTextFile(handle, subPath, content)
   fileContentCache.set(subPath, compactJson(content))
   fileMtimeCache.delete(subPath)
@@ -512,19 +704,25 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       const state = parsed?.state ?? parsed
 
       const departments = state.departments ?? []
-      const deptsPretty = JSON.stringify(departments, null, 2)
-      await writeVaultFile(`${slug}/departments.json`, deptsPretty)
-      await writeVaultFile('departments.json', deptsPretty)
+      if (departments.length > 0 || isRecentExplicitDelete()) {
+        const deptsPretty = JSON.stringify(departments, null, 2)
+        await writeVaultFile(`${slug}/departments.json`, deptsPretty)
+        await writeVaultFile('departments.json', deptsPretty)
+      }
 
       const subjects = state.subjects ?? []
-      const subjectsPretty = JSON.stringify(subjects, null, 2)
-      await writeVaultFile(`${slug}/subjects.json`, subjectsPretty)
-      await writeVaultFile('subjects.json', subjectsPretty)
+      if (subjects.length > 0 || isRecentExplicitDelete()) {
+        const subjectsPretty = JSON.stringify(subjects, null, 2)
+        await writeVaultFile(`${slug}/subjects.json`, subjectsPretty)
+        await writeVaultFile('subjects.json', subjectsPretty)
+      }
 
       const designations = state.designations ?? []
-      const designationsPretty = JSON.stringify(designations, null, 2)
-      await writeVaultFile(`${slug}/designations.json`, designationsPretty)
-      await writeVaultFile('designations.json', designationsPretty)
+      if (designations.length > 0 || isRecentExplicitDelete()) {
+        const designationsPretty = JSON.stringify(designations, null, 2)
+        await writeVaultFile(`${slug}/designations.json`, designationsPretty)
+        await writeVaultFile('designations.json', designationsPretty)
+      }
     } catch { /* ignore */ }
   }
 
@@ -533,9 +731,11 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       const parsed = JSON.parse(rawJson)
       const state = parsed?.state ?? parsed
       const students = state.students ?? []
-      const studentsPretty = JSON.stringify(students, null, 2)
-      await writeVaultFile(`${slug}/students.json`, studentsPretty)
-      await writeVaultFile('students.json', studentsPretty)
+      if (students.length > 0 || isRecentExplicitDelete()) {
+        const studentsPretty = JSON.stringify(students, null, 2)
+        await writeVaultFile(`${slug}/students.json`, studentsPretty)
+        await writeVaultFile('students.json', studentsPretty)
+      }
     } catch {
       await writeVaultFile(`${slug}/students.json`, prettifyJson(rawJson))
       await writeVaultFile('students.json', prettifyJson(rawJson))
@@ -551,9 +751,11 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
 
       // 1. routines.json
       const routines = state.routines ?? []
-      const routinesPretty = JSON.stringify(routines, null, 2)
-      await writeVaultFile(`${slug}/routines.json`, routinesPretty)
-      await writeVaultFile('routines.json', routinesPretty)
+      if (routines.length > 0 || isRecentExplicitDelete()) {
+        const routinesPretty = JSON.stringify(routines, null, 2)
+        await writeVaultFile(`${slug}/routines.json`, routinesPretty)
+        await writeVaultFile('routines.json', routinesPretty)
+      }
 
       // 2. sections.json
       const classes = state.classes ?? []
@@ -564,15 +766,50 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
           ...s,
         }))
       )
-      const sectionsPretty = JSON.stringify(sections, null, 2)
-      await writeVaultFile(`${slug}/sections.json`, sectionsPretty)
-      await writeVaultFile('sections.json', sectionsPretty)
+      if (sections.length > 0 || isRecentExplicitDelete()) {
+        const sectionsPretty = JSON.stringify(sections, null, 2)
+        await writeVaultFile(`${slug}/sections.json`, sectionsPretty)
+        await writeVaultFile('sections.json', sectionsPretty)
+      }
 
       // 3. institution.json
       if (state.institution) {
         const instPretty = JSON.stringify(state.institution, null, 2)
         await writeVaultFile(`${slug}/institution.json`, instPretty)
         await writeVaultFile('institution.json', instPretty)
+      }
+    } catch { /* ignore */ }
+  }
+
+  if (path === `${slug}/fees.json`) {
+    await writeVaultFile('fees.json', prettifyJson(rawJson))
+
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+
+      // 1. fee_structures.json
+      const structures = state.structures ?? []
+      if (structures.length > 0 || isRecentExplicitDelete()) {
+        const structPretty = JSON.stringify(structures, null, 2)
+        await writeVaultFile(`${slug}/fee_structures.json`, structPretty)
+        await writeVaultFile('fee_structures.json', structPretty)
+      }
+
+      // 2. payments.json
+      const payments = state.payments ?? []
+      if (payments.length > 0 || isRecentExplicitDelete()) {
+        const paymentsPretty = JSON.stringify(payments, null, 2)
+        await writeVaultFile(`${slug}/payments.json`, paymentsPretty)
+        await writeVaultFile('payments.json', paymentsPretty)
+      }
+
+      // 3. waivers.json
+      const waivers = state.waiverEntries ?? state.waivers ?? []
+      if (waivers.length > 0 || isRecentExplicitDelete()) {
+        const waiversPretty = JSON.stringify(waivers, null, 2)
+        await writeVaultFile(`${slug}/waivers.json`, waiversPretty)
+        await writeVaultFile('waivers.json', waiversPretty)
       }
     } catch { /* ignore */ }
   }
@@ -612,7 +849,7 @@ function handleStoreWrite(key: string, json: string): void {
       try {
         const saved = await loadVaultHandle()
         if (saved && (await hasPermission(saved))) {
-          handle = saved
+          await activate(saved, false)
           handleStoreWrite(key, json)
         }
       } catch {
@@ -621,6 +858,7 @@ function handleStoreWrite(key: string, json: string): void {
     })()
     return
   }
+  if (!isVaultHydrated) return
   const slug = currentSlug()
   if (!slug || !keyMatchesInstitution(key, slug, currentUserId())) return
   const path = keyToVaultPath(key)
@@ -652,13 +890,13 @@ async function writePath(path: string, json: string): Promise<void> {
     try {
       const saved = await loadVaultHandle()
       if (saved && (await hasPermission(saved))) {
-        handle = saved
+        await activate(saved, false)
       }
     } catch {
       /* ignore */
     }
   }
-  if (!handle) return
+  if (!handle || !isVaultHydrated) return
   const slug = currentSlug()
   try {
     await writeVaultFile(path, prettifyJson(json))
@@ -674,6 +912,9 @@ async function writePath(path: string, json: string): Promise<void> {
 
 async function handleStoreRemove(key: string): Promise<void> {
   if (!handle) return
+  // Only remove files from disk if this was preceded by an explicit user delete in UI!
+  if (!isRecentExplicitDelete()) return
+
   const path = keyToVaultPath(key)
   if (!path) return
   const existing = pendingWrites.get(path)
@@ -689,18 +930,18 @@ async function handleStoreRemove(key: string): Promise<void> {
 
 /** Write all debounced changes immediately (call on page hide). */
 export async function flushVaultWrites(): Promise<void> {
-  if (!isWriteAllowed()) return
+  if (!isWriteAllowed() || !isVaultHydrated) return
   if (!handle) {
     try {
       const saved = await loadVaultHandle()
       if (saved && (await hasPermission(saved))) {
-        handle = saved
+        await activate(saved, false)
       }
     } catch {
       /* ignore */
     }
   }
-  if (!handle) return
+  if (!handle || !isVaultHydrated) return
   const entries = Array.from(pendingWrites.entries())
   pendingWrites.clear()
   for (const [path, entry] of entries) {
@@ -735,7 +976,7 @@ export async function watchTick(): Promise<void> {
     if (!knownPath.startsWith(`${slug}/`) && !isRootJson) continue
     if (currentPathSet.has(knownPath)) continue
 
-    // File is GONE from disk!
+    // File is not present at this specific path
     knownVaultFiles.delete(knownPath)
     fileContentCache.delete(knownPath)
     fileMtimeCache.delete(knownPath)
@@ -744,8 +985,19 @@ export async function watchTick(): Promise<void> {
     // A) Is it a JSON file?
     if (knownPath.endsWith('.json')) {
       const jsonKey = vaultPathToKey(knownPath, { slug, userId })
-      if (jsonKey) {
-        if (knownPath.includes('departments')) {
+      if (!jsonKey) continue
+
+      // Parent store files on disk check: if parent file exists, domain slice files must never be wiped!
+      const hasTeachersOnDisk = currentPathSet.has('teachers.json') || currentPathSet.has(`${slug}/teachers.json`)
+      const hasClassesOnDisk = currentPathSet.has('classes.json') || currentPathSet.has(`${slug}/classes.json`)
+      const hasFeesOnDisk = currentPathSet.has('fees.json') || currentPathSet.has(`${slug}/fees.json`)
+
+      // Check if twin slice path exists on disk
+      const twins = getTwinPaths(knownPath, slug)
+      const hasTwinSliceOnDisk = twins.some((t) => currentPathSet.has(t))
+
+      if (knownPath.includes('departments')) {
+        if (!hasTeachersOnDisk && !hasTwinSliceOnDisk) {
           const raw = localStorage.getItem(jsonKey)
           if (raw) {
             try {
@@ -757,7 +1009,9 @@ export async function watchTick(): Promise<void> {
               }
             } catch { /* ignore */ }
           }
-        } else if (knownPath.includes('subjects')) {
+        }
+      } else if (knownPath.includes('subjects')) {
+        if (!hasTeachersOnDisk && !hasTwinSliceOnDisk) {
           const raw = localStorage.getItem(jsonKey)
           if (raw) {
             try {
@@ -769,7 +1023,9 @@ export async function watchTick(): Promise<void> {
               }
             } catch { /* ignore */ }
           }
-        } else if (knownPath.includes('designations')) {
+        }
+      } else if (knownPath.includes('designations')) {
+        if (!hasTeachersOnDisk && !hasTwinSliceOnDisk) {
           const raw = localStorage.getItem(jsonKey)
           if (raw) {
             try {
@@ -781,7 +1037,9 @@ export async function watchTick(): Promise<void> {
               }
             } catch { /* ignore */ }
           }
-        } else if (knownPath.includes('routines')) {
+        }
+      } else if (knownPath.includes('routines')) {
+        if (!hasClassesOnDisk && !hasTwinSliceOnDisk) {
           const raw = localStorage.getItem(jsonKey)
           if (raw) {
             try {
@@ -795,7 +1053,9 @@ export async function watchTick(): Promise<void> {
               }
             } catch { /* ignore */ }
           }
-        } else if (knownPath.includes('sections')) {
+        }
+      } else if (knownPath.includes('sections')) {
+        if (!hasClassesOnDisk && !hasTwinSliceOnDisk) {
           const raw = localStorage.getItem(jsonKey)
           if (raw) {
             try {
@@ -811,37 +1071,24 @@ export async function watchTick(): Promise<void> {
               }
             } catch { /* ignore */ }
           }
-        } else {
-          localStorage.removeItem(jsonKey)
-          deletedKeys.add(jsonKey)
-          if (knownPath === `${slug}/classes.json`) {
-            await deleteTextFile(handle, 'classes.json')
-            knownVaultFiles.delete('classes.json')
-            fileContentCache.delete('classes.json')
-            fileMtimeCache.delete('classes.json')
-          } else if (knownPath === 'classes.json') {
-            await deleteTextFile(handle, `${slug}/classes.json`)
-            knownVaultFiles.delete(`${slug}/classes.json`)
-            fileContentCache.delete(`${slug}/classes.json`)
-            fileMtimeCache.delete(`${slug}/classes.json`)
-          } else if (knownPath === `${slug}/teachers.json`) {
-            await deleteTextFile(handle, 'teachers.json')
-            knownVaultFiles.delete('teachers.json')
-            fileContentCache.delete('teachers.json')
-            fileMtimeCache.delete('teachers.json')
-          } else if (knownPath === 'teachers.json') {
-            await deleteTextFile(handle, `${slug}/teachers.json`)
-            knownVaultFiles.delete(`${slug}/teachers.json`)
-            fileContentCache.delete(`${slug}/teachers.json`)
-            fileMtimeCache.delete(`${slug}/teachers.json`)
-          } else if (knownPath === `${slug}/admissions.json`) {
-            await deleteTextFile(handle, 'students.json')
-            knownVaultFiles.delete('students.json')
-            fileContentCache.delete('students.json')
-            fileMtimeCache.delete('students.json')
-          }
-          changed = true
         }
+      } else if (knownPath.includes('fee_structures') || knownPath.includes('payments') || knownPath.includes('waivers')) {
+        if (!hasFeesOnDisk && !hasTwinSliceOnDisk) {
+          // Keep fee slices intact unless fees.json is also deleted
+        }
+      } else {
+        // Main domain file genuinely deleted by user from file manager
+        localStorage.removeItem(jsonKey)
+        deletedKeys.add(jsonKey)
+        for (const twin of twins) {
+          if (currentPathSet.has(twin)) {
+            await deleteTextFile(handle, twin)
+            knownVaultFiles.delete(twin)
+            fileContentCache.delete(twin)
+            fileMtimeCache.delete(twin)
+          }
+        }
+        changed = true
       }
       continue
     }
@@ -849,6 +1096,14 @@ export async function watchTick(): Promise<void> {
     // B) Is it an image file?
     const imgTarget = parseVaultImagePath(knownPath, slug)
     if (imgTarget) {
+      const isRootImg = knownPath.startsWith('images/')
+      const twinImgPath = isRootImg ? `${slug}/${knownPath}` : knownPath.replace(`${slug}/`, '')
+      if (currentPathSet.has(twinImgPath)) {
+        await deleteTextFile(handle, twinImgPath)
+        knownVaultFiles.delete(twinImgPath)
+        fileContentCache.delete(twinImgPath)
+        fileMtimeCache.delete(twinImgPath)
+      }
       if (imgTarget.type === 'logo') {
         if (clearInstitutionImage(slug, 'logo')) changed = true
       } else if (imgTarget.type === 'banner') {

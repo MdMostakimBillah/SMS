@@ -42,3 +42,25 @@ export function notifyVaultRemove(key: string): void {
 export function requestStoreReload(): void {
   reloadRequester?.()
 }
+
+/**
+ * Track explicit user deletion actions initiated in software UI (e.g. deleting a
+ * teacher, student, class, routine, designation, fee structure, payment).
+ *
+ * Used as a vital safeguard by vault sync and server sync: an empty dataset is
+ * ONLY allowed to overwrite non-empty local files or cloud database if it was
+ * preceded by an explicit user deletion within the grace window.
+ *
+ * Page reloads, unhydrated startups, store resets, or localStorage clearing will
+ * NEVER overwrite existing files or database with empty arrays.
+ */
+let lastExplicitDeleteAt = 0
+
+export function markExplicitUserDelete(): void {
+  lastExplicitDeleteAt = Date.now()
+}
+
+export function isRecentExplicitDelete(windowMs = 8000): boolean {
+  return Date.now() - lastExplicitDeleteAt < windowMs
+}
+

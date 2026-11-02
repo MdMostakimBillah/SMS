@@ -16,6 +16,7 @@ import { studentRouter } from './routes/students.js'
 import { backupRouter } from './routes/backup.js'
 import { licenseRouter } from './routes/license.js'
 import { classRouter } from './routes/classes.js'
+import { feesRouter } from './routes/fees.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
@@ -34,10 +35,16 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   const app = express()
 
   const allowedOrigins = corsOrigin.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
+  // Private/LAN origins are NOT trusted automatically: every deployment serves
+  // the frontend and /api from one origin via nginx, so credentialed CORS is
+  // only needed for local development (CORS_ORIGIN) — or, for LAN development
+  // against a directly-exposed API, the explicit ALLOW_PRIVATE_ORIGINS=true
+  // opt-in below (see .env.example).
+  const allowPrivateOrigins = process.env.ALLOW_PRIVATE_ORIGINS === 'true'
   const corsDelegate = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     if (!origin) return callback(null, true)
     const o = origin.toLowerCase()
-    if (allowedOrigins.includes(o) || LAN_OR_LOCAL_ORIGIN_RE.test(o)) {
+    if (allowedOrigins.includes(o) || (allowPrivateOrigins && LAN_OR_LOCAL_ORIGIN_RE.test(o))) {
       return callback(null, true)
     }
     callback(null, false)
@@ -77,6 +84,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   app.use('/api/backup', backupRouter(prisma, jwtSecret))
   app.use('/api/license', licenseRouter(licenseSecret))
   app.use('/api/classes', classRouter(prisma, jwtSecret))
+  app.use('/api/fees', feesRouter(prisma, jwtSecret))
 
   const sRouter = schoolRouter(prisma, jwtSecret, storage)
   app.use('/api/schools', sRouter)

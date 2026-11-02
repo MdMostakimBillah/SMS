@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express'
 import type { PrismaClient } from '@prisma/client'
-import jwt from 'jsonwebtoken'
-import { requireAuth, SESSION_COOKIE, type AuthenticatedRequest, type SessionClaims } from '../middleware/auth.js'
+import { requireAuth, optionalAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 import { requireRole } from '../middleware/rbac.js'
 
 export function classRouter(prisma: PrismaClient, jwtSecret: string) {
@@ -9,6 +8,8 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
 
   /**
    * Helper to resolve school by auth context or query param.
+   * The `optionalAuth` middleware (mounted on GET /) has already populated
+   * `schoolId` from a valid session cookie, if one was sent.
    */
   async function resolveTargetSchool(req: Request) {
     const authReq = req as AuthenticatedRequest
@@ -33,33 +34,16 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
       return prisma.school.findUnique({ where: { id: authReq.schoolId } })
     }
 
-    const token = req.cookies?.[SESSION_COOKIE] as string | undefined
-    if (token) {
-      try {
-        const claims = jwt.verify(token, jwtSecret) as SessionClaims
-        if (claims?.jti && claims?.userId) {
-          const session = await prisma.session.findUnique({ where: { id: claims.jti } })
-          if (session && session.userId === claims.userId && !session.revokedAt && session.expiresAt.getTime() > Date.now()) {
-            const user = await prisma.user.findUnique({
-              where: { id: claims.userId },
-              select: { id: true, role: true, schoolId: true, isActive: true },
-            })
-            if (user?.isActive && user.schoolId) {
-              return prisma.school.findUnique({ where: { id: user.schoolId } })
-            }
-          }
-        }
-      } catch {}
-    }
-
     return null
   }
 
   /**
    * GET /api/classes
    * Fetch all classes and routines for the active institution.
+   * Public by explicit ?slug= (school landing pages); authenticated sessions
+   * resolve their own school when no slug is given.
    */
-  router.get('/', async (req: Request, res: Response) => {
+  router.get('/', optionalAuth(prisma, jwtSecret), async (req: Request, res: Response) => {
     try {
       const school = await resolveTargetSchool(req)
       if (!school) {

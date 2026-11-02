@@ -246,6 +246,67 @@ describe('School Branding & Institution Tab API', () => {
         .set('Cookie', cookieHeader(adminJar))
       expect(res.status).toBe(403)
     })
+
+    it('GET /api/schools/:slug omits internal and billing fields for anonymous callers', async () => {
+      // Give the school internal metadata that must NOT leak publicly
+      const patchRes = await request(app)
+        .patch(`/api/schools/${schoolId}`)
+        .set('Cookie', cookieHeader(adminJar))
+        .set('x-csrf-token', csrfToken(adminJar))
+        .send({ serverUrl: 'http://10.0.0.5:9000', folderName: 'internal-folder' })
+      expect(patchRes.status).toBe(200)
+
+      const anon = await request(app).get(`/api/schools/${SLUG}`)
+      expect(anon.status).toBe(200)
+      expect(anon.body.domain).toBe(SLUG)
+      expect(anon.body.name).toBeDefined()
+      // Public branding stays visible…
+      // …but internal infrastructure and billing data never reaches an anonymous caller
+      expect(anon.body.serverUrl).toBeUndefined()
+      expect(anon.body.folderName).toBeUndefined()
+      expect(anon.body.storageMode).toBeUndefined()
+      expect(anon.body.paymentStatus).toBeUndefined()
+      expect(anon.body.billingCycle).toBeUndefined()
+      expect(anon.body.maxStudents).toBeUndefined()
+      expect(anon.body.maxTeachers).toBeUndefined()
+      expect(anon.body.storageBytes).toBeUndefined()
+      expect(anon.body.mediaCount).toBeUndefined()
+    })
+
+    it('GET /api/schools/:slug returns full metadata to the schools own admin', async () => {
+      const res = await request(app)
+        .get(`/api/schools/${SLUG}`)
+        .set('Cookie', cookieHeader(adminJar))
+      expect(res.status).toBe(200)
+      expect(res.body.domain).toBe(SLUG)
+      expect(res.body.serverUrl).toBe('http://10.0.0.5:9000')
+      expect(res.body.folderName).toBe('internal-folder')
+      expect(res.body.paymentStatus).toBeDefined()
+      expect(res.body.storageBytes).toBeDefined()
+    })
+
+    it('GET /api/schools/:slug does not leak another tenants internals to a signed-in admin', async () => {
+      // adminJar belongs to the school under test; request a DIFFERENT tenant
+      const otherSchool = await prisma.school.create({
+        data: {
+          name: 'Other Tenant School',
+          domain: 'other-tenant-slug',
+          serverUrl: 'http://10.0.0.9:9000',
+          folderName: 'other-secret-folder',
+        },
+      })
+      try {
+        const res = await request(app)
+          .get(`/api/schools/${otherSchool.domain}`)
+          .set('Cookie', cookieHeader(adminJar))
+        expect(res.status).toBe(200)
+        expect(res.body.domain).toBe(otherSchool.domain)
+        expect(res.body.serverUrl).toBeUndefined()
+        expect(res.body.folderName).toBeUndefined()
+      } finally {
+        await prisma.school.deleteMany({ where: { id: otherSchool.id } })
+      }
+    })
   })
 
   describe('Super Admin Institution & Fetcher Powers', () => {

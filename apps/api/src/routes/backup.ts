@@ -110,7 +110,7 @@ export function backupRouter(prisma: PrismaClient, jwtSecret: string) {
         console.error('[backup] telegram test failed:', err instanceof Error ? err.message : err)
         res.status(500).json({
           success: false,
-          error: err instanceof Error ? err.message : 'Internal server error',
+          error: 'Internal server error',
         })
       }
     }
@@ -376,7 +376,7 @@ export function backupRouter(prisma: PrismaClient, jwtSecret: string) {
         console.error('[backup] telegram send failed:', err instanceof Error ? err.message : err)
         res.status(500).json({
           success: false,
-          error: err instanceof Error ? err.message : 'Internal server error',
+          error: 'Internal server error',
         })
       }
     }

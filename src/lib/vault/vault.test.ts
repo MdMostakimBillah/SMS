@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import {
+  vaultInit,
   vaultConnectFolder,
   vaultReconnect,
   vaultDisconnect,
@@ -582,6 +583,176 @@ describe('vault — Mode C (local-first browser sync)', () => {
     // Twin scoped file must also be updated
     const scopedRaw = await readTextFile(pickHandle, 'demo/teachers.json')
     expect(scopedRaw).toContain('Manual Teacher')
+  })
+
+  it('hard refresh / localStorage clear does not wipe local PC files and restores store from disk', async () => {
+    await vaultConnectFolder()
+
+    // 1. Existing local files on disk (students, teachers, classes, designations)
+    await writeTextFile(
+      pickHandle,
+      'teachers.json',
+      JSON.stringify([
+        { id: 'ET0001', nameEn: 'John Doe', designation: 'Senior Teacher' },
+        { id: 'ET0002', nameEn: 'Jane Smith', designation: 'Assistant Teacher' },
+      ])
+    )
+    await writeTextFile(
+      pickHandle,
+      'students.json',
+      JSON.stringify([
+        { id: 'ST0001', nameEn: 'Alice', class: 'Class 6' },
+        { id: 'ST0002', nameEn: 'Bob', class: 'Class 6' },
+      ])
+    )
+    await writeTextFile(
+      pickHandle,
+      'classes.json',
+      JSON.stringify([
+        { id: 'CLS-01', name: 'Class 6', sections: [{ id: 'SEC-1', name: 'A' }] },
+      ])
+    )
+    await writeTextFile(
+      pickHandle,
+      'designations.json',
+      JSON.stringify([
+        { id: 'DES-01', name: 'Principal' },
+        { id: 'DES-02', name: 'Headmaster' },
+      ])
+    )
+
+    // 2. Simulate browser hard refresh / localStorage cleared
+    localStorage.clear()
+
+    // 3. Vault re-hydrates (files win)
+    await vaultReconnect()
+
+    // 4. Verify local PC files are completely intact (NOT wiped)
+    const teachersOnDisk = await readTextFile(pickHandle, 'teachers.json')
+    expect(teachersOnDisk).toContain('John Doe')
+    expect(teachersOnDisk).toContain('Jane Smith')
+
+    const studentsOnDisk = await readTextFile(pickHandle, 'students.json')
+    expect(studentsOnDisk).toContain('Alice')
+    expect(studentsOnDisk).toContain('Bob')
+
+    const classesOnDisk = await readTextFile(pickHandle, 'classes.json')
+    expect(classesOnDisk).toContain('Class 6')
+
+    const desOnDisk = await readTextFile(pickHandle, 'designations.json')
+    expect(desOnDisk).toContain('Principal')
+
+    // 5. Verify stores were restored from disk files into localStorage
+    const tStore = JSON.parse(localStorage.getItem('edutech-teachers_demo') || '{}')
+    expect(tStore?.state?.teachers).toHaveLength(2)
+
+    const sStore = JSON.parse(localStorage.getItem('edutech-admissions_demo') || '{}')
+    expect(sStore?.state?.students).toHaveLength(2)
+
+    const cStore = JSON.parse(localStorage.getItem('edutech-classes_demo') || '{}')
+    expect(cStore?.state?.classes).toHaveLength(1)
+
+    // 6. Simulate unhydrated store attempting an empty write (e.g. startup mount flush)
+    // Attempting to write empty classes: []
+    localStorage.setItem(
+      'edutech-classes_demo',
+      JSON.stringify({ state: { classes: [] }, version: 0 })
+    )
+    // watchTick or flush should refuse to overwrite disk with empty array without explicit user delete
+    await watchTick()
+
+    const classesAfterEmptyWrite = await readTextFile(pickHandle, 'classes.json')
+    expect(classesAfterEmptyWrite).toContain('Class 6') // Still preserved!
+  })
+
+  it('preserves teacher designation data across watchTick cycles without resetting automatically', async () => {
+    await vaultConnectFolder()
+
+    // Populate designations file
+    await writeTextFile(
+      pickHandle,
+      'designations.json',
+      JSON.stringify([
+        { id: 'DES-01', name: 'Senior Teacher', nameBn: 'সিনিয়র শিক্ষক' },
+        { id: 'DES-02', name: 'Assistant Teacher', nameBn: 'সহকারী শিক্ষক' },
+      ])
+    )
+    await writeTextFile(
+      pickHandle,
+      'teachers.json',
+      JSON.stringify([
+        { id: 'ET0001', nameEn: 'John Doe', designation: 'Senior Teacher' },
+      ])
+    )
+
+    await vaultReconnect()
+
+    // Verify designations loaded with proper name and title
+    const tStore = JSON.parse(localStorage.getItem('edutech-teachers_demo') || '{}')
+    expect(tStore?.state?.designations).toHaveLength(2)
+    expect(tStore?.state?.designations[0].name).toBe('Senior Teacher')
+    expect(tStore?.state?.designations[0].nameBn).toBe('সিনিয়র শিক্ষক')
+
+    // Run multiple watchTick cycles
+    await watchTick()
+    await watchTick()
+    await watchTick()
+
+    // Designations must NOT reset automatically
+    const tStoreAfterTicks = JSON.parse(localStorage.getItem('edutech-teachers_demo') || '{}')
+    expect(tStoreAfterTicks?.state?.designations).toHaveLength(2)
+    expect(tStoreAfterTicks?.state?.designations[0].name).toBe('Senior Teacher')
+  })
+
+  it('restores all data on vaultInit even when both localStorage and sessionStorage are completely wiped', async () => {
+    await vaultConnectFolder()
+
+    // 1. Setup vault files in scoped tenant directory
+    await writeTextFile(
+      pickHandle,
+      'demo/teachers.json',
+      JSON.stringify([{ id: 'ET0001', nameEn: 'John Vault Teacher' }])
+    )
+    await writeTextFile(
+      pickHandle,
+      'demo/students.json',
+      JSON.stringify([{ id: 'ST0001', nameEn: 'Alice Student' }])
+    )
+    await writeTextFile(
+      pickHandle,
+      'demo/classes.json',
+      JSON.stringify([{ id: 'CLS-01', name: 'Class 10' }])
+    )
+
+    // 2. Clear both localStorage and sessionStorage completely (DevTools Clear site data)
+    localStorage.clear()
+    sessionStorage.clear()
+    expect(sessionStorage.getItem('edutech_inst_slug')).toBeNull()
+    expect(localStorage.getItem('edutech_inst_slug')).toBeNull()
+
+    // 3. App restarts and calls vaultInit()
+    await vaultInit()
+
+    // 4. Verify slug was auto-discovered from vault
+    expect(sessionStorage.getItem('edutech_inst_slug')).toBe('demo')
+    expect(localStorage.getItem('edutech_inst_slug')).toBe('demo')
+
+    // 5. Verify stores were fully hydrated from disk files
+    const tStore = JSON.parse(localStorage.getItem('edutech-teachers_demo') || '{}')
+    expect(tStore?.state?.teachers).toHaveLength(1)
+    expect(tStore?.state?.teachers[0].nameEn).toBe('John Vault Teacher')
+
+    const sStore = JSON.parse(localStorage.getItem('edutech-admissions_demo') || '{}')
+    expect(sStore?.state?.students).toHaveLength(1)
+    expect(sStore?.state?.students[0].nameEn).toBe('Alice Student')
+
+    const cStore = JSON.parse(localStorage.getItem('edutech-classes_demo') || '{}')
+    expect(cStore?.state?.classes).toHaveLength(1)
+    expect(cStore?.state?.classes[0].name).toBe('Class 10')
+
+    // 6. Verify files on disk remain completely intact
+    const teachersOnDisk = await readTextFile(pickHandle, 'demo/teachers.json')
+    expect(teachersOnDisk).toContain('John Vault Teacher')
   })
 
   it('disconnects and clears status', async () => {

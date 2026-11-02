@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from 'express'
 import type { PrismaClient } from '@prisma/client'
-import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
+import { requireAuth, optionalAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 import { requireRole } from '../middleware/rbac.js'
 import type { MediaStorage } from '../storage.js'
 import { uploadBase64Media, deletePreviousMedia } from '../lib/media-helper.js'
@@ -250,30 +250,43 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
   })
 
   /**
-   * Direct school lookup by domain / slug / id.
+   * School lookup by domain / slug / id.
    * Matches /:slug
+   *
+   * Full internal metadata (storage mode, server URL, billing/plan details,
+   * media usage) is only returned to the school's own members or a
+   * super_admin. Everyone else (anonymous or another tenant) receives the
+   * same sanitized public view as /public/:slug.
    */
-  router.get('/:slug', async (req: Request, res: Response) => {
+  router.get('/:slug', optionalAuth(prisma, jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
     try {
       const rawSlug = req.params.slug
       if (rawSlug === 'public') {
         return res.status(400).json({ error: 'Slug is required' })
       }
-      const school = await resolveSchool(rawSlug)
-      if (!school) {
+
+      const isSuper = req.userRole === 'super_admin'
+      const fullSchool = isSuper || req.schoolId ? await resolveSchool(rawSlug) : null
+      // Full internal metadata only for super_admin or the school's own members.
+      if (fullSchool && (isSuper || fullSchool.id === req.schoolId)) {
+        const usage = await prisma.mediaObject?.aggregate({
+          where: { schoolId: fullSchool.id, deletedAt: null },
+          _sum: { sizeBytes: true },
+          _count: { id: true },
+        }).catch(() => null)
+        const schoolWithStorage = {
+          ...fullSchool,
+          storageBytes: usage?._sum?.sizeBytes || 0,
+          mediaCount: usage?._count?.id || 0,
+        }
+        return res.json(formatSchoolResponse(schoolWithStorage))
+      }
+
+      const publicSchool = await resolvePublicSchool(rawSlug)
+      if (!publicSchool) {
         return res.status(404).json({ error: 'Institution not found', school: null })
       }
-      const usage = await prisma.mediaObject?.aggregate({
-        where: { schoolId: school.id, deletedAt: null },
-        _sum: { sizeBytes: true },
-        _count: { id: true },
-      }).catch(() => null)
-      const schoolWithStorage = {
-        ...school,
-        storageBytes: usage?._sum?.sizeBytes || 0,
-        mediaCount: usage?._count?.id || 0,
-      }
-      res.json(formatSchoolResponse(schoolWithStorage))
+      res.json(formatSchoolResponse(publicSchool))
     } catch (err) {
       console.error('[schools] lookup failed:', err instanceof Error ? err.message : err)
       res.status(500).json({ error: 'Internal server error' })

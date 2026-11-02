@@ -663,6 +663,50 @@ export const classesApi = {
   },
 }
 
+export interface FeesResponse {
+  structures?: any[]
+  payments?: any[]
+  feeCategories?: any[]
+  waiverCategories?: any[]
+  waiverEntries?: any[]
+  studentWaivers?: any[]
+}
+
+export const feesApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<FeesResponse>(`/api/fees${q}`)
+  },
+  update: (data: {
+    structures?: any[]
+    payments?: any[]
+    feeCategories?: any[]
+    waiverCategories?: any[]
+    waiverEntries?: any[]
+    studentWaivers?: any[]
+    schoolId?: string
+  }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean } & FeesResponse>('/api/fees', {
+      method: 'PUT',
+      body,
+    })
+  },
+  createPayment: (payment: any, schoolId?: string) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const q = (schoolId || fallbackSlug) ? `?slug=${encodeURIComponent(schoolId || fallbackSlug!)}` : ''
+    return apiRequest<{ success: boolean; payment: any }>(`/api/fees/payments${q}`, {
+      method: 'POST',
+      body: payment,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

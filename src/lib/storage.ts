@@ -20,6 +20,22 @@ export function getSlug(): string | null {
         return urlSlug
       }
     }
+    if (typeof localStorage !== 'undefined') {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && (key.startsWith('edutech-classes_') || key.startsWith('edutech-teachers_') || key.startsWith('edutech-admissions_'))) {
+          const parts = key.split('_')
+          const discovered = parts[1]
+          if (discovered && !discovered.includes('_')) {
+            try {
+              sessionStorage.setItem('edutech_inst_slug', discovered)
+              localStorage.setItem('edutech_inst_slug', discovered)
+            } catch { /* ignore */ }
+            return discovered
+          }
+        }
+      }
+    }
     return null
   } catch {
     return null
@@ -128,6 +144,12 @@ export function onSlugChange(cb: SlugChangeCallback): () => void {
 const resetFns: Array<() => void> = []
 const loadFns: Array<() => void> = []
 
+let isResettingStores = false
+
+export function isStoreResetInProgress(): boolean {
+  return isResettingStores
+}
+
 export function registerStoreReset(resetFn: () => void): void {
   resetFns.push(resetFn)
 }
@@ -137,7 +159,12 @@ export function registerStoreLoad(loadFn: () => void): void {
 }
 
 function resetAllStores(): void {
-  resetFns.forEach((fn) => fn())
+  isResettingStores = true
+  try {
+    resetFns.forEach((fn) => fn())
+  } finally {
+    isResettingStores = false
+  }
 }
 
 function loadAllStores(): void {
@@ -228,6 +255,7 @@ export function createNamespacedStorage<T>(base: string, fallback?: string, opts
       } catch { return null }
     },
     setItem: (_name: string, value: StorageValue<T>): void => {
+      if (isResettingStores) return
       const slug = getSlug()
       const key = resolveKey(slug)
       if (shouldDebounce) {
@@ -243,6 +271,7 @@ export function createNamespacedStorage<T>(base: string, fallback?: string, opts
       }
     },
     removeItem: (_name: string): void => {
+      if (isResettingStores) return
       const slug = getSlug()
       const key = resolveKey(slug)
       cancelWrite(key)
@@ -259,12 +288,13 @@ const WRITE_DEBOUNCE_MS = 300
 const pendingWrites = new Map<string, { timer: ReturnType<typeof setTimeout>; value: string }>()
 
 function scheduleWrite(key: string, value: unknown): void {
+  if (isResettingStores) return
   const json = JSON.stringify(value)
   const existing = pendingWrites.get(key)
   if (existing) clearTimeout(existing.timer)
   const timer = setTimeout(() => {
     pendingWrites.delete(key)
-    if (!isWriteAllowed()) return
+    if (isResettingStores || !isWriteAllowed()) return
     try {
       localStorage.setItem(key, json)
       notifyVaultWrite(key, json)

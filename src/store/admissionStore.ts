@@ -5,6 +5,7 @@ import type { StudentAdmission } from '@/pages/students/admission/types'
 import { useClassStore } from './classStore'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
+import { markExplicitUserDelete } from '@/lib/vault/bridge'
 import { studentsApi } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverStudentToStudent, studentToPayload } from '@/lib/studentMappers'
@@ -138,6 +139,7 @@ export const useAdmissionStore = create<AdmissionState>()(
       },
 
       deleteStudent: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           students: state.students.filter((s) => s.id !== id),
         }))

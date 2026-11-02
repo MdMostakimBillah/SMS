@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
+import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { feesApi } from '@/lib/api'
 
 export interface FeeCategory {
   id: string
@@ -184,6 +188,12 @@ interface FeeState {
     paymentCount: number
   }
   getClassWiseSummary: (students: StudentInfo[]) => { className: string; section: string; totalDue: number; totalPaid: number; studentCount: number }[]
+
+  serverSynced: boolean
+  syncing: boolean
+  syncError: string | null
+  syncFromServer: (slugOrId?: string) => Promise<void>
+  syncToServer: () => Promise<void>
 }
 
 function computeWaiverAmount(entry: WaiverEntry, feeAmount: number): number {
@@ -191,6 +201,45 @@ function computeWaiverAmount(entry: WaiverEntry, feeAmount: number): number {
     return Math.round(feeAmount * entry.value / 100)
   }
   return entry.value
+}
+
+let serverSyncTimer: any = null
+function queueServerSync(get: () => FeeState) {
+  try {
+    if (isLocalComputerMode()) return
+    const state = get()
+    // Guard: Never push empty fees to the database during startup or unhydrated state
+    if (!state.serverSynced && state.structures.length === 0 && state.payments.length === 0) {
+      return
+    }
+    if (serverSyncTimer) clearTimeout(serverSyncTimer)
+    serverSyncTimer = setTimeout(async () => {
+      try {
+        const s = get()
+        if (s.structures.length === 0 && s.payments.length === 0 && !isRecentExplicitDelete()) {
+          return
+        }
+        await feesApi.update({
+          structures: s.structures,
+          payments: s.payments,
+          feeCategories: s.feeCategories,
+          waiverCategories: s.waiverCategories,
+          waiverEntries: s.waiverEntries,
+          studentWaivers: s.studentWaivers,
+        })
+      } catch {
+        // Warning only
+      }
+    }, 400)
+  } catch {
+    /* ignore */
+  }
+}
+
+function onStateMutated(get: () => FeeState) {
+  flushPendingWrites()
+  void flushVaultWrites()
+  queueServerSync(get)
 }
 
 export const useFeeStore = create<FeeState>()(
@@ -202,107 +251,242 @@ export const useFeeStore = create<FeeState>()(
       waiverCategories: [],
       waiverEntries: [],
       studentWaivers: [],
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
 
-      addFeeCategory: (c) => set((state) => ({ feeCategories: [...state.feeCategories, c] })),
+      addFeeCategory: (c) => {
+        set((state) => ({ feeCategories: [...state.feeCategories, c] }))
+        onStateMutated(get)
+      },
 
-      updateFeeCategory: (id, data) =>
+      updateFeeCategory: (id, data) => {
         set((state) => ({
           feeCategories: state.feeCategories.map((c) => (c.id === id ? { ...c, ...data } : c)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      deleteFeeCategory: (id) =>
+      deleteFeeCategory: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           feeCategories: state.feeCategories.filter((c) => c.id !== id),
           structures: state.structures.map((s) => (s.categoryId === id ? { ...s, categoryId: undefined } : s)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      toggleFeeCategoryActive: (id) =>
+      toggleFeeCategoryActive: (id) => {
         set((state) => ({
           feeCategories: state.feeCategories.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      addStructure: (s) => set((state) => ({ structures: [...state.structures, s] })),
+      addStructure: (s) => {
+        set((state) => ({ structures: [...state.structures, s] }))
+        onStateMutated(get)
+      },
 
-      updateStructure: (id, data) =>
+      updateStructure: (id, data) => {
         set((state) => ({
           structures: state.structures.map((s) => (s.id === id ? { ...s, ...data } : s)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      deleteStructure: (id) =>
+      deleteStructure: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           structures: state.structures.filter((s) => s.id !== id),
           payments: state.payments.filter((p) => p.feeStructureId !== id),
           waiverEntries: state.waiverEntries.filter((e) => e.feeStructureId !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      toggleStructureActive: (id) =>
+      toggleStructureActive: (id) => {
         set((state) => ({
           structures: state.structures.map((s) => (s.id === id ? { ...s, isActive: !s.isActive } : s)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      bulkAddStructures: (newStructures) =>
-        set((state) => ({ structures: [...state.structures, ...newStructures] })),
+      bulkAddStructures: (newStructures) => {
+        set((state) => ({ structures: [...state.structures, ...newStructures] }))
+        onStateMutated(get)
+      },
 
-      addPayment: (p) => set((state) => ({ payments: [...state.payments, p] })),
+      addPayment: (p) => {
+        set((state) => ({ payments: [...state.payments, p] }))
+        onStateMutated(get)
+      },
 
-      deletePayment: (id) =>
+      deletePayment: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           payments: state.payments.filter((p) => p.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      addWaiverCategory: (c) => set((state) => ({ waiverCategories: [...state.waiverCategories, c] })),
+      addWaiverCategory: (c) => {
+        set((state) => ({ waiverCategories: [...state.waiverCategories, c] }))
+        onStateMutated(get)
+      },
 
-      updateWaiverCategory: (id, data) =>
+      updateWaiverCategory: (id, data) => {
         set((state) => ({
           waiverCategories: state.waiverCategories.map((c) => (c.id === id ? { ...c, ...data } : c)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      deleteWaiverCategory: (id) =>
+      deleteWaiverCategory: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           waiverCategories: state.waiverCategories.filter((c) => c.id !== id),
           waiverEntries: state.waiverEntries.filter((e) => e.categoryId !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      toggleWaiverCategoryActive: (id) =>
+      toggleWaiverCategoryActive: (id) => {
         set((state) => ({
           waiverCategories: state.waiverCategories.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      addWaiverEntry: (e) => set((state) => ({ waiverEntries: [...state.waiverEntries, e] })),
+      addWaiverEntry: (e) => {
+        set((state) => ({ waiverEntries: [...state.waiverEntries, e] }))
+        onStateMutated(get)
+      },
 
-      addWaiverEntries: (entries) => set((state) => ({ waiverEntries: [...state.waiverEntries, ...entries] })),
+      addWaiverEntries: (entries) => {
+        set((state) => ({ waiverEntries: [...state.waiverEntries, ...entries] }))
+        onStateMutated(get)
+      },
 
-      updateWaiverEntry: (id, data) =>
+      updateWaiverEntry: (id, data) => {
         set((state) => ({
           waiverEntries: state.waiverEntries.map((e) => (e.id === id ? { ...e, ...data } : e)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      deleteWaiverEntry: (id) =>
+      deleteWaiverEntry: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           waiverEntries: state.waiverEntries.filter((e) => e.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      deleteWaiverEntriesByCategory: (categoryId) =>
+      deleteWaiverEntriesByCategory: (categoryId) => {
+        markExplicitUserDelete()
         set((state) => ({
           waiverEntries: state.waiverEntries.filter((e) => e.categoryId !== categoryId),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      addStudentWaiver: (w) => set((state) => ({ studentWaivers: [...state.studentWaivers, w] })),
+      addStudentWaiver: (w) => {
+        set((state) => ({ studentWaivers: [...state.studentWaivers, w] }))
+        onStateMutated(get)
+      },
 
-      updateStudentWaiver: (id, data) =>
+      updateStudentWaiver: (id, data) => {
         set((state) => ({
           studentWaivers: state.studentWaivers.map((w) => (w.id === id ? { ...w, ...data } : w)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      deleteStudentWaiver: (id) =>
+      deleteStudentWaiver: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           studentWaivers: state.studentWaivers.filter((w) => w.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      toggleStudentWaiverActive: (id) =>
+      toggleStudentWaiverActive: (id) => {
         set((state) => ({
           studentWaivers: state.studentWaivers.map((w) => (w.id === id ? { ...w, isActive: !w.isActive } : w)),
-        })),
+        }))
+        onStateMutated(get)
+      },
+
+      syncFromServer: async (slugOrId?: string) => {
+        if (isLocalComputerMode()) {
+          set({ serverSynced: true, syncing: false })
+          return
+        }
+        set({ syncing: true, syncError: null })
+        try {
+          const res = await feesApi.get(slugOrId)
+          if (res) {
+            const hasStructures = Array.isArray(res.structures) && res.structures.length > 0
+            const hasPayments = Array.isArray(res.payments) && res.payments.length > 0
+            const hasCategories = Array.isArray(res.feeCategories) && res.feeCategories.length > 0
+            const hasWaivers = (Array.isArray(res.waiverEntries) && res.waiverEntries.length > 0) || (Array.isArray(res.studentWaivers) && res.studentWaivers.length > 0)
+            const state = get()
+
+            if (hasStructures || hasPayments || hasCategories || hasWaivers) {
+              set({
+                structures: res.structures || [],
+                payments: res.payments || [],
+                feeCategories: res.feeCategories || [],
+                waiverCategories: res.waiverCategories || [],
+                waiverEntries: res.waiverEntries || [],
+                studentWaivers: res.studentWaivers || [],
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+            } else if (state.structures.length > 0 || state.payments.length > 0) {
+              await feesApi.update({
+                structures: state.structures,
+                payments: state.payments,
+                feeCategories: state.feeCategories,
+                waiverCategories: state.waiverCategories,
+                waiverEntries: state.waiverEntries,
+                studentWaivers: state.studentWaivers,
+                schoolId: slugOrId,
+              })
+              set({ serverSynced: true, syncing: false, syncError: null })
+            } else {
+              set({ serverSynced: true, syncing: false, syncError: null })
+            }
+          } else {
+            set({ serverSynced: true, syncing: false, syncError: null })
+          }
+        } catch (err: any) {
+          console.warn('[feeStore] syncFromServer failed:', err)
+          set({ syncing: false, syncError: err?.message || 'Failed to sync fees' })
+        }
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        set({ syncing: true })
+        try {
+          const state = get()
+          await feesApi.update({
+            structures: state.structures,
+            payments: state.payments,
+            feeCategories: state.feeCategories,
+            waiverCategories: state.waiverCategories,
+            waiverEntries: state.waiverEntries,
+            studentWaivers: state.studentWaivers,
+          })
+          set({ serverSynced: true, syncing: false, syncError: null })
+        } catch (err: any) {
+          console.warn('[feeStore] syncToServer failed:', err)
+          set({ syncing: false, syncError: err?.message || 'Failed to push fees' })
+        }
+      },
 
       generateWaivers: (students?) => {
         const { waiverEntries, structures, studentWaivers } = get()
@@ -621,7 +805,7 @@ export const useFeeStore = create<FeeState>()(
 )
 
 registerStoreReset(() => {
-  useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [] })
+  useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [], serverSynced: false, syncing: false, syncError: null })
 })
 
 registerStoreLoad(() => {
@@ -633,9 +817,9 @@ registerStoreLoad(() => {
       const parsed = JSON.parse(raw)
       if (parsed.state) useFeeStore.setState(parsed.state)
     } else {
-      useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [] })
+      useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [], serverSynced: false, syncing: false, syncError: null })
     }
   } catch {
-    useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [] })
+    useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [], serverSynced: false, syncing: false, syncError: null })
   }
 })

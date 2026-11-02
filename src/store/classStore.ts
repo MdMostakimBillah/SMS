@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
+import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { classesApi } from '@/lib/api'
 
@@ -335,13 +336,22 @@ let serverSyncTimer: any = null
 function queueServerSync(get: () => ClassState) {
   try {
     if (isLocalComputerMode()) return
+    const state = get()
+    // Guard: Never push empty classes/routines to the database during startup or unhydrated state
+    if (!state.serverSynced && state.classes.length === 0 && state.routines.length === 0) {
+      return
+    }
     if (serverSyncTimer) clearTimeout(serverSyncTimer)
     serverSyncTimer = setTimeout(async () => {
       try {
-        const state = get()
+        const s = get()
+        // Double check: if classes and routines are empty, and not an explicit user delete, abort
+        if (s.classes.length === 0 && s.routines.length === 0 && !isRecentExplicitDelete()) {
+          return
+        }
         await classesApi.update({
-          classes: state.classes,
-          routines: state.routines,
+          classes: s.classes,
+          routines: s.routines,
         })
       } catch (err) {
         // Warning only
@@ -417,6 +427,7 @@ export const useClassStore = create<ClassState>()(
       },
 
       deleteClass: (id) => {
+        markExplicitUserDelete()
         set((state) => ({ classes: state.classes.filter((c) => c.id !== id) }))
         flushPendingWrites()
         void flushVaultWrites()
@@ -452,6 +463,7 @@ export const useClassStore = create<ClassState>()(
       },
 
       deleteSection: (classId, sectionId) => {
+        markExplicitUserDelete()
         set((state) => ({
           classes: state.classes.map((c) =>
             c.id === classId

@@ -44,6 +44,7 @@ model School {
   folderName  String? @default("") @map("folder_name")
   classesData String? @default("[]") @map("classes_data")
   routinesData String? @default("[]") @map("routines_data")
+  feesData String? @default("{}") @map("fees_data")
   status      String   @default("active")
   plan        String   @default("basic")
   expiresAt   DateTime? @map("expires_at")

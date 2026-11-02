@@ -468,3 +468,70 @@ describe('super-admin credential update is atomic (F3)', () => {
     expect(staff).not.toBeNull()
   })
 })
+
+describe('register-institution hardening', () => {
+  const REG_SLUG = `harden-reg-${Date.now().toString(36)}`
+  const REG_ADMIN_EMAIL = 'harden-reg-admin@test.local'
+
+  afterAll(async () => {
+    await prisma.session.deleteMany({ where: { user: { email: REG_ADMIN_EMAIL } } })
+    await prisma.user.deleteMany({ where: { email: REG_ADMIN_EMAIL } })
+    await prisma.school.deleteMany({ where: { domain: REG_SLUG } })
+  })
+
+  it('ignores caller-supplied billing/status/cap fields — server assigns the trial', async () => {
+    const app = makeApp()
+
+    const res = await request(app).post('/api/auth/register-institution').send({
+      name: 'Harden Test School',
+      slug: REG_SLUG,
+      adminEmail: REG_ADMIN_EMAIL,
+      adminPassword: 'LongRegPass!12345',
+      // Escalation attempts — all must be ignored
+      status: 'active',
+      plan: 'enterprise',
+      package: 'Enterprise',
+      paymentStatus: 'paid',
+      billingCycle: 'yearly',
+      maxStudents: 999999,
+      maxTeachers: 999,
+    })
+    expect(res.status).toBe(201)
+
+    const school = await prisma.school.findUnique({ where: { domain: REG_SLUG } })
+    expect(school).not.toBeNull()
+    expect(school!.status).toBe('trial')
+    expect(school!.paymentStatus).toBe('unpaid')
+    expect(school!.billingCycle).toBe('monthly')
+    expect(school!.maxStudents).toBe(500)
+    expect(school!.maxTeachers).toBe(50)
+    // Plan is only the registrant's whitelisted cosmetic choice
+    expect(['basic', 'standard', 'premium', 'enterprise']).toContain(school!.plan)
+    expect(school!.expiresAt).not.toBeNull()
+  })
+
+  it('maps an unknown package choice to basic', async () => {
+    const app = makeApp()
+    const slug = `${REG_SLUG}-b`
+    const email = 'harden-reg-admin-b@test.local'
+
+    try {
+      const res = await request(app).post('/api/auth/register-institution').send({
+        name: 'Harden Test School B',
+        slug,
+        adminEmail: email,
+        adminPassword: 'LongRegPass!12345',
+        package: 'Platinum-Unlimited',
+      })
+      expect(res.status).toBe(201)
+
+      const school = await prisma.school.findUnique({ where: { domain: slug } })
+      expect(school).not.toBeNull()
+      expect(school!.plan).toBe('basic')
+    } finally {
+      await prisma.session.deleteMany({ where: { user: { email } } })
+      await prisma.user.deleteMany({ where: { email } })
+      await prisma.school.deleteMany({ where: { domain: slug } })
+    }
+  })
+})

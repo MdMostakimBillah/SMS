@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, generateDarkColors } from '@/store/classStore'
+import { useFeeStore } from '@/store/feeStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useThemeColors, applyThemeColors } from '@/hooks/useThemeColors'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -83,6 +84,7 @@ export default function AppLayout() {
           const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
           applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
           useClassStore.getState().syncFromServer(targetSlug).catch(() => {})
+          useFeeStore.getState().syncFromServer(targetSlug).catch(() => {})
         }
       }).catch(() => {})
       return
@@ -111,6 +113,7 @@ export default function AppLayout() {
       const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
       applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
       useClassStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
+      useFeeStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
     } else {
       const pathSlug =
         (typeof window !== 'undefined' ? window.location.pathname.match(/^\/i\/([^/]+)/)?.[1] : null) ||
@@ -134,6 +137,7 @@ export default function AppLayout() {
             const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
             applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
             useClassStore.getState().syncFromServer(pathSlug).catch(() => {})
+            useFeeStore.getState().syncFromServer(pathSlug).catch(() => {})
           }
         }).catch(() => {})
       }
