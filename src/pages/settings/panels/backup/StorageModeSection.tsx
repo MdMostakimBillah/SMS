@@ -1,14 +1,22 @@
 import React from 'react'
 import { Cloud, Laptop, Server, Lock, ShieldAlert } from 'lucide-react'
+import { canSwitchToCloud } from '@/lib/storageMode'
 
 interface Props {
   isBn: boolean
   mode: 'cloud' | 'local_computer' | 'local_server'
   isSuperAdminAccount?: boolean
   onModeChange: (mode: 'cloud' | 'local_computer' | 'local_server') => void
+  onCloudPermissionRequired?: () => void
 }
 
-export const StorageModeSection: React.FC<Props> = ({ isBn, mode, isSuperAdminAccount = false, onModeChange }) => {
+export const StorageModeSection: React.FC<Props> = ({
+  isBn,
+  mode,
+  isSuperAdminAccount = false,
+  onModeChange,
+  onCloudPermissionRequired,
+}) => {
   const cards = [
     {
       id: 'cloud' as const,
@@ -68,14 +76,18 @@ export const StorageModeSection: React.FC<Props> = ({ isBn, mode, isSuperAdminAc
         const Icon = c.icon
         const isSelected = mode === c.id
         const isLockedForSuperAdmin = isSuperAdminAccount && c.id !== 'cloud'
+        const isCloudLockedForUser = c.id === 'cloud' && mode !== 'cloud' && !canSwitchToCloud(mode)
 
         return (
           <div
             key={c.id}
             onClick={() => {
-              if (!isLockedForSuperAdmin) {
-                onModeChange(c.id)
+              if (isLockedForSuperAdmin) return
+              if (isCloudLockedForUser) {
+                onCloudPermissionRequired?.()
+                return
               }
+              onModeChange(c.id)
             }}
             className={`p-4 rounded-2xl border transition-all duration-200 flex flex-col justify-between select-none ${
               isLockedForSuperAdmin
@@ -103,6 +115,19 @@ export const StorageModeSection: React.FC<Props> = ({ isBn, mode, isSuperAdminAc
                     <Lock size={10} />
                     {isBn ? 'লকড' : 'LOCKED'}
                   </span>
+                ) : isCloudLockedForUser ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onCloudPermissionRequired?.()
+                    }}
+                    className="inline-flex items-center gap-1 text-[0.625rem] font-semibold text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/20 transition-colors cursor-pointer"
+                    title={isBn ? 'সুপার অ্যাডমিনের অনুমতি প্রয়োজন' : 'Super Admin permission required'}
+                  >
+                    <Lock size={10} />
+                    {isBn ? 'অনুমতি প্রয়োজন' : 'PERMISSION REQUIRED'}
+                  </button>
                 ) : isSelected ? (
                   <span className="text-[0.6875rem] font-bold text-[var(--brand)] tracking-wider uppercase">
                     {isBn ? 'বাছাইকৃত' : 'SELECTED'}

@@ -27,7 +27,7 @@ import {
   RefreshCw,
   Lock,
 } from 'lucide-react'
-import { isSuperAdminAccount } from '@/lib/storageMode'
+import { isSuperAdminAccount, canSwitchToCloud } from '@/lib/storageMode'
 import { sendTelegramBackupNow, downloadLocalBackup, readAndValidateBackupFile, restoreLocalStores } from '@/lib/backup'
 import { usePermission } from '@/hooks/usePermission'
 import ColorSettings from '@/components/shared/ColorSettings'
@@ -35,6 +35,7 @@ import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { resolveMediaUrl } from '@/lib/api'
+import { CloudPermissionModal } from '@/components/shared/CloudPermissionModal'
 
 interface InstitutionTabProps {
   institution: any
@@ -238,6 +239,7 @@ export default React.memo(function InstitutionTab({
   const { canEdit } = usePermission()
   const [backupLoading, setBackupLoading] = useState(false)
   const [backupNotice, setBackupNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [showCloudPermissionModal, setShowCloudPermissionModal] = useState(false)
   const restoreFileRef = useRef<HTMLInputElement>(null)
 
   const handleQuickTelegramBackup = async () => {
@@ -1040,24 +1042,45 @@ export default React.memo(function InstitutionTab({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {/* Option 1: Cloud */}
-                <div
-                  onClick={() => setInstForm((p: any) => ({ ...p, storageMode: 'cloud' }))}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    (!instForm.storageMode || instForm.storageMode === 'cloud')
-                      ? 'border-[var(--brand)] bg-[var(--brand-light)]'
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)]'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <Cloud size={16} className={(!instForm.storageMode || instForm.storageMode === 'cloud') ? 'text-[var(--brand)]' : 'text-[var(--text-secondary)]'} />
-                    <span className="text-xs font-semibold text-[var(--text-primary)]">
-                      {isBn ? 'এডুটেক ক্লাউড' : 'EduTech Cloud'}
-                    </span>
-                  </div>
-                  <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
-                    {isBn ? 'প্রোভাইডার ক্লাউড ডাটাবেজ ও ক্লাউডফ্লেয়ার R2 স্টোরেজ (ডিফল্ট)' : 'Provider managed PostgreSQL + Cloudflare R2'}
-                  </p>
-                </div>
+                {(() => {
+                  const isCloudLocked =
+                    (instForm.storageMode && instForm.storageMode !== 'cloud' && !canSwitchToCloud(instForm.storageMode)) ||
+                    (!instForm.storageMode && institution?.storageMode && institution.storageMode !== 'cloud' && !canSwitchToCloud(institution.storageMode))
+
+                  return (
+                    <div
+                      onClick={() => {
+                        if (isCloudLocked) {
+                          setShowCloudPermissionModal(true)
+                          return
+                        }
+                        setInstForm((p: any) => ({ ...p, storageMode: 'cloud' }))
+                      }}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                        (!instForm.storageMode || instForm.storageMode === 'cloud')
+                          ? 'border-[var(--brand)] bg-[var(--brand-light)]'
+                          : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border-strong)]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2">
+                          <Cloud size={16} className={(!instForm.storageMode || instForm.storageMode === 'cloud') ? 'text-[var(--brand)]' : 'text-[var(--text-secondary)]'} />
+                          <span className="text-xs font-semibold text-[var(--text-primary)]">
+                            {isBn ? 'এডুটেক ক্লাউড' : 'EduTech Cloud'}
+                          </span>
+                        </div>
+                        {isCloudLocked && (
+                          <span className="text-[0.625rem] text-amber-500 flex items-center gap-1 font-semibold">
+                            <Lock size={10} /> {isBn ? 'অনুমতি প্রয়োজন' : 'Permission Required'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[0.625rem] text-[var(--text-muted)] m-0">
+                        {isBn ? 'প্রোভাইডার ক্লাউড ডাটাবেজ ও ক্লাউডফ্লেয়ার R2 স্টোরেজ (ডিফল্ট)' : 'Provider managed PostgreSQL + Cloudflare R2'}
+                      </p>
+                    </div>
+                  )
+                })()}
 
                 {/* Option 2: Local Computer */}
                 <div
@@ -1217,6 +1240,13 @@ export default React.memo(function InstitutionTab({
           </div>
         </>
       )}
+
+      <CloudPermissionModal
+        isOpen={showCloudPermissionModal}
+        onClose={() => setShowCloudPermissionModal(false)}
+        isBn={isBn}
+        schoolName={instForm?.name || institution?.name}
+      />
     </div>
   )
 })

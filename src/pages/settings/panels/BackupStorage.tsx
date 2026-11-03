@@ -4,7 +4,7 @@ import { useAppStore } from '@/store/appStore'
 import { useClassStore } from '@/store/classStore'
 import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/lib/api'
-import { setLocalStorageMode } from '@/lib/storageMode'
+import { setLocalStorageMode, canSwitchToCloud } from '@/lib/storageMode'
 import { useVault } from '@/hooks/useVault'
 import { vaultConnectFolder, vaultSyncNow } from '@/lib/vault/vault'
 import { downloadLocalBackup, sendTelegramBackupNow } from '@/lib/backup'
@@ -14,6 +14,7 @@ import { ProviderCloudControlPanel } from './backup/ProviderCloudControlPanel'
 import { VPSServerControlPanel } from './backup/VPSServerControlPanel'
 import { TelegramBackupSection } from './backup/TelegramBackupSection'
 import { LocalBackupSection } from './backup/LocalBackupSection'
+import { CloudPermissionModal } from '@/components/shared/CloudPermissionModal'
 
 interface Props {
   isBn: boolean
@@ -30,6 +31,7 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
 
   const [savedNotice, setSavedNotice] = useState<string | null>(null)
   const [isBackingUp, setIsBackingUp] = useState(false)
+  const [showCloudPermissionModal, setShowCloudPermissionModal] = useState(false)
   const [lastBackupTime, setLastBackupTime] = useState<string>(() => {
     return localStorage.getItem('edutech_last_backup_time') || '10/24/2026, 9:54 PM'
   })
@@ -107,6 +109,10 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
 
   const handleModeChange = (mode: 'cloud' | 'local_computer' | 'local_server') => {
     if (isSuperAdminAccount && mode !== 'cloud') {
+      return
+    }
+    if (mode === 'cloud' && storageMode !== 'cloud' && !canSwitchToCloud(storageMode)) {
+      setShowCloudPermissionModal(true)
       return
     }
     updateSettings({
@@ -276,6 +282,7 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
         mode={storageMode}
         isSuperAdminAccount={isSuperAdminAccount}
         onModeChange={handleModeChange}
+        onCloudPermissionRequired={() => setShowCloudPermissionModal(true)}
       />
 
       {/* 2. Main Control Panel (Adapts dynamically based on active mode) */}
@@ -331,6 +338,13 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
       <LocalBackupSection
         isBn={isBn}
         schoolSlug={schoolSlug}
+        schoolName={schoolName}
+      />
+
+      <CloudPermissionModal
+        isOpen={showCloudPermissionModal}
+        onClose={() => setShowCloudPermissionModal(false)}
+        isBn={isBn}
         schoolName={schoolName}
       />
     </div>

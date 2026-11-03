@@ -17,6 +17,25 @@ export function isSuperAdminAccount(): boolean {
 }
 
 /**
+ * Returns true if the logged-in user has the 'super_admin' role (even if viewing a tenant school).
+ */
+export function isSuperAdminUser(): boolean {
+  if (typeof sessionStorage === 'undefined') return false
+  return sessionStorage.getItem('edutech_user_role') === 'super_admin'
+}
+
+/**
+ * Returns true if switching to Provider Cloud is permitted.
+ * - An institution already running in Provider Cloud ('cloud') is always allowed to remain in cloud.
+ * - If an institution is currently in 'local_computer' or 'local_server', switching to Provider Cloud
+ *   STRICTLY REQUIRES permission from the Super Admin. Only a Super Admin can approve/switch it.
+ */
+export function canSwitchToCloud(currentMode?: StorageMode | string | null): boolean {
+  if (currentMode === 'cloud') return true
+  return isSuperAdminUser()
+}
+
+/**
  * Returns true if the active institution is operating in Local Computer mode.
  * In this mode, server database mutations (PostgreSQL / Supabase) are completely stopped,
  * and the app relies exclusively on local computer storage (JSON / localStorage).

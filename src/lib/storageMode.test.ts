@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   isSuperAdminAccount,
+  isSuperAdminUser,
+  canSwitchToCloud,
   isLocalComputerMode,
   getActiveStorageMode,
   setLocalStorageMode,
@@ -74,5 +76,23 @@ describe('storageMode isolation and super admin restrictions', () => {
     setLocalStorageMode('local_server')
     expect(sessionStorage.getItem('edutech_storage_mode')).toBe('cloud')
     expect(getActiveStorageMode()).toBe('cloud')
+  })
+
+  it('verifies cloud switching permissions via canSwitchToCloud and isSuperAdminUser', () => {
+    // Regular institution admin cannot switch from local storage to cloud without super admin
+    sessionStorage.setItem('edutech_user_role', 'school_admin')
+    expect(isSuperAdminUser()).toBe(false)
+    expect(canSwitchToCloud('local_computer')).toBe(false)
+    expect(canSwitchToCloud('local_server')).toBe(false)
+    // But staying in cloud is always permitted
+    expect(canSwitchToCloud('cloud')).toBe(true)
+
+    // Super admin can switch any institution from local storage to cloud
+    sessionStorage.setItem('edutech_user_role', 'super_admin')
+    sessionStorage.setItem('edutech_viewing_id', 'inst-udvash')
+    expect(isSuperAdminUser()).toBe(true)
+    expect(canSwitchToCloud('local_computer')).toBe(true)
+    expect(canSwitchToCloud('local_server')).toBe(true)
+    expect(canSwitchToCloud('cloud')).toBe(true)
   })
 })

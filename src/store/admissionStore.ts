@@ -30,6 +30,7 @@ interface AdmissionState {
   addStudent: (student: StudentAdmission) => void
   bulkAddStudents: (students: StudentAdmission[]) => void
   updateStudent: (id: string, data: Partial<StudentAdmission>) => void
+  bulkUpdateStudents: (updates: Array<{ id: string; data: Partial<StudentAdmission> }>) => void
   deleteStudent: (id: string) => void
   approveStudent: (id: string, billingDate?: string) => void
   rejectStudent: (id: string) => void
@@ -134,6 +135,32 @@ export const useAdmissionStore = create<AdmissionState>()(
         if (!isLocalComputerMode()) {
           studentsApi.update(id, studentToPayload(data)).catch((err) => {
             console.error('[admissionStore] background update failed:', err)
+          })
+        }
+      },
+
+      bulkUpdateStudents: (updates) => {
+        if (!updates || updates.length === 0) return
+        const today = new Date().toISOString().split('T')[0]
+        const updateMap = new Map<string, Partial<StudentAdmission>>()
+        for (const u of updates) {
+          updateMap.set(u.id, u.data)
+        }
+        set((state) => ({
+          students: state.students.map((s) => {
+            const patch = updateMap.get(s.id)
+            return patch ? { ...s, ...patch, updatedAt: today } : s
+          }),
+        }))
+        flushPendingWrites()
+        void flushVaultWrites()
+        if (!isLocalComputerMode()) {
+          const payloadList = updates.map((u) => ({
+            id: u.id,
+            ...studentToPayload(u.data),
+          }))
+          studentsApi.bulkSave(payloadList).catch((err) => {
+            console.error('[admissionStore] background bulk update failed:', err)
           })
         }
       },

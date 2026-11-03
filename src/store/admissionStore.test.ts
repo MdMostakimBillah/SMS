@@ -68,4 +68,71 @@ describe('admissionStore', () => {
     useAdmissionStore.getState().updateStudent('STU-999', { name: 'Nope' })
     expect(useAdmissionStore.getState().students[0].name).toBe('Test')
   })
+
+  it('bulkUpdateStudents applies batch updates in a single pass', () => {
+    // Add 10 students
+    for (let i = 1; i <= 10; i++) {
+      useAdmissionStore.getState().addStudent({
+        id: `STU-${i}`,
+        name: `Student ${i}`,
+        className: 'Class 5',
+        section: 'A',
+      } as any)
+    }
+
+    // Bulk update 5 of them to Class 6, Section B
+    useAdmissionStore.getState().bulkUpdateStudents([
+      { id: 'STU-1', data: { className: 'Class 6', section: 'B' } },
+      { id: 'STU-3', data: { className: 'Class 6', section: 'B' } },
+      { id: 'STU-5', data: { className: 'Class 6', section: 'B' } },
+      { id: 'STU-999', data: { className: 'Class 6', section: 'B' } }, // Non-existent, should be ignored
+    ])
+
+    const students = useAdmissionStore.getState().students
+    const stu1 = students.find((s) => s.id === 'STU-1')
+    const stu2 = students.find((s) => s.id === 'STU-2')
+    const stu3 = students.find((s) => s.id === 'STU-3')
+    const stu5 = students.find((s) => s.id === 'STU-5')
+
+    expect(stu1?.className).toBe('Class 6')
+    expect(stu1?.section).toBe('B')
+    expect(stu1?.updatedAt).toBeTruthy()
+
+    expect(stu2?.className).toBe('Class 5')
+    expect(stu2?.section).toBe('A')
+
+    expect(stu3?.className).toBe('Class 6')
+    expect(stu5?.className).toBe('Class 6')
+  })
+
+  it('bulkUpdateStudents handles 1000+ students with high performance', () => {
+    // Populate 1200 students
+    const initialStudents = Array.from({ length: 1200 }, (_, idx) => ({
+      id: `STU-${idx + 1}`,
+      name: `Student ${idx + 1}`,
+      className: 'Class 8',
+      section: 'A',
+      gender: idx % 2 === 0 ? 'male' : 'female',
+      status: 'approved',
+    })) as any[]
+
+    useAdmissionStore.setState({ students: initialStudents })
+
+    const updates = initialStudents.map((s) => ({
+      id: s.id,
+      data: { section: 'C', status: 'enrolled' as const },
+    }))
+
+    const start = performance.now()
+    useAdmissionStore.getState().bulkUpdateStudents(updates)
+    const duration = performance.now() - start
+
+    // Bulk update of 1200 students in memory should take well under 100ms
+    expect(duration).toBeLessThan(100)
+
+    const updated = useAdmissionStore.getState().students
+    expect(updated).toHaveLength(1200)
+    expect(updated[0].section).toBe('C')
+    expect(updated[1199].section).toBe('C')
+  })
 })

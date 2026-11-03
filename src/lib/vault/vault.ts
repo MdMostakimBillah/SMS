@@ -59,7 +59,7 @@ export interface VaultStatus {
   lastSyncAt: number | null
 }
 
-const WRITE_DEBOUNCE_MS = 500
+const WRITE_DEBOUNCE_MS = 300
 const WATCH_INTERVAL_MS = 2000
 const OWN_WRITE_GRACE_MS = 4000
 
@@ -422,6 +422,17 @@ function setStudentPhoto(slug: string, studentId: string, dataUrl: string): bool
   return false
 }
 
+const exportedImageHashCache = new Map<string, string>()
+
+function getImageSignature(dataUrl: string): string {
+  const len = dataUrl.length
+  return `${len}:${dataUrl.slice(0, 32)}:${dataUrl.slice(-32)}`
+}
+
+export function clearExportedImageCache(): void {
+  exportedImageHashCache.clear()
+}
+
 async function exportStoreImages(slug: string, keyOrPath: string, json: string): Promise<void> {
   if (!handle) return
   try {
@@ -434,31 +445,43 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
       const inst = state.institution
       if (inst) {
         if (typeof inst.logo === 'string' && inst.logo.startsWith('data:')) {
-          const img = dataUrlToUint8Array(inst.logo)
-          if (img) {
-            const imgPath = `${slug}/images/logo.${img.ext}`
-            await writeBinaryFile(handle, imgPath, img.bytes)
-            knownVaultFiles.add(imgPath)
-            ownWriteAt.set(imgPath, Date.now())
+          const sigKey = `${slug}_logo`
+          const sig = getImageSignature(inst.logo)
+          if (exportedImageHashCache.get(sigKey) !== sig) {
+            const img = dataUrlToUint8Array(inst.logo)
+            if (img) {
+              const imgPath = `${slug}/images/logo.${img.ext}`
+              await writeBinaryFile(handle, imgPath, img.bytes)
+              knownVaultFiles.add(imgPath)
+              ownWriteAt.set(imgPath, Date.now())
 
-            const rootImgPath = `images/logo.${img.ext}`
-            await writeBinaryFile(handle, rootImgPath, img.bytes)
-            knownVaultFiles.add(rootImgPath)
-            ownWriteAt.set(rootImgPath, Date.now())
+              const rootImgPath = `images/logo.${img.ext}`
+              await writeBinaryFile(handle, rootImgPath, img.bytes)
+              knownVaultFiles.add(rootImgPath)
+              ownWriteAt.set(rootImgPath, Date.now())
+
+              exportedImageHashCache.set(sigKey, sig)
+            }
           }
         }
         if (typeof inst.banner === 'string' && inst.banner.startsWith('data:')) {
-          const img = dataUrlToUint8Array(inst.banner)
-          if (img) {
-            const imgPath = `${slug}/images/banner.${img.ext}`
-            await writeBinaryFile(handle, imgPath, img.bytes)
-            knownVaultFiles.add(imgPath)
-            ownWriteAt.set(imgPath, Date.now())
+          const sigKey = `${slug}_banner`
+          const sig = getImageSignature(inst.banner)
+          if (exportedImageHashCache.get(sigKey) !== sig) {
+            const img = dataUrlToUint8Array(inst.banner)
+            if (img) {
+              const imgPath = `${slug}/images/banner.${img.ext}`
+              await writeBinaryFile(handle, imgPath, img.bytes)
+              knownVaultFiles.add(imgPath)
+              ownWriteAt.set(imgPath, Date.now())
 
-            const rootImgPath = `images/banner.${img.ext}`
-            await writeBinaryFile(handle, rootImgPath, img.bytes)
-            knownVaultFiles.add(rootImgPath)
-            ownWriteAt.set(rootImgPath, Date.now())
+              const rootImgPath = `images/banner.${img.ext}`
+              await writeBinaryFile(handle, rootImgPath, img.bytes)
+              knownVaultFiles.add(rootImgPath)
+              ownWriteAt.set(rootImgPath, Date.now())
+
+              exportedImageHashCache.set(sigKey, sig)
+            }
           }
         }
       }
@@ -471,41 +494,53 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
         for (const t of teachers) {
           if (!t.id) continue
           if (typeof t.photo === 'string' && t.photo.startsWith('data:')) {
-            const img = dataUrlToUint8Array(t.photo)
-            if (img) {
-              const imgPath = `${slug}/images/teachers/${t.id}_photo.${img.ext}`
-              await writeBinaryFile(handle, imgPath, img.bytes)
-              knownVaultFiles.add(imgPath)
-              ownWriteAt.set(imgPath, Date.now())
+            const sigKey = `${slug}_tch_${t.id}_photo`
+            const sig = getImageSignature(t.photo)
+            if (exportedImageHashCache.get(sigKey) !== sig) {
+              const img = dataUrlToUint8Array(t.photo)
+              if (img) {
+                const imgPath = `${slug}/images/teachers/${t.id}_photo.${img.ext}`
+                await writeBinaryFile(handle, imgPath, img.bytes)
+                knownVaultFiles.add(imgPath)
+                ownWriteAt.set(imgPath, Date.now())
 
-              const directPath = `${slug}/images/teachers/${t.id}.${img.ext}`
-              await writeBinaryFile(handle, directPath, img.bytes)
-              knownVaultFiles.add(directPath)
-              ownWriteAt.set(directPath, Date.now())
+                const directPath = `${slug}/images/teachers/${t.id}.${img.ext}`
+                await writeBinaryFile(handle, directPath, img.bytes)
+                knownVaultFiles.add(directPath)
+                ownWriteAt.set(directPath, Date.now())
 
-              const rootImgPath = `images/teachers/${t.id}_photo.${img.ext}`
-              await writeBinaryFile(handle, rootImgPath, img.bytes)
-              knownVaultFiles.add(rootImgPath)
-              ownWriteAt.set(rootImgPath, Date.now())
+                const rootImgPath = `images/teachers/${t.id}_photo.${img.ext}`
+                await writeBinaryFile(handle, rootImgPath, img.bytes)
+                knownVaultFiles.add(rootImgPath)
+                ownWriteAt.set(rootImgPath, Date.now())
 
-              const rootDirectPath = `images/teachers/${t.id}.${img.ext}`
-              await writeBinaryFile(handle, rootDirectPath, img.bytes)
-              knownVaultFiles.add(rootDirectPath)
-              ownWriteAt.set(rootDirectPath, Date.now())
+                const rootDirectPath = `images/teachers/${t.id}.${img.ext}`
+                await writeBinaryFile(handle, rootDirectPath, img.bytes)
+                knownVaultFiles.add(rootDirectPath)
+                ownWriteAt.set(rootDirectPath, Date.now())
+
+                exportedImageHashCache.set(sigKey, sig)
+              }
             }
           }
           if (typeof t.signature === 'string' && t.signature.startsWith('data:')) {
-            const img = dataUrlToUint8Array(t.signature)
-            if (img) {
-              const imgPath = `${slug}/images/teachers/${t.id}_signature.${img.ext}`
-              await writeBinaryFile(handle, imgPath, img.bytes)
-              knownVaultFiles.add(imgPath)
-              ownWriteAt.set(imgPath, Date.now())
+            const sigKey = `${slug}_tch_${t.id}_sig`
+            const sig = getImageSignature(t.signature)
+            if (exportedImageHashCache.get(sigKey) !== sig) {
+              const img = dataUrlToUint8Array(t.signature)
+              if (img) {
+                const imgPath = `${slug}/images/teachers/${t.id}_signature.${img.ext}`
+                await writeBinaryFile(handle, imgPath, img.bytes)
+                knownVaultFiles.add(imgPath)
+                ownWriteAt.set(imgPath, Date.now())
 
-              const rootSigPath = `images/teachers/${t.id}_signature.${img.ext}`
-              await writeBinaryFile(handle, rootSigPath, img.bytes)
-              knownVaultFiles.add(rootSigPath)
-              ownWriteAt.set(rootSigPath, Date.now())
+                const rootSigPath = `images/teachers/${t.id}_signature.${img.ext}`
+                await writeBinaryFile(handle, rootSigPath, img.bytes)
+                knownVaultFiles.add(rootSigPath)
+                ownWriteAt.set(rootSigPath, Date.now())
+
+                exportedImageHashCache.set(sigKey, sig)
+              }
             }
           }
         }
@@ -519,17 +554,23 @@ async function exportStoreImages(slug: string, keyOrPath: string, json: string):
         for (const s of students) {
           if (!s.id) continue
           if (typeof s.photo === 'string' && s.photo.startsWith('data:')) {
-            const img = dataUrlToUint8Array(s.photo)
-            if (img) {
-              const imgPath = `${slug}/images/students/${s.id}_photo.${img.ext}`
-              await writeBinaryFile(handle, imgPath, img.bytes)
-              knownVaultFiles.add(imgPath)
-              ownWriteAt.set(imgPath, Date.now())
+            const sigKey = `${slug}_stu_${s.id}_photo`
+            const sig = getImageSignature(s.photo)
+            if (exportedImageHashCache.get(sigKey) !== sig) {
+              const img = dataUrlToUint8Array(s.photo)
+              if (img) {
+                const imgPath = `${slug}/images/students/${s.id}_photo.${img.ext}`
+                await writeBinaryFile(handle, imgPath, img.bytes)
+                knownVaultFiles.add(imgPath)
+                ownWriteAt.set(imgPath, Date.now())
 
-              const directPath = `${slug}/images/students/${s.id}.${img.ext}`
-              await writeBinaryFile(handle, directPath, img.bytes)
-              knownVaultFiles.add(directPath)
-              ownWriteAt.set(directPath, Date.now())
+                const directPath = `${slug}/images/students/${s.id}.${img.ext}`
+                await writeBinaryFile(handle, directPath, img.bytes)
+                knownVaultFiles.add(directPath)
+                ownWriteAt.set(directPath, Date.now())
+
+                exportedImageHashCache.set(sigKey, sig)
+              }
             }
           }
         }
@@ -974,18 +1015,6 @@ function handleStoreWrite(key: string, json: string): void {
   const path = keyToVaultPath(key)
   if (!path || fileContentCache.get(path) === json) return // no-op change
 
-  const isLocalComp =
-    (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('edutech_storage_mode') === 'local_computer') ||
-    (typeof localStorage !== 'undefined' && localStorage.getItem('edutech_storage_mode') === 'local_computer')
-
-  if (isLocalComp || key.includes('classes') || key.includes('teachers') || key.includes('admissions')) {
-    const existing = pendingWrites.get(path)
-    if (existing) clearTimeout(existing.timer)
-    pendingWrites.delete(path)
-    trackInFlight(writePath(path, json))
-    return
-  }
-
   const existing = pendingWrites.get(path)
   if (existing) clearTimeout(existing.timer)
   const timer = setTimeout(() => {
@@ -1348,6 +1377,7 @@ function stopWatcher(): void {
 
 async function activate(savedHandle: VfsDirectoryHandle, seedIfEmpty: boolean): Promise<void> {
   handle = savedHandle
+  exportedImageHashCache.clear()
   registerVaultHooks({ onWrite: handleStoreWrite, onRemove: (k) => void handleStoreRemove(k) })
   const applied = await hydrateFromVault()
   if (seedIfEmpty && applied === 0) await seedVaultFromStorage()
@@ -1445,6 +1475,7 @@ export async function vaultReconnect(): Promise<void> {
 /** Force-write pending changes and re-export current storage into the folder. */
 export async function vaultSyncNow(): Promise<void> {
   await flushVaultWrites()
+  exportedImageHashCache.clear()
   await seedVaultFromStorage()
 }
 
@@ -1457,6 +1488,7 @@ export async function vaultDisconnect(): Promise<void> {
   fileMtimeCache.clear()
   ownWriteAt.clear()
   knownVaultFiles.clear()
+  exportedImageHashCache.clear()
   registerVaultHooks({ onWrite: () => undefined, onRemove: () => undefined })
   await clearVaultHandle()
   emit({ connected: false, needsReconnect: false, folderName: null, lastSyncAt: null })

@@ -94,7 +94,7 @@ export default function BulkUpdatePage() {
   const navigate = useNavigate()
   const nav = useNavPath()
   const { isMobile } = useWindowSize()
-  const updateStudent = useAdmissionStore((s) => s.updateStudent)
+  const bulkUpdateStudents = useAdmissionStore((s) => s.bulkUpdateStudents)
   const allStudents = useAdmissionStore((s) => s.students)
   const classes = useClassStore((s) => s.classes)
   const institution = useClassStore((s) => s.institution)
@@ -202,28 +202,27 @@ export default function BulkUpdatePage() {
 
   const applyChanges = useCallback(() => {
     const ids = selected.length > 0 ? selected : filtered.map((s) => s.id)
-    let count = 0
+    const updates: Array<{ id: string; data: any }> = []
     ids.forEach((id) => {
       if (op === 'photo') {
         if (photoMap[id]) {
-          updateStudent(id, { photo: photoMap[id] })
-          count++
+          updates.push({ id, data: { photo: photoMap[id] } })
         }
       } else {
         const val = rowEdits[id]
         if (val) {
-          updateStudent(id, { [op]: val })
-          count++
+          updates.push({ id, data: { [op]: val } })
         }
       }
     })
-    if (count === 0) {
+    if (updates.length === 0) {
       alert(isBn ? 'কোনো পরিবর্তন নেই' : 'No changes to apply')
       return
     }
+    bulkUpdateStudents(updates)
     setApplied(true)
     setTimeout(() => setApplied(false), 3000)
-  }, [selected, filtered, op, photoMap, rowEdits, updateStudent, isBn])
+  }, [selected, filtered, op, photoMap, rowEdits, bulkUpdateStudents, isBn])
 
   const clearAll = useCallback(() => {
     setRowEdits({})
