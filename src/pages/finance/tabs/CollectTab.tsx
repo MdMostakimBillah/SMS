@@ -620,56 +620,73 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const buildReceiptHTML = useCallback((copyLabel: string, data: ReceiptData): string => {
     const b = getPDFBranding()
     const logoHtml = pdfLogoHTML(b, 50)
-    const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:350px;height:350px;opacity:0.05;pointer-events:none;object-fit:contain" />` : ''
+    const watermarkHtml = b.logo ? `<img src="${b.logo}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:350px;height:350px;opacity:0.04;pointer-events:none;object-fit:contain" />` : ''
     const feeRows = data.fees.map((f, i) => {
-      const period = f.month ? `<span style="font-size:8px;color:#555;font-weight:400">(${f.month}-${f.year})</span>` : (f.year ? `<span style="font-size:8px;color:#555;font-weight:400">(${f.year})</span>` : '')
+      const period = f.month ? `<span style="font-size:9.5px;color:#64748b;font-weight:500"> (${f.month}-${f.year})</span>` : (f.year ? `<span style="font-size:9.5px;color:#64748b;font-weight:500"> (${f.year})</span>` : '')
       let details = ''
       if (f.waived && f.waived > 0) {
         const reason = bn ? f.waiverReasonBn || f.waiverReason : f.waiverReason
-        details += `<div style="font-size:7px;color:#7c3aed;font-weight:500">${bn ? 'ছাড়' : 'Waiver'}: ${f.waived.toLocaleString()}${reason ? ` (${reason})` : ''}</div>`
+        details += `<div style="font-size:9px;color:#7c3aed;font-weight:600;margin-top:2px">${bn ? 'ছাড়' : 'Waiver'}: ৳${f.waived.toLocaleString()}${reason ? ` (${reason})` : ''}</div>`
       }
       if (f.discount && f.discount > 0) {
-        details += `<div style="font-size:7px;color:#d97706;font-weight:500">${bn ? 'ডিসকাউন্ট' : 'Discount'}: ${f.discount.toLocaleString()}${f.remarks ? ` - ${f.remarks}` : ''}</div>`
+        details += `<div style="font-size:9px;color:#d97706;font-weight:600;margin-top:2px">${bn ? 'ডিসকাউন্ট' : 'Discount'}: ৳${f.discount.toLocaleString()}${f.remarks ? ` - ${f.remarks}` : ''}</div>`
       } else if (f.remarks) {
-        details += `<div style="font-size:9px;color:#555;font-weight:500">${bn ? 'মন্তব্য' : 'Note'}: ${f.remarks}</div>`
+        details += `<div style="font-size:9.5px;color:#475569;font-weight:500;margin-top:2px">${bn ? 'মন্তব্য' : 'Note'}: ${f.remarks}</div>`
       }
-      return `<tr><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:center">${i + 1}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:left"><div style="font-weight:600">${bn ? f.nameBn : f.name} ${period}</div>${details}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600">${f.amount.toLocaleString()}</td></tr>`
+      return `<tr>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:center;font-weight:600;color:#64748b">${i + 1}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:left"><div style="font-weight:600;font-size:11.5px;color:#0f172a">${bn ? f.nameBn : f.name}${period}</div>${details}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:700;font-size:11.5px;color:#0f172a">৳${f.amount.toLocaleString()}</td>
+      </tr>`
     }).join('')
-    return `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;padding:0 10px;display:flex;flex-direction:column;position:relative">
+    return `<div style="font-family:'Inter','Noto Sans Bengali','Hind Siliguri',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11.5px;color:#0f172a;width:100%;height:100%;padding:0 12px;display:flex;flex-direction:column;position:relative;-webkit-font-smoothing:antialiased">
       ${watermarkHtml}
-      <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:14px;border-bottom:2.5px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
         ${logoHtml}
         <div style="flex:1;text-align:center">
-          <div style="font-size:15px;font-weight:700;color:${b.brandColor}">${b.schoolName}</div>
-          <div style="font-size:9px;color:#444;margin-top:2px">${b.address}</div>
+          <div style="font-size:17px;font-weight:800;color:${b.brandColor};letter-spacing:-0.01em;line-height:1.2">${b.schoolName}</div>
+          <div style="font-size:10px;color:#475569;margin-top:3px;font-weight:500">${b.address}</div>
         </div>
       </div>
-      <div style="text-align:center;font-size:13px;font-weight:700;color:${b.brandColor};background:${b.brandColor}11;border:1px solid ${b.brandColor}33;border-radius:4px;padding:6px;margin-bottom:12px">${bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [${copyLabel}]</div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'সেশন' : 'Session'}:</b> ${data.session}</span><span><b>${bn ? 'ফি সময়কাল' : 'Fee Period'}:</b> ${data.feePeriod}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:10px"><span><b>${bn ? 'তারিখ' : 'Date'}:</b> ${data.date}</span><span><b>${bn ? 'রসিদ নং' : 'Receipt No'}:</b> ${data.receiptNo}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'নাম' : 'Name'}:</b> ${bn ? data.studentNameBn : data.studentName}</span><span><b>${bn ? 'ভর্তি নং' : 'Adm No'}:</b> ${data.admissionNo}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:10px"><span><b>${bn ? 'শ্রেণি' : 'Class'}:</b> ${data.class}</span><span><b>${bn ? 'সেকশন' : 'Section'}:</b> ${data.section}</span></div>
-      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:10px">
-        <thead><tr><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600;width:30px">S.No</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:left;font-weight:600">${bn ? 'ফি শিরোনাম' : 'Fee Head'}</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:right;font-weight:600">${bn ? 'পরিমাণ' : 'Amount'}</th></tr></thead>
+      <div style="text-align:center;font-size:12px;font-weight:700;color:${b.brandColor};background:${b.brandColor}12;border:1px solid ${b.brandColor}33;border-radius:6px;padding:6px 12px;margin-bottom:12px;letter-spacing:0.5px">${bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [${copyLabel}]</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:11px;margin-bottom:10px;background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0">
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'সেশন' : 'Session'}:</span> <span style="font-weight:600;color:#0f172a">${data.session}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'ফি সময়কাল' : 'Fee Period'}:</span> <span style="font-weight:600;color:#0f172a">${data.feePeriod}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'তারিখ' : 'Date'}:</span> <span style="font-weight:600;color:#0f172a">${data.date}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'রসিদ নং' : 'Receipt No'}:</span> <span style="font-weight:700;color:${b.brandColor}">${data.receiptNo}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'নাম' : 'Name'}:</span> <span style="font-weight:700;color:#0f172a">${bn ? data.studentNameBn : data.studentName}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'ভর্তি নং' : 'Adm No'}:</span> <span style="font-weight:600;color:#0f172a">${data.admissionNo}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'শ্রেণি' : 'Class'}:</span> <span style="font-weight:600;color:#0f172a">${data.class}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'সেকশন' : 'Section'}:</span> <span style="font-weight:600;color:#0f172a">${data.section}</span></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+        <thead><tr>
+          <th style="background:${b.brandColor};color:#fff;padding:6px 10px;text-align:center;font-weight:700;font-size:10.5px;letter-spacing:0.5px;width:36px;border-top-left-radius:4px">#</th>
+          <th style="background:${b.brandColor};color:#fff;padding:6px 10px;text-align:left;font-weight:700;font-size:10.5px;letter-spacing:0.5px">${bn ? 'ফি বিবরণ' : 'Fee Particulars'}</th>
+          <th style="background:${b.brandColor};color:#fff;padding:6px 10px;text-align:right;font-weight:700;font-size:10.5px;letter-spacing:0.5px;width:100px;border-top-right-radius:4px">${bn ? 'পরিমাণ' : 'Amount'}</th>
+        </tr></thead>
         <tbody>${feeRows}</tbody>
       </table>
       <div style="flex:1"></div>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
-        <table style="width:220px;border-collapse:collapse;font-size:10px">
-          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333">${bn ? 'মোট' : 'Total'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:${b.brandColor}">${data.totalAmount.toLocaleString()}</td></tr>
-          ${data.discount > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#d97706">${data.discount.toLocaleString()}</td></tr>` : ''}
-          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333;border-top:2px solid ${b.brandColor}">${bn ? 'পরিশোধিত' : 'Paid'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#16a34a;border-top:2px solid ${b.brandColor}">${data.totalReceived.toLocaleString()}</td></tr>
-          ${data.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333;border-top:2px solid #dc2626">${bn ? 'বকেয়' : 'Balance'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#dc2626;border-top:2px solid #dc2626">${data.totalDue.toLocaleString()}</td></tr>` : ''}
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+        <table style="width:240px;border-collapse:collapse;font-size:11px">
+          <tr><td style="padding:4px 8px;text-align:right;font-weight:600;color:#475569">${bn ? 'মোট' : 'Total'}:</td><td style="padding:4px 8px;text-align:right;font-weight:700;font-size:12px;color:${b.brandColor}">৳${data.totalAmount.toLocaleString()}</td></tr>
+          ${data.discount > 0 ? `<tr><td style="padding:4px 8px;text-align:right;font-weight:600;color:#d97706">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:4px 8px;text-align:right;font-weight:700;font-size:12px;color:#d97706">-৳${data.discount.toLocaleString()}</td></tr>` : ''}
+          <tr><td style="padding:5px 8px;text-align:right;font-weight:700;color:#15803d;border-top:2px solid ${b.brandColor}">${bn ? 'পরিশোধিত' : 'Paid'}:</td><td style="padding:5px 8px;text-align:right;font-weight:800;font-size:13px;color:#15803d;border-top:2px solid ${b.brandColor}">৳${data.totalReceived.toLocaleString()}</td></tr>
+          ${data.totalDue > 0 ? `<tr><td style="padding:5px 8px;text-align:right;font-weight:700;color:#b91c1c;border-top:2px solid #b91c1c">${bn ? 'বকেয়' : 'Balance'}:</td><td style="padding:5px 8px;text-align:right;font-weight:800;font-size:13px;color:#b91c1c;border-top:2px solid #b91c1c">৳${data.totalDue.toLocaleString()}</td></tr>` : ''}
         </table>
       </div>
-      <div style="font-size:11px;color:#333;margin-bottom:5px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(data.totalReceived)} Only.</div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:#333;margin-bottom:5px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${data.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${data.totalDue.toLocaleString()}</span></div>
-      ${data.comment ? `<div style="font-size:11px;color:#333;margin-bottom:5px"><b>${bn ? 'মন্তব্য' : 'Comment'}:</b> ${data.comment}</div>` : ''}
-      <div style="display:flex;justify-content:space-between;margin-top:25px;padding-top:10px">
-        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
-        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
+      <div style="font-size:11px;color:#334155;margin-bottom:5px;line-height:1.4"><span style="font-weight:600;color:#64748b">${bn ? 'কথায়' : 'In words'}:</span> <span style="font-weight:600;color:#0f172a">${numberToWords(data.totalReceived)} Taka Only.</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#334155;margin-bottom:6px">
+        <span><span style="font-weight:600;color:#64748b">${bn ? 'পদ্ধতি' : 'Mode'}:</span> <span style="font-weight:600;text-transform:uppercase;color:#0f172a">${data.paymentMethod}</span></span>
+        ${data.totalDue > 0 ? `<span style="font-weight:700;color:#b91c1c">${bn ? 'বকেয়া' : 'BALANCE'}: ৳${data.totalDue.toLocaleString()}</span>` : ''}
       </div>
-      <div style="text-align:center;font-size:8px;color:#555;margin-top:10px;padding-top:8px;border-top:1px dashed #ccc">${bn ? 'একবার ফি পরিশোধ হলে ফেরত দেওয়া হবে না' : 'Fee Once paid will not be refunded'}</div>
+      ${data.comment ? `<div style="font-size:10.5px;color:#475569;margin-bottom:6px"><span style="font-weight:600;color:#64748b">${bn ? 'মন্তব্য' : 'Comment'}:</span> ${data.comment}</div>` : ''}
+      <div style="display:flex;justify-content:space-between;margin-top:28px;padding-top:10px">
+        <div style="text-align:center;width:130px"><div style="border-top:1px solid #64748b;padding-top:4px;font-size:10px;font-weight:600;color:#475569">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
+        <div style="text-align:center;width:130px"><div style="border-top:1px solid #64748b;padding-top:4px;font-size:10px;font-weight:600;color:#475569">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:#64748b;margin-top:10px;padding-top:6px;border-top:1px dashed #cbd5e1;font-weight:500">${bn ? 'একবার ফি পরিশোধ হলে ফেরত দেওয়া হবে না' : 'Fee once paid is not refundable'}</div>
     </div>`
   }, [bn, numberToWords])
 
@@ -758,8 +775,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
     const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
     const brandColor = getPDFBranding().brandColor
-    const css = `@page{size:A4 landscape;margin:5mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.container{display:flex;gap:16px;height:100%}.copy{flex:1;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:16px}th{background:${brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:5mm!important}}`
-    const bodyHTML = `<div class=container style=width:100%><div class=copy>${leftCopy}</div><div class=copy>${rightCopy}</div></div>`
+    const css = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap');@page{size:A4 landscape;margin:6mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter','Noto Sans Bengali','Hind Siliguri',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11.5px;color:#0f172a;background:#fff;padding:4mm;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}.container{display:flex;gap:20px;height:100%}.copy{flex:1;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #cbd5e1;padding-right:20px}th{background:${brandColor};color:#fff;padding:6px 10px;text-align:center;font-weight:700}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:4mm!important}}`
+    const bodyHTML = `<div class="container" style="width:100%"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
     openPrintWindow(rn, bodyHTML, { css })
   }, [selectedStudent, institution, structures, fSession, bn, buildReceiptHTML, storeProducts, storeCategoryMap])
 
@@ -768,8 +785,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const leftCopy = buildReceiptHTML(bn ? 'শিক্ষার্থী কপি' : 'Student Copy', receiptData)
     const rightCopy = buildReceiptHTML(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy', receiptData)
     const brandColor = getPDFBranding().brandColor
-    const css = `@page{size:A4 landscape;margin:5mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.container{display:flex;gap:16px;height:100%}.copy{flex:1;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:16px}th{background:${brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:5mm!important}}`
-    const bodyHTML = `<div class=container style=width:100%><div class=copy>${leftCopy}</div><div class=copy>${rightCopy}</div></div>`
+    const css = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap');@page{size:A4 landscape;margin:6mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter','Noto Sans Bengali','Hind Siliguri',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11.5px;color:#0f172a;background:#fff;padding:4mm;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}.container{display:flex;gap:20px;height:100%}.copy{flex:1;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #cbd5e1;padding-right:20px}th{background:${brandColor};color:#fff;padding:6px 10px;text-align:center;font-weight:700}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:4mm!important}}`
+    const bodyHTML = `<div class="container" style="width:100%"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
     openPrintWindow(receiptData.receiptNo, bodyHTML, { css })
   }, [receiptData, bn, buildReceiptHTML])
 
@@ -1031,19 +1048,19 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             <div className="border border-[var(--border)] rounded-xl overflow-hidden max-h-[360px] overflow-y-auto bg-[var(--bg-primary)]">
               <table className="w-full text-xs table-fixed">
                 <thead>
-                  <tr className="bg-[var(--bg-secondary)]">
-                    <th className="text-center py-2 px-3 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
+                  <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                    <th className="text-center py-2.5 px-3 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
                       <ModernCheckbox checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
                         onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); const newChecked = !ac; next[r.key] = { ...e, checked: newChecked, receive: newChecked ? Math.max(0, r.receivable - e.discount) : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
                         color="brand" size="xs" />
                     </th>
-                    <th className="text-center px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[28%]">{bn ? 'বিবরণ' : 'Particular'}</th>
-                    <th className="text-center px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                    <th className="text-center px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'ছাড়' : 'Waiver'}</th>
-                    <th className="text-center px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'ডিসকাউন্ট' : 'Discount'}</th>
-                    <th className="text-center px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
-                    <th className="text-center px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
-                    <th className="text-center px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
+                    <th className="text-left px-4 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[28%]">{bn ? 'বিবরণ' : 'Particular'}</th>
+                    <th className="text-center px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                    <th className="text-center px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'ছাড়' : 'Waiver'}</th>
+                    <th className="text-center px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'ডিসকাউন্ট' : 'Discount'}</th>
+                    <th className="text-center px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
+                    <th className="text-center px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
+                    <th className="text-center px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1059,18 +1076,20 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             })
                           }} color="brand" size="xs" />
                         </td>
-                        <td className="text-center px-3 py-2.5">
-                          <span className="font-semibold text-[var(--text-primary)] text-xs">{bn ? row.feeNameBn : row.feeName}</span>
-                          {row.isOnetime && (
-                            <span className={`ml-1 inline-block text-[9px] font-bold uppercase px-1 py-px rounded ${
-                              row.structureId.startsWith('FEE-OTHER-')
-                                ? 'bg-[var(--purple-light)] text-[var(--purple)]'
-                                : 'bg-[var(--amber-light)] text-[var(--amber)]'
-                            }`}>
-                              {row.structureId.startsWith('FEE-OTHER-') ? (bn ? 'অন্যান্য আয়' : 'Others Income') : 'One-time'}
-                            </span>
-                          )}
-                          <div className="text-[10px] text-[var(--text-muted)]">{bn ? row.dateRangeBn : row.dateRange}</div>
+                        <td className="text-left px-4 py-2.5">
+                          <div className="font-semibold text-[var(--text-primary)] text-xs flex items-center gap-1.5 flex-wrap">
+                            <span>{bn ? row.feeNameBn : row.feeName}</span>
+                            {row.isOnetime && (
+                              <span className={`inline-block text-[0.625rem] font-bold uppercase px-1.5 py-0.5 rounded ${
+                                row.structureId.startsWith('FEE-OTHER-')
+                                  ? 'bg-[var(--purple-light)] text-[var(--purple)]'
+                                  : 'bg-[var(--amber-light)] text-[var(--amber)]'
+                              }`}>
+                                {row.structureId.startsWith('FEE-OTHER-') ? (bn ? 'অন্যান্য আয়' : 'Others Income') : 'One-time'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">{bn ? row.dateRangeBn : row.dateRange}</div>
                         </td>
                         <td className="text-center px-3 py-2.5"><span className="font-semibold text-[var(--text-primary)] text-xs">{fmt(row.amount)}</span></td>
                         <td className="text-center px-3 py-2.5">
@@ -1180,107 +1199,107 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   </button>
                 )}
               </div>
-              <div className="p-4" style={{ fontSize: '10px' }}>
+              <div className="p-4 text-xs">
                 {/* Two-column receipt */}
-                <div className="flex gap-5">
+                <div className="flex gap-6">
                   {/* Student Copy */}
-                  <div className="flex-1 border-r border-dashed border-[var(--border)] pr-5">
-                    <div className="flex items-center gap-3 pb-2 mb-2 border-b-2 border-[var(--brand)]">
+                  <div className="flex-1 border-r border-dashed border-[var(--border)] pr-6">
+                    <div className="flex items-center gap-3 pb-2.5 mb-2.5 border-b-2 border-[var(--brand)]">
                        {institution?.logo ? <img src={institution.logo} alt={institution?.name || 'School logo'} className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
                       <div className="text-center flex-1">
-                        <div className="text-[13px] font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
-                        <div className="text-[9px] text-[var(--text-muted)]">{institution?.address}</div>
+                        <div className="text-sm font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
+                        <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">{institution?.address}</div>
                       </div>
                     </div>
-                    <div className="text-center text-[11px] font-bold text-[var(--brand)] bg-[var(--brand)]/5 border border-[var(--brand)]/20 rounded px-2 py-1 mb-2">
+                    <div className="text-center text-xs font-bold text-[var(--brand)] bg-[var(--brand-light)] border border-[var(--brand)]/20 rounded-md px-2.5 py-1 mb-2.5">
                       {bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [{bn ? 'শিক্ষার্থী কপি' : 'Student Copy'}]
                     </div>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[9px] mb-2">
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span> {receiptData.session}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'তারিখ:' : 'Date:'}</span> {receiptData.date}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'নাম:' : 'Name:'}</span> {bn ? receiptData.studentNameBn : receiptData.studentName}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'রসিদ নং:' : 'Receipt No:'}</span> {receiptData.receiptNo}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span> {receiptData.class}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেকশন:' : 'Section:'}</span> {receiptData.section}</div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[0.6875rem] mb-2.5 bg-[var(--bg-secondary)]/50 p-2.5 rounded-lg border border-[var(--border)]">
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span> <span className="text-[var(--text-primary)] font-medium">{receiptData.session}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'তারিখ:' : 'Date:'}</span> <span className="text-[var(--text-primary)] font-medium">{receiptData.date}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'নাম:' : 'Name:'}</span> <span className="text-[var(--text-primary)] font-bold">{bn ? receiptData.studentNameBn : receiptData.studentName}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'রসিদ নং:' : 'Receipt No:'}</span> <span className="text-[var(--brand)] font-bold">{receiptData.receiptNo}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span> <span className="text-[var(--text-primary)] font-medium">{receiptData.class}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেকশন:' : 'Section:'}</span> <span className="text-[var(--text-primary)] font-medium">{receiptData.section}</span></div>
                     </div>
-                    <table className="w-full border-collapse mb-2 text-[9px]">
+                    <table className="w-full border-collapse mb-2.5 text-xs">
                       <thead><tr className="bg-[var(--brand)] text-white">
-                        <th className="px-2 py-1 text-center font-semibold">S.No</th>
-                        <th className="px-2 py-1 text-left font-semibold">{bn ? 'ফি শিরোনাম' : 'Fee Head'}</th>
-                        <th className="px-2 py-1 text-right font-semibold">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                        <th className="px-2.5 py-1.5 text-center font-semibold text-[0.6875rem] uppercase tracking-wider rounded-tl-md">#</th>
+                        <th className="px-2.5 py-1.5 text-left font-semibold text-[0.6875rem] uppercase tracking-wider">{bn ? 'ফি বিবরণ' : 'Fee Particulars'}</th>
+                        <th className="px-2.5 py-1.5 text-right font-semibold text-[0.6875rem] uppercase tracking-wider rounded-tr-md">{bn ? 'পরিমাণ' : 'Amount'}</th>
                       </tr></thead>
                       <tbody>
                         {receiptData.fees.map((f, i) => (
                           <tr key={i} className="border-b border-[var(--border)]">
-                            <td className="px-2 py-1 text-center">{i + 1}</td>
-                            <td className="px-2 py-1 text-left">
-                              <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.waived && f.waived > 0 && <div className="text-[8px] text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
-                              {f.discount && f.discount > 0 && <div className="text-[8px] text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
+                            <td className="px-2.5 py-1.5 text-center text-[var(--text-muted)] text-[0.6875rem]">{i + 1}</td>
+                            <td className="px-2.5 py-1.5 text-left">
+                              <div className="font-semibold text-[var(--text-primary)]">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[0.6875rem] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
+                              {f.waived && f.waived > 0 && <div className="text-[0.625rem] text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
+                              {f.discount && f.discount > 0 && <div className="text-[0.625rem] text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
                             </td>
-                            <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
+                            <td className="px-2.5 py-1.5 text-right font-semibold text-[var(--text-primary)]">{fmt(f.amount)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    <div className="flex justify-end text-[9px]">
-                      <div className="space-y-0.5">
+                    <div className="flex justify-end text-[0.6875rem]">
+                      <div className="space-y-1 min-w-[10rem]">
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
-                        {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
-                        <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
-                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Balance:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
-                        {receiptData.comment && <div className="flex justify-between gap-4 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মন্তব্য:' : 'Comment:'}</span><span className="text-[var(--text-secondary)]">{receiptData.comment}</span></div>}
+                        {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">-{fmt(receiptData.discount)}</span></div>}
+                        <div className="flex justify-between gap-4 border-t border-[var(--brand)]/30 pt-1"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
+                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-1"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Balance:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
+                        {receiptData.comment && <div className="flex justify-between gap-4 pt-1"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মন্তব্য:' : 'Comment:'}</span><span className="text-[var(--text-secondary)]">{receiptData.comment}</span></div>}
                       </div>
                     </div>
                   </div>
 
                   {/* Institute Copy */}
-                  <div className="flex-1 pl-5">
-                    <div className="flex items-center gap-3 pb-2 mb-2 border-b-2 border-[var(--brand)]">
+                  <div className="flex-1 pl-6">
+                    <div className="flex items-center gap-3 pb-2.5 mb-2.5 border-b-2 border-[var(--brand)]">
                        {institution?.logo ? <img src={institution.logo} alt={institution?.name || 'School logo'} className="w-10 h-10 rounded-lg object-cover" /> : <div className="w-10 h-10 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white text-[14px] font-bold">ET</div>}
                       <div className="text-center flex-1">
-                        <div className="text-[13px] font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
-                        <div className="text-[9px] text-[var(--text-muted)]">{institution?.address}</div>
+                        <div className="text-sm font-bold text-[var(--brand)]">{institution?.name || 'EduTech'}</div>
+                        <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">{institution?.address}</div>
                       </div>
                     </div>
-                    <div className="text-center text-[11px] font-bold text-[var(--brand)] bg-[var(--brand)]/5 border border-[var(--brand)]/20 rounded px-2 py-1 mb-2">
+                    <div className="text-center text-xs font-bold text-[var(--brand)] bg-[var(--brand-light)] border border-[var(--brand)]/20 rounded-md px-2.5 py-1 mb-2.5">
                       {bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [{bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy'}]
                     </div>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[9px] mb-2">
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span> {receiptData.session}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'তারিখ:' : 'Date:'}</span> {receiptData.date}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'নাম:' : 'Name:'}</span> {bn ? receiptData.studentNameBn : receiptData.studentName}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'রসিদ নং:' : 'Receipt No:'}</span> {receiptData.receiptNo}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span> {receiptData.class}</div>
-                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেকশন:' : 'Section:'}</span> {receiptData.section}</div>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[0.6875rem] mb-2.5 bg-[var(--bg-secondary)]/50 p-2.5 rounded-lg border border-[var(--border)]">
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span> <span className="text-[var(--text-primary)] font-medium">{receiptData.session}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'তারিখ:' : 'Date:'}</span> <span className="text-[var(--text-primary)] font-medium">{receiptData.date}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'নাম:' : 'Name:'}</span> <span className="text-[var(--text-primary)] font-bold">{bn ? receiptData.studentNameBn : receiptData.studentName}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'রসিদ নং:' : 'Receipt No:'}</span> <span className="text-[var(--brand)] font-bold">{receiptData.receiptNo}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span> <span className="text-[var(--text-primary)] font-medium">{receiptData.class}</span></div>
+                      <div><span className="font-semibold text-[var(--text-muted)]">{bn ? 'সেকশন:' : 'Section:'}</span> <span className="text-[var(--text-primary)] font-medium">{receiptData.section}</span></div>
                     </div>
-                    <table className="w-full border-collapse mb-2 text-[9px]">
+                    <table className="w-full border-collapse mb-2.5 text-xs">
                       <thead><tr className="bg-[var(--brand)] text-white">
-                        <th className="px-2 py-1 text-center font-semibold">S.No</th>
-                        <th className="px-2 py-1 text-left font-semibold">{bn ? 'ফি শিরোনাম' : 'Fee Head'}</th>
-                        <th className="px-2 py-1 text-right font-semibold">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                        <th className="px-2.5 py-1.5 text-center font-semibold text-[0.6875rem] uppercase tracking-wider rounded-tl-md">#</th>
+                        <th className="px-2.5 py-1.5 text-left font-semibold text-[0.6875rem] uppercase tracking-wider">{bn ? 'ফি বিবরণ' : 'Fee Particulars'}</th>
+                        <th className="px-2.5 py-1.5 text-right font-semibold text-[0.6875rem] uppercase tracking-wider rounded-tr-md">{bn ? 'পরিমাণ' : 'Amount'}</th>
                       </tr></thead>
                       <tbody>
                         {receiptData.fees.map((f, i) => (
                           <tr key={i} className="border-b border-[var(--border)]">
-                            <td className="px-2 py-1 text-center">{i + 1}</td>
-                            <td className="px-2 py-1 text-left">
-                              <div className="font-semibold">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[8px] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
-                              {f.waived && f.waived > 0 && <div className="text-[8px] text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
-                              {f.discount && f.discount > 0 && <div className="text-[8px] text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
+                            <td className="px-2.5 py-1.5 text-center text-[var(--text-muted)] text-[0.6875rem]">{i + 1}</td>
+                            <td className="px-2.5 py-1.5 text-left">
+                              <div className="font-semibold text-[var(--text-primary)]">{bn ? f.nameBn : f.name} {(f.month || f.year) && <span className="font-normal text-[0.6875rem] text-[var(--text-muted)]">({f.month ? `${f.month}-${f.year}` : f.year})</span>}</div>
+                              {f.waived && f.waived > 0 && <div className="text-[0.625rem] text-[var(--purple)] font-medium">{bn ? `ছাড়: ${fmt(f.waived)}${f.waiverReasonBn ? ` (${f.waiverReasonBn})` : ''}` : `Waiver: ${fmt(f.waived)}${f.waiverReason ? ` (${f.waiverReason})` : ''}`}</div>}
+                              {f.discount && f.discount > 0 && <div className="text-[0.625rem] text-[var(--amber)] font-medium">{bn ? `ডিসকাউন্ট: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}` : `Discount: ${fmt(f.discount)}${f.remarks ? ` - ${f.remarks}` : ''}`}</div>}
                             </td>
-                            <td className="px-2 py-1 text-right font-semibold">{fmt(f.amount)}</td>
+                            <td className="px-2.5 py-1.5 text-right font-semibold text-[var(--text-primary)]">{fmt(f.amount)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                    <div className="flex justify-end text-[9px]">
-                      <div className="space-y-0.5">
+                    <div className="flex justify-end text-[0.6875rem]">
+                      <div className="space-y-1 min-w-[10rem]">
                         <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মোট:' : 'Total:'}</span><span className="font-bold text-[var(--brand)]">{fmt(receiptData.totalAmount)}</span></div>
-                        {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">{fmt(receiptData.discount)}</span></div>}
-                        <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
-                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
-                        {receiptData.comment && <div className="flex justify-between gap-4 pt-0.5"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মন্তব্য:' : 'Comment:'}</span><span className="text-[var(--text-secondary)]">{receiptData.comment}</span></div>}
+                        {receiptData.discount > 0 && <div className="flex justify-between gap-4"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'ছাড়:' : 'Discount:'}</span><span className="font-bold text-[var(--amber)]">-{fmt(receiptData.discount)}</span></div>}
+                        <div className="flex justify-between gap-4 border-t border-[var(--brand)]/30 pt-1"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'পরিশোধিত:' : 'Paid:'}</span><span className="font-bold text-[var(--green)]">{fmt(receiptData.totalReceived)}</span></div>
+                        {receiptData.totalDue > 0 && <div className="flex justify-between gap-4 border-t border-red-400 pt-1"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'বকেয়:' : 'Due:'}</span><span className="font-bold text-red-500">{fmt(receiptData.totalDue)}</span></div>}
+                        {receiptData.comment && <div className="flex justify-between gap-4 pt-1"><span className="text-[var(--text-muted)] font-semibold">{bn ? 'মন্তব্য:' : 'Comment:'}</span><span className="text-[var(--text-secondary)]">{receiptData.comment}</span></div>}
                       </div>
                     </div>
                   </div>
@@ -1558,15 +1577,15 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     <col style={{ width: '16%' }} />
                   </colgroup>
                   <thead>
-                    <tr className="bg-[var(--bg-secondary)] sticky top-0 z-10">
-                      <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">#</th>
-                      <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ফি' : 'Fee'}</th>
-                      <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'তারিখ' : 'Date'}</th>
-                      <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                      <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
-                      <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                      <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'মন্তব্য' : 'Comment'}</th>
-                      <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold"></th>
+                    <tr className="bg-[var(--bg-secondary)] sticky top-0 z-10 border-b border-[var(--border)]">
+                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">#</th>
+                      <th className="text-left px-3 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ফি' : 'Fee'}</th>
+                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
+                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
+                      <th className="text-right px-3 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'মন্তব্য' : 'Comment'}</th>
+                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider"></th>
                     </tr>
                   </thead>
                   <tbody>

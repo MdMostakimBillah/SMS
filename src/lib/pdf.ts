@@ -6,6 +6,7 @@ export function getBrandColor(): string {
 }
 
 function buildPrintHTML(title: string, bodyHTML: string, css?: string): string {
+  const fontImport = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap');`
   const printRules = `
     @media print {
       body { print-color-adjust: exact; -webkit-print-color-adjust: exact; color-adjust: exact; padding: 10mm; }
@@ -13,13 +14,14 @@ function buildPrintHTML(title: string, bodyHTML: string, css?: string): string {
     }
   `
   const defaultCss = `
+    ${fontImport}
     @page { size: A4 portrait; margin: 0; }
     @page :first { margin-top: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; background: #fff; font-size: 12px; padding: 10mm; }
+    body { font-family: 'Inter', 'Noto Sans Bengali', 'Hind Siliguri', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; background: #fff; font-size: 12px; padding: 10mm; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
   `
-  const finalCss = css ? `${css}\n${printRules}` : `${defaultCss}\n${printRules}`
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><style>${finalCss}</style></head><body>${bodyHTML}</body></html>`
+  const finalCss = css ? `${fontImport}\n${css}\n${printRules}` : `${defaultCss}\n${printRules}`
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>${finalCss}</style></head><body>${bodyHTML}</body></html>`
 }
 
 function createPrintIframe(html: string, delay: number): void {

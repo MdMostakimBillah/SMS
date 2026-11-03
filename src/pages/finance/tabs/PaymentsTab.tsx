@@ -435,45 +435,58 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       paymentMethod: batch.method,
       comment: batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ') || undefined,
     }
-    const copyHtml = (copyLabel: string) => `<div style="font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;width:100%;height:100%;padding:0 10px;display:flex;flex-direction:column;position:relative">
+    const copyHtml = (copyLabel: string) => `<div style="font-family:'Inter','Noto Sans Bengali','Hind Siliguri',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11.5px;color:#0f172a;width:100%;height:100%;padding:0 12px;display:flex;flex-direction:column;position:relative;-webkit-font-smoothing:antialiased">
       ${watermarkHtml}
-      <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:14px;border-bottom:2.5px solid ${b.brandColor};padding-bottom:10px;margin-bottom:12px">
         ${logoHtml}
         <div style="flex:1;text-align:center">
-          <div style="font-size:15px;font-weight:700;color:${b.brandColor}">${b.schoolName}</div>
-          <div style="font-size:9px;color:#444;margin-top:2px">${b.address}</div>
+          <div style="font-size:17px;font-weight:800;color:${b.brandColor};letter-spacing:-0.01em;line-height:1.2">${b.schoolName}</div>
+          <div style="font-size:10px;color:#475569;margin-top:3px;font-weight:500">${b.address}</div>
         </div>
       </div>
-      <div style="text-align:center;font-size:13px;font-weight:700;color:${b.brandColor};background:${b.brandColor}11;border:1px solid ${b.brandColor}33;border-radius:4px;padding:6px;margin-bottom:12px">${bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [${copyLabel}]</div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'সেশন' : 'Session'}:</b> ${fSession}</span><span><b>${bn ? 'ফি সময়কাল' : 'Fee Period'}:</b> ${receiptData.feePeriod}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:10px"><span><b>${bn ? 'তারিখ' : 'Date'}:</b> ${receiptData.date}</span><span><b>${bn ? 'রসিদ নং' : 'Receipt No'}:</b> ${receiptData.receiptNo}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'নাম' : 'Name'}:</b> ${bn ? receiptData.studentNameBn : receiptData.studentName}</span><span><b>${bn ? 'ভর্তি নং' : 'Adm No'}:</b> ${receiptData.admissionNo}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span><b>${bn ? 'শ্রেণি' : 'Class'}:</b> ${receiptData.class}</span><span><b>${bn ? 'সেকশন' : 'Section'}:</b> ${receiptData.section}</span></div>
-      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:10px">
-        <thead><tr><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600;width:30px">S.No</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:left;font-weight:600">${bn ? 'ফি শিরোনাম' : 'Fee Head'}</th><th style="background:${b.brandColor};color:#fff;padding:5px 8px;text-align:right;font-weight:600">${bn ? 'পরিমাণ' : 'Amount'}</th></tr></thead>
+      <div style="text-align:center;font-size:12px;font-weight:700;color:${b.brandColor};background:${b.brandColor}12;border:1px solid ${b.brandColor}33;border-radius:6px;padding:6px 12px;margin-bottom:12px;letter-spacing:0.5px">${bn ? 'ফি রসিদ/ইনভয়েস' : 'Fee Receipt/Invoice'}: [${copyLabel}]</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:11px;margin-bottom:10px;background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0">
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'সেশন' : 'Session'}:</span> <span style="font-weight:600;color:#0f172a">${fSession}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'ফি সময়কাল' : 'Fee Period'}:</span> <span style="font-weight:600;color:#0f172a">${receiptData.feePeriod}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'তারিখ' : 'Date'}:</span> <span style="font-weight:600;color:#0f172a">${receiptData.date}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'রসিদ নং' : 'Receipt No'}:</span> <span style="font-weight:700;color:${b.brandColor}">${receiptData.receiptNo}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'নাম' : 'Name'}:</span> <span style="font-weight:700;color:#0f172a">${bn ? receiptData.studentNameBn : receiptData.studentName}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'ভর্তি নং' : 'Adm No'}:</span> <span style="font-weight:600;color:#0f172a">${receiptData.admissionNo}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'শ্রেণি' : 'Class'}:</span> <span style="font-weight:600;color:#0f172a">${receiptData.class}</span></div>
+        <div><span style="font-weight:600;color:#64748b">${bn ? 'সেকশন' : 'Section'}:</span> <span style="font-weight:600;color:#0f172a">${receiptData.section}</span></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+        <thead><tr>
+          <th style="background:${b.brandColor};color:#fff;padding:6px 10px;text-align:center;font-weight:700;font-size:10.5px;letter-spacing:0.5px;width:36px;border-top-left-radius:4px">#</th>
+          <th style="background:${b.brandColor};color:#fff;padding:6px 10px;text-align:left;font-weight:700;font-size:10.5px;letter-spacing:0.5px">${bn ? 'ফি বিবরণ' : 'Fee Particulars'}</th>
+          <th style="background:${b.brandColor};color:#fff;padding:6px 10px;text-align:right;font-weight:700;font-size:10.5px;letter-spacing:0.5px;width:100px;border-top-right-radius:4px">${bn ? 'পরিমাণ' : 'Amount'}</th>
+        </tr></thead>
         <tbody>${feeRows}</tbody>
       </table>
       <div style="flex:1"></div>
-      <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
-        <table style="width:220px;border-collapse:collapse;font-size:10px">
-          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333">${bn ? 'মোট' : 'Total'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:${b.brandColor}">${receiptData.totalAmount.toLocaleString()}</td></tr>
-          ${receiptData.discount > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#d97706">${receiptData.discount.toLocaleString()}</td></tr>` : ''}
-          <tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333;border-top:2px solid ${b.brandColor}">${bn ? 'পরিশোধিত' : 'Paid'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#16a34a;border-top:2px solid ${b.brandColor}">${receiptData.totalReceived.toLocaleString()}</td></tr>
-          ${receiptData.totalDue > 0 ? `<tr><td style="padding:3px 8px;text-align:right;font-weight:600;color:#333;border-top:2px solid #dc2626">${bn ? 'বকেয়' : 'Balance'}:</td><td style="padding:3px 8px;text-align:right;font-weight:700;color:#dc2626;border-top:2px solid #dc2626">${receiptData.totalDue.toLocaleString()}</td></tr>` : ''}
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+        <table style="width:240px;border-collapse:collapse;font-size:11px">
+          <tr><td style="padding:4px 8px;text-align:right;font-weight:600;color:#475569">${bn ? 'মোট' : 'Total'}:</td><td style="padding:4px 8px;text-align:right;font-weight:700;font-size:12px;color:${b.brandColor}">৳${receiptData.totalAmount.toLocaleString()}</td></tr>
+          ${receiptData.discount > 0 ? `<tr><td style="padding:4px 8px;text-align:right;font-weight:600;color:#d97706">${bn ? 'ছাড়' : 'Discount'}:</td><td style="padding:4px 8px;text-align:right;font-weight:700;font-size:12px;color:#d97706">-৳${receiptData.discount.toLocaleString()}</td></tr>` : ''}
+          <tr><td style="padding:5px 8px;text-align:right;font-weight:700;color:#15803d;border-top:2px solid ${b.brandColor}">${bn ? 'পরিশোধিত' : 'Paid'}:</td><td style="padding:5px 8px;text-align:right;font-weight:800;font-size:13px;color:#15803d;border-top:2px solid ${b.brandColor}">৳${receiptData.totalReceived.toLocaleString()}</td></tr>
+          ${receiptData.totalDue > 0 ? `<tr><td style="padding:5px 8px;text-align:right;font-weight:700;color:#b91c1c;border-top:2px solid #b91c1c">${bn ? 'বকেয়' : 'Balance'}:</td><td style="padding:5px 8px;text-align:right;font-weight:800;font-size:13px;color:#b91c1c;border-top:2px solid #b91c1c">৳${receiptData.totalDue.toLocaleString()}</td></tr>` : ''}
         </table>
       </div>
-      <div style="font-size:11px;color:#333;margin-bottom:5px"><b>${bn ? 'অর্থের পরিমাণ' : 'Amt in words'}:</b> ${numberToWords(receiptData.totalReceived)} Only.</div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:#333;margin-bottom:5px"><span><b>${bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Mode'}:</b> ${receiptData.paymentMethod.toUpperCase()}</span><span><b>BALANCE:</b> ${receiptData.totalDue.toLocaleString()}</span></div>
-      ${receiptData.comment ? `<div style="font-size:11px;color:#333;margin-bottom:5px"><b>${bn ? 'মন্তব্য' : 'Comment'}:</b> ${receiptData.comment}</div>` : ''}
-      <div style="display:flex;justify-content:space-between;margin-top:25px;padding-top:10px">
-        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
-        <div style="text-align:center;width:120px"><div style="border-top:1px solid #333;padding-top:4px;font-size:9px;color:#333">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
+      <div style="font-size:11px;color:#334155;margin-bottom:5px;line-height:1.4"><span style="font-weight:600;color:#64748b">${bn ? 'কথায়' : 'In words'}:</span> <span style="font-weight:600;color:#0f172a">${numberToWords(receiptData.totalReceived)} Taka Only.</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#334155;margin-bottom:6px">
+        <span><span style="font-weight:600;color:#64748b">${bn ? 'পদ্ধতি' : 'Mode'}:</span> <span style="font-weight:600;text-transform:uppercase;color:#0f172a">${receiptData.paymentMethod}</span></span>
+        ${receiptData.totalDue > 0 ? `<span style="font-weight:700;color:#b91c1c">${bn ? 'বকেয়া' : 'BALANCE'}: ৳${receiptData.totalDue.toLocaleString()}</span>` : ''}
       </div>
-      <div style="text-align:center;font-size:8px;color:#555;margin-top:10px;padding-top:8px;border-top:1px dashed #ccc">${bn ? 'একবার ফি পরিশোধ হলে ফেরত দেওয়া হবে না' : 'Fee Once paid will not be refunded'}</div>
+      ${receiptData.comment ? `<div style="font-size:10.5px;color:#475569;margin-bottom:6px"><span style="font-weight:600;color:#64748b">${bn ? 'মন্তব্য' : 'Comment'}:</span> ${receiptData.comment}</div>` : ''}
+      <div style="display:flex;justify-content:space-between;margin-top:28px;padding-top:10px">
+        <div style="text-align:center;width:130px"><div style="border-top:1px solid #64748b;padding-top:4px;font-size:10px;font-weight:600;color:#475569">${bn ? 'ফি আদায়কারী' : 'Fee Collected by'}</div></div>
+        <div style="text-align:center;width:130px"><div style="border-top:1px solid #64748b;padding-top:4px;font-size:10px;font-weight:600;color:#475569">${bn ? 'অভিভাবক' : 'Parent/Guardian'}</div></div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:#64748b;margin-top:10px;padding-top:6px;border-top:1px dashed #cbd5e1;font-weight:500">${bn ? 'একবার ফি পরিশোধ হলে ফেরত দেওয়া হবে না' : 'Fee once paid is not refundable'}</div>
     </div>`
     const leftCopy = copyHtml(bn ? 'শিক্ষার্থী কপি' : 'Student Copy')
     const rightCopy = copyHtml(bn ? 'প্রতিষ্ঠান কপি' : 'Institute Copy')
-    const css = `@page{size:A4 landscape;margin:5mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:11px;color:#1a1a1a;background:#fff;padding:5mm}.container{display:flex;gap:16px;height:100%}.copy{flex:1;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #ccc;padding-right:16px}th{background:${b.brandColor};color:#fff;padding:5px 8px;text-align:center;font-weight:600}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:5mm!important}}`
+    const css = `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap');@page{size:A4 landscape;margin:6mm}html,body{height:100%;margin:0;padding:0}*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter','Noto Sans Bengali','Hind Siliguri',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:11.5px;color:#0f172a;background:#fff;padding:4mm;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}.container{display:flex;gap:20px;height:100%}.copy{flex:1;height:100%;display:flex;flex-direction:column}.copy:first-child{border-right:2px dashed #cbd5e1;padding-right:20px}th{background:${b.brandColor};color:#fff;padding:6px 10px;text-align:center;font-weight:700}@media print{html,body{height:100%!important;margin:0!important;padding:0!important}body{print-color-adjust:exact;-webkit-print-color-adjust:exact;color-adjust:exact;padding:4mm!important}}`
     const bodyHTML = `<div class="container" style="width:100%"><div class="copy">${leftCopy}</div><div class="copy">${rightCopy}</div></div>`
     openPrintWindow(batch.receiptNo, bodyHTML, { css })
   }, [bn, structureMap, numberToWords, fSession, storeProducts, storeCategoryMap])
@@ -672,19 +685,19 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-[var(--bg-secondary)]">
-                  <th className="text-center px-2 py-2 w-[36px]">
+                <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+                  <th className="text-center px-2 py-2.5 w-[36px]">
                     <ModernCheckbox checked={batches.length > 0 && selectedRows.size === batches.length} onChange={() => toggleAllRows()} color="brand" size="xs" />
                   </th>
-                  <th className="text-center px-2 py-2 w-[36px] text-[10px] uppercase text-[var(--text-muted)] font-bold">#</th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
-                  <th className="text-center px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'তারিখ' : 'Date'}</th>
-                  <th className="text-right px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                  <th className="text-right px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'ছাড়' : 'Disc.'}</th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                  <th className="text-left px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'সংগ্রাহক' : 'Receipted By'}</th>
-                  <th className="text-right px-3 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'কাজ' : 'Actions'}</th>
+                  <th className="text-center px-2 py-2.5 w-[36px] text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">#</th>
+                  <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                  <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
+                  <th className="text-center px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
+                  <th className="text-right px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                  <th className="text-right px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ছাড়' : 'Disc.'}</th>
+                  <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                  <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'সংগ্রাহক' : 'Receipted By'}</th>
+                  <th className="text-right px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'কাজ' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>

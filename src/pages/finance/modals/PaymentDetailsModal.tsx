@@ -321,16 +321,16 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                 <table className="w-full text-[0.75rem]">
                   <thead>
                     <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)] sticky top-0 z-10">
-                      <th className="text-center px-2.5 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">#</th>
-                      <th className="text-left px-3 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
-                      <th className="text-center px-2.5 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">{bn ? 'তারিখ' : 'Date'}</th>
-                      <th className="text-left px-3 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">{bn ? 'ফি নাম' : 'Fee Item'}</th>
-                      <th className="text-center px-2.5 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">{bn ? 'সময়কাল' : 'Period'}</th>
-                      <th className="text-right px-3 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                      <th className="text-right px-2.5 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">{bn ? 'ছাড়' : 'Disc.'}</th>
-                      <th className="text-center px-2.5 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                      <th className="text-left px-3 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">{bn ? 'সংগ্রাহক' : 'Collected By'}</th>
-                      <th className="text-center px-2 py-2 text-[0.625rem] uppercase font-bold text-[var(--text-muted)]">{bn ? 'রসিদ' : 'Print'}</th>
+                      <th className="text-center px-2.5 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">#</th>
+                      <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
+                      <th className="text-center px-2.5 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
+                      <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">{bn ? 'ফি নাম' : 'Fee Item'}</th>
+                      <th className="text-center px-2.5 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">{bn ? 'সময়কাল' : 'Period'}</th>
+                      <th className="text-right px-3 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                      <th className="text-right px-2.5 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">{bn ? 'ছাড়' : 'Disc.'}</th>
+                      <th className="text-center px-2.5 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                      <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">{bn ? 'সংগ্রাহক' : 'Collected By'}</th>
+                      <th className="text-center px-2 py-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-secondary)] tracking-wider">{bn ? 'রসিদ' : 'Print'}</th>
                     </tr>
                   </thead>
                   <tbody>
