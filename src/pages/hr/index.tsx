@@ -164,12 +164,13 @@ export default function HRPage() {
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
   const stripRef = useRef<HTMLDivElement>(null)
-  // Start hidden; revealed once measured (only shows when tabs actually overflow).
+  const [stripAtStart, setStripAtStart] = useState(true)
   const [stripAtEnd, setStripAtEnd] = useState(true)
 
   const handleStripScroll = useCallback(() => {
     const el = stripRef.current
     if (!el) return
+    setStripAtStart(el.scrollLeft <= 4)
     // 4px tolerance to avoid flicker from sub-pixel rounding.
     setStripAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4)
   }, [])
@@ -992,7 +993,7 @@ export default function HRPage() {
   // (tabs are permission-filtered, so the set can shrink/grow per role).
   useEffect(() => {
     handleStripScroll()
-  }, [handleStripScroll, tabs.length])
+  }, [handleStripScroll, tabs.length, activeTab])
 
   const quickStats = [
     {
@@ -1056,7 +1057,7 @@ export default function HRPage() {
         <div
           ref={stripRef}
           onScroll={handleStripScroll}
-          className="relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] overflow-x-auto scrollbar-hide"
+          className="relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] overflow-x-auto scrollbar-hide w-full"
         >
           {/* Sliding indicator */}
           <div
@@ -1076,7 +1077,7 @@ export default function HRPage() {
                 setPage(1)
                 setPerPage(20)
               }}
-              className={`relative z-10 flex items-center justify-center gap-[0.375rem] shrink-0 py-2 px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${
+              className={`relative z-10 flex-1 min-w-max flex items-center justify-center gap-[0.375rem] py-2 px-3 sm:px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${
                 activeTab === tab.id ? 'text-white' : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               style={{ background: 'transparent' }}
@@ -1086,11 +1087,18 @@ export default function HRPage() {
             </button>
           ))}
         </div>
+        {/* Left-edge fade: hint that tabs are scrollable backwards */}
+        {!stripAtStart && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[var(--bg-tertiary)] to-transparent z-20"
+          />
+        )}
         {/* Right-edge fade: hint that more tabs are scrollable into view */}
         {!stripAtEnd && (
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[var(--bg-tertiary)] to-transparent"
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[var(--bg-tertiary)] to-transparent z-20"
           />
         )}
       </div>
