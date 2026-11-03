@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback } from 'react'
 import React from 'react'
-import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Filter } from 'lucide-react'
+import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Filter, Printer } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
-import { useSessionStudents } from '@/store/admissionStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import type { FeePayment } from '@/store/feeStore'
@@ -15,6 +15,7 @@ import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { inputCls } from '@/lib/styles'
+import { PaymentDetailsModal } from '../modals/PaymentDetailsModal'
 
 interface PaymentBatch {
   batchKey: string
@@ -44,7 +45,7 @@ function stripCatPrefix(note: string): string {
 export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const bn = useBn()
   const { canDelete, canExport } = usePermission()
-  const students = useSessionStudents()
+  const allAdmissionStudents = useAdmissionStore((s) => s.students)
   const { institution } = useClassStore()
   const { payments, structures, deletePayment } = useFeeStore()
   const storeProducts = useStoreStore((s) => s.products)
@@ -52,21 +53,47 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const [search, setSearch] = useState('')
   const [fMethod, setFMethod] = useState('')
   const [fCollector, setFCollector] = useState('')
+  const [fSession, setFSession] = useState('')
   const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0])
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0])
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'>('date-desc')
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
-  const fSession = institution?.currentSession || ''
+  const [selectedBatchForDetails, setSelectedBatchForDetails] = useState<PaymentBatch | null>(null)
 
   const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
+  const allAvailableSessions = useMemo(() => {
+    const set = new Set<string>()
+    if (institution?.currentSession) set.add(institution.currentSession)
+    for (const s of (institution?.sessions || [])) {
+      if (s) set.add(s)
+    }
+    for (const st of structures) {
+      if (st.academicYear) set.add(st.academicYear)
+    }
+    for (const std of allAdmissionStudents) {
+      if (std.academicYear) set.add(std.academicYear)
+    }
+    return Array.from(set).sort().reverse()
+  }, [institution, structures, allAdmissionStudents])
+
   const studentMap = useMemo(() => {
-    const map: Record<string, { nameEn: string; nameBn: string; class: string; section: string }> = {}
-    students.forEach((s) => { map[s.id] = { nameEn: s.nameEn, nameBn: s.nameBn, class: s.class, section: s.section || '' } })
+    const map: Record<string, { nameEn: string; nameBn: string; class: string; section: string; roll?: string; photo?: string; academicYear?: string }> = {}
+    allAdmissionStudents.forEach((s) => {
+      map[s.id] = {
+        nameEn: s.nameEn,
+        nameBn: s.nameBn,
+        class: s.class,
+        section: s.section || '',
+        roll: s.roll || '',
+        photo: s.photo || '',
+        academicYear: s.academicYear || '',
+      }
+    })
     return map
-  }, [students])
+  }, [allAdmissionStudents])
 
   const storeCategoryMap = useMemo(() => {
     const map: Record<string, { name: string; nameBn: string }> = {}
@@ -84,6 +111,13 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
 
   const batches = useMemo(() => {
     let list = [...payments].sort((a, b) => b.paidAt.localeCompare(a.paidAt) || b.createdAt.localeCompare(a.createdAt))
+    if (fSession) {
+      list = list.filter((p) => {
+        const sn = studentMap[p.studentId]
+        const st = p.feeStructureId ? structures.find((s) => s.id === p.feeStructureId) : null
+        return (sn?.academicYear === fSession) || (st?.academicYear === fSession) || (!sn?.academicYear && !st?.academicYear)
+      })
+    }
     if (fMethod) list = list.filter((p) => p.method === fMethod)
     if (fCollector) list = list.filter((p) => p.collectedBy === fCollector)
     if (dateFrom) list = list.filter((p) => p.paidAt >= dateFrom)
@@ -129,12 +163,15 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
       return b.paidAt.localeCompare(a.paidAt)
     })
     return result
-  }, [payments, search, fMethod, fCollector, dateFrom, dateTo, sortBy, studentMap, structureMap])
+  }, [payments, search, fMethod, fCollector, fSession, dateFrom, dateTo, sortBy, studentMap, structureMap, structures])
 
   const totalCollected = useMemo(() => batches.reduce((sum, b) => sum + b.totalAmount, 0), [batches])
   const totalDiscount = useMemo(() => batches.reduce((sum, b) => sum + b.totalDiscount, 0), [batches])
   const todayStr = new Date().toISOString().split('T')[0]
   const monthStart = (() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] })()
+  const currentYear = new Date().getFullYear()
+  const yearStart = `${currentYear}-01-01`
+  const yearEnd = `${currentYear}-12-31`
   const todayCollected = useMemo(() => batches.filter((b) => b.paidAt.startsWith(todayStr)).reduce((sum, b) => sum + b.totalAmount, 0), [batches, todayStr])
 
   const fmt = (n: number) => n.toLocaleString()
@@ -147,18 +184,6 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     const set = new Set(payments.map((p) => p.collectedBy).filter(Boolean))
     return Array.from(set).sort()
   }, [payments])
-
-  const isTodayRange = dateFrom === todayStr && dateTo === todayStr
-
-  const toggleDateRange = useCallback(() => {
-    if (isTodayRange) {
-      setDateFrom(monthStart)
-      setDateTo(todayStr)
-    } else {
-      setDateFrom(todayStr)
-      setDateTo(todayStr)
-    }
-  }, [isTodayRange, monthStart, todayStr])
 
   const toggleRowSelection = useCallback((key: string) => {
     setSelectedRows((prev) => {
@@ -505,15 +530,64 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
             <input type="text" placeholder={bn ? 'পেমেন্ট খুঁজুন...' : 'Search payments...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${inputCls} w-full pl-9 h-8 text-xs`} />
           </div>
+          <select
+            value={fSession}
+            onChange={(e) => setFSession(e.target.value)}
+            className={`${inputCls} h-8 text-xs px-2 min-w-[110px]`}
+          >
+            <option value="">{bn ? 'সব শিক্ষাবর্ষ' : 'All Sessions'}</option>
+            {allAvailableSessions.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
           <div className="flex items-center gap-1.5">
             <Calendar size={12} className="text-[var(--text-muted)]" />
             <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
             <span className="text-[var(--text-muted)] text-xs">—</span>
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
           </div>
-          <button onClick={toggleDateRange} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all bg-[var(--brand-light)] text-[var(--brand)] border-[var(--brand)]/20 hover:bg-[var(--brand)]/20">
-            {isTodayRange ? (bn ? 'এই মাস' : 'This Month') : (bn ? 'আজ' : 'Today')}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => { setDateFrom(todayStr); setDateTo(todayStr) }}
+              className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${
+                dateFrom === todayStr && dateTo === todayStr
+                  ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
+                  : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'
+              }`}
+            >
+              {bn ? 'আজ' : 'Today'}
+            </button>
+            <button
+              onClick={() => { setDateFrom(monthStart); setDateTo(todayStr) }}
+              className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${
+                dateFrom === monthStart && dateTo === todayStr
+                  ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
+                  : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'
+              }`}
+            >
+              {bn ? 'এই মাস' : 'This Month'}
+            </button>
+            <button
+              onClick={() => { setDateFrom(yearStart); setDateTo(yearEnd) }}
+              className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${
+                dateFrom === yearStart && dateTo === yearEnd
+                  ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
+                  : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'
+              }`}
+            >
+              {bn ? 'বাৎসরিক (এই বছর)' : 'Yearly (This Year)'}
+            </button>
+            <button
+              onClick={() => { setDateFrom(''); setDateTo('') }}
+              className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${
+                !dateFrom && !dateTo
+                  ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
+                  : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'
+              }`}
+            >
+              {bn ? 'সব সময়' : 'All Time'}
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
@@ -638,8 +712,11 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
                     <td className="px-3 py-2 text-[11px] text-[var(--text-secondary)]">{b.collectedBy || '—'}</td>
                     <td className="px-3 py-2 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => generateReceipt(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'রসিদ দেখুন' : 'View Receipt'}>
+                        <button onClick={() => setSelectedBatchForDetails(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}>
                           <Eye size={12} />
+                        </button>
+                        <button onClick={() => generateReceipt(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--green-light)] text-[var(--green)] border-0 cursor-pointer hover:bg-[var(--green)]/20 transition-colors" title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}>
+                          <Printer size={12} />
                         </button>
                         {canDelete('finance.fees.payments') && (
                           <button onClick={() => handleDeleteBatch(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)]/20 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
@@ -683,6 +760,25 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
           previewRenderer={pdfPreviewRenderer}
           onClose={() => setShowPdfModal(false)}
           onDownload={handlePdfDownload}
+        />
+      )}
+
+      {/* Payment Details Modal */}
+      {selectedBatchForDetails && (
+        <PaymentDetailsModal
+          student={{
+            id: selectedBatchForDetails.studentId,
+            nameEn: selectedBatchForDetails.studentName,
+            nameBn: selectedBatchForDetails.studentNameBn,
+            class: selectedBatchForDetails.class,
+            section: selectedBatchForDetails.section,
+            roll: studentMap[selectedBatchForDetails.studentId]?.roll || '',
+            photo: studentMap[selectedBatchForDetails.studentId]?.photo || '',
+          }}
+          payments={selectedBatchForDetails.payments}
+          session={fSession || institution?.currentSession}
+          batchReceiptNo={selectedBatchForDetails.receiptNo}
+          onClose={() => setSelectedBatchForDetails(null)}
         />
       )}
     </div>

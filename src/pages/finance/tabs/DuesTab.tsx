@@ -1,12 +1,12 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown, CircleCheck, FileSpreadsheet, FileText, MoreVertical } from 'lucide-react'
+import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown, CircleCheck, FileSpreadsheet, FileText, MoreVertical, Eye, Banknote } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
-import { useSessionStudents } from '@/store/admissionStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
-import { useFeeStore } from '@/store/feeStore'
+import { useFeeStore, type FeeStructure } from '@/store/feeStore'
 import type { FeeDue } from '@/store/feeStore'
 import { XLSX } from '@/lib/excelExport'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
@@ -14,9 +14,42 @@ import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { PaymentDetailsModal } from '../modals/PaymentDetailsModal'
 
 interface Props {
   onCollect: (due: FeeDue) => void
+}
+
+function matchesFeeType(fee: FeeStructure, typeFilter: string): boolean {
+  if (!typeFilter) return true
+  if (typeFilter === 'monthly') return fee.type === 'monthly'
+  if (typeFilter === 'yearly') {
+    return (
+      (fee.type as string) === 'yearly' ||
+      (fee.type === 'onetime' && (
+        fee.name.toLowerCase().includes('year') ||
+        fee.name.toLowerCase().includes('annual') ||
+        fee.name.toLowerCase().includes('session') ||
+        fee.nameBn.includes('বাৎসরিক') ||
+        fee.nameBn.includes('বার্ষিক') ||
+        fee.nameBn.includes('সেশন')
+      ))
+    )
+  }
+  if (typeFilter === 'onetime') {
+    return (
+      fee.type === 'onetime' &&
+      !(
+        fee.name.toLowerCase().includes('year') ||
+        fee.name.toLowerCase().includes('annual') ||
+        fee.name.toLowerCase().includes('session') ||
+        fee.nameBn.includes('বাৎসরিক') ||
+        fee.nameBn.includes('বার্ষিক') ||
+        fee.nameBn.includes('সেশন')
+      )
+    )
+  }
+  return fee.type === typeFilter
 }
 
 const MONTH_LABELS = [
@@ -53,7 +86,7 @@ interface DueMatrixRow {
   feeStructureId: string
   feeName: string
   feeNameBn: string
-  feeType: 'monthly' | 'onetime'
+  feeType: 'monthly' | 'onetime' | 'yearly'
   totalAmount: number
   months: Record<number, MonthCell>
   totalDue: number
@@ -64,10 +97,10 @@ interface DueMatrixRow {
 export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const bn = useBn()
   const { canExport, canPrint, canCreate } = usePermission()
-  const students = useSessionStudents()
-  const { classes } = useClassStore()
+  const allAdmissionStudents = useAdmissionStore((s) => s.students)
+  const { classes, institution } = useClassStore()
   const { structures, payments, generateWaivers } = useFeeStore()
-  const waivers = useMemo(() => generateWaivers(students), [generateWaivers, structures, payments, students])
+  const waivers = useMemo(() => generateWaivers(allAdmissionStudents), [generateWaivers, structures, payments, allAdmissionStudents])
 
   const paymentsByKey = useMemo(() => {
     const map = new Map<string, typeof payments>()
@@ -92,21 +125,36 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   }, [waivers])
 
   const [searchParams] = useSearchParams()
-  const initType = (searchParams.get('feeType') || '') as 'monthly' | 'onetime' | ''
+  const initType = (searchParams.get('feeType') || '') as 'monthly' | 'onetime' | 'yearly' | ''
   const initCategory = searchParams.get('category') || ''
   const initStatus = (searchParams.get('status') || 'all') as 'all' | 'paid' | 'due' | 'paiddue'
   const initMonths = searchParams.get('months')
   const initDateFrom = searchParams.get('dateFrom') || ''
   const initDateTo = searchParams.get('dateTo') || ''
 
-  const [fType, setFType] = useState<'monthly' | 'onetime' | ''>(initType)
+  const [fType, setFType] = useState<'monthly' | 'onetime' | 'yearly' | ''>(initType)
   const [fCategory, setFCategory] = useState(initCategory)
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
   const [fStatus, setFStatus] = useState<'all' | 'paid' | 'due' | 'paiddue'>(initStatus)
   const [searchText, setSearchText] = useState('')
-  const { institution } = useClassStore()
-  const sessions = institution?.sessions || []
+  const [detailsRow, setDetailsRow] = useState<DueMatrixRow | null>(null)
+
+  const allAvailableSessions = useMemo(() => {
+    const set = new Set<string>()
+    if (institution?.currentSession) set.add(institution.currentSession)
+    for (const s of (institution?.sessions || [])) {
+      if (s) set.add(s)
+    }
+    for (const st of structures) {
+      if (st.academicYear) set.add(st.academicYear)
+    }
+    for (const std of allAdmissionStudents) {
+      if (std.academicYear) set.add(std.academicYear)
+    }
+    return Array.from(set).sort().reverse()
+  }, [institution, structures, allAdmissionStudents])
+
   const [fSession, setFSession] = useState(() => institution?.currentSession || '')
   const fYear = parseInt(fSession.split('-')[0]) || new Date().getFullYear()
   const [selectedMonths, setSelectedMonths] = useState<Set<number>>(() => {
@@ -120,7 +168,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const monthDropdownRef = useRef<HTMLDivElement>(null)
   const dateFrom = initDateFrom
   const dateTo = initDateTo
-  const [showResults, setShowResults] = useState(() => searchParams.has('feeType') || searchParams.has('category'))
+  const [showResults, setShowResults] = useState(true)
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
   const [showActionMenu, setShowActionMenu] = useState(false)
   const actionMenuRef = useRef<HTMLDivElement>(null)
@@ -131,8 +179,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const sectionOptions = useMemo(() => (fClass ? sectionsMap[fClass] || [] : []), [fClass, sectionsMap])
 
   const activeStudents = useMemo(
-    () => students.filter((s) => s.status === 'approved' && s.active !== false),
-    [students]
+    () => allAdmissionStudents.filter((s) =>
+      s.status === 'approved' &&
+      s.active !== false &&
+      (!fSession || !s.academicYear || s.academicYear === fSession)
+    ),
+    [allAdmissionStudents, fSession]
   )
 
   const activeStructures = useMemo(
@@ -142,10 +194,11 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
   const categoryOptions = useMemo(() => {
     let list = activeStructures
-    if (fType) list = list.filter((s) => s.type === fType)
+    if (fSession) list = list.filter((s) => !s.academicYear || s.academicYear === fSession)
+    if (fType) list = list.filter((s) => matchesFeeType(s, fType))
     const names = new Set(list.map((s) => s.name))
     return Array.from(names)
-  }, [activeStructures, fType])
+  }, [activeStructures, fSession, fType])
 
   const filterByDate = useCallback((dateStr: string) => {
     if (!dateFrom && !dateTo) return true
@@ -155,11 +208,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   }, [dateFrom, dateTo])
 
   const feeStructuresForCategory = useMemo(() => {
-    let list = structures
+    let list = structures.filter((s) => s.isActive)
+    if (fSession) list = list.filter((s) => !s.academicYear || s.academicYear === fSession)
     if (fCategory) list = list.filter((s) => s.name === fCategory)
-    if (fType) list = list.filter((s) => s.type === fType)
+    if (fType) list = list.filter((s) => matchesFeeType(s, fType))
     return list
-  }, [structures, fCategory, fType])
+  }, [structures, fSession, fCategory, fType])
 
   const showMonthPicker = fType === 'monthly' || (!fType && feeStructuresForCategory.some((s) => s.type === 'monthly'))
 
@@ -192,19 +246,16 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       else next.add(m)
       return next
     })
-    setShowResults(false)
     setSelectedRows(new Set())
   }, [])
 
   const selectAllMonths = useCallback(() => {
     setSelectedMonths(new Set(MONTH_LABELS.map((_, i) => i)))
-    setShowResults(false)
     setSelectedRows(new Set())
   }, [])
 
   const clearAllMonths = useCallback(() => {
     setSelectedMonths(new Set())
-    setShowResults(false)
     setSelectedRows(new Set())
   }, [])
 
@@ -230,6 +281,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     const monthsToShow = showMonthPicker ? sortedMonths : []
 
     for (const fee of feeStructuresForCategory) {
+      const isYearly = matchesFeeType(fee, 'yearly')
       for (const student of filteredStudents) {
         if (fee.class && fee.class !== student.class) continue
         if (fee.section && fee.section !== student.section) continue
@@ -238,11 +290,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         const feePayments = paymentsByKey.get(`${student.id}|${fee.id}`) || []
         const feeWaivers = waiversByKey.get(`${student.id}|${fee.id}`) || []
 
-        if (fee.type === 'onetime') {
+        if (fee.type === 'onetime' || isYearly) {
           const filteredPayments = (dateFrom || dateTo) ? feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0])) : feePayments
           const paid = filteredPayments.reduce((sum, p) => sum + p.amount, 0)
+          const discount = filteredPayments.reduce((sum, p) => sum + (p.discount || 0), 0)
           const waived = feeWaivers.reduce((sum, w) => sum + w.amount, 0)
-          const due = fee.amount - paid - waived
+          const due = fee.amount - paid - discount - waived
           rows.push({
             studentId: student.id,
             studentName: student.nameEn,
@@ -254,7 +307,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             feeStructureId: fee.id,
             feeName: fee.name,
             feeNameBn: fee.nameBn,
-            feeType: 'onetime',
+            feeType: isYearly ? 'yearly' : 'onetime',
             totalAmount: fee.amount,
             months: {},
             totalDue: Math.max(0, due),
@@ -341,8 +394,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
   const results = useMemo(() => {
     let list = allResults
-    if (fStatus === 'due') list = list.filter((r) => r.totalDue > 0)
-    else if (fStatus === 'paid') list = list.filter((r) => r.totalPaid > 0)
+    if (fStatus === 'due') {
+      list = list.filter((r) => r.totalDue > 0)
+    } else if (fStatus === 'paid') {
+      list = list.filter((r) => r.totalPaid > 0 && r.totalDue <= 0)
+    } else if (fStatus === 'paiddue') {
+      list = list.filter((r) => r.totalPaid > 0 && r.totalDue > 0)
+    }
     if (searchText.trim()) {
       const q = searchText.toLowerCase()
       list = list.filter((r) =>
@@ -450,7 +508,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         [bn ? 'শিক্ষার্থী আইডি' : 'Student ID']: r.studentId,
         [bn ? 'শ্রেণি' : 'Class']: `${r.class}${r.section ? `-${r.section}` : ''}`,
         [bn ? 'ফি' : 'Fee']: bn ? r.feeNameBn : r.feeName,
-        [bn ? 'ধরন' : 'Type']: r.feeType === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
+        [bn ? 'ধরন' : 'Type']: r.feeType === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : r.feeType === 'yearly' ? (bn ? 'বাৎসরিক' : 'Yearly') : (bn ? 'এককালীন' : 'One-time'),
         [bn ? 'মোট ফি' : 'Total Fee']: r.totalAmount,
       }
       if (showMonthPicker) {
@@ -460,14 +518,15 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
           row[label] = cell ? (cell.paid ? (bn ? 'পরিশোধিত' : 'Paid') : cell.amount) : '—'
         }
       }
+      row[bn ? 'পরিশোধিত' : 'Paid'] = r.totalPaid
       row[bn ? 'মোট বকেয়' : 'Total Due'] = r.totalDue
       return row
     })
     const ws = XLSX.utils.json_to_sheet(sheetData)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, bn ? 'বকেয়' : 'Dues')
-    XLSX.writeFile(wb, `dues-${fSession}.xlsx`)
-  }, [results, fYear, bn, showMonthPicker, sortedMonths])
+    XLSX.writeFile(wb, `dues-${fSession || 'all'}.xlsx`)
+  }, [results, fSession, bn, showMonthPicker, sortedMonths])
 
   const pdfColumns = useMemo<PDFColumnDef[]>(() => {
     const cols: PDFColumnDef[] = [
@@ -486,6 +545,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         cols.push({ key: `month-${m}`, label: lbl, labelBn: MONTH_LABELS[m].bn, default: true })
       }
     }
+    cols.push({ key: 'totalPaid', label: 'Paid', labelBn: 'পরিশোধিত', default: true })
     cols.push({ key: 'totalDue', label: 'Total Due', labelBn: 'মোট বকেয়', default: true })
     return cols
   }, [showMonthPicker, sortedMonths, bn])
@@ -498,7 +558,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     if (selectedCols.includes('studentId')) row[bn ? 'শিক্ষার্থী আইডি' : 'Student ID'] = r.studentId
     if (selectedCols.includes('class')) row[bn ? 'শ্রেণি' : 'Class'] = `${r.class}${r.section ? `-${r.section}` : ''}`
     if (selectedCols.includes('fee')) row[bn ? 'ফি' : 'Fee'] = bn ? r.feeNameBn : r.feeName
-    if (selectedCols.includes('type')) row[bn ? 'ধরন' : 'Type'] = r.feeType === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')
+    if (selectedCols.includes('type')) row[bn ? 'ধরন' : 'Type'] = r.feeType === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : r.feeType === 'yearly' ? (bn ? 'বাৎসরিক' : 'Yearly') : (bn ? 'এককালীন' : 'One-time')
     if (selectedCols.includes('feeAmt')) row[bn ? 'ফির পরিমাণ' : 'Fee Amt'] = r.totalAmount
     if (showMonthPicker) {
       for (const m of sortedMonths) {
@@ -508,6 +568,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         }
       }
     }
+    if (selectedCols.includes('totalPaid')) row[bn ? 'পরিশোধিত' : 'Paid'] = r.totalPaid
     if (selectedCols.includes('totalDue')) row[bn ? 'মোট বকেয়' : 'Total Due'] = r.totalDue
     row.__photo = r.photo || ''
     return row
@@ -534,6 +595,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         }
       }
     }
+    if (opts.selectedCols.includes('totalPaid')) summaryRow[bn ? 'পরিশোধিত' : 'Paid'] = selectedData.reduce((s, r) => s + r.totalPaid, 0)
+    if (opts.selectedCols.includes('totalPaid')) summaryRow[bn ? 'পরিশোধিত' : 'Paid'] = selectedData.reduce((s, r) => s + r.totalPaid, 0)
     if (opts.selectedCols.includes('totalDue')) summaryRow[bn ? 'মোট বকেয়' : 'Total Due'] = selectedData.reduce((s, r) => s + r.totalDue, 0)
     rows.push(summaryRow)
     const pdfBranding = getPDFBranding()
@@ -569,6 +632,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         }
       }
     }
+    if (opts.selectedCols.includes('totalPaid')) summaryRow[bn ? 'পরিশোধিত' : 'Paid'] = selectedData.reduce((s, r) => s + r.totalPaid, 0)
     if (opts.selectedCols.includes('totalDue')) summaryRow[bn ? 'মোট বকেয়' : 'Total Due'] = selectedData.reduce((s, r) => s + r.totalDue, 0)
     rows.push(summaryRow)
     const pdfBranding = getPDFBranding()
@@ -595,6 +659,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   }, [results, selectedRows, pdfColumns, bn, showMonthPicker, sortedMonths, buildPdfRow])
 
   const fmt = (n: number) => n.toLocaleString()
+  const showPaidCol = fStatus !== 'due'
+  const showDueCol = fStatus !== 'paid'
 
   return (
     <div className="space-y-4">
@@ -602,25 +668,27 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] flex items-center gap-2 flex-wrap">
         <select
           value={fSession}
-          onChange={(e) => { setFSession(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
+          onChange={(e) => { setFSession(e.target.value); setSelectedRows(new Set()) }}
           className={selectCls}
         >
-          {sessions.map((s) => (
+          <option value="">{bn ? 'সব শিক্ষাবর্ষ' : 'All Sessions'}</option>
+          {allAvailableSessions.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
         <select
           value={fType}
-          onChange={(e) => { setFType(e.target.value as '' | 'monthly' | 'onetime'); setFCategory(''); setShowResults(false); setSelectedRows(new Set()) }}
+          onChange={(e) => { setFType(e.target.value as '' | 'monthly' | 'onetime' | 'yearly'); setFCategory(''); setSelectedRows(new Set()) }}
           className={selectCls}
         >
           <option value="">{bn ? 'সব ধরন' : 'All types'}</option>
           <option value="monthly">{bn ? 'মাসিক' : 'Monthly'}</option>
           <option value="onetime">{bn ? 'এককালীন' : 'One-time'}</option>
+          <option value="yearly">{bn ? 'বাৎসরিক' : 'Yearly'}</option>
         </select>
         <select
           value={fCategory}
-          onChange={(e) => { setFCategory(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
+          onChange={(e) => { setFCategory(e.target.value); setSelectedRows(new Set()) }}
           className={selectCls}
         >
           <option value="">{bn ? 'সব ক্যাটাগরি' : 'All categories'}</option>
@@ -649,7 +717,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             {showMonthDropdown && (
               <div className="absolute z-50 mt-1 w-[220px] rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)] p-2">
                 <div className="flex items-center gap-1 mb-1.5 pb-1.5 border-b border-[var(--border)]">
-                  <button onClick={selectAllMonths} className="text-[11px] font-semibold text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'সব নির্বাচন' : 'Select all'}</button>
+                  <button onClick={selectAllMonths} className="text-[11px] font-semibold text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'বাৎসরিক (সব মাস)' : 'Yearly (All)'}</button>
                   <span className="text-[var(--text-muted)]">·</span>
                   <button onClick={clearAllMonths} className="text-[11px] font-semibold text-[var(--text-muted)] hover:underline cursor-pointer bg-transparent border-0 p-0">{bn ? 'পরিষ্কার' : 'Clear'}</button>
                   <span className="text-[11px] text-[var(--text-muted)] ml-auto">{selectedMonths.size}/12</span>
@@ -679,7 +747,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         <div className="w-px self-stretch bg-[var(--border)] mx-1" />
         <select
           value={fClass}
-          onChange={(e) => { setFClass(e.target.value); setFSection(''); setShowResults(false); setSelectedRows(new Set()) }}
+          onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedRows(new Set()) }}
           className={selectCls}
         >
           <option value="">{bn ? 'সব শ্রেণি' : 'All classes'}</option>
@@ -688,7 +756,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         {fClass && (
           <select
             value={fSection}
-            onChange={(e) => { setFSection(e.target.value); setShowResults(false); setSelectedRows(new Set()) }}
+            onChange={(e) => { setFSection(e.target.value); setSelectedRows(new Set()) }}
             className={selectCls}
           >
             <option value="">{bn ? 'সব সেকশন' : 'All sections'}</option>
@@ -714,25 +782,25 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         </div>
       </div>
 
-      {/* Stats — only shown after Find Due */}
+      {/* Stats */}
       {showResults && results.length > 0 && (
-        <div className={fStatus === 'paiddue' ? 'grid grid-cols-3 gap-[0.625rem]' : 'grid grid-cols-2 gap-[0.625rem]'}>
+        <div className={(fStatus === 'all' || fStatus === 'paiddue') ? 'grid grid-cols-3 gap-[0.625rem]' : 'grid grid-cols-2 gap-[0.625rem]'}>
           {(fStatus === 'due' || fStatus === 'paiddue' || fStatus === 'all') && (
-          <div
-            className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
-          >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--amber-light)' }}>
-              <DollarSign size={15} style={{ color: 'var(--amber)' }} />
+            <div
+              className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
+              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--amber-light)' }}>
+                <DollarSign size={15} style={{ color: 'var(--amber)' }} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalDue)}</div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট বকেয়' : 'Total Due'}</div>
+              </div>
             </div>
-            <div className="min-w-0">
-              <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{fmt(totalDue)}</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'মোট বকেয়' : 'Total Due'}</div>
-            </div>
-          </div>
           )}
-          {(fStatus === 'paid' || fStatus === 'paiddue') && (
+          {(fStatus === 'paid' || fStatus === 'paiddue' || fStatus === 'all') && (
             <div
               className="glass rounded-[0.75rem] flex items-center gap-[0.625rem] p-[0.875rem] cursor-default transition-all duration-200"
               onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)' }}
@@ -757,7 +825,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             </div>
             <div className="min-w-0">
               <div className="text-[var(--text-primary)] leading-none font-bold text-lg">{studentCount}</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">{bn ? 'বকেয় শিক্ষার্থী' : 'Students with Dues'}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-[0.125rem]">
+                {fStatus === 'all' ? (bn ? 'মোট শিক্ষার্থী' : 'Total Students') :
+                 fStatus === 'paid' ? (bn ? 'পরিশোধিত শিক্ষার্থী' : 'Paid Students') :
+                 fStatus === 'due' ? (bn ? 'বকেয় শিক্ষার্থী' : 'Students with Due') :
+                 (bn ? 'বকেয় ও পরিশোধিত শিক্ষার্থী' : 'Students with Paid & Due')}
+              </div>
             </div>
           </div>
         </div>
@@ -859,13 +932,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     {bn ? MONTH_LABELS[m].bn : MONTH_LABELS[m].en}
                   </th>
                 ))}
-                {!showMonthPicker && fStatus === 'paiddue' && (
+                {(fStatus === 'all' || fStatus === 'paid' || fStatus === 'paiddue') && (
                   <th className="text-center px-2 py-2 text-[10px] uppercase font-bold whitespace-nowrap" style={{ width: '90px', minWidth: '90px', background: 'var(--green-light)', color: 'var(--green)' }}>{bn ? 'পরিশোধিত' : 'Paid'}</th>
                 )}
-                {!showMonthPicker && (
-                  <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold">{bn ? 'বকেয়' : 'Due'}</th>
+                {(fStatus === 'all' || fStatus === 'due' || fStatus === 'paiddue') && (
+                  <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap" style={{ width: '100px', minWidth: '100px', background: 'var(--amber-light)', color: 'var(--amber)' }}>{bn ? 'মোট বকেয়' : 'Total Due'}</th>
                 )}
-                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap" style={{ width: '100px', minWidth: '100px', background: 'var(--amber-light)', color: 'var(--amber)' }}>{bn ? 'মোট বকেয়' : 'Total Due'}</th>
+                <th className="text-center px-2 py-2 text-[10px] uppercase text-[var(--text-muted)] font-bold whitespace-nowrap" style={{ width: '80px', minWidth: '80px' }}>{bn ? 'অ্যাকশন' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody>
@@ -903,10 +976,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     </td>
                     <td className="text-center px-2 py-3">
                       <span className="inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded whitespace-nowrap" style={{
-                        background: row.feeType === 'onetime' ? 'var(--amber-light)' : 'var(--brand-light)',
-                        color: row.feeType === 'onetime' ? 'var(--amber)' : 'var(--brand)',
+                        background: row.feeType === 'yearly' ? 'rgba(147, 51, 234, 0.12)' : row.feeType === 'onetime' ? 'var(--amber-light)' : 'var(--brand-light)',
+                        color: row.feeType === 'yearly' ? '#9333ea' : row.feeType === 'onetime' ? 'var(--amber)' : 'var(--brand)',
                       }}>
-                        {row.feeType === 'onetime'
+                        {row.feeType === 'yearly'
+                          ? (bn ? 'বাৎসরিক' : 'Yearly')
+                          : row.feeType === 'onetime'
                           ? (bn ? 'এককালীন' : 'One-time')
                           : (bn ? 'মাসিক' : 'Monthly')}
                       </span>
@@ -915,10 +990,18 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     {showMonthPicker && sortedMonths.map((m) => {
                       const cell = row.months[m]
                       if (!cell) return <td key={m} className="text-center px-2 py-2 text-[var(--text-muted)]">—</td>
-                      if (fStatus === 'paiddue') {
+                      if (fStatus === 'paiddue' || fStatus === 'all') {
                         return (
                           <td key={m} className="text-center px-2 py-3" style={{ minWidth: '90px' }}>
-                            {cell.paidAmount > 0 && <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>}
+                            {cell.paidAmount > 0 && (
+                              <button
+                                onClick={() => setDetailsRow(row)}
+                                className="font-bold text-[12px] text-[var(--green)] hover:underline cursor-pointer bg-transparent border-0 p-0"
+                                title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View payment details'}
+                              >
+                                {fmt(cell.paidAmount)}
+                              </button>
+                            )}
                             {cell.paidAmount > 0 && cell.amount > 0 && <span className="text-[var(--text-muted)] text-[10px]"> / </span>}
                             {cell.amount > 0 && canCreate('finance.fees.collect.create') && (
                               <button
@@ -933,9 +1016,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                               <span className="font-bold text-[12px] text-[var(--amber)]">{fmt(cell.amount)}</span>
                             )}
                             {cell.paidAmount === 0 && cell.amount === 0 && (
-                              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)]">
+                              <button
+                                onClick={() => setDetailsRow(row)}
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)] cursor-pointer border-0"
+                                title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View payment details'}
+                              >
                                 <CircleCheck size={14} className="text-[var(--green)]" />
-                              </span>
+                              </button>
                             )}
                           </td>
                         )
@@ -944,7 +1031,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         return (
                           <td key={m} className="text-center px-2 py-3" style={{ minWidth: '90px' }}>
                             {cell.paidAmount > 0 ? (
-                              <span className="font-bold text-[12px] text-[var(--green)]">{fmt(cell.paidAmount)}</span>
+                              <button
+                                onClick={() => setDetailsRow(row)}
+                                className="font-bold text-[12px] text-[var(--green)] hover:underline cursor-pointer bg-transparent border-0 p-0"
+                                title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View payment details'}
+                              >
+                                {fmt(cell.paidAmount)}
+                              </button>
                             ) : (
                               <span className="text-[var(--text-muted)] text-[12px]">—</span>
                             )}
@@ -954,9 +1047,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                       return (
                         <td key={m} className="text-center px-2 py-3">
                           {cell.paid ? (
-                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)]">
+                            <button
+                              onClick={() => setDetailsRow(row)}
+                              className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[var(--green-light)] cursor-pointer border-0"
+                              title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View payment details'}
+                            >
                               <CircleCheck size={14} className="text-[var(--green)]" />
-                            </span>
+                            </button>
                           ) : canCreate('finance.fees.collect.create') ? (
                             <button
                               onClick={() => { const due = buildCollectDue(row, m); if (due) onCollect(due) }}
@@ -971,19 +1068,52 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         </td>
                       )
                     })}
-                    {!showMonthPicker && fStatus === 'paiddue' && (
-                      <td className="text-center px-2 py-3 font-semibold text-[var(--green)]">{row.totalPaid > 0 ? fmt(row.totalPaid) : '—'}</td>
+                    {showPaidCol && (
+                      <td className="text-center px-2 py-3 font-semibold text-[var(--green)]">
+                        {row.totalPaid > 0 ? (
+                          <button
+                            onClick={() => setDetailsRow(row)}
+                            className="font-bold text-[12px] text-[var(--green)] hover:underline cursor-pointer bg-transparent border-0 p-0"
+                            title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View payment details'}
+                          >
+                            {fmt(row.totalPaid)}
+                          </button>
+                        ) : '—'}
+                      </td>
                     )}
-                    {!showMonthPicker && (
-                      <td className="text-center px-2 py-3 font-bold text-[var(--amber)]">{fmt(row.totalDue)}</td>
+                    {showDueCol && (
+                      <td className="text-center px-2 py-3 font-semibold text-[var(--amber)]" style={{ width: '100px', minWidth: '100px', background: 'var(--amber-light)' }}>
+                        {row.totalDue > 0 ? fmt(row.totalDue) : '—'}
+                      </td>
                     )}
-                    <td className="text-center px-2 py-3 font-semibold text-[var(--amber)]" style={{ width: '100px', minWidth: '100px', background: 'var(--amber-light)' }}>{fmt(row.totalDue)}</td>
+                    <td className="text-center px-2 py-3 whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => setDetailsRow(row)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer hover:bg-[var(--brand)] hover:text-white transition-colors"
+                          title={bn ? 'পেমেন্ট বিবরণ' : 'Payment Details'}
+                        >
+                          <Eye size={13} />
+                        </button>
+                        {row.totalDue > 0 && canCreate('finance.fees.collect.create') && (
+                          <button
+                            onClick={() => {
+                              const due = buildCollectDue(row)
+                              if (due) onCollect(due)
+                            }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--amber-light)] text-[var(--amber)] border-0 cursor-pointer hover:bg-[var(--amber)] hover:text-white transition-colors"
+                            title={bn ? 'ফি আদায়' : 'Collect Fee'}
+                          >
+                            <Banknote size={13} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   </tr>
                 )
               })}
-              {fStatus !== 'all' && (
-                <>
-                  {(fStatus === 'paid' || fStatus === 'paiddue') && (
+              <>
+                {showPaidCol && (
                   <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
@@ -995,17 +1125,19 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]">{fmt(totalPaid)}</td>
-                    {!showMonthPicker && fStatus === 'paiddue' && <td className="px-2 py-2 bg-[var(--bg-secondary)]" />}
-                    {!showMonthPicker && <td className="px-2 py-2 bg-[var(--bg-secondary)]" />}
                     {showMonthPicker && sortedMonths.map((m) => (
                       <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--green)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthPaidSums[m] > 0 ? fmt(monthPaidSums[m]) : '—'}
                       </td>
                     ))}
                     <td className="text-center px-2 py-2 text-[12px] text-[var(--green)] font-bold" style={{ background: 'var(--green-light)' }}>{fmt(totalPaid)}</td>
+                    {showDueCol && (
+                      <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    )}
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                   </tr>
-                  )}
-                  {(fStatus === 'due' || fStatus === 'paiddue') && (
+                )}
+                {showDueCol && (
                   <tr className="border-t border-[var(--border)] bg-[var(--bg-secondary)] font-bold">
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
@@ -1017,18 +1149,19 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                     <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]">{fmt(totalDue)}</td>
-                    {!showMonthPicker && fStatus === 'paiddue' && <td className="px-2 py-2 bg-[var(--bg-secondary)]" />}
-                    {!showMonthPicker && <td className="px-2 py-2 bg-[var(--bg-secondary)]" />}
                     {showMonthPicker && sortedMonths.map((m) => (
                       <td key={m} className="text-center px-2 py-2 text-[12px] text-[var(--amber)] bg-[var(--bg-secondary)]" style={{ minWidth: '90px' }}>
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
+                    {showPaidCol && (
+                      <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
+                    )}
                     <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                   </tr>
-                  )}
-                </>
-              )}
+                )}
+              </>
             </tbody>
             {showMonthPicker && sortedMonths.length > 0 && fStatus !== 'paiddue' && (
               <tfoot>
@@ -1048,13 +1181,50 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                         {monthSums[m] > 0 ? fmt(monthSums[m]) : '—'}
                       </td>
                     ))}
-                    <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
+                    {showPaidCol && (
+                      <td className="text-center px-2 py-2 text-[12px] text-[var(--green)] font-bold" style={{ background: 'var(--green-light)' }}>{fmt(totalPaid)}</td>
+                    )}
+                    {showDueCol && (
+                      <td className="text-center px-2 py-2 text-[12px] text-[var(--amber)] font-bold" style={{ background: 'var(--amber-light)' }}>{fmt(totalDue)}</td>
+                    )}
+                    <td className="px-2 py-2 bg-[var(--bg-secondary)]" />
                   </tr>
               </tfoot>
             )}
           </table>
           </div>
         </div>
+      )}
+
+      {/* Payment Details Modal */}
+      {detailsRow && (
+        <PaymentDetailsModal
+          student={{
+            id: detailsRow.studentId,
+            nameEn: detailsRow.studentName,
+            nameBn: detailsRow.studentNameBn,
+            class: detailsRow.class,
+            section: detailsRow.section,
+            roll: detailsRow.roll,
+            photo: detailsRow.photo,
+          }}
+          fee={{
+            id: detailsRow.feeStructureId,
+            name: detailsRow.feeName,
+            nameBn: detailsRow.feeNameBn,
+            amount: detailsRow.totalAmount,
+            type: detailsRow.feeType,
+          }}
+          payments={paymentsByKey.get(`${detailsRow.studentId}|${detailsRow.feeStructureId}`) || []}
+          waivers={waiversByKey.get(`${detailsRow.studentId}|${detailsRow.feeStructureId}`) || []}
+          totalDue={detailsRow.totalDue}
+          session={fSession}
+          onClose={() => setDetailsRow(null)}
+          onCollect={(due) => {
+            setDetailsRow(null)
+            onCollect(due)
+          }}
+        />
       )}
 
       {/* PDF Options Modal */}
