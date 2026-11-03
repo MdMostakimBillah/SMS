@@ -28,6 +28,16 @@ import { XLSX } from '@/lib/excelExport'
 const DAYS = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 const DAYS_BN = ['শনিবার', 'রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার']
 
+function parseTimeToMinutes(timeStr?: string, defaultMinutes = 0): number {
+  if (!timeStr || typeof timeStr !== 'string') return defaultMinutes
+  const parts = timeStr.trim().split(':')
+  if (parts.length < 2) return defaultMinutes
+  const h = parseInt(parts[0], 10)
+  const m = parseInt(parts[1], 10)
+  if (isNaN(h) || isNaN(m)) return defaultMinutes
+  return h * 60 + m
+}
+
 interface RoutineTabProps {
   classes: any[]
   routines: any[]
@@ -133,19 +143,29 @@ export default React.memo(function RoutineTab({
   const startTime = cls?.startTime || institution.startTime || '07:30'
 
   const totalPeriods = useMemo(() => {
-    const [sh, sm] = (cls?.startTime || institution.startTime || '07:30').split(':').map(Number)
-    const [eh, em] = (cls?.endTime || institution.endTime || '14:30').split(':').map(Number)
-    const totalMin = eh * 60 + em - (sh * 60 + sm)
-    return Math.floor(totalMin / defaultDuration) || 7
-  }, [cls, institution, defaultDuration])
+    const rawStart = cls?.startTime || institution?.startTime || '07:30'
+    const rawEnd = cls?.endTime || institution?.endTime || '14:30'
+    const sMin = parseTimeToMinutes(rawStart, 7 * 60 + 30)
+    let eMin = parseTimeToMinutes(rawEnd, 14 * 60 + 30)
+    if (eMin <= sMin && eMin + 12 * 60 > sMin) {
+      eMin += 12 * 60
+    }
+    const totalMin = eMin - sMin
+    const safeDuration = Math.max(15, Number(defaultDuration) || 40)
+    const calculated = Math.floor(totalMin / safeDuration)
+    return Number.isFinite(calculated) && calculated > 0 ? Math.min(Math.max(calculated, 1), 20) : 7
+  }, [cls?.startTime, cls?.endTime, institution?.startTime, institution?.endTime, defaultDuration])
 
   const periodDurations = useMemo(() => {
+    const safeTotal = Math.max(1, Math.min(20, totalPeriods || 7))
+    const safeDuration = Math.max(15, Number(defaultDuration) || 40)
     const saved = routine?.periodDurations
-    if (saved && saved.length > 0) {
-      while (saved.length < totalPeriods) saved.push(defaultDuration)
-      return saved.slice(0, totalPeriods)
+    if (saved && Array.isArray(saved) && saved.length > 0) {
+      const copy = [...saved]
+      while (copy.length < safeTotal) copy.push(safeDuration)
+      return copy.slice(0, safeTotal)
     }
-    return Array(totalPeriods).fill(defaultDuration)
+    return Array.from({ length: safeTotal }, () => safeDuration)
   }, [routine?.periodDurations, defaultDuration, totalPeriods])
 
   const activeDays = useMemo(
@@ -154,34 +174,35 @@ export default React.memo(function RoutineTab({
   )
 
   const getPeriodTime = (periodIndex: number) => {
-    const [h, m] = startTime.split(':').map(Number)
-    let startMin = h * 60 + m
+    const sMin = parseTimeToMinutes(startTime, 7 * 60 + 30)
+    let startMin = sMin
     for (let i = 0; i < periodIndex; i++) {
-      startMin += periodDurations[i] || defaultDuration
+      startMin += periodDurations[i] || defaultDuration || 40
     }
-    const endMin = startMin + (periodDurations[periodIndex] || defaultDuration)
-    const pad = (n: number) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`
+    const endMin = startMin + (periodDurations[periodIndex] || defaultDuration || 40)
+    const pad = (n: number) => {
+      const norm = Math.max(0, n) % (24 * 60)
+      return `${String(Math.floor(norm / 60)).padStart(2, '0')}:${String(norm % 60).padStart(2, '0')}`
+    }
     return { start: pad(startMin), end: pad(endMin) }
   }
 
   const breakPositions = useMemo(() => {
     const breaks = institution.breaks || []
     if (breaks.length === 0) return []
-    const [sh, sm] = startTime.split(':').map(Number)
-    const schoolStartMin = sh * 60 + sm
+    const schoolStartMin = parseTimeToMinutes(startTime, 7 * 60 + 30)
     return breaks.map((brk: any) => {
-      const [bh, bm] = brk.start.split(':').map(Number)
-      const breakMin = bh * 60 + bm
+      const breakMin = parseTimeToMinutes(brk.start, 11 * 60)
       let elapsed = 0
       let periodIdx = 0
       while (periodIdx < totalPeriods) {
-        elapsed += periodDurations[periodIdx] || defaultDuration
+        elapsed += periodDurations[periodIdx] || defaultDuration || 40
         if (schoolStartMin + elapsed > breakMin) break
         periodIdx++
       }
       return {
         ...brk,
-        afterPeriod: Math.max(0, Math.min(periodIdx, totalPeriods - 1)),
+        afterPeriod: Math.max(0, Math.min(periodIdx, Math.max(0, totalPeriods - 1))),
       }
     }).sort((a: any, b: any) => a.afterPeriod - b.afterPeriod)
   }, [institution.breaks, startTime, periodDurations, defaultDuration, totalPeriods])
@@ -204,7 +225,12 @@ export default React.memo(function RoutineTab({
   }
 
   const handlePeriodDurationChange = (val: number) => {
-    updateRoutine(selectedClass, { sectionId: effectiveSection, periodDuration: val, periodDurations: Array(totalPeriods).fill(val) })
+    const safeTotal = Math.max(1, Math.min(20, totalPeriods || 7))
+    updateRoutine(selectedClass, {
+      sectionId: effectiveSection,
+      periodDuration: val,
+      periodDurations: Array.from({ length: safeTotal }, () => val),
+    })
   }
 
   const handlePeriodDurationUpdate = (periodIndex: number, val: number) => {
@@ -401,9 +427,12 @@ export default React.memo(function RoutineTab({
             {isBn ? 'কাস্টম সময় সেট করুন' : 'Set custom time'}
           </label>
           {(() => {
-            const [sh, sm] = startTime.split(':').map(Number)
-            const [eh, em] = (cls?.endTime || institution.endTime || '14:30').split(':').map(Number)
-            const totalMin = eh * 60 + em - (sh * 60 + sm)
+            const rawStart = startTime || '07:30'
+            const rawEnd = cls?.endTime || institution?.endTime || '14:30'
+            const sMin = parseTimeToMinutes(rawStart, 7 * 60 + 30)
+            let eMin = parseTimeToMinutes(rawEnd, 14 * 60 + 30)
+            if (eMin <= sMin && eMin + 12 * 60 > sMin) eMin += 12 * 60
+            const totalMin = Math.max(0, eMin - sMin)
             const usedMin = periodDurations.slice(0, totalPeriods).reduce((sum: number, d: number) => sum + d, 0)
             const remainder = totalMin - usedMin
             return (

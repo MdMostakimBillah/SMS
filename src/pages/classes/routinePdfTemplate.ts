@@ -113,7 +113,8 @@ export function generateRoutineGridPDF(
 
   const blankRows = Array.from({ length: emptyRows }, () => {
     const first = `<td class="day-cell" style="color:#bbb;font-size:8px"></td>`
-    const blanks = Array(totalPeriods).fill('<td class="cell empty-cell"></td>').join('')
+    const safeTotal = Math.max(1, Math.min(20, totalPeriods || 7))
+    const blanks = Array.from({ length: safeTotal }, () => '<td class="cell empty-cell"></td>').join('')
     const extra = emptyColumns.map(() => '<td class="cell empty-cell"></td>').join('')
     return `<tr class="blank-row">${first}${blanks}${extra}</tr>`
   }).join('')
