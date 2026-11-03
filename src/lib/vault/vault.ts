@@ -13,6 +13,14 @@
 
 import { onSlugChange } from '../storage'
 import { isWriteAllowed } from '../writeGuard'
+import { useAppStore } from '@/store/appStore'
+import {
+  savePermanentStorageMode,
+  savePermanentTelegramConfig,
+  savePermanentConfigToVaultHandle,
+  loadPermanentConfigFromVaultHandle,
+  applyPermanentConfigToStores,
+} from '../permanentConfig'
 import {
   registerVaultHooks,
   requestStoreReload,
@@ -800,6 +808,23 @@ async function hydrateFromVault(): Promise<number> {
     }
   }
 
+  // 4. Restore permanent config & Telegram connection from disk files
+  try {
+    const diskConfig = await loadPermanentConfigFromVaultHandle(handle, slug)
+    if (diskConfig) {
+      if (diskConfig.telegramBackup && (diskConfig.telegramBackup.botToken || diskConfig.telegramBackup.chatId)) {
+        await savePermanentTelegramConfig(diskConfig.telegramBackup)
+      }
+      if (diskConfig.storageMode) {
+        await savePermanentStorageMode(diskConfig.storageMode, diskConfig.serverUrl, diskConfig.folderName)
+      }
+      applyPermanentConfigToStores()
+      applied++
+    }
+  } catch {
+    /* ignore */
+  }
+
   isVaultHydrated = true
   if (applied > 0) requestStoreReload()
   return applied
@@ -986,6 +1011,23 @@ async function seedVaultFromStorage(): Promise<number> {
     await exportStoreImages(slug, path, raw)
     seeded++
   }
+
+  // Seed permanent config and Telegram settings to disk
+  try {
+    const tgSettings = useAppStore.getState().settings.telegramBackup
+    await savePermanentConfigToVaultHandle(
+      handle,
+      {
+        storageMode: 'local_computer',
+        folderName: handle.name,
+        telegramBackup: tgSettings,
+      },
+      slug
+    )
+  } catch {
+    /* ignore */
+  }
+
   emit({ lastSyncAt: Date.now() })
   return seeded
 }
@@ -1378,10 +1420,12 @@ function stopWatcher(): void {
 async function activate(savedHandle: VfsDirectoryHandle, seedIfEmpty: boolean): Promise<void> {
   handle = savedHandle
   exportedImageHashCache.clear()
+  void savePermanentStorageMode('local_computer', undefined, savedHandle.name)
   registerVaultHooks({ onWrite: handleStoreWrite, onRemove: (k) => void handleStoreRemove(k) })
   const applied = await hydrateFromVault()
   if (seedIfEmpty && applied === 0) await seedVaultFromStorage()
   startWatcher()
+  applyPermanentConfigToStores()
   emit({
     connected: true,
     needsReconnect: false,
@@ -1404,6 +1448,7 @@ export async function vaultInit(): Promise<void> {
   try {
     localStorage.setItem('edutech_storage_mode', 'local_computer')
     sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    void savePermanentStorageMode('local_computer', undefined, saved.name)
   } catch { /* ignore */ }
 
   const hasWrite = await hasPermission(saved, 'readwrite')

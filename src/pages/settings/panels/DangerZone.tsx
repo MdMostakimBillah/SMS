@@ -2,6 +2,12 @@ import { useState } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { AlertTriangle, Trash2 } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
+import { useAppStore } from '@/store/appStore'
+import {
+  savePermanentTelegramConfig,
+  savePermanentStorageMode,
+  applyPermanentConfigToStores,
+} from '@/lib/permanentConfig'
 
 interface Props {
   isBn: boolean
@@ -13,9 +19,30 @@ export function DangerZonePanel({ isBn, onBack }: Props) {
   const [showModal, setShowModal] = useState(false)
   const { canManage } = usePermission()
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    // Preserve selected storage mode and Telegram connection before clearing
+    const currentMode = localStorage.getItem('edutech_storage_mode')
+    const currentServerUrl = localStorage.getItem('edutech_server_url')
+    const currentSlug = localStorage.getItem('edutech_inst_slug') || sessionStorage.getItem('edutech_inst_slug')
+    const tgConfig = useAppStore.getState().settings.telegramBackup
+
+    if (tgConfig && (tgConfig.botToken || tgConfig.chatId)) {
+      await savePermanentTelegramConfig(tgConfig)
+    }
+    if (currentMode) {
+      await savePermanentStorageMode(currentMode as any, currentServerUrl || undefined)
+    }
+
     localStorage.clear()
     sessionStorage.clear()
+
+    // Reapply permanent storage mode and Telegram connection
+    applyPermanentConfigToStores()
+    if (currentSlug) {
+      localStorage.setItem('edutech_inst_slug', currentSlug)
+      sessionStorage.setItem('edutech_inst_slug', currentSlug)
+    }
+
     window.location.href = '/login'
   }
 

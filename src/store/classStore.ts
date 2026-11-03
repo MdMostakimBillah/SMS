@@ -5,6 +5,7 @@ import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { classesApi } from '@/lib/api'
+import { getPermanentStorageModeSync, getPermanentTelegramSync } from '@/lib/permanentConfig'
 
 export interface BreakTime {
   id: string
@@ -240,6 +241,13 @@ export interface InstitutionSettings {
   storageMode?: string
   serverUrl?: string
   folderName?: string
+  telegramBackup?: {
+    botToken: string
+    chatId: string
+    autoBackup: boolean
+    lastBackupAt?: string
+    lastBackupStatus?: string
+  }
   storageBytes?: number
   mediaCount?: number
   lightColors: ThemeColors
@@ -772,8 +780,14 @@ export const useClassStore = create<ClassState>()(
 )
 
 registerStoreReset(() => {
+  const permMode = getPermanentStorageModeSync()
+  const permTg = getPermanentTelegramSync()
   useClassStore.setState({
-    institution: { ...defaultInstitution },
+    institution: {
+      ...defaultInstitution,
+      ...(permMode ? { storageMode: permMode } : {}),
+      ...(permTg ? { telegramBackup: permTg } : {}),
+    },
     classes: [],
     routines: [],
     sessionClasses: {},
@@ -789,6 +803,18 @@ registerStoreLoad(() => {
     if (raw) {
       const parsed = JSON.parse(raw)
       if (parsed?.state) useClassStore.setState(parsed.state)
+    }
+    const permMode = getPermanentStorageModeSync()
+    const permTg = getPermanentTelegramSync()
+    if (permMode || permTg) {
+      const current = useClassStore.getState().institution
+      useClassStore.setState({
+        institution: {
+          ...current,
+          ...(permMode ? { storageMode: permMode } : {}),
+          ...(permTg ? { telegramBackup: permTg } : {}),
+        },
+      })
     }
   } catch {
     /* ignore */

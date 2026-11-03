@@ -7,12 +7,15 @@ import { TopLoadingBar } from './components/ui/TopLoadingBar'
 import './index.css'
 import './styles/premium-theme.css'
 import { cleanupOrphanedBaseKeys } from '@/lib/storage'
+import { initPermanentConfig } from '@/lib/permanentConfig'
 import { vaultInit } from '@/lib/vault/vault'
 import { startAutoBackupScheduler } from '@/lib/vault/autoBackup'
 import { startLicenseHeartbeat } from '@/lib/licenseHeartbeat'
 import App from './App'
 
 cleanupOrphanedBaseKeys()
+// Restore permanent storageMode and telegram credentials across refreshes / resets
+void initPermanentConfig()
 // Reconnect the Local Data Vault (JSON folder) without blocking first render.
 void vaultInit()
 startAutoBackupScheduler()

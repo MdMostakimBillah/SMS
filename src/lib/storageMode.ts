@@ -1,6 +1,10 @@
 import { useClassStore } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
 import { getVaultStatus } from './vault/vault'
+import {
+  getPermanentStorageModeSync,
+  savePermanentStorageMode,
+} from './permanentConfig'
 
 export type StorageMode = 'cloud' | 'local_computer' | 'local_server'
 
@@ -56,6 +60,12 @@ export function getActiveStorageMode(): StorageMode {
   }
 
   try {
+    // 1. Permanent configuration cache (survives localStorage.clear and hard refresh)
+    const permMode = getPermanentStorageModeSync()
+    if (permMode === 'local_computer' || permMode === 'local_server') {
+      return permMode
+    }
+
     if (typeof localStorage !== 'undefined') {
       const loc = localStorage.getItem('edutech_storage_mode')
       if (loc === 'local_computer' || loc === 'local_server') {
@@ -72,7 +82,7 @@ export function getActiveStorageMode(): StorageMode {
 
     try {
       const vaultStat = getVaultStatus()
-      if (vaultStat.connected || vaultStat.needsReconnect) {
+      if (vaultStat.connected || vaultStat.needsReconnect || vaultStat.folderName) {
         return 'local_computer'
       }
     } catch {
@@ -150,6 +160,7 @@ export function getActiveServerUrl(): string {
 
 export function setLocalServerUrl(url: string): void {
   const cleanUrl = url.trim().replace(/\/+$/, '')
+  void savePermanentStorageMode('local_server', cleanUrl)
   if (typeof sessionStorage !== 'undefined') {
     sessionStorage.setItem('edutech_server_url', cleanUrl)
   }
@@ -179,6 +190,8 @@ export function setLocalStorageMode(mode?: StorageMode | string | null, serverUr
   const validMode: StorageMode = (mode === 'local_computer' || mode === 'local_server') ? mode : 'cloud'
   // Super admin account can never switch away from cloud
   const effectiveMode: StorageMode = isSuperAdminAccount() ? 'cloud' : validMode
+
+  void savePermanentStorageMode(effectiveMode, serverUrl)
 
   if (typeof sessionStorage !== 'undefined') {
     sessionStorage.setItem('edutech_storage_mode', effectiveMode)

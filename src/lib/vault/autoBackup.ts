@@ -8,6 +8,7 @@
 
 import { useAppStore } from '@/store/appStore'
 import { sendTelegramBackupNow } from '../backup'
+import { savePermanentTelegramConfig } from '../permanentConfig'
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000 // hourly
 const DUE_MS = 24 * 60 * 60 * 1000
@@ -47,6 +48,16 @@ async function runIfDue(): Promise<void> {
       },
     },
   }))
+
+  void savePermanentTelegramConfig({
+    botToken: tg.botToken,
+    chatId: tg.chatId,
+    autoBackup: tg.autoBackup,
+    lastBackupAt: new Date().toISOString(),
+    lastBackupStatus: res.success
+      ? `success: ${res.filename ?? 'backup'}`
+      : `failed: ${res.error ?? 'unknown'}`,
+  })
 }
 
 /** Start the hourly due-check. Safe to call multiple times. */

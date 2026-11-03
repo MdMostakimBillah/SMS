@@ -6,8 +6,12 @@ import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/lib/api'
 import { setLocalStorageMode, canSwitchToCloud } from '@/lib/storageMode'
 import { useVault } from '@/hooks/useVault'
-import { vaultConnectFolder, vaultSyncNow } from '@/lib/vault/vault'
+import { vaultConnectFolder, vaultSyncNow, getActiveVaultHandle } from '@/lib/vault/vault'
 import { downloadLocalBackup, sendTelegramBackupNow } from '@/lib/backup'
+import {
+  savePermanentTelegramConfig,
+  savePermanentConfigToVaultHandle,
+} from '@/lib/permanentConfig'
 import { StorageModeSection } from './backup/StorageModeSection'
 import { LocalDatabaseControlPanel } from './backup/LocalDatabaseControlPanel'
 import { ProviderCloudControlPanel } from './backup/ProviderCloudControlPanel'
@@ -144,31 +148,41 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
     syncStorage(storageMode, undefined, folder)
   }
 
+  const persistTelegramToDiskIfVault = (updated: any) => {
+    const vHandle = getActiveVaultHandle()
+    if (vHandle) {
+      void savePermanentConfigToVaultHandle(vHandle, { telegramBackup: updated }, schoolSlug)
+    }
+  }
+
   const handleBotTokenChange = (token: string) => {
-    updateSettings({
-      telegramBackup: {
-        ...(settings.telegramBackup || { chatId: '', autoBackup: false }),
-        botToken: token,
-      },
-    })
+    const updated = {
+      ...(settings.telegramBackup || { chatId: '', autoBackup: false }),
+      botToken: token,
+    }
+    updateSettings({ telegramBackup: updated })
+    void savePermanentTelegramConfig(updated)
+    persistTelegramToDiskIfVault(updated)
   }
 
   const handleChatIdChange = (id: string) => {
-    updateSettings({
-      telegramBackup: {
-        ...(settings.telegramBackup || { botToken: '', autoBackup: false }),
-        chatId: id,
-      },
-    })
+    const updated = {
+      ...(settings.telegramBackup || { botToken: '', autoBackup: false }),
+      chatId: id,
+    }
+    updateSettings({ telegramBackup: updated })
+    void savePermanentTelegramConfig(updated)
+    persistTelegramToDiskIfVault(updated)
   }
 
   const handleAutoBackupChange = (enabled: boolean) => {
-    updateSettings({
-      telegramBackup: {
-        ...(settings.telegramBackup || { botToken: '', chatId: '' }),
-        autoBackup: enabled,
-      },
-    })
+    const updated = {
+      ...(settings.telegramBackup || { botToken: '', chatId: '' }),
+      autoBackup: enabled,
+    }
+    updateSettings({ telegramBackup: updated })
+    void savePermanentTelegramConfig(updated)
+    persistTelegramToDiskIfVault(updated)
   }
 
   // Backup Now action

@@ -121,6 +121,15 @@ export async function loadVaultHandle(): Promise<VfsDirectoryHandle | null> {
   }
 }
 
+export async function hasSavedVaultHandle(): Promise<boolean> {
+  try {
+    const handle = await loadVaultHandle()
+    return Boolean(handle)
+  } catch {
+    return false
+  }
+}
+
 export async function clearVaultHandle(): Promise<void> {
   try {
     const db = await openDb()

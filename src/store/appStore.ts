@@ -15,6 +15,11 @@ import {
   GRACE_PERIOD_MS,
 } from '@/lib/license'
 import { registerWriteGuard } from '@/lib/writeGuard'
+import {
+  savePermanentTelegramConfig,
+  savePermanentStorageMode,
+  applyPermanentConfigToStores,
+} from '@/lib/permanentConfig'
 
 interface PageVisit {
   path: string
@@ -229,8 +234,19 @@ export const useAppStore = create<AppState>()(
 
       setQuickAccessCardsOrder: (order) => set({ quickAccessCardsOrder: order }),
 
-      updateSettings: (partial) =>
-        set((state) => ({ settings: { ...state.settings, ...partial } })),
+      updateSettings: (partial) => {
+        if (partial.telegramBackup) {
+          void savePermanentTelegramConfig(partial.telegramBackup)
+        }
+        if (partial.storageSettings?.mode) {
+          void savePermanentStorageMode(
+            partial.storageSettings.mode,
+            partial.storageSettings.serverUrl,
+            partial.storageSettings.folderName
+          )
+        }
+        set((state) => ({ settings: { ...state.settings, ...partial } }))
+      },
 
       setTwoFactorEnabled: (enabled) =>
         set((state) => ({ settings: { ...state.settings, twoFactorEnabled: enabled } })),
@@ -333,6 +349,7 @@ function validateLicenseState(key: string): void {
 
 registerStoreReset(() => {
   useAppStore.setState({ sidebarOpen: false })
+  applyPermanentConfigToStores()
 })
 
 registerStoreLoad(() => {
@@ -355,6 +372,7 @@ registerStoreLoad(() => {
       const parsed = JSON.parse(raw)
       if (parsed.state) useAppStore.setState(parsed.state)
     }
+    applyPermanentConfigToStores()
   } catch { /* ignore */ }
 })
 
