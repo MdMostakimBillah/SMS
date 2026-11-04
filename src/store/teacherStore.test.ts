@@ -232,6 +232,41 @@ describe('teacherStore', () => {
     expect(useTeacherStore.getState().teachers.map((t) => t.id)).toEqual(['srv-1'])
   })
 
+  it('bulkUpdateTeachers applies batch updates to 50+ teachers in a single pass', () => {
+    const initialTeachers = Array.from({ length: 60 }, (_, i) => ({
+      id: `TCH-${i + 1}`,
+      nameEn: `Teacher ${i + 1}`,
+      salary: 30000,
+      inTime: '08:00',
+      outTime: '16:00',
+    } as Teacher))
+
+    useTeacherStore.setState({ teachers: initialTeachers })
+
+    // Bulk update 50 teachers with new salary and in/out times
+    const updates = Array.from({ length: 50 }, (_, i) => ({
+      id: `TCH-${i + 1}`,
+      data: {
+        salary: 45000,
+        inTime: '08:30',
+        outTime: '16:30',
+      },
+    }))
+
+    const start = performance.now()
+    useTeacherStore.getState().bulkUpdateTeachers(updates)
+    const elapsed = performance.now() - start
+
+    const updatedState = useTeacherStore.getState().teachers
+    expect(updatedState).toHaveLength(60)
+    expect(updatedState[0].salary).toBe(45000)
+    expect(updatedState[0].inTime).toBe('08:30')
+    expect(updatedState[0].outTime).toBe('16:30')
+    expect(updatedState[49].salary).toBe(45000)
+    expect(updatedState[50].salary).toBe(30000) // Unchanged
+    expect(elapsed).toBeLessThan(100) // Must execute under 100ms
+  })
+
   it('upsertServerDepartment / removeServerDepartment manage departments', () => {
     const store = useTeacherStore.getState()
     store.upsertServerDepartment({ id: 'd1', name: 'Sci' } as Department)

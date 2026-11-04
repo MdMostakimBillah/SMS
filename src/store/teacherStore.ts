@@ -90,6 +90,7 @@ interface TeacherState {
   /** Fetches teachers + departments from the secured API; backs up local data on first successful sync. */
   syncFromServer: () => Promise<void>
   upsertServerTeacher: (teacher: Teacher) => void
+  bulkUpdateTeachers: (updates: Array<{ id: string; data: Partial<Teacher> }>) => void
   removeServerTeacher: (id: string) => void
   upsertServerDepartment: (dept: Department) => void
   removeServerDepartment: (id: string) => void
@@ -242,6 +243,23 @@ export const useTeacherStore = create<TeacherState>()(
           teachers: state.teachers.some((t) => t.id === teacher.id)
             ? state.teachers.map((t) => (t.id === teacher.id ? teacher : t))
             : [teacher, ...state.teachers],
+        }))
+        flushPendingWrites()
+        void flushVaultWrites()
+      },
+
+      bulkUpdateTeachers: (updates) => {
+        if (!updates || updates.length === 0) return
+        const today = new Date().toISOString()
+        const updateMap = new Map<string, Partial<Teacher>>()
+        for (const u of updates) {
+          updateMap.set(u.id, u.data)
+        }
+        set((state) => ({
+          teachers: state.teachers.map((t) => {
+            const patch = updateMap.get(t.id)
+            return patch ? { ...t, ...patch, updatedAt: today } : t
+          }),
         }))
         flushPendingWrites()
         void flushVaultWrites()

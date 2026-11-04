@@ -69,7 +69,7 @@ export interface VaultStatus {
 
 const WRITE_DEBOUNCE_MS = 300
 const WATCH_INTERVAL_MS = 2000
-const OWN_WRITE_GRACE_MS = 4000
+const OWN_WRITE_GRACE_MS = 2500
 
 let handle: VfsDirectoryHandle | null = null
 let watcherTimer: ReturnType<typeof setInterval> | null = null
@@ -1109,28 +1109,48 @@ async function handleStoreRemove(key: string): Promise<void> {
   await deleteTextFile(handle, path)
 }
 
+let activeFlushPromise: Promise<void> | null = null
+
 /** Write all debounced changes immediately (call on page hide). */
 export async function flushVaultWrites(): Promise<void> {
-  if (!isWriteAllowed() || !isVaultHydrated) return
-  if (!handle) {
+  if (activeFlushPromise) {
     try {
-      const saved = await loadVaultHandle()
-      if (saved && (await hasPermission(saved))) {
-        await activate(saved, false)
-      }
+      await activeFlushPromise
     } catch {
       /* ignore */
     }
   }
-  if (!handle || !isVaultHydrated) return
-  const entries = Array.from(pendingWrites.entries())
-  pendingWrites.clear()
-  for (const [path, entry] of entries) {
-    clearTimeout(entry.timer)
-    trackInFlight(writePath(path, entry.content))
+  if (!isWriteAllowed() || !isVaultHydrated) return
+  if (pendingWrites.size === 0 && inFlightWrites.size === 0) return
+
+  const doFlush = async () => {
+    if (!handle) {
+      try {
+        const saved = await loadVaultHandle()
+        if (saved && (await hasPermission(saved))) {
+          await activate(saved, false)
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!handle || !isVaultHydrated) return
+    const entries = Array.from(pendingWrites.entries())
+    pendingWrites.clear()
+    for (const [path, entry] of entries) {
+      clearTimeout(entry.timer)
+      trackInFlight(writePath(path, entry.content))
+    }
+    if (inFlightWrites.size > 0) {
+      await Promise.all(Array.from(inFlightWrites))
+    }
   }
-  if (inFlightWrites.size > 0) {
-    await Promise.all(Array.from(inFlightWrites))
+
+  activeFlushPromise = doFlush()
+  try {
+    await activeFlushPromise
+  } finally {
+    activeFlushPromise = null
   }
 }
 
@@ -1309,7 +1329,6 @@ export async function watchTick(): Promise<void> {
 
     // Skip our own recent writes within the grace window
     if (Date.now() - (ownWriteAt.get(file.path) ?? 0) < OWN_WRITE_GRACE_MS) {
-      fileMtimeCache.set(file.path, file.lastModified)
       continue
     }
 

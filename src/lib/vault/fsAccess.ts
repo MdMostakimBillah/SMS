@@ -163,19 +163,39 @@ async function walkToParent(
   return dir
 }
 
+/** Per-path write queue to guarantee serialized writes and prevent Windows file locking contention */
+const writeQueueByPath = new Map<string, Promise<void>>()
+
 export async function writeTextFile(
   root: VfsDirectoryHandle,
   path: string,
   content: string,
 ): Promise<void> {
-  const segments = path.split('/').filter(Boolean)
-  const filename = segments.pop()
-  if (!filename) throw new Error(`Invalid vault path: ${path}`)
-  const dir = await walkToParent(root, segments)
-  const fileHandle = await dir.getFileHandle(filename, { create: true })
-  const writable = await fileHandle.createWritable()
-  await writable.write(content)
-  await writable.close()
+  const prevWrite = writeQueueByPath.get(path) ?? Promise.resolve()
+  const currentWrite = prevWrite
+    .catch(() => {})
+    .then(async () => {
+      const segments = path.split('/').filter(Boolean)
+      const filename = segments.pop()
+      if (!filename) throw new Error(`Invalid vault path: ${path}`)
+      const dir = await walkToParent(root, segments)
+      const fileHandle = await dir.getFileHandle(filename, { create: true })
+      const writable = await fileHandle.createWritable()
+      try {
+        await writable.write(content)
+      } finally {
+        await writable.close()
+      }
+    })
+
+  writeQueueByPath.set(path, currentWrite)
+  try {
+    await currentWrite
+  } finally {
+    if (writeQueueByPath.get(path) === currentWrite) {
+      writeQueueByPath.delete(path)
+    }
+  }
 }
 
 export async function readTextFile(
@@ -221,14 +241,31 @@ export async function writeBinaryFile(
   path: string,
   data: Uint8Array | Blob | ArrayBuffer,
 ): Promise<void> {
-  const segments = path.split('/').filter(Boolean)
-  const filename = segments.pop()
-  if (!filename) throw new Error(`Invalid vault path: ${path}`)
-  const dir = await walkToParent(root, segments)
-  const fileHandle = await dir.getFileHandle(filename, { create: true })
-  const writable = await fileHandle.createWritable()
-  await writable.write(data as any)
-  await writable.close()
+  const prevWrite = writeQueueByPath.get(path) ?? Promise.resolve()
+  const currentWrite = prevWrite
+    .catch(() => {})
+    .then(async () => {
+      const segments = path.split('/').filter(Boolean)
+      const filename = segments.pop()
+      if (!filename) throw new Error(`Invalid vault path: ${path}`)
+      const dir = await walkToParent(root, segments)
+      const fileHandle = await dir.getFileHandle(filename, { create: true })
+      const writable = await fileHandle.createWritable()
+      try {
+        await writable.write(data as any)
+      } finally {
+        await writable.close()
+      }
+    })
+
+  writeQueueByPath.set(path, currentWrite)
+  try {
+    await currentWrite
+  } finally {
+    if (writeQueueByPath.get(path) === currentWrite) {
+      writeQueueByPath.delete(path)
+    }
+  }
 }
 
 export async function readBinaryFile(

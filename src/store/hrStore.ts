@@ -183,17 +183,14 @@ export const useHRStore = create<HRState>()(
         }),
       upsertManyMonthlySalaryConfigs: (configs) =>
         set((state) => {
-          const newConfigs = [...state.monthlySalaryConfigs]
-          configs.forEach((config) => {
-            const existing = newConfigs.find((c) => c.teacherId === config.teacherId && c.month === config.month)
-            if (existing) {
-              const idx = newConfigs.indexOf(existing)
-              newConfigs[idx] = config
-            } else {
-              newConfigs.push(config)
-            }
-          })
-          return { monthlySalaryConfigs: newConfigs }
+          const map = new Map<string, MonthlySalaryConfig>()
+          for (const c of state.monthlySalaryConfigs) {
+            map.set(`${c.teacherId}_${c.month}`, c)
+          }
+          for (const c of configs) {
+            map.set(`${c.teacherId}_${c.month}`, c)
+          }
+          return { monthlySalaryConfigs: Array.from(map.values()) }
         }),
       deleteMonthlySalaryConfig: (id) =>
         set((state) => ({
@@ -227,20 +224,17 @@ export const useHRStore = create<HRState>()(
         })),
       upsertTeacherFacilities: (tfs) =>
         set((state) => {
-          const newTfs = [...state.teacherFacilities]
-          tfs.forEach((tf) => {
-            const existing = newTfs.find((e) => e.teacherId === tf.teacherId && e.facilityId === tf.facilityId)
-            if (existing) {
-              const idx = newTfs.indexOf(existing)
-              newTfs[idx] = tf
-            } else {
-              newTfs.push(tf)
-            }
-          })
-          return { teacherFacilities: newTfs }
+          const map = new Map<string, TeacherFacility>()
+          for (const tf of state.teacherFacilities) {
+            map.set(`${tf.teacherId}_${tf.facilityId}`, tf)
+          }
+          for (const tf of tfs) {
+            map.set(`${tf.teacherId}_${tf.facilityId}`, tf)
+          }
+          return { teacherFacilities: Array.from(map.values()) }
         }),
     }),
-    { name: 'edutech-hr', storage: createNamespacedStorage('edutech-hr'), version: 1 }
+    { name: 'edutech-hr', storage: createNamespacedStorage('edutech-hr', undefined, { debounce: true }), version: 1 }
   )
 )
 

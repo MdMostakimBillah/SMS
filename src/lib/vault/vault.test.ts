@@ -257,6 +257,7 @@ describe('vault — Mode C (local-first browser sync)', () => {
       'edutech-classes_demo',
       JSON.stringify({ state: { classes: [{ id: 1 }] }, version: 0 })
     )
+    await vaultSyncNow()
 
     // Hand-edit the file on disk with newer content
     await writeTextFile(

@@ -26,8 +26,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { teachersApi, type TeacherData } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverTeacherToTeacher, apiErrorMessage } from '@/lib/teacherMappers'
-import { flushPendingWrites } from '@/lib/storage'
-import { flushVaultWrites } from '@/lib/vault/vault'
+import type { Teacher } from '../types'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
@@ -85,12 +84,12 @@ export default function TeacherBulkUpdatePage() {
   const nav = useNavPath()
   const isBn = useBn()
   const { isMobile } = useWindowSize()
-  const { teachers, departments, designations, upsertServerTeacher, serverSynced, syncing, syncError, syncFromServer } = useTeacherStore(
+  const { teachers, departments, designations, bulkUpdateTeachers, serverSynced, syncing, syncError, syncFromServer } = useTeacherStore(
     useShallow((s) => ({
       teachers: s.teachers,
       departments: s.departments,
       designations: s.designations,
-      upsertServerTeacher: s.upsertServerTeacher,
+      bulkUpdateTeachers: s.bulkUpdateTeachers,
       serverSynced: s.serverSynced,
       syncing: s.syncing,
       syncError: s.syncError,
@@ -135,7 +134,8 @@ export default function TeacherBulkUpdatePage() {
     [teachers, search, fDept]
   )
 
-  const allSel = filtered.length > 0 && filtered.every((t) => selected.includes(t.id))
+  const selectedSet = useMemo(() => new Set(selected), [selected])
+  const allSel = filtered.length > 0 && filtered.every((t) => selectedSet.has(t.id))
   const toggleAll = useCallback(() => setSelected(allSel ? [] : filtered.map((t) => t.id)), [allSel, filtered])
   const toggleOne = useCallback((id: string) => setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id])), [])
 
@@ -191,41 +191,40 @@ export default function TeacherBulkUpdatePage() {
 
     if (isLocalComputerMode()) {
       setApplying(true)
-      const currentTeachers = useTeacherStore.getState().teachers
-      for (const c of changes) {
-        const existing = currentTeachers.find((t) => t.id === c.id)
-        if (existing) {
-          const patch: any = { ...c.payload }
-          if (patch.salary !== undefined) {
-            patch.salary = Number(patch.salary) || 0
-          }
-          upsertServerTeacher({
-            ...existing,
-            ...patch,
-            updatedAt: new Date().toISOString(),
-          })
+      const updates = changes.map((c) => {
+        const patch: any = { ...c.payload }
+        if (patch.salary !== undefined) {
+          patch.salary = Number(patch.salary) || 0
         }
-      }
-      flushPendingWrites()
-      await flushVaultWrites()
+        return { id: c.id, data: patch }
+      })
+      bulkUpdateTeachers(updates)
       setApplied(true)
       setApplying(false)
       setTimeout(() => setApplied(false), 3000)
       return
     }
 
-    // Sequential API writes — the store is updated only with server responses.
+    // In cloud mode: update server in controlled concurrent batches
     setApplying(true)
     setApplyError('')
     let done = 0
     try {
-      for (const c of changes) {
-        const updated = await teachersApi.update(c.id, c.payload)
-        upsertServerTeacher(serverTeacherToTeacher(updated))
-        done++
+      const BATCH_CONCURRENCY = 5
+      const serverUpdated: Array<{ id: string; data: Partial<Teacher> }> = []
+      for (let i = 0; i < changes.length; i += BATCH_CONCURRENCY) {
+        const chunk = changes.slice(i, i + BATCH_CONCURRENCY)
+        const chunkResults = await Promise.all(
+          chunk.map(async (c) => {
+            const updated = await teachersApi.update(c.id, c.payload)
+            done++
+            const mapped = serverTeacherToTeacher(updated)
+            return { id: mapped.id, data: mapped }
+          })
+        )
+        serverUpdated.push(...chunkResults)
       }
-      flushPendingWrites()
-      await flushVaultWrites()
+      bulkUpdateTeachers(serverUpdated)
       setApplied(true)
       setTimeout(() => setApplied(false), 3000)
     } catch (err) {
@@ -235,7 +234,7 @@ export default function TeacherBulkUpdatePage() {
     } finally {
       setApplying(false)
     }
-  }, [selected, filtered, op, photoMap, rowEdits, upsertServerTeacher, isBn, applying])
+  }, [selected, filtered, op, photoMap, rowEdits, bulkUpdateTeachers, isBn, applying])
 
   const clearAll = useCallback(() => {
     setRowEdits({})
@@ -578,17 +577,17 @@ export default function TeacherBulkUpdatePage() {
                   <tr
                     key={t.id}
                     className="border-b-[0.0313rem] border-[var(--border)]"
-                    style={{ background: selected.includes(t.id) ? `${opInfo.bg}44` : 'transparent' } as React.CSSProperties}
+                    style={{ background: selectedSet.has(t.id) ? `${opInfo.bg}44` : 'transparent' } as React.CSSProperties}
                     onMouseEnter={(e) => {
-                      if (!selected.includes(t.id)) e.currentTarget.style.background = 'var(--bg-secondary)'
+                      if (!selectedSet.has(t.id)) e.currentTarget.style.background = 'var(--bg-secondary)'
                     }}
                     onMouseLeave={(e) => {
-                      if (!selected.includes(t.id)) e.currentTarget.style.background = 'transparent'
+                      if (!selectedSet.has(t.id)) e.currentTarget.style.background = 'transparent'
                     }}
                   >
                     <td className="py-[0.5rem] px-[0.75rem]">
                        <ModernCheckbox
-                         checked={selected.includes(t.id)}
+                         checked={selectedSet.has(t.id)}
                          onChange={() => toggleOne(t.id)}
                          color={opInfo.color}
                          size="xs"
@@ -641,7 +640,7 @@ export default function TeacherBulkUpdatePage() {
                     </td>
                     <td
                       className="py-[0.375rem] px-[0.5rem]"
-                      style={{ background: selected.includes(t.id) ? `${opInfo.bg}33` : 'transparent' } as React.CSSProperties}
+                      style={{ background: selectedSet.has(t.id) ? `${opInfo.bg}33` : 'transparent' } as React.CSSProperties}
                     >
                       {op === 'photo' ? (
                         <label
