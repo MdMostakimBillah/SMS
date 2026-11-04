@@ -1,4 +1,5 @@
 export { toBnNum, getInitials, getAvatarGradient } from '@/lib/i18n'
+export { StaffAvatar, getStaffProfileImageUrl } from '@/components/shared/StaffAvatar'
 
 export const sectionCls = (isMobile: boolean) =>
   `bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl ${isMobile ? 'p-[0.875rem]' : 'p-4'} mb-3.5 overflow-hidden`

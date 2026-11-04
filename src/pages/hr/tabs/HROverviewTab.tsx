@@ -11,7 +11,7 @@ import {
   ChevronRight,
   ChevronsRight,
 } from 'lucide-react'
-import { sectionCls, sectionTitleCls, inputCls, getInitials, getAvatarGradient } from '@/pages/hr/utils'
+import { sectionCls, sectionTitleCls, inputCls, StaffAvatar } from '@/pages/hr/utils'
 
 interface RankingItem {
   id: string
@@ -36,6 +36,7 @@ interface Employee {
   nameEn: string
   nameBn?: string
   photo?: string
+  gender?: string
   designation: string
   phone: string
   status: string
@@ -237,7 +238,9 @@ export const HROverviewTab = React.memo(function HROverviewTab({
             <div key={card.title} className="bg-[var(--bg-secondary)] rounded-[0.625rem] p-3">
               <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] mb-[0.625rem]">{card.title}</div>
               {card.data.slice(0, 3).map((t, i) => {
-                const photo = t.photo || activeTeachers.find((at) => at.id === t.id)?.photo
+                const matchedTeacher = activeTeachers.find((at) => at.id === t.id)
+                const photo = t.photo || matchedTeacher?.photo
+                const gender = (t as any).gender || matchedTeacher?.gender
                 return (
                   <div key={t.id} className="flex items-center gap-2 py-[0.3125rem] px-0 border-b border-[var(--border)]">
                     <span
@@ -245,16 +248,15 @@ export const HROverviewTab = React.memo(function HROverviewTab({
                     >
                       #{i + 1}
                     </span>
-                    <div
-                      className="w-[1.625rem] h-[1.625rem] rounded-[0.4375rem] flex items-center justify-center shrink-0 text-[0.5rem] font-semibold text-white overflow-hidden"
-                      style={{ background: photo ? 'transparent' : getAvatarGradient(t.id) }}
-                    >
-                      {photo ? (
-                        <img src={photo} alt={t.nameEn || 'Staff'} className="w-full h-full object-cover" />
-                      ) : (
-                        getInitials(t.nameEn)
-                      )}
-                    </div>
+                    <StaffAvatar
+                      id={t.id}
+                      name={t.nameEn}
+                      photo={photo}
+                      gender={gender}
+                      sizeCls="w-[1.625rem] h-[1.625rem]"
+                      roundedCls="rounded-[0.4375rem]"
+                      alt={t.nameEn || 'Staff'}
+                    />
                     <div className="flex-1 min-w-[0]">
                       <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
                         {t.nameEn}
@@ -389,16 +391,15 @@ export const HROverviewTab = React.memo(function HROverviewTab({
                 className={`p-3 rounded-[0.625rem] cursor-pointer transition-all ${selectedEmployee === t.id ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'}`}
               >
                 <div className="flex items-center gap-[0.625rem] mb-[0.625rem]">
-                  <div
-                    className="w-[2.125rem] h-[2.125rem] rounded-lg flex items-center justify-center text-[0.625rem] font-semibold text-white shrink-0 overflow-hidden"
-                    style={{ background: t.photo ? 'transparent' : getAvatarGradient(t.id) }}
-                  >
-                    {t.photo ? (
-                       <img src={t.photo} alt={t.nameEn || 'Teacher'} className="w-full h-full object-cover" />
-                    ) : (
-                      getInitials(t.nameEn)
-                    )}
-                  </div>
+                  <StaffAvatar
+                    id={t.id}
+                    name={t.nameEn}
+                    photo={t.photo}
+                    gender={t.gender}
+                    sizeCls="w-[2.125rem] h-[2.125rem]"
+                    roundedCls="rounded-lg"
+                    alt={t.nameEn || 'Teacher'}
+                  />
                   <div className="flex-1 min-w-[0]">
                     <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
                       {t.nameEn}
@@ -475,16 +476,15 @@ export const HROverviewTab = React.memo(function HROverviewTab({
                   >
                     <td className="py-2 px-2">
                       <div className="flex items-center gap-[0.625rem]">
-                        <div
-                          className="w-[1.875rem] h-[1.875rem] rounded-[0.4375rem] flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0 overflow-hidden"
-                          style={{ background: t.photo ? 'transparent' : getAvatarGradient(t.id) }}
-                        >
-                          {t.photo ? (
-                             <img src={t.photo} alt={t.nameEn || 'Teacher'} className="w-full h-full object-cover" />
-                          ) : (
-                            getInitials(t.nameEn)
-                          )}
-                        </div>
+                        <StaffAvatar
+                          id={t.id}
+                          name={t.nameEn}
+                          photo={t.photo}
+                          gender={t.gender}
+                          sizeCls="w-[1.875rem] h-[1.875rem]"
+                          roundedCls="rounded-[0.4375rem]"
+                          alt={t.nameEn || 'Teacher'}
+                        />
                         <div>
                           <div className="text-xs font-medium text-[var(--text-primary)]">{t.nameEn}</div>
                           <div className="text-[0.625rem] text-[var(--text-muted)]">{t.phone}</div>

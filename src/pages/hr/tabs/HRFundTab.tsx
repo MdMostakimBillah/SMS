@@ -10,7 +10,7 @@ import {
   ChevronsRight,
   ChevronRight,
 } from 'lucide-react'
-import { sectionCls, sectionTitleCls, getInitials, getAvatarGradient } from '@/pages/hr/utils'
+import { sectionCls, sectionTitleCls, StaffAvatar } from '@/pages/hr/utils'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { usePermission } from '@/hooks/usePermission'
 
@@ -386,16 +386,15 @@ export const HRFundTab = React.memo(function HRFundTab({
                   >
                     <td className="py-2 px-2">
                       <div className="flex items-center gap-2">
-                        <div
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0 overflow-hidden"
-                          style={{ background: t.photo ? 'transparent' : getAvatarGradient(t.id) }}
-                        >
-                          {t.photo ? (
-                            <img src={t.photo} alt={t.nameEn || 'Staff'} className="w-full h-full object-cover" />
-                          ) : (
-                            getInitials(t.nameEn)
-                          )}
-                        </div>
+                        <StaffAvatar
+                          id={t.id}
+                          name={t.nameEn}
+                          photo={t.photo}
+                          gender={t.gender}
+                          sizeCls="w-7 h-7"
+                          roundedCls="rounded-md"
+                          alt={t.nameEn || 'Staff'}
+                        />
                         <div className="min-w-0">
                           <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">{t.nameEn}</div>
                           <div className="text-[0.625rem] text-[var(--text-muted)]">{t.designation}</div>

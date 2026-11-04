@@ -356,76 +356,92 @@ function setInstitutionImage(slug: string, field: 'logo' | 'banner', dataUrl: st
 
 function clearTeacherImage(slug: string, teacherId: string, field: 'photo' | 'signature'): boolean {
   try {
-    const key = `edutech-teachers_${slug}`
-    const raw = localStorage.getItem(key)
-    if (!raw) return false
-    const parsed = JSON.parse(raw)
-    const teachers = parsed?.state?.teachers
-    if (Array.isArray(teachers)) {
-      const t = teachers.find((item: any) => item.id === teacherId)
-      if (t && t[field]) {
-        t[field] = ''
-        localStorage.setItem(key, JSON.stringify(parsed))
-        return true
+    const keyCandidates = [slug ? `edutech-teachers_${slug}` : null, 'edutech-teachers'].filter(Boolean) as string[]
+    let cleared = false
+    for (const key of keyCandidates) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+      const parsed = JSON.parse(raw)
+      const teachers = parsed?.state?.teachers
+      if (Array.isArray(teachers)) {
+        const t = teachers.find((item: any) => item.id === teacherId)
+        if (t && t[field]) {
+          t[field] = ''
+          localStorage.setItem(key, JSON.stringify(parsed))
+          cleared = true
+        }
       }
     }
+    return cleared
   } catch { /* ignore */ }
   return false
 }
 
 function setTeacherImage(slug: string, teacherId: string, field: 'photo' | 'signature', dataUrl: string): boolean {
   try {
-    const key = `edutech-teachers_${slug}`
-    const raw = localStorage.getItem(key)
-    if (!raw) return false
-    const parsed = JSON.parse(raw)
-    const teachers = parsed?.state?.teachers
-    if (Array.isArray(teachers)) {
-      const t = teachers.find((item: any) => item.id === teacherId)
-      if (t && t[field] !== dataUrl) {
-        t[field] = dataUrl
-        localStorage.setItem(key, JSON.stringify(parsed))
-        return true
+    const keyCandidates = [slug ? `edutech-teachers_${slug}` : null, 'edutech-teachers'].filter(Boolean) as string[]
+    let updated = false
+    for (const key of keyCandidates) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+      const parsed = JSON.parse(raw)
+      const teachers = parsed?.state?.teachers
+      if (Array.isArray(teachers)) {
+        const t = teachers.find((item: any) => item.id === teacherId)
+        if (t && t[field] !== dataUrl) {
+          t[field] = dataUrl
+          localStorage.setItem(key, JSON.stringify(parsed))
+          updated = true
+        }
       }
     }
+    return updated
   } catch { /* ignore */ }
   return false
 }
 
 function clearStudentPhoto(slug: string, studentId: string): boolean {
   try {
-    const key = `edutech-admissions_${slug}`
-    const raw = localStorage.getItem(key)
-    if (!raw) return false
-    const parsed = JSON.parse(raw)
-    const students = parsed?.state?.students
-    if (Array.isArray(students)) {
-      const s = students.find((item: any) => item.id === studentId)
-      if (s && s.photo) {
-        s.photo = ''
-        localStorage.setItem(key, JSON.stringify(parsed))
-        return true
+    const keyCandidates = [slug ? `edutech-admissions_${slug}` : null, 'edutech-admissions'].filter(Boolean) as string[]
+    let cleared = false
+    for (const key of keyCandidates) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+      const parsed = JSON.parse(raw)
+      const students = parsed?.state?.students
+      if (Array.isArray(students)) {
+        const s = students.find((item: any) => item.id === studentId)
+        if (s && s.photo) {
+          s.photo = ''
+          localStorage.setItem(key, JSON.stringify(parsed))
+          cleared = true
+        }
       }
     }
+    return cleared
   } catch { /* ignore */ }
   return false
 }
 
 function setStudentPhoto(slug: string, studentId: string, dataUrl: string): boolean {
   try {
-    const key = `edutech-admissions_${slug}`
-    const raw = localStorage.getItem(key)
-    if (!raw) return false
-    const parsed = JSON.parse(raw)
-    const students = parsed?.state?.students
-    if (Array.isArray(students)) {
-      const s = students.find((item: any) => item.id === studentId)
-      if (s && s.photo !== dataUrl) {
-        s.photo = dataUrl
-        localStorage.setItem(key, JSON.stringify(parsed))
-        return true
+    const keyCandidates = [slug ? `edutech-admissions_${slug}` : null, 'edutech-admissions'].filter(Boolean) as string[]
+    let updated = false
+    for (const key of keyCandidates) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+      const parsed = JSON.parse(raw)
+      const students = parsed?.state?.students
+      if (Array.isArray(students)) {
+        const s = students.find((item: any) => item.id === studentId)
+        if (s && s.photo !== dataUrl) {
+          s.photo = dataUrl
+          localStorage.setItem(key, JSON.stringify(parsed))
+          updated = true
+        }
       }
     }
+    return updated
   } catch { /* ignore */ }
   return false
 }
@@ -836,6 +852,10 @@ async function hydrateFromVault(): Promise<number> {
 
 async function writeVaultFile(subPath: string, content: string): Promise<void> {
   if (!handle) return
+
+  // Skip redundant writes if the file content is already identical
+  const compact = compactJson(content)
+  if (fileContentCache.get(subPath) === compact) return
 
   // Safeguard: Never overwrite a non-empty file on disk with an empty domain payload
   // unless this was preceded by an explicit user deletion in the UI within the grace window.

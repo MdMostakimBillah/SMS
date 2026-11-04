@@ -1,7 +1,7 @@
 import React from 'react'
 import { Zap, CheckCircle2, XCircle, ThumbsUp, AlertCircle, Award, Gift, TrendingUp, Percent } from 'lucide-react'
 import CircularChart from '@/components/ui/CircularChart'
-import { sectionCls, sectionTitleCls } from '@/pages/hr/utils'
+import { sectionCls, sectionTitleCls, StaffAvatar } from '@/pages/hr/utils'
 import { usePermission } from '@/hooks/usePermission'
 
 interface HRDecisionsTabProps {
@@ -14,8 +14,8 @@ interface HRDecisionsTabProps {
   handleGenerateRecommendations: () => void
   handleApproveRecommendation: (rec: any) => void
   updateRecommendation: (id: string, status: string) => void
-  getAvatarGradient: (id: string) => string
-  getInitials: (name: string) => string
+  getAvatarGradient?: (id: string) => string
+  getInitials?: (name: string) => string
   getTeacherDept: (id: string) => string
 }
 
@@ -29,8 +29,6 @@ export const HRDecisionsTab = React.memo(function HRDecisionsTab({
   handleGenerateRecommendations,
   handleApproveRecommendation,
   updateRecommendation,
-  getAvatarGradient,
-  getInitials,
   getTeacherDept,
 }: HRDecisionsTabProps) {
   const { canCreate, canApprove, canReject } = usePermission()
@@ -80,16 +78,15 @@ export const HRDecisionsTab = React.memo(function HRDecisionsTab({
                   <span className={`text-[0.8125rem] font-bold w-[1.5rem] ${i < 3 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}>
                     #{i + 1}
                   </span>
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0 overflow-hidden"
-                    style={{ background: photo ? 'transparent' : getAvatarGradient(t.id) }}
-                  >
-                    {photo ? (
-                      <img src={photo} alt={t.nameEn || 'Staff'} className="w-full h-full object-cover" />
-                    ) : (
-                      getInitials(t.nameEn)
-                    )}
-                  </div>
+                  <StaffAvatar
+                    id={t.id}
+                    name={t.nameEn}
+                    photo={photo}
+                    gender={(t as any).gender || teachers.find((te: any) => te.id === t.id)?.gender}
+                    sizeCls="w-8 h-8"
+                    roundedCls="rounded-lg"
+                    alt={t.nameEn || 'Staff'}
+                  />
                   <div className="flex-1 min-w-[0]">
                     <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{t.nameEn}</div>
                     <div className="text-[0.6875rem] text-[var(--text-muted)]">

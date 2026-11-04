@@ -10,7 +10,7 @@ import {
 import type { MonthlySalaryConfig } from '@/store/hrStore'
 import type { Teacher } from '@/pages/teachers/types'
 import { PaginationControls } from '@/components/shared/PaginationControls'
-import { sectionCls, sectionTitleCls, inputCls, getInitials, getAvatarGradient } from '@/pages/hr/utils'
+import { sectionCls, sectionTitleCls, inputCls, StaffAvatar } from '@/pages/hr/utils'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { usePermission } from '@/hooks/usePermission'
 
@@ -318,16 +318,15 @@ export const HRSalarySetupTab = React.memo(function HRSalarySetupTab({
                   </td>
                   <td className="py-[0.4375rem] px-2">
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-6 h-6 rounded-md flex items-center justify-center text-[0.5rem] font-semibold text-white shrink-0 overflow-hidden"
-                        style={{ background: t.photo ? 'transparent' : getAvatarGradient(t.id) }}
-                      >
-                        {t.photo ? (
-                          <img src={t.photo} alt={t.nameEn || 'Staff'} className="w-full h-full object-cover" />
-                        ) : (
-                          getInitials(t.nameEn)
-                        )}
-                      </div>
+                      <StaffAvatar
+                        id={t.id}
+                        name={t.nameEn}
+                        photo={t.photo}
+                        gender={t.gender}
+                        sizeCls="w-6 h-6"
+                        roundedCls="rounded-md"
+                        alt={t.nameEn || 'Staff'}
+                      />
                       <div className="min-w-0">
                         <div className="text-[0.6875rem] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">{t.nameEn}</div>
                         <div className="text-[0.5625rem] text-[var(--text-muted)]">{t.designation}</div>

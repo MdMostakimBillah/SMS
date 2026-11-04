@@ -1,6 +1,6 @@
 import React from 'react'
 import { Briefcase, Users, HandCoins, Plus, Edit2, Trash2, Save, FileText } from 'lucide-react'
-import { sectionCls, sectionTitleCls, getInitials, getAvatarGradient } from '@/pages/hr/utils'
+import { sectionCls, sectionTitleCls, StaffAvatar } from '@/pages/hr/utils'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import type { FacForm } from '@/pages/hr/types'
 import type { Facility } from '@/store/hrStore'
@@ -458,16 +458,15 @@ export const HRFacilitiesTab = React.memo(function HRFacilitiesTab({
                       <td className="p-2 text-[0.6875rem] font-medium text-[var(--text-primary)]">
                         <div className="flex items-center gap-1.5">
                           {t && (
-                            <div
-                              className="w-[1.375rem] h-[1.375rem] rounded-[0.3125rem] flex items-center justify-center text-[0.5rem] font-semibold text-white shrink-0 overflow-hidden"
-                              style={{ background: t.photo ? 'transparent' : getAvatarGradient(t.id) }}
-                            >
-                              {t.photo ? (
-                                <img src={t.photo} alt={t.nameEn || 'Staff'} className="w-full h-full object-cover" />
-                              ) : (
-                                getInitials(t.nameEn)
-                              )}
-                            </div>
+                            <StaffAvatar
+                              id={t.id}
+                              name={t.nameEn}
+                              photo={t.photo}
+                              gender={t.gender}
+                              sizeCls="w-[1.375rem] h-[1.375rem]"
+                              roundedCls="rounded-[0.3125rem]"
+                              alt={t.nameEn || 'Staff'}
+                            />
                           )}
                           <span>{t?.nameEn || tf.teacherId}</span>
                         </div>

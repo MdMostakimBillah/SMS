@@ -101,8 +101,8 @@ async function measureDeviceStorage(): Promise<DeviceStorageStats> {
       if (estimate.quota && estimate.quota > 0) {
         quotaBytes = estimate.quota
       }
-      if (estimate.usage && estimate.usage > 0) {
-        usedBytes = Math.max(usedBytes, estimate.usage)
+      if (usedBytes === 0 && estimate.usage && estimate.usage > 0) {
+        usedBytes = estimate.usage
       }
     }
   } catch {

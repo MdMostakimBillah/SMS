@@ -1,20 +1,15 @@
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Check,
-  CheckCircle,
   Clock,
   DollarSign,
   Building2,
   Briefcase,
   Image,
-  Info,
   Phone,
   Save,
-  Search,
-  Upload,
-  Zap,
   AlertTriangle,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -30,11 +25,12 @@ import type { Teacher } from '../types'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
-
-type Op = 'salary' | 'phone' | 'photo' | 'department' | 'designation' | 'inTime' | 'outTime'
+import { TeacherRow, type BulkOp, type BulkOpMeta } from './components/TeacherRow'
+import { BulkOpSelector } from './components/BulkOpSelector'
+import { BulkFilterAndBatchBar } from './components/BulkFilterAndBatchBar'
 
 /** Bulk op ids -> server column names (`department` is stored as `departmentId`). */
-const OP_FIELD: Record<Op, keyof TeacherData> = {
+const OP_FIELD: Record<BulkOp, keyof TeacherData> = {
   photo: 'photo',
   salary: 'salary',
   phone: 'phone',
@@ -44,14 +40,7 @@ const OP_FIELD: Record<Op, keyof TeacherData> = {
   outTime: 'outTime',
 }
 
-const OPS: {
-  id: Op
-  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
-  bn: string
-  en: string
-  color: string
-  bg: string
-}[] = [
+const OPS: BulkOpMeta[] = [
   { id: 'photo', Icon: Image, bn: 'ছবি পরিবর্তন', en: 'Photo', color: 'var(--brand)', bg: 'var(--brand-light)' },
   { id: 'salary', Icon: DollarSign, bn: 'বেতন পরিবর্তন', en: 'Salary', color: 'var(--green)', bg: 'var(--green-light)' },
   { id: 'phone', Icon: Phone, bn: 'মোবাইল নম্বর', en: 'Phone', color: 'var(--teal)', bg: 'var(--teal-light)' },
@@ -60,24 +49,6 @@ const OPS: {
   { id: 'inTime', Icon: Clock, bn: 'ইন টাইম', en: 'In Time', color: 'var(--teal)', bg: 'var(--teal-light)' },
   { id: 'outTime', Icon: Clock, bn: 'আউট টাইম', en: 'Out Time', color: 'var(--red)', bg: 'var(--red-light)' },
 ]
-
-interface CellProps {
-  value: string
-  onChange: (v: string) => void
-  type?: string
-}
-const EditCell = React.memo(function EditCell({ value, onChange, type = 'text' }: CellProps) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full py-[0.375rem] px-[0.5rem] rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-[inherit] outline-none"
-      onFocus={(e) => (e.target.style.borderColor = 'var(--brand)')}
-      onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-    />
-  )
-})
 
 export default function TeacherBulkUpdatePage() {
   const navigate = useNavigate()
@@ -101,9 +72,9 @@ export default function TeacherBulkUpdatePage() {
   /** Phase 7 RBAC policy: writes are school_admin/hr_admin only — super_admin is read-only. */
   const canWriteTeachers = user?.role !== 'super_admin'
 
-  const departmentMap = useMemo(() => new Map(departments.map(d => [d.id, d])), [departments])
+  const departmentMap = useMemo(() => new Map(departments.map((d) => [d.id, d])), [departments])
 
-  const [op, setOp] = useState<Op>('salary')
+  const [op, setOp] = useState<BulkOp>('salary')
   const [search, setSearch] = useState('')
   const [fDept, setFDept] = useState('')
   const [selected, setSelected] = useState<string[]>([])
@@ -113,13 +84,12 @@ export default function TeacherBulkUpdatePage() {
   const [applied, setApplied] = useState(false)
   const [applying, setApplying] = useState(false)
   const [applyError, setApplyError] = useState('')
-  const fileRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   useEffect(() => {
     void syncFromServer()
   }, [syncFromServer])
 
-  const opInfo = OPS.find((x) => x.id === op)!
+  const opInfo = useMemo(() => OPS.find((x) => x.id === op)!, [op])
 
   const filtered = useMemo(
     () =>
@@ -136,10 +106,23 @@ export default function TeacherBulkUpdatePage() {
 
   const selectedSet = useMemo(() => new Set(selected), [selected])
   const allSel = filtered.length > 0 && filtered.every((t) => selectedSet.has(t.id))
-  const toggleAll = useCallback(() => setSelected(allSel ? [] : filtered.map((t) => t.id)), [allSel, filtered])
-  const toggleOne = useCallback((id: string) => setSelected((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id])), [])
 
-  const updateRowEdit = useCallback((id: string, val: string) => setRowEdits((p) => ({ ...p, [id]: val })), [])
+  const toggleAll = useCallback(() => {
+    setSelected(allSel ? [] : filtered.map((t) => t.id))
+  }, [allSel, filtered])
+
+  const toggleOne = useCallback((id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return Array.from(next)
+    })
+  }, [])
+
+  const updateRowEdit = useCallback((id: string, val: string) => {
+    setRowEdits((p) => ({ ...p, [id]: val }))
+  }, [])
 
   const handlePhotoUpload = useCallback(
     async (id: string, file: File) => {
@@ -148,7 +131,9 @@ export default function TeacherBulkUpdatePage() {
         alert(
           result.reason === 'too-large'
             ? imageTooLargeMessage(isBn)
-            : (isBn ? 'ছবি প্রসেস করতে সমস্যা হয়েছে' : 'Failed to process image')
+            : isBn
+              ? 'ছবি প্রসেস করতে সমস্যা হয়েছে'
+              : 'Failed to process image'
         )
         return
       }
@@ -168,22 +153,24 @@ export default function TeacherBulkUpdatePage() {
 
   const applyChanges = useCallback(async () => {
     if (applying) return
-    const ids = selected.length > 0 ? selected : filtered.map((t) => t.id)
     const changes: { id: string; payload: Partial<TeacherData> }[] = []
-    ids.forEach((id) => {
-      if (op === 'photo') {
-        if (photoMap[id]) changes.push({ id, payload: { photo: photoMap[id] } })
-      } else {
-        const val = rowEdits[id]
-        if (val) {
-          const field = OP_FIELD[op]
+
+    if (op === 'photo') {
+      for (const [id, photo] of Object.entries(photoMap)) {
+        if (photo) changes.push({ id, payload: { photo } })
+      }
+    } else {
+      const field = OP_FIELD[op]
+      for (const [id, val] of Object.entries(rowEdits)) {
+        if (val !== undefined && val !== '') {
           changes.push({
             id,
             payload: { [field]: op === 'salary' ? String(Number(val) || 0) : val } as Partial<TeacherData>,
           })
         }
       }
-    })
+    }
+
     if (changes.length === 0) {
       alert(isBn ? 'কোনো পরিবর্তন নেই' : 'No changes to apply')
       return
@@ -199,6 +186,10 @@ export default function TeacherBulkUpdatePage() {
         return { id: c.id, data: patch }
       })
       bulkUpdateTeachers(updates)
+      setRowEdits({})
+      setPhotoMap({})
+      setBatchVal('')
+      setSelected([])
       setApplied(true)
       setApplying(false)
       setTimeout(() => setApplied(false), 3000)
@@ -225,6 +216,10 @@ export default function TeacherBulkUpdatePage() {
         serverUpdated.push(...chunkResults)
       }
       bulkUpdateTeachers(serverUpdated)
+      setRowEdits({})
+      setPhotoMap({})
+      setBatchVal('')
+      setSelected([])
       setApplied(true)
       setTimeout(() => setApplied(false), 3000)
     } catch (err) {
@@ -234,7 +229,7 @@ export default function TeacherBulkUpdatePage() {
     } finally {
       setApplying(false)
     }
-  }, [selected, filtered, op, photoMap, rowEdits, bulkUpdateTeachers, isBn, applying])
+  }, [applying, op, photoMap, rowEdits, bulkUpdateTeachers, isBn])
 
   const clearAll = useCallback(() => {
     setRowEdits({})
@@ -243,13 +238,15 @@ export default function TeacherBulkUpdatePage() {
     setBatchVal('')
   }, [])
 
+  const handleSelectOp = useCallback((newOp: BulkOp) => {
+    setOp(newOp)
+    setRowEdits({})
+    setPhotoMap({})
+    setBatchVal('')
+  }, [])
+
   const readyCount = op === 'photo' ? Object.keys(photoMap).length : Object.keys(rowEdits).filter((k) => rowEdits[k]).length
 
-  const inpCls =
-    'py-[0.4375rem] px-[0.5625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[0.75rem] font-[inherit] cursor-pointer outline-none'
-
-  // Gate on server-authoritative data: local rows must never be presented as
-  // server data while the sync has not succeeded.
   if (!serverSynced) {
     return (
       <div>
@@ -321,196 +318,35 @@ export default function TeacherBulkUpdatePage() {
         </div>
       </div>
 
-      <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] py-[0.875rem] px-[1rem] mb-[0.75rem]">
-        <div className="text-[0.75rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-[0.625rem]">
-          ① {isBn ? 'কোন তথ্য পরিবর্তন করতে চান?' : 'What do you want to update?'}
-        </div>
-        <div className={`grid ${isMobile ? 'grid-cols-3' : 'grid-cols-5'} gap-[0.375rem]`}>
-          {OPS.map((o) => (
-            <button
-              key={o.id}
-              onClick={() => {
-                setOp(o.id)
-                setRowEdits({})
-                setPhotoMap({})
-                setBatchVal('')
-              }}
-              className={`flex flex-col items-center gap-[0.3125rem] py-[0.625rem] px-[0.375rem] rounded-[0.625rem] border-2 ${op === o.id ? 'border-[color:var(--o-color)]' : 'border-[var(--border)]'} ${op === o.id ? 'bg-[color:var(--o-bg)]' : 'bg-[var(--bg-secondary)]'} cursor-pointer font-[inherit] transition-all duration-150`}
-              style={{ '--o-color': o.color, '--o-bg': o.bg } as React.CSSProperties}
-            >
-              <o.Icon size={18} style={{ color: op === o.id ? o.color : undefined }} />
-              <span
-                className={`text-[0.625rem] ${op === o.id ? 'font-semibold' : 'font-normal'} ${op === o.id ? 'text-[color:var(--o-color)]' : 'text-[var(--text-secondary)]'} text-center leading-[1.2]`}
-              >
-                {isBn ? o.bn : o.en}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <BulkOpSelector
+        ops={OPS}
+        selectedOp={op}
+        onSelectOp={handleSelectOp}
+        isBn={isBn}
+        isMobile={isMobile}
+      />
 
-      <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-[240px_1fr]'} gap-[0.625rem] mb-[0.625rem]`}>
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.75rem] py-[0.75rem] px-[0.875rem]">
-          <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-[0.0313rem] mb-[0.5rem]">
-            ② {isBn ? 'শিক্ষক ফিল্টার' : 'Filter Teachers'}
-          </div>
-          <div className="flex flex-col gap-[0.375rem]">
-            <div className="flex items-center gap-[0.4375rem] bg-[var(--bg-secondary)] border border-[var(--border)] rounded-[0.5rem] py-[0.375rem] px-[0.5625rem]">
-              <Search size={13} className="text-[var(--text-muted)] shrink-0" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={isBn ? 'নাম বা আইডি...' : 'Name or ID...'}
-                className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)] font-[inherit]"
-              />
-            </div>
-            <select value={fDept} onChange={(e) => setFDept(e.target.value)} className={inpCls}>
-              <option value="">{isBn ? 'সব বিভাগ' : 'All Departments'}</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-[0.3125rem]">
-              <button
-                onClick={toggleAll}
-                className={`flex-1 py-[0.375rem] px-[0.5rem] rounded-[0.4375rem] border ${allSel ? 'border-[var(--brand)]' : 'border-[var(--border)]'} ${allSel ? 'bg-[var(--brand-light)]' : 'bg-[var(--bg-secondary)]'} ${allSel ? 'text-[var(--brand)]' : 'text-[var(--text-secondary)]'} text-[0.6875rem] cursor-pointer font-[inherit] font-medium`}
-              >
-                {allSel ? (isBn ? 'সব বাদ' : 'Deselect All') : isBn ? 'সব বাছুন' : 'Select All'} ({filtered.length})
-              </button>
-              {selected.length > 0 && (
-                <button
-                  onClick={() => setSelected([])}
-                  className="py-[0.375rem] px-[0.625rem] rounded-[0.4375rem] border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] text-[0.6875rem] cursor-pointer font-[inherit]"
-                >
-                  {selected.length} ✕
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div
-          className="bg-[var(--bg-primary)] border border-[color:var(--op-color)] rounded-[0.75rem] py-[0.75rem] px-[0.875rem]"
-          style={{ '--op-color': opInfo.color } as React.CSSProperties}
-        >
-          <div
-            className="text-[0.6875rem] font-semibold uppercase tracking-[0.0313rem] mb-[0.625rem]"
-            style={{ color: opInfo.color } as React.CSSProperties}
-          >
-            ③ {isBn ? `এক সাথে ${opInfo.bn}` : `Batch ${opInfo.en}`}
-            {selected.length > 0 && (
-              <span className="ml-[0.375rem] font-bold">
-                — {selected.length} {isBn ? 'জন' : 'selected'}
-              </span>
-            )}
-          </div>
-
-          {op === 'photo' ? (
-            <div
-              className="py-[0.625rem] px-[0.625rem] rounded-[0.5rem] text-[0.8125rem]"
-              style={{ background: opInfo.bg, color: opInfo.color } as React.CSSProperties}
-            >
-              <Info size={14} className="inline mr-[0.3125rem] align-middle" />
-              {isBn
-                ? 'নিচের টেবিলে প্রতিটি শিক্ষকের পাশের বাটনে ক্লিক করে ছবি আপলোড করুন'
-                : 'Click the upload button next to each teacher in the table below'}
-            </div>
-          ) : op === 'department' ? (
-            <div className="flex gap-[0.5rem] items-center flex-wrap">
-              <select
-                value={batchVal}
-                onChange={(e) => setBatchVal(e.target.value)}
-                className={`${inpCls} flex-1`}
-                style={{ color: batchVal ? 'var(--text-primary)' : 'var(--text-secondary)' } as React.CSSProperties}
-              >
-                <option value="">{isBn ? 'নতুন বিভাগ বেছে নিন' : 'Select new department'}</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {isBn ? d.nameBn : d.name}
-                  </option>
-                ))}
-              </select>
-              {canEdit('teachers.bulk-update') && (
-                <button
-                  onClick={applyBatch}
-                  disabled={!batchVal || selected.length === 0}
-                  className={`flex items-center gap-[0.3125rem] py-[0.5rem] px-[0.875rem] rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap ${!batchVal || selected.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                  style={{ background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color } as React.CSSProperties}
-                >
-                  <Zap size={13} />
-                  {isBn ? `${selected.length} জনে লাগান` : `Apply to ${selected.length}`}
-                </button>
-              )}
-            </div>
-          ) : op === 'designation' ? (
-            <div className="flex gap-[0.5rem] items-center flex-wrap">
-              <select
-                value={batchVal}
-                onChange={(e) => setBatchVal(e.target.value)}
-                className={`${inpCls} flex-1`}
-                style={{ color: batchVal ? 'var(--text-primary)' : 'var(--text-secondary)' } as React.CSSProperties}
-              >
-                <option value="">{isBn ? 'নতুন পদবি বেছে নিন' : 'Select new designation'}</option>
-                {designations.map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {isBn ? d.nameBn : d.name}
-                  </option>
-                ))}
-              </select>
-              {canEdit('teachers.bulk-update') && (
-                <button
-                  onClick={applyBatch}
-                  disabled={!batchVal || selected.length === 0}
-                  className={`flex items-center gap-[0.3125rem] py-[0.5rem] px-[0.875rem] rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap ${!batchVal || selected.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                  style={{ background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color } as React.CSSProperties}
-                >
-                  <Zap size={13} />
-                  {isBn ? `${selected.length} জনে লাগান` : `Apply to ${selected.length}`}
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="flex gap-[0.5rem] items-center flex-wrap">
-              {op === 'inTime' || op === 'outTime' ? (
-                <input
-                  type="time"
-                  value={batchVal}
-                  onChange={(e) => setBatchVal(e.target.value)}
-                  className={`${inpCls} flex-1 text-[var(--text-primary)]`}
-                />
-              ) : op === 'salary' ? (
-                <input
-                  type="number"
-                  value={batchVal}
-                  onChange={(e) => setBatchVal(e.target.value)}
-                  placeholder={isBn ? 'নতুন বেতন লিখুন' : 'Enter new salary'}
-                  className={`${inpCls} flex-1 text-[var(--text-primary)]`}
-                />
-              ) : (
-                <input
-                  value={batchVal}
-                  onChange={(e) => setBatchVal(e.target.value)}
-                  placeholder={isBn ? 'নতুন মান লিখুন' : 'Enter new value'}
-                  className={`${inpCls} flex-1 text-[var(--text-primary)]`}
-                />
-              )}
-              {canEdit('teachers.bulk-update') && (
-                <button
-                  onClick={applyBatch}
-                  disabled={!batchVal || selected.length === 0}
-                  className={`flex items-center gap-[0.3125rem] py-[0.5rem] px-[0.875rem] rounded-[0.5rem] border-none text-white text-[0.75rem] font-medium font-[inherit] whitespace-nowrap ${!batchVal || selected.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                  style={{ background: !batchVal || selected.length === 0 ? 'var(--border-2)' : opInfo.color } as React.CSSProperties}
-                >
-                  <Zap size={13} />
-                  {isBn ? `${selected.length} জনে লাগান` : `Apply to ${selected.length}`}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <BulkFilterAndBatchBar
+        isMobile={isMobile}
+        isBn={isBn}
+        op={op}
+        opInfo={opInfo}
+        search={search}
+        onSearchChange={setSearch}
+        fDept={fDept}
+        onFDeptChange={setFDept}
+        departments={departments}
+        designations={designations}
+        selectedCount={selected.length}
+        filteredCount={filtered.length}
+        allSel={allSel}
+        onToggleAll={toggleAll}
+        onClearSelection={() => setSelected([])}
+        batchVal={batchVal}
+        onBatchValChange={setBatchVal}
+        onApplyBatch={applyBatch}
+        canEdit={Boolean(canEdit('teachers.bulk-update') && canWriteTeachers)}
+      />
 
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden mb-[0.75rem]">
         <div className="py-[0.625rem] px-[0.875rem] border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)]">
@@ -518,44 +354,43 @@ export default function TeacherBulkUpdatePage() {
             <div className="w-[0.5rem] h-[0.5rem] rounded-full" style={{ background: opInfo.color } as React.CSSProperties} />
             <span className="text-[0.8125rem] font-medium text-[var(--text-primary)]">
               {filtered.length} {isBn ? 'জন শিক্ষক' : 'teachers'}
-              {selected.length > 0 && (
-                <span className="ml-[0.5rem]" style={{ color: opInfo.color } as React.CSSProperties}>
-                  · {selected.length} {isBn ? 'নির্বাচিত' : 'selected'}
-                </span>
-              )}
             </span>
+            {selected.length > 0 && (
+              <span className="text-[0.75rem] text-[var(--text-muted)]">
+                · {selected.length} {isBn ? 'জন নির্বাচিত' : 'selected'}
+              </span>
+            )}
           </div>
-          {readyCount > 0 && (
-            <span
-              className="text-[0.75rem] py-[0.1875rem] px-[0.625rem] rounded-[0.375rem] font-medium"
-              style={{ color: opInfo.color, background: opInfo.bg } as React.CSSProperties}
-            >
-              {readyCount} {isBn ? 'টি পরিবর্তন প্রস্তুত' : 'changes ready'}
-            </span>
-          )}
+          <div className="text-[0.75rem] text-[var(--text-muted)]">
+            {readyCount > 0 && (
+              <span className="font-semibold text-[var(--green)]">
+                {readyCount} {isBn ? 'টি পরিবর্তন প্রস্তুত' : 'ready to save'}
+              </span>
+            )}
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-[0.75rem]">
-            <thead>
-              <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                <th className="py-[0.625rem] px-[0.75rem] w-[2.25rem]">
-                   <ModernCheckbox
-                     checked={allSel}
-                     onChange={toggleAll}
-                     color={opInfo.color}
-                     size="xs"
-                   />
+        <div className="overflow-x-auto max-h-[30rem] overflow-y-auto">
+          <table className="w-full border-collapse text-[0.8125rem]">
+            <thead className="sticky top-0 bg-[var(--bg-secondary)] z-10">
+              <tr className="border-b border-[var(--border)]">
+                <th className="py-[0.625rem] px-[0.75rem] text-left w-[2.25rem]">
+                  <ModernCheckbox
+                    checked={allSel}
+                    onChange={toggleAll}
+                    color={opInfo.color}
+                    size="xs"
+                  />
                 </th>
-                <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-[2.25rem]">#</th>
-                <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase min-w-[3.125rem]">
+                <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-[2.5rem]">#</th>
+                <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase w-[3rem]">
                   {isBn ? 'ছবি' : 'Photo'}
                 </th>
-                <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase min-w-[10.3125rem]">
-                  {isBn ? 'নাম / আইডি' : 'Name / ID'}
+                <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase min-w-[9.375rem]">
+                  {isBn ? 'শিক্ষক' : 'Teacher'}
                 </th>
-                <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase min-w-[5rem]">
-                  {isBn ? 'বর্তমান মান' : 'Current'}
+                <th className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold text-[var(--text-muted)] uppercase min-w-[7.5rem]">
+                  {isBn ? 'বর্তমান তথ্য' : 'Current Value'}
                 </th>
                 <th
                   className="py-[0.625rem] px-[0.5rem] text-left text-[0.625rem] font-semibold uppercase min-w-[12.5rem]"
@@ -574,109 +409,23 @@ export default function TeacherBulkUpdatePage() {
                 </tr>
               ) : (
                 filtered.map((t, i) => (
-                  <tr
+                  <TeacherRow
                     key={t.id}
-                    className="border-b-[0.0313rem] border-[var(--border)]"
-                    style={{ background: selectedSet.has(t.id) ? `${opInfo.bg}44` : 'transparent' } as React.CSSProperties}
-                    onMouseEnter={(e) => {
-                      if (!selectedSet.has(t.id)) e.currentTarget.style.background = 'var(--bg-secondary)'
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!selectedSet.has(t.id)) e.currentTarget.style.background = 'transparent'
-                    }}
-                  >
-                    <td className="py-[0.5rem] px-[0.75rem]">
-                       <ModernCheckbox
-                         checked={selectedSet.has(t.id)}
-                         onChange={() => toggleOne(t.id)}
-                         color={opInfo.color}
-                         size="xs"
-                       />
-                    </td>
-                    <td className="py-[0.5rem] px-[0.5rem] text-[var(--text-muted)] font-semibold text-[0.6875rem]">{i + 1}</td>
-                    <td className="py-[0.4375rem] px-[0.5rem]">
-                      <div className="w-[2rem] h-[2.375rem] rounded-[0.375rem] overflow-hidden bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
-                        {t.photo ? (
-                           <img src={t.photo} alt={t.nameEn || 'Teacher'} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-[0.625rem] text-[var(--text-muted)]">
-                            {t.nameEn
-                              .split(' ')
-                              .map((n) => n[0])
-                              .slice(0, 2)
-                              .join('')}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-[0.5rem] px-[0.5rem]">
-                      <div className="text-[0.75rem] font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap max-w-[10rem]">
-                        {isBn ? t.nameBn || t.nameEn : t.nameEn}
-                      </div>
-                      <div className="text-[0.625rem] text-[var(--brand)] font-mono">{t.id}</div>
-                    </td>
-                    <td className="py-[0.5rem] px-[0.5rem] text-[var(--text-secondary)] text-[0.6875rem]">
-                      {op === 'salary'
-                        ? `৳${t.salary.toLocaleString()}`
-                        : op === 'phone'
-                          ? t.phone
-                          : op === 'photo'
-                            ? t.photo
-                              ? isBn
-                                ? 'ছবি আছে'
-                                : 'Has photo'
-                              : isBn
-                                ? 'নেই'
-                                : 'None'
-                            : op === 'department'
-                              ? departmentMap.get(t.departmentId)?.name || t.departmentId
-                              : op === 'designation'
-                                ? t.designation || '—'
-                                : op === 'inTime'
-                                  ? t.inTime
-                                  : op === 'outTime'
-                                    ? t.outTime
-                                    : '—'}
-                    </td>
-                    <td
-                      className="py-[0.375rem] px-[0.5rem]"
-                      style={{ background: selectedSet.has(t.id) ? `${opInfo.bg}33` : 'transparent' } as React.CSSProperties}
-                    >
-                      {op === 'photo' ? (
-                        <label
-                          className={`flex items-center gap-[0.3125rem] py-[0.375rem] px-[0.625rem] rounded-[0.4375rem] border text-[0.6875rem] cursor-pointer font-medium w-fit ${photoMap[t.id] ? 'border-[var(--green)] text-[var(--green)]' : ''}`}
-                          style={
-                            {
-                              background: photoMap[t.id] ? 'var(--green-light)' : opInfo.bg,
-                              borderColor: photoMap[t.id] ? 'var(--green)' : opInfo.color,
-                              color: photoMap[t.id] ? 'var(--green)' : opInfo.color,
-                            } as React.CSSProperties
-                          }
-                        >
-                          {photoMap[t.id] ? <CheckCircle size={12} /> : <Upload size={12} />}
-                          {photoMap[t.id] ? (isBn ? 'আপলোড হয়েছে ✓' : 'Uploaded ✓') : isBn ? 'ছবি বেছে নিন' : 'Choose Photo'}
-                          <input
-                            ref={(el) => {
-                              fileRefs.current[t.id] = el
-                            }}
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const f = e.target.files?.[0]
-                              if (f) handlePhotoUpload(t.id, f)
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-                      ) : (
-                        <EditCell
-                          value={rowEdits[t.id] !== undefined ? rowEdits[t.id] : op === 'salary' ? String(t.salary) : (t as any)[op] || ''}
-                          onChange={(v) => updateRowEdit(t.id, v)}
-                          type={op === 'salary' ? 'number' : 'text'}
-                        />
-                      )}
-                    </td>
-                  </tr>
+                    teacher={t}
+                    index={i}
+                    op={op}
+                    opInfo={opInfo}
+                    isSelected={selectedSet.has(t.id)}
+                    isBn={isBn}
+                    departmentName={departmentMap.get(t.departmentId)?.name}
+                    departments={departments}
+                    designations={designations}
+                    editValue={rowEdits[t.id]}
+                    photoMapVal={photoMap[t.id]}
+                    onToggle={toggleOne}
+                    onEdit={updateRowEdit}
+                    onPhotoUpload={handlePhotoUpload}
+                  />
                 ))
               )}
             </tbody>
@@ -709,7 +458,7 @@ export default function TeacherBulkUpdatePage() {
             <button
               onClick={() => void applyChanges()}
               disabled={readyCount === 0 || applying}
-              className={`flex items-center gap-[0.4375rem] py-[0.625rem] px-[1.375rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-[inherit] ${readyCount === 0 || applying ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`flex items-center gap-[0.4375rem] py-[0.625rem] px-[1.375rem] rounded-[0.5625rem] border-none text-white text-[0.8125rem] font-semibold font-[inherit] ${readyCount === 0 || applying ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
               style={
                 {
                   background: readyCount === 0 || applying ? 'var(--border-2)' : opInfo.color,

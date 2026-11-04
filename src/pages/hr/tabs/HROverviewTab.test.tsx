@@ -94,10 +94,13 @@ describe('HROverviewTab', () => {
     expect(staffImg?.getAttribute('alt')).toBe('Md. Mostakim Billah')
   })
 
-  it('falls back to initials when staff has no photo', () => {
+  it('renders a professional profile avatar image when staff has no uploaded photo', () => {
     render(<HROverviewTab {...baseProps} />)
 
-    // For t-2 (Md. Rafiqul Islam), initials 'MR' should be displayed
-    expect(screen.getAllByText('MR').length).toBeGreaterThan(0)
+    // For t-2 (Md. Rafiqul Islam), an img element with SVG profile avatar should be displayed
+    const images = screen.getAllByRole('img')
+    const t2Img = images.find((img) => img.getAttribute('alt') === 'Md. Rafiqul Islam')
+    expect(t2Img).toBeTruthy()
+    expect(t2Img?.getAttribute('src')).toContain('data:image/svg+xml')
   })
 })
