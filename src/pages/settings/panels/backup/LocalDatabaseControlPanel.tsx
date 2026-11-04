@@ -3,6 +3,8 @@ import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw,
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
+import { getActiveVaultHandle } from '@/lib/vault/vault'
+import { listAllVaultFiles } from '@/lib/vault/fsAccess'
 
 interface Props {
   isBn: boolean
@@ -15,6 +17,13 @@ interface Props {
   onChangeFolder: () => void
 }
 
+export interface DeviceStorageStats {
+  usedFormatted: string
+  quotaFormatted: string
+  remainingFormatted: string
+  percentUsed: number
+}
+
 function formatBytes(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return '0 B'
   const k = 1024
@@ -23,34 +32,97 @@ function formatBytes(bytes?: number | null): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
 }
 
-function calculateLocalStorageUsage() {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return { usedMB: 3.3, quotaMB: 5.0, percentUsed: 65, remainingMB: 1.7 }
-  }
+function getInitialStorageStats(): DeviceStorageStats {
+  let usedBytes = 0
   try {
-    let totalChars = 0
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i)
-      if (key) {
-        const val = localStorage.getItem(key) || ''
-        totalChars += key.length + val.length
+    if (typeof localStorage !== 'undefined') {
+      let totalChars = 0
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key) {
+          const val = localStorage.getItem(key) || ''
+          totalChars += key.length + val.length
+        }
       }
-    }
-    // In UTF-16, characters take 2 bytes
-    const totalBytes = totalChars * 2
-    const totalMB = totalBytes / (1024 * 1024)
-    const quotaMB = 5.0
-    const displayUsedMB = Math.max(0.1, Number(totalMB.toFixed(1)))
-    const percentUsed = Math.min(100, Math.max(4, Math.round((displayUsedMB / quotaMB) * 100)))
-    const remainingMB = Math.max(0, Number((quotaMB - displayUsedMB).toFixed(1)))
-    return {
-      usedMB: displayUsedMB,
-      quotaMB,
-      percentUsed,
-      remainingMB,
+      usedBytes = totalChars * 2
     }
   } catch {
-    return { usedMB: 3.3, quotaMB: 5.0, percentUsed: 65, remainingMB: 1.7 }
+    /* ignore */
+  }
+  const fallbackQuota = 64 * 1024 * 1024 * 1024
+  return {
+    usedFormatted: formatBytes(usedBytes || 3.6 * 1024 * 1024),
+    quotaFormatted: formatBytes(fallbackQuota),
+    remainingFormatted: formatBytes(fallbackQuota - usedBytes),
+    percentUsed: 1,
+  }
+}
+
+async function measureDeviceStorage(): Promise<DeviceStorageStats> {
+  let usedBytes = 0
+  let quotaBytes = 0
+
+  // 1. Calculate localStorage size
+  try {
+    if (typeof localStorage !== 'undefined') {
+      let totalChars = 0
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key) {
+          const val = localStorage.getItem(key) || ''
+          totalChars += key.length + val.length
+        }
+      }
+      usedBytes += totalChars * 2
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 2. Add local vault folder file sizes from disk if connected
+  try {
+    const handle = getActiveVaultHandle()
+    if (handle) {
+      const files = await listAllVaultFiles(handle)
+      const folderBytes = files.reduce((acc, f) => acc + (f.size || 0), 0)
+      if (folderBytes > 0) {
+        usedBytes = Math.max(usedBytes, folderBytes)
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 3. Query OS disk storage estimate via standard Navigator Storage API
+  // Supported across Windows, macOS, Linux, ChromeOS, Android, and iOS
+  try {
+    if (typeof navigator !== 'undefined' && navigator.storage && typeof navigator.storage.estimate === 'function') {
+      const estimate = await navigator.storage.estimate()
+      if (estimate.quota && estimate.quota > 0) {
+        quotaBytes = estimate.quota
+      }
+      if (estimate.usage && estimate.usage > 0) {
+        usedBytes = Math.max(usedBytes, estimate.usage)
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // Fallback to 64 GB baseline if OS quota cannot be probed
+  if (quotaBytes <= 0) {
+    quotaBytes = 64 * 1024 * 1024 * 1024
+  }
+
+  const remainingBytes = Math.max(0, quotaBytes - usedBytes)
+  const rawPercent = (usedBytes / quotaBytes) * 100
+  const percentUsed = Math.min(100, Math.max(1, Math.round(rawPercent)))
+
+  return {
+    usedFormatted: formatBytes(usedBytes),
+    quotaFormatted: formatBytes(quotaBytes),
+    remainingFormatted: formatBytes(remainingBytes),
+    percentUsed,
   }
 }
 
@@ -70,11 +142,17 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
   const classes = useClassStore((s) => s.classes)
   const routines = useClassStore((s) => s.routines)
 
-  const [storageUsage, setStorageUsage] = useState(calculateLocalStorageUsage)
+  const [storageUsage, setStorageUsage] = useState<DeviceStorageStats>(getInitialStorageStats)
 
   useEffect(() => {
-    setStorageUsage(calculateLocalStorageUsage())
-  }, [students.length, teachers.length, classes.length, routines.length])
+    let mounted = true
+    void measureDeviceStorage().then((stats) => {
+      if (mounted) setStorageUsage(stats)
+    })
+    return () => {
+      mounted = false
+    }
+  }, [students.length, teachers.length, classes.length, routines.length, folderPath])
 
   const totalSections = useMemo(() => {
     return classes.reduce((sum, c) => sum + (c.sections?.length || 0), 0)
@@ -148,11 +226,11 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
               {isBn ? 'ডিভাইস স্টোরেজ' : 'Device storage'}
             </span>
             <div className="text-[1.25rem] font-bold text-[var(--text-primary)] tracking-tight mt-0.5">
-              {storageUsage.usedMB} MB{' '}
-              <span className="text-[var(--text-muted)] text-[0.875rem] font-normal">/ {storageUsage.quotaMB} MB</span>
+              {storageUsage.usedFormatted}{' '}
+              <span className="text-[var(--text-muted)] text-[0.875rem] font-normal">/ {storageUsage.quotaFormatted}</span>
             </div>
             <span className="text-[0.75rem] text-[var(--text-secondary)] mt-1 block">
-              {isBn ? `${storageUsage.remainingMB} MB অবশিষ্ট` : `${storageUsage.remainingMB} MB remaining`}
+              {isBn ? `${storageUsage.remainingFormatted} অবশিষ্ট` : `${storageUsage.remainingFormatted} remaining`}
             </span>
 
             {/* Provider Server Storage Usage Indicator */}

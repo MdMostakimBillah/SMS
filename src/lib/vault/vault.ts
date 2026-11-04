@@ -1344,7 +1344,8 @@ export async function watchTick(): Promise<void> {
       if (text === null) continue
       fileMtimeCache.set(file.path, file.lastModified)
       const fileCompact = compactJson(text)
-      if (fileContentCache.get(file.path) === fileCompact) continue
+      const isMissingInStore = !localStorage.getItem(key)
+      if (!isMissingInStore && fileContentCache.get(file.path) === fileCompact) continue
 
       try {
         JSON.parse(text)

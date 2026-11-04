@@ -183,14 +183,18 @@ function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; i
     }
   }
 
+  const isFullWidth = activePanel === 'backup-storage'
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-[1.375rem] font-bold text-[var(--text-primary)] tracking-tight">
-          {isBn ? 'সেটিংস' : 'Settings'}
-        </h1>
-      </div>
+    <div className={isFullWidth ? 'w-full max-w-none px-4 md:px-6 py-6' : 'max-w-2xl mx-auto px-4 py-6'}>
+      {/* Header — hidden for full-width Backup & Storage panel as it has its own dedicated header */}
+      {!isFullWidth && (
+        <div className="mb-6">
+          <h1 className="text-[1.375rem] font-bold text-[var(--text-primary)] tracking-tight">
+            {isBn ? 'সেটিংস' : 'Settings'}
+          </h1>
+        </div>
+      )}
 
       {/* Panel or Group List */}
       {activePanel || editingRoleId || creatingRole ? (

@@ -243,7 +243,7 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
     : '[FOLDER PATH]'
 
   return (
-    <div className="fade-up space-y-6 max-w-5xl mx-auto pb-10">
+    <div className="fade-up space-y-6 w-full max-w-none pb-10">
       {/* Top Header: Kicker, Title, Subtitle, and Live Status Badge */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div className="flex items-start gap-3.5">
