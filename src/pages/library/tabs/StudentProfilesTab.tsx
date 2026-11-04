@@ -4,6 +4,7 @@ import { useBn } from '@/hooks/useBn'
 import { useLibraryStore, calcFine } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
+import { isMatchingSession } from '@/lib/classStudentCount'
 import { toBnNum } from '@/lib/i18n'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { StudentLibraryProfileModal } from '../modals/StudentLibraryProfileModal'
@@ -22,10 +23,12 @@ export function StudentProfilesTab({ searchQuery }: Props) {
   const [perPage, setPerPage] = useState(10)
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
 
-  const sessionStudents = useMemo(() =>
-    students.filter((s) => s.academicYear === currentSession && s.status === 'approved'),
-    [students, currentSession]
-  )
+  const sessionStudents = useMemo(() => {
+    const approved = students.filter((s) => (!s.status || s.status === 'approved') && s.active !== false)
+    if (!currentSession || approved.length === 0) return approved
+    const matched = approved.filter((s) => isMatchingSession(s.academicYear, currentSession))
+    return matched.length > 0 ? matched : approved
+  }, [students, currentSession])
 
   const profiles = useMemo(() => {
     return sessionStudents.map((s) => {

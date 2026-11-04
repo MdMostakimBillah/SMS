@@ -8,6 +8,7 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { usePermission } from '@/hooks/usePermission'
+import { isMatchingSession } from '@/lib/classStudentCount'
 
 interface RollCellProps {
   value: string
@@ -46,10 +47,12 @@ export default function ClassPromotionPage() {
 
   const [fSession, setFSession] = useState(currentSession)
 
-  const students = useMemo(
-    () => allStudents.filter((s) => s.academicYear === fSession),
-    [allStudents, fSession]
-  )
+  const students = useMemo(() => {
+    if (!allStudents || allStudents.length === 0) return []
+    if (!fSession) return allStudents
+    const matched = allStudents.filter((s) => isMatchingSession(s.academicYear, fSession))
+    return matched.length > 0 ? matched : allStudents
+  }, [allStudents, fSession])
 
   const approved = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
 

@@ -193,7 +193,7 @@ export default function DashboardPage() {
       .reduce((s, p) => s + p.amount, 0)
 
     const activeStructures = structures.filter((s) => s.isActive && s.type === 'monthly')
-    const approvedStudents = students.filter((s) => s.status === 'approved' && s.active !== false)
+    const approvedStudents = students.filter((s) => (!s.status || s.status === 'approved') && s.active !== false)
     const totalExpected = activeStructures.reduce((s, st) => s + st.amount, 0) * approvedStudents.length
 
     const monthIncome = payments
@@ -214,7 +214,7 @@ export default function DashboardPage() {
   // Top students (approved, roll number sorted)
   const topStudentsList = useMemo(() =>
     [...students]
-      .filter((s) => s.status === 'approved')
+      .filter((s) => !s.status || s.status === 'approved')
       .slice(0, 5)
       .map((s, i) => ({
         name: s.nameEn,

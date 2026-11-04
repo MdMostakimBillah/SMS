@@ -14,6 +14,7 @@ import { setSlug } from '@/lib/storage'
 import { setLocalStorageMode } from '@/lib/storageMode'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { presets } from '@/components/shared/ColorSettings'
+import { getVaultStatus, vaultReconnect } from '@/lib/vault/vault'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -409,6 +410,14 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
 
       if (targetSlug) {
         setSlug(targetSlug)
+      }
+
+      // If vault needs re-permission (e.g. after localStorage clear), reconnect now.
+      // The login button press is a user gesture so the browser will allow the permission dialog.
+      const vs = getVaultStatus()
+      if (vs.needsReconnect && !vs.connected) {
+        // Fire-and-forget — vault will hydrate and reload stores asynchronously
+        void vaultReconnect()
       }
 
       if (u?.school) {

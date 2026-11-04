@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useLibraryStore } from '@/store/libraryStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import { isMatchingSession } from '@/lib/classStudentCount'
 import { toBnNum } from '@/lib/i18n'
 import { modalOverlayCls, modalStyleCls, labelCls } from '@/pages/hr/utils'
 import type { Borrowing, BookCondition } from '../types'
@@ -41,10 +42,12 @@ export function IssueTab(_props: Props) {
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
   const sectionsMap = useMemo(() => buildSectionsMap(classes), [classes])
 
-  const sessionStudents = useMemo(() =>
-    students.filter((s) => s.academicYear === currentSession && s.status === 'approved'),
-    [students, currentSession]
-  )
+  const sessionStudents = useMemo(() => {
+    const approved = students.filter((s) => (!s.status || s.status === 'approved') && s.active !== false)
+    if (!currentSession || approved.length === 0) return approved
+    const matched = approved.filter((s) => isMatchingSession(s.academicYear, currentSession))
+    return matched.length > 0 ? matched : approved
+  }, [students, currentSession])
 
   const [selectedStudentId, setSelectedStudentId] = useState('')
   const [selectedBookId, setSelectedBookId] = useState('')

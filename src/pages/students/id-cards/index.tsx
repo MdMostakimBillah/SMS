@@ -13,6 +13,7 @@ import { printRawHTML } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { usePermission } from '@/hooks/usePermission'
+import { isMatchingSession } from '@/lib/classStudentCount'
 
 const TEMPLATES = [
   { id: 'classic', name: 'Classic', nameBn: 'ক্লাসিক', primary: '#6366f1', secondary: '#eef2ff', accent: '#4f46e5', radius: 12 },
@@ -195,10 +196,12 @@ export default function IDCardsPage() {
 
   const [fSession, setFSession] = useState(currentSession)
 
-  const students = useMemo(
-    () => allStudents.filter((s) => s.academicYear === fSession),
-    [allStudents, fSession]
-  )
+  const students = useMemo(() => {
+    if (!allStudents || allStudents.length === 0) return []
+    if (!fSession) return allStudents
+    const matched = allStudents.filter((s) => isMatchingSession(s.academicYear, fSession))
+    return matched.length > 0 ? matched : allStudents
+  }, [allStudents, fSession])
 
   const approved = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
   const classOptions = useMemo(() => getClassOptions(classes), [classes])

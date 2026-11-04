@@ -36,6 +36,7 @@ import { ReactivationModal } from '@/components/shared/ReactivationModal'
 import { generateListPDF } from '@/pages/students/admission/listPdfTemplate'
 import { generateA4HTML } from '@/pages/students/admission/a4Template'
 import { printRawHTML } from '@/lib/pdf'
+import { isMatchingSession } from '@/lib/classStudentCount'
 import type { ListPDFOptions } from '@/pages/students/admission/listPdfTemplate'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import { BLOOD_GROUPS } from '@/lib/constants'
@@ -57,7 +58,6 @@ export default function AllStudentsPage() {
     void syncFromServer()
   }, [syncFromServer])
   const { classes, institution } = useClassStore()
-  const currentSession = institution.currentSession
   const isBn = useBn()
   const { canEdit, canExport } = usePermission()
 
@@ -84,6 +84,7 @@ export default function AllStudentsPage() {
   const debouncedSearch = useDebouncedValue(search, 200)
   const [fClass, setFClass] = useState('')
   const [fSection, setFSection] = useState('')
+  const [fSession, setFSession] = useState('')
   const [fGender, setFGender] = useState('')
   const [fStatus, setFStatus] = useState('')
   const [fActive, setFActive] = useState<'active' | 'inactive' | ''>('active')
@@ -117,12 +118,13 @@ export default function AllStudentsPage() {
   const filtered = useMemo(
     () =>
       students.filter((s) => {
-        if (s.academicYear !== currentSession) return false
+        if (fSession && !isMatchingSession(s.academicYear, fSession)) return false
         // Default: show approved + inactive students; exclude rejected
+        const st = s.status || 'approved'
         if (!fStatus) {
-          if (s.status !== 'approved' && s.active !== false) return false
+          if (st !== 'approved' && s.active !== false) return false
         } else {
-          if (s.status !== fStatus) return false
+          if (st !== fStatus) return false
         }
         if (debouncedSearch) {
           const q = debouncedSearch.toLowerCase()
@@ -146,7 +148,7 @@ export default function AllStudentsPage() {
         if (fBlood && s.bloodGroup !== fBlood) return false
         return true
       }),
-    [students, currentSession, debouncedSearch, fClass, fSection, fGender, fStatus, fActive, fReligion, fBlood]
+    [students, fSession, debouncedSearch, fClass, fSection, fGender, fStatus, fActive, fReligion, fBlood]
   )
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
@@ -237,9 +239,10 @@ export default function AllStudentsPage() {
     setFActive('active')
     setFReligion('')
     setFBlood('')
+    setFSession('')
     setPage(1)
   }, [])
-  const hasFilter = search || fClass || fSection || fGender || fStatus || fActive || fReligion || fBlood
+  const hasFilter = search || fClass || fSection || fGender || fStatus || fActive || fReligion || fBlood || fSession
 
   const sel =
     'w-full min-w-0 px-2 py-[0.4375rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-xs outline-none cursor-pointer truncate'
@@ -510,6 +513,21 @@ export default function AllStudentsPage() {
                         {s}
                       </option>
                     ))}
+              </select>
+              <select
+                value={fSession}
+                onChange={(e) => {
+                  setFSession(e.target.value)
+                  setPage(1)
+                }}
+                className={sel}
+              >
+                <option value="">{isBn ? 'সব শিক্ষাবর্ষ' : 'All Sessions'}</option>
+                {institution.sessions.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
               </select>
               <select
                 value={fGender}

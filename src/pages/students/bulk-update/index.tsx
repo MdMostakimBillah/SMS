@@ -28,6 +28,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { logger } from '@/lib/logger'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
+import { isMatchingSession } from '@/lib/classStudentCount'
 import { usePermission } from '@/hooks/usePermission'
 
 type Op = 'photo' | 'roll' | 'class' | 'section' | 'bloodGroup' | 'religion' | 'academicYear'
@@ -138,10 +139,12 @@ export default function BulkUpdatePage() {
 
   const opInfo = OPS.find((x) => x.id === op)!
 
-  const students = useMemo(
-    () => allStudents.filter((s) => s.academicYear === fSession),
-    [allStudents, fSession]
-  )
+  const students = useMemo(() => {
+    if (!allStudents || allStudents.length === 0) return []
+    if (!fSession) return allStudents
+    const matched = allStudents.filter((s) => isMatchingSession(s.academicYear, fSession))
+    return matched.length > 0 ? matched : allStudents
+  }, [allStudents, fSession])
 
   const approved = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
 

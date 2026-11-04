@@ -313,13 +313,22 @@ export const useAdmissionStore = create<AdmissionState>()(
   )
 )
 
+import { isMatchingSession } from '@/lib/classStudentCount'
+
 export function useSessionStudents() {
   const students = useAdmissionStore((s) => s.students)
   const currentSession = useClassStore((s) => s.institution.currentSession)
-  return useMemo(
-    () => students.filter((s) => !s.academicYear || s.academicYear === currentSession),
-    [students, currentSession]
-  )
+  return useMemo(() => {
+    if (!students || students.length === 0) return []
+    if (!currentSession) return students
+
+    const sessionMatched = students.filter((s) => isMatchingSession(s.academicYear, currentSession))
+    if (sessionMatched.length > 0) return sessionMatched
+
+    // Fallback: If no students matched the current session, return all students
+    // so student data is never zeroed out or hidden.
+    return students
+  }, [students, currentSession])
 }
 
 registerStoreReset(() => {
@@ -333,7 +342,36 @@ registerStoreLoad(() => {
     const raw = localStorage.getItem(key) || (slug ? localStorage.getItem('edutech-admissions') : null)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed?.state) useAdmissionStore.setState(parsed.state)
+      const st = parsed?.state || parsed
+      if (st?.students) {
+        useAdmissionStore.setState(st)
+
+        // If the current session has 0 students, but students exist under another session,
+        // automatically align the institution's currentSession to the students' session.
+        const currentSession = useClassStore.getState().institution.currentSession
+        const studentsList: StudentAdmission[] = st.students || []
+        if (studentsList.length > 0) {
+          const hasCurrent = studentsList.some((s) => isMatchingSession(s.academicYear, currentSession))
+          if (!hasCurrent) {
+            const counts: Record<string, number> = {}
+            for (const s of studentsList) {
+              if (s.academicYear) counts[s.academicYear] = (counts[s.academicYear] || 0) + 1
+            }
+            const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
+            if (dominant) {
+              const inst = useClassStore.getState().institution
+              const sessions = inst.sessions.includes(dominant) ? inst.sessions : [...inst.sessions, dominant]
+              useClassStore.setState({
+                institution: {
+                  ...inst,
+                  sessions,
+                  currentSession: dominant,
+                },
+              })
+            }
+          }
+        }
+      }
     }
   } catch {
     /* ignore */

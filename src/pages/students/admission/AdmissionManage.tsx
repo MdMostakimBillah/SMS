@@ -7,6 +7,7 @@ import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classS
 import { PDFOptionsModal } from '@/components/shared/PDFOptionsModal'
 import { isMale, isFemale, matchesGender } from '@/lib/gender'
 import { useTeacherStore } from '@/store/teacherStore'
+import { isMatchingSession } from '@/lib/classStudentCount'
 import type { StudentAdmission } from './types'
 import { ApproveModal } from './modals/ApproveModal'
 import { RejectModal } from './modals/RejectModal'
@@ -28,7 +29,11 @@ export default function AdmissionManage() {
   const teachers = useTeacherStore((s) => s.teachers)
   const teacherMap = useMemo(() => new Map(teachers.map((t) => [t.id, t])), [teachers])
   const currentSession = institution.currentSession
-  const students = useMemo(() => allStudents.filter((s) => s.academicYear === currentSession), [allStudents, currentSession])
+  const students = useMemo(() => {
+    if (!allStudents || allStudents.length === 0) return []
+    const matched = allStudents.filter((s) => isMatchingSession(s.academicYear, currentSession))
+    return matched.length > 0 ? matched : allStudents
+  }, [allStudents, currentSession])
   const isBn = useBn()
   const { handleApprove, handleReject, exportExcel, handleListPDF } = useAdmissionActions()
 

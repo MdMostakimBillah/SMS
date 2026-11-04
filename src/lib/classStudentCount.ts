@@ -123,11 +123,14 @@ export function getSectionStudentCount(
   sec: ClassSection,
   currentSession?: string
 ): number {
-  return students.filter((s) => {
+  const inSection = students.filter((s) => {
     if (s.active === false || s.status === 'rejected') return false
-    if (!isMatchingSession(s.academicYear, currentSession)) return false
     return isStudentInSection(s, cls, sec)
-  }).length
+  })
+  if (inSection.length === 0 || !currentSession) return inSection.length
+
+  const sessionMatched = inSection.filter((s) => isMatchingSession(s.academicYear, currentSession))
+  return sessionMatched.length > 0 ? sessionMatched.length : inSection.length
 }
 
 /**
@@ -138,9 +141,12 @@ export function getClassStudentCount(
   cls: ClassInfo,
   currentSession?: string
 ): number {
-  return students.filter((s) => {
+  const inClass = students.filter((s) => {
     if (s.active === false || s.status === 'rejected') return false
-    if (!isMatchingSession(s.academicYear, currentSession)) return false
     return isStudentInClass(s, cls)
-  }).length
+  })
+  if (inClass.length === 0 || !currentSession) return inClass.length
+
+  const sessionMatched = inClass.filter((s) => isMatchingSession(s.academicYear, currentSession))
+  return sessionMatched.length > 0 ? sessionMatched.length : inClass.length
 }

@@ -94,7 +94,7 @@ export default function UpdateStudentPage() {
     }
   }, [location.state, students])
 
-  const approved = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
+  const approved = useMemo(() => students.filter((s) => (!s.status || s.status === 'approved') && s.active !== false), [students])
 
   const results =
     search.length >= 2

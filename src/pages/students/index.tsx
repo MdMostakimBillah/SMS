@@ -60,7 +60,7 @@ export default function StudentsPage() {
   const { studentCardsOrder, setStudentCardsOrder } = useAppStore()
   const { canRead } = usePermission()
 
-  const approvedStudents = students.filter((s) => s.status === 'approved' && s.active !== false)
+  const approvedStudents = students.filter((s) => (!s.status || s.status === 'approved') && s.active !== false)
   const totalStudents = approvedStudents.length
   const maleStudents = approvedStudents.filter((s) => isMale(s.gender)).length
   const femaleStudents = approvedStudents.filter((s) => isFemale(s.gender)).length

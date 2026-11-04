@@ -7,6 +7,7 @@ import { usePermission } from '@/hooks/usePermission'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAuditUser } from '@/lib/auditUser'
 import { useSessionStudents } from '@/store/admissionStore'
+import { isMatchingSession } from '@/lib/classStudentCount'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useStoreStore } from '@/store/storeStore'
@@ -276,7 +277,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
   const sectionOptions = useMemo(() => (fClass ? sectionsMap[fClass] || [] : []), [fClass, sectionsMap])
 
   const sessionStudents = useMemo(() => {
-    let list = students.filter((s) => s.academicYear === fSession)
+    let list = fSession ? students.filter((s) => isMatchingSession(s.academicYear, fSession)) : students
     if (fClass) list = list.filter((s) => s.class === fClass)
     if (fSection) list = list.filter((s) => s.section === fSection)
     if (fStatus === 'active') list = list.filter((s) => s.active !== false)
