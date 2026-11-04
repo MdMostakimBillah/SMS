@@ -929,43 +929,43 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         {/* Row 1: Filters + Find Due */}
         <div className="flex items-center gap-2 flex-wrap">
           <select value={fSession} onChange={(e) => { setFSession(e.target.value); setSelectedStudentId(null) }}
-            className="h-[2.375rem] sm:h-[2.5rem] text-[0.875rem] px-[0.75rem] rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors">
+            className="h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors">
             {(institution?.sessions || []).map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <select value={fStatus} onChange={(e) => setFStatus(e.target.value)}
-            className="h-[2.375rem] sm:h-[2.5rem] text-[0.875rem] px-[0.75rem] rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors">
+            className="h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors">
             <option value="all">{bn ? 'সব' : 'All'}</option>
             <option value="active">{bn ? 'সক্রিয়' : 'Active'}</option>
             <option value="inactive">{bn ? 'নিষ্ক্রিয়' : 'Inactive'}</option>
           </select>
           <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection(''); setSelectedStudentId(null) }}
-            className="h-[2.375rem] sm:h-[2.5rem] text-[0.875rem] px-[0.75rem] rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors">
+            className="h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors">
             <option value="">{bn ? 'সব শ্রেণি' : 'All classes'}</option>
             {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
           <select value={fSection} onChange={(e) => { setFSection(e.target.value); setSelectedStudentId(null) }}
-            className="h-[2.375rem] sm:h-[2.5rem] text-[0.875rem] px-[0.75rem] rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors">
+            className="h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors">
             <option value="">{bn ? 'সব সেকশন' : 'All sections'}</option>
             {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
           <div className="ml-auto">
             <button onClick={() => setFindDueTrigger((t) => t + 1)} disabled={!selectedStudentId}
-              className="h-[2.375rem] sm:h-[2.5rem] px-[1.125rem] rounded-[0.5625rem] bg-[var(--brand)] text-white font-semibold text-[0.875rem] border-0 cursor-pointer flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_2px_8px_rgba(99,102,241,0.25)] disabled:opacity-40 disabled:cursor-not-allowed">
-              <Search size={16} />{bn ? 'বকেয়া' : 'Find due'}
+              className="h-[2.125rem] px-[1rem] rounded-[0.5rem] bg-[var(--brand)] text-white font-semibold text-[0.75rem] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_2px_8px_rgba(99,102,241,0.25)] disabled:opacity-40 disabled:cursor-not-allowed">
+              <Search size={14} />{bn ? 'বকেয়া' : 'Find due'}
             </button>
           </div>
         </div>
 
         {/* Row 2: Student Info Strip or Search Input */}
         {selectedStudent ? (
-          <div className="flex items-center gap-[0.75rem] py-[0.5rem] px-[0.75rem] rounded-[0.625rem] bg-[var(--bg-secondary)] border border-[var(--border)] flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-[0.625rem] py-[0.4375rem] px-[0.625rem] rounded-[0.5rem] bg-[var(--bg-secondary)] border border-[var(--border)] flex-wrap sm:flex-nowrap">
             {/* Photo with hover zoom */}
             <div className="relative group flex-shrink-0">
-              <div className="w-[2.25rem] h-[2.25rem] rounded-[0.5rem] bg-[var(--bg-primary)] border border-[var(--border)] overflow-hidden flex items-center justify-center cursor-pointer shadow-sm">
+              <div className="w-[1.875rem] h-[1.875rem] rounded-[0.375rem] bg-[var(--bg-primary)] border border-[var(--border)] overflow-hidden flex items-center justify-center cursor-pointer shadow-sm">
                 {selectedStudent.photo ? (
                   <img src={selectedStudent.photo} alt={selectedStudent.nameEn || 'Student'} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-[0.875rem] font-bold text-[var(--brand)]">{initials(selectedStudent.nameEn)}</span>
+                  <span className="text-[0.75rem] font-bold text-[var(--brand)]">{initials(selectedStudent.nameEn)}</span>
                 )}
               </div>
               {selectedStudent.photo && (
@@ -977,65 +977,65 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               )}
             </div>
             {/* Info details */}
-            <div className="flex items-center gap-[0.5rem] flex-wrap min-w-0 flex-1">
-              <span className="text-[0.9375rem] font-bold text-[var(--text-primary)] whitespace-nowrap">{selectedStudent.nameEn}</span>
-              <span className="text-[0.8125rem] text-[var(--text-muted)] select-none">·</span>
-              <span className="text-[0.8125rem] font-medium text-[var(--text-secondary)] whitespace-nowrap">
+            <div className="flex items-center gap-[0.375rem] flex-wrap min-w-0 flex-1">
+              <span className="text-[0.8125rem] font-bold text-[var(--text-primary)] whitespace-nowrap">{selectedStudent.nameEn}</span>
+              <span className="text-[0.6875rem] text-[var(--text-muted)] select-none">·</span>
+              <span className="text-[0.6875rem] font-medium text-[var(--text-secondary)] whitespace-nowrap">
                 {selectedStudent.class}{selectedStudent.section ? ` - ${selectedStudent.section}` : ''}
               </span>
-              <span className="text-[0.8125rem] text-[var(--text-muted)] select-none">·</span>
-              <span className="text-[0.8125rem] font-mono text-[var(--text-secondary)] whitespace-nowrap">{selectedStudent.id}</span>
+              <span className="text-[0.6875rem] text-[var(--text-muted)] select-none">·</span>
+              <span className="text-[0.6875rem] font-mono text-[var(--text-secondary)] whitespace-nowrap">{selectedStudent.id}</span>
               {selectedStudent.phone && (
                 <>
-                  <span className="text-[0.8125rem] text-[var(--text-muted)] select-none">·</span>
-                  <span className="text-[0.8125rem] font-medium text-[var(--text-secondary)] whitespace-nowrap">{selectedStudent.phone}</span>
+                  <span className="text-[0.6875rem] text-[var(--text-muted)] select-none">·</span>
+                  <span className="text-[0.6875rem] font-medium text-[var(--text-secondary)] whitespace-nowrap">{selectedStudent.phone}</span>
                 </>
               )}
               {selectedStudent.fatherNameEn && (
                 <>
-                  <span className="text-[0.8125rem] text-[var(--text-muted)] select-none">·</span>
-                  <span className="text-[0.8125rem] text-[var(--text-muted)] whitespace-nowrap">{bn ? 'বাবা:' : 'Father:'} {selectedStudent.fatherNameEn}</span>
+                  <span className="text-[0.6875rem] text-[var(--text-muted)] select-none">·</span>
+                  <span className="text-[0.6875rem] text-[var(--text-muted)] whitespace-nowrap">{bn ? 'বাবা:' : 'Father:'} {selectedStudent.fatherNameEn}</span>
                 </>
               )}
               {selectedStudent.motherNameEn && (
                 <>
-                  <span className="text-[0.8125rem] text-[var(--text-muted)] select-none">·</span>
-                  <span className="text-[0.8125rem] text-[var(--text-muted)] whitespace-nowrap">{bn ? 'মা:' : 'Mother:'} {selectedStudent.motherNameEn}</span>
+                  <span className="text-[0.6875rem] text-[var(--text-muted)] select-none">·</span>
+                  <span className="text-[0.6875rem] text-[var(--text-muted)] whitespace-nowrap">{bn ? 'মা:' : 'Mother:'} {selectedStudent.motherNameEn}</span>
                 </>
               )}
             </div>
             <button
               onClick={() => { setSelectedStudentId(null); setStudentSearch(''); setFSession(institution?.currentSession || ''); setFStatus('active'); setFClass(''); setFSection('') }}
-              className="ml-auto w-[1.875rem] h-[1.875rem] rounded-[0.375rem] hover:bg-[var(--border)] flex items-center justify-center cursor-pointer border-0 bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
+              className="ml-auto w-[1.5rem] h-[1.5rem] rounded-[0.375rem] hover:bg-[var(--border)] flex items-center justify-center cursor-pointer border-0 bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
               title={bn ? 'বাদ দিন' : 'Clear'}
             >
-              <X size={16} />
+              <X size={13} />
             </button>
           </div>
         ) : (
           <div className="relative" ref={dropdownRef}>
-            <Search size={16} className="absolute left-[0.75rem] top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+            <Search size={14} className="absolute left-[0.625rem] top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
             <input ref={inputRef} type="text"
               value={isDropdownOpen ? studentSearch : ''}
               placeholder={bn ? 'নাম বা আইডি দিয়ে শিক্ষার্থী খুঁজুন...' : 'Search student by name or ID...'}
               onChange={(e) => { setStudentSearch(e.target.value); setSelectedStudentId(null); setIsDropdownOpen(true); setHighlightedIndex(0) }}
               onFocus={() => { setIsDropdownOpen(true); setHighlightedIndex(0) }}
               onKeyDown={handleKeyDown}
-              className="w-full h-[2.375rem] sm:h-[2.5rem] pl-[2.375rem] pr-[0.875rem] text-[0.875rem] rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--brand)] transition-colors"
+              className="w-full h-[2.125rem] pl-[2.125rem] pr-[0.75rem] text-[0.75rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--brand)] transition-colors"
             />
             {isDropdownOpen && (
               <div className="absolute z-50 mt-1 w-full max-h-[16.25rem] overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_12px_30px_rgba(20,23,33,0.12)]">
                 {dropdownStudents.length === 0 ? (
-                  <div className="px-3 py-2.5 text-[0.875rem] text-[var(--text-muted)]">{bn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}</div>
+                  <div className="px-3 py-2.5 text-[0.75rem] text-[var(--text-muted)]">{bn ? 'কোনো শিক্ষার্থী পাওয়া যায়নি' : 'No students found'}</div>
                 ) : dropdownStudents.map((s, i) => (
                   <button key={s.id} data-index={i} onClick={() => selectStudent(s.id)} onMouseEnter={() => setHighlightedIndex(i)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left border-0 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${i === highlightedIndex ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--brand-light)]'}`}>
-                    <div className="w-[2rem] h-[2rem] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center text-[0.75rem] font-bold flex-shrink-0 overflow-hidden">
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-left border-0 border-b border-[var(--border)] last:border-b-0 cursor-pointer transition-colors ${i === highlightedIndex ? 'bg-[var(--brand-light)]' : 'bg-transparent hover:bg-[var(--brand-light)]'}`}>
+                    <div className="w-[1.75rem] h-[1.75rem] rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] flex items-center justify-center text-[0.6875rem] font-bold flex-shrink-0 overflow-hidden">
                        {s.photo ? <img src={s.photo} alt={s.nameEn || 'Student'} className="w-full h-full object-cover" /> : initials(s.nameEn)}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{s.nameEn}</p>
-                      <p className="text-[0.75rem] text-[var(--text-muted)]">{s.class} &middot; {s.id}</p>
+                      <p className="text-[0.75rem] font-semibold text-[var(--text-primary)]">{s.nameEn}</p>
+                      <p className="text-[0.6875rem] text-[var(--text-muted)]">{s.class} &middot; {s.id}</p>
                     </div>
                   </button>
                 ))}
@@ -1076,18 +1076,18 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
               <table className="w-full text-xs table-fixed">
                 <thead>
                   <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                    <th className="text-center py-2.5 px-3 text-[0.75rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
+                    <th className="text-center py-2 px-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-10">
                       <ModernCheckbox checked={displayRows.length > 0 && displayRows.every((r) => getRowEdit(r.key).checked)}
                         onChange={() => { const ac = displayRows.every((r) => getRowEdit(r.key).checked); const next: Record<string, { discount: number; remarks: string; receive: number; checked: boolean }> = {}; for (const r of displayRows) { const e = getRowEdit(r.key); const newChecked = !ac; next[r.key] = { ...e, checked: newChecked, receive: newChecked ? Math.max(0, r.receivable - e.discount) : 0 } }; setEditState((prev) => ({ ...prev, ...next })) }}
                         color="brand" size="xs" />
                     </th>
-                    <th className="text-left px-4 py-2.5 text-[0.75rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[28%]">{bn ? 'বিবরণ' : 'Particular'}</th>
-                    <th className="text-center px-3 py-2.5 text-[0.75rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                    <th className="text-center px-3 py-2.5 text-[0.75rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'ছাড়' : 'Waiver'}</th>
-                    <th className="text-center px-3 py-2.5 text-[0.75rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'ডিসকাউন্ট' : 'Discount'}</th>
-                    <th className="text-center px-3 py-2.5 text-[0.75rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
-                    <th className="text-center px-3 py-2.5 text-[0.75rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
-                    <th className="text-center px-3 py-2.5 text-[0.75rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
+                    <th className="text-left px-3 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[28%]">{bn ? 'বিবরণ' : 'Particular'}</th>
+                    <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                    <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'ছাড়' : 'Waiver'}</th>
+                    <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'ডিসকাউন্ট' : 'Discount'}</th>
+                    <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'মন্তব্য' : 'Remarks'}</th>
+                    <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[11%]">{bn ? 'প্রাপ্য' : 'Receivable'}</th>
+                    <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider sticky top-0 bg-[var(--bg-secondary)] z-10 w-[13%]">{bn ? 'গ্রহণ' : 'Receive'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1095,7 +1095,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                     const edit = getRowEdit(row.key)
                     return (
                       <tr key={row.key} className={`transition-colors border-t border-[var(--border)] hover:bg-[var(--brand-light)]/60 ${!edit.checked ? 'opacity-45' : ''}`}>
-                        <td className="text-center py-2.5 px-3">
+                        <td className="text-center py-2 px-2.5">
                           <ModernCheckbox checked={edit.checked} onChange={(checked) => {
                             setEditState((prev) => {
                               const c = prev[row.key] || { discount: 0, remarks: '', receive: 0, checked: false }
@@ -1103,11 +1103,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                             })
                           }} color="brand" size="xs" />
                         </td>
-                        <td className="text-left px-4 py-2.5">
-                          <div className="font-semibold text-[var(--text-primary)] text-[0.875rem] flex items-center gap-1.5 flex-wrap">
+                        <td className="text-left px-3 py-2">
+                          <div className="font-semibold text-[var(--text-primary)] text-[0.8125rem] flex items-center gap-1.5 flex-wrap">
                             <span>{bn ? row.feeNameBn : row.feeName}</span>
                             {row.isOnetime && (
-                              <span className={`inline-block text-[0.6875rem] font-bold uppercase px-2 py-0.5 rounded-[0.25rem] ${
+                              <span className={`inline-block text-[0.625rem] font-bold uppercase px-1.5 py-0.5 rounded-[0.25rem] ${
                                 row.structureId.startsWith('FEE-OTHER-')
                                   ? 'bg-[var(--purple-light)] text-[var(--purple)]'
                                   : 'bg-[var(--amber-light)] text-[var(--amber)]'
@@ -1116,24 +1116,24 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                               </span>
                             )}
                           </div>
-                          <div className="text-[0.75rem] text-[var(--text-muted)] mt-0.5">{bn ? row.dateRangeBn : row.dateRange}</div>
+                          <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">{bn ? row.dateRangeBn : row.dateRange}</div>
                         </td>
-                        <td className="text-center px-3 py-2.5"><span className="font-semibold text-[var(--text-primary)] text-[0.875rem]">{fmt(row.amount)}</span></td>
-                        <td className="text-center px-3 py-2.5">
+                        <td className="text-center px-2 py-2"><span className="font-semibold text-[var(--text-primary)] text-[0.8125rem]">{fmt(row.amount)}</span></td>
+                        <td className="text-center px-2 py-2">
                           {row.waivedAmount > 0 ? (
                             <div className="inline-flex flex-col items-center">
-                              <span className="text-[0.8125rem] font-bold text-[var(--purple)]">-{fmt(row.waivedAmount)}</span>
+                              <span className="text-[0.75rem] font-bold text-[var(--purple)]">-{fmt(row.waivedAmount)}</span>
                               {(row.waiverReason || row.waiverReasonBn) && (
-                                <span className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5 max-w-[5.5rem] truncate" title={bn ? row.waiverReasonBn || row.waiverReason : row.waiverReason}>
+                                <span className="text-[0.625rem] text-[var(--text-muted)] mt-0.5 max-w-[5rem] truncate" title={bn ? row.waiverReasonBn || row.waiverReason : row.waiverReason}>
                                   {bn ? row.waiverReasonBn || row.waiverReason : row.waiverReason}
                                 </span>
                               )}
                             </div>
                           ) : (
-                            <span className="text-[0.8125rem] text-[var(--text-muted)]">—</span>
+                            <span className="text-[0.75rem] text-[var(--text-muted)]">—</span>
                           )}
                         </td>
-                        <td className="text-center px-2 py-2">
+                        <td className="text-center px-1.5 py-1.5">
                           <input type="number" value={edit.discount || ''} onChange={(e) => {
                             const discount = Math.min(Number(e.target.value) || 0, row.receivable)
                             setEditState((prev) => {
@@ -1141,16 +1141,16 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                               return { ...prev, [row.key]: { ...c, discount, receive: c.checked ? Math.max(0, row.receivable - discount) : c.receive } }
                             })
                           }}
-                            className="h-[2.125rem] sm:h-[2.25rem] w-full text-[0.875rem] font-semibold text-center px-2 rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 transition-all font-mono placeholder:text-[var(--text-muted)]" placeholder="0" max={row.receivable} />
+                            className="h-[1.875rem] w-full text-[0.75rem] font-semibold text-center px-1.5 rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] font-mono placeholder:text-[var(--text-muted)]" placeholder="0" max={row.receivable} />
                         </td>
-                        <td className="text-center px-2 py-2">
+                        <td className="text-center px-1.5 py-1.5">
                           <input type="text" value={edit.remarks} onChange={(e) => updateRow(row.key, 'remarks', e.target.value)}
-                            className="h-[2.125rem] sm:h-[2.25rem] w-full text-[0.8125rem] text-center px-2 rounded-[0.4375rem] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 transition-all placeholder:text-[var(--text-muted)]" placeholder={bn ? '...' : '...'} />
+                            className="h-[1.875rem] w-full text-[0.6875rem] text-center px-1.5 rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] placeholder:text-[var(--text-muted)]" placeholder={bn ? '...' : '...'} />
                         </td>
-                        <td className="text-center px-3 py-2.5"><span className="font-bold text-[var(--text-primary)] text-[0.875rem]">{fmt(row.receivable)}</span></td>
-                        <td className="text-center px-2 py-2">
+                        <td className="text-center px-2 py-2"><span className="font-bold text-[var(--text-primary)] text-[0.8125rem]">{fmt(row.receivable)}</span></td>
+                        <td className="text-center px-1.5 py-1.5">
                           <input type="number" value={edit.receive} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
-                            className="h-[2.125rem] sm:h-[2.25rem] w-full text-[0.875rem] sm:text-[0.9375rem] font-bold text-center px-2 rounded-[0.4375rem] border-2 border-[var(--brand)] bg-[var(--brand-light)]/20 text-[var(--brand)] outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20 transition-all font-mono" placeholder="0" />
+                            className="h-[1.875rem] w-full text-[0.8125rem] font-bold text-center px-1.5 rounded-[0.375rem] border-2 border-[var(--brand)] bg-[var(--brand-light)]/20 text-[var(--brand)] outline-none focus:border-[var(--brand)] font-mono" placeholder="0" />
                         </td>
                       </tr>
                     )
@@ -1164,38 +1164,38 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           {displayRows.length > 0 && (
             <div className="flex items-center gap-3 py-2 flex-wrap">
               <div className="flex items-center gap-1.5">
-                <span className="text-[0.75rem] sm:text-[0.8125rem] text-[var(--text-muted)] font-medium">{bn ? 'মোট:' : 'Total:'}</span>
-                <span className="font-bold text-[0.9375rem] sm:text-base text-[var(--text-primary)]">{fmt(totalAmount)}</span>
+                <span className="text-[0.6875rem] text-[var(--text-muted)] font-medium">{bn ? 'মোট:' : 'Total:'}</span>
+                <span className="font-bold text-[0.875rem] text-[var(--text-primary)]">{fmt(totalAmount)}</span>
               </div>
               <div className="w-px h-4 bg-[var(--border)]" />
               <div className="flex items-center gap-1.5">
-                <span className="text-[0.75rem] sm:text-[0.8125rem] text-[var(--text-muted)] font-medium">{bn ? 'ছাড়:' : 'Discount:'}</span>
-                <span className="font-bold text-[0.9375rem] sm:text-base text-[var(--amber)]">{fmt(totalDiscount)}</span>
+                <span className="text-[0.6875rem] text-[var(--text-muted)] font-medium">{bn ? 'ছাড়:' : 'Discount:'}</span>
+                <span className="font-bold text-[0.875rem] text-[var(--amber)]">{fmt(totalDiscount)}</span>
               </div>
               <div className="w-px h-4 bg-[var(--border)]" />
-              <div className="ml-auto flex items-center gap-2 bg-[var(--brand-light)] rounded-[0.5rem] px-[0.875rem] py-[0.5rem]">
-                <span className="text-[0.75rem] sm:text-[0.8125rem] text-[var(--brand)] font-bold">{bn ? 'গ্রহণ:' : 'Receiving:'}</span>
-                <span className="font-extrabold text-[1rem] sm:text-[1.125rem] text-[var(--brand)] font-mono">{fmt(totalReceive)}</span>
+              <div className="ml-auto flex items-center gap-2 bg-[var(--brand-light)] rounded-[0.375rem] px-[0.75rem] py-[0.375rem]">
+                <span className="text-[0.6875rem] text-[var(--brand)] font-bold">{bn ? 'গ্রহণ:' : 'Receiving:'}</span>
+                <span className="font-extrabold text-[0.9375rem] text-[var(--brand)] font-mono">{fmt(totalReceive)}</span>
               </div>
             </div>
           )}
 
           {/* Action Bar */}
           {displayRows.length > 0 && (
-            <div className="flex items-center gap-4 py-3 border-t border-[var(--border)] flex-wrap">
+            <div className="flex items-center gap-3 py-2.5 border-t border-[var(--border)] flex-wrap">
               <div className="flex items-center gap-2">
-                <label className="text-[0.75rem] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'তারিখ' : 'Date'}</label>
+                <label className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'তারিখ' : 'Date'}</label>
                 <input type="date" value={receivedDate} onChange={(e) => setReceivedDate(e.target.value)}
-                  className="h-[2.375rem] sm:h-[2.5rem] w-[10rem] text-[0.875rem] px-[0.75rem] rounded-[0.5625rem] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
+                  className="h-[2.125rem] w-[8.75rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)]" />
               </div>
-              <label className="flex items-center gap-1.5 text-[0.875rem] text-[var(--text-secondary)] font-medium cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 text-[0.75rem] text-[var(--text-secondary)] font-medium cursor-pointer select-none">
                 <ModernCheckbox checked={sendSms} onChange={(c) => setSendSms(c)} color="brand" size="xs" />
                 {bn ? 'এসএমএস' : 'SMS'}
               </label>
               <div className="ml-auto flex items-center gap-3">
                 <button onClick={handleReceiveFee} disabled={!displayRows.some((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })}
-                  className="h-[2.375rem] sm:h-[2.5rem] px-[1.5rem] rounded-[0.5625rem] bg-[var(--brand)] text-white font-bold text-[0.875rem] border-0 cursor-pointer flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_2px_8px_rgba(99,102,241,0.25)] disabled:opacity-40 disabled:cursor-not-allowed">
-                  <CircleCheck size={18} />{bn ? 'প্রাপ্ত' : 'Receive'}
+                  className="h-[2.125rem] px-[1.25rem] rounded-[0.5rem] bg-[var(--brand)] text-white font-bold text-[0.8125rem] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_2px_8px_rgba(99,102,241,0.25)] disabled:opacity-40 disabled:cursor-not-allowed">
+                  <CircleCheck size={16} />{bn ? 'প্রাপ্ত' : 'Receive'}
                 </button>
               </div>
             </div>
@@ -1361,23 +1361,23 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
             <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
               {canCreate('finance.fees.collect') && (
                 <button onClick={() => setShowOneTimeModal(true)}
-                  className="w-full flex items-center justify-center gap-2 h-[2.375rem] sm:h-[2.5rem] rounded-[0.5625rem] bg-[var(--brand)] text-white text-[0.875rem] font-semibold border-0 cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all">
-                  <Plus size={15} />{bn ? 'এককালীন ফি' : 'One-time fee'}
+                  className="w-full flex items-center justify-center gap-1.5 h-[2.125rem] rounded-[0.5rem] bg-[var(--brand)] text-white text-[0.75rem] font-semibold border-0 cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all">
+                  <Plus size={14} />{bn ? 'এককালীন ফি' : 'One-time fee'}
                 </button>
               )}
               {selectedStudent && classProducts.length > 0 && (
                 <button onClick={() => setShowShopModal(true)}
-                  className="w-full flex items-center justify-center gap-2 h-[2.375rem] sm:h-[2.5rem] rounded-[0.5625rem] bg-[var(--teal)] text-white text-[0.875rem] font-semibold border-0 cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all">
-                  <ShoppingBag size={15} />{bn ? 'দোকান' : 'Shop'}
+                  className="w-full flex items-center justify-center gap-1.5 h-[2.125rem] rounded-[0.5rem] bg-[var(--teal)] text-white text-[0.75rem] font-semibold border-0 cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all">
+                  <ShoppingBag size={14} />{bn ? 'দোকান' : 'Shop'}
                 </button>
               )}
               <button onClick={() => setShowFineModal(true)}
-                className="w-full flex items-center justify-center gap-2 h-[2.375rem] sm:h-[2.5rem] rounded-[0.5625rem] border border-[var(--red)]/20 text-[var(--red)] text-[0.875rem] font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/15 active:scale-[0.98] transition-all">
-                <Ban size={15} />{bn ? 'জরিমানা' : 'Add fine'}
+                className="w-full flex items-center justify-center gap-1.5 h-[2.125rem] rounded-[0.5rem] border border-[var(--red)]/20 text-[var(--red)] text-[0.75rem] font-semibold cursor-pointer bg-[var(--red-light)] hover:bg-[var(--red)]/15 active:scale-[0.98] transition-all">
+                <Ban size={14} />{bn ? 'জরিমানা' : 'Add fine'}
               </button>
               <button onClick={() => setShowHistoryModal(true)}
-                className="w-full flex items-center justify-center gap-2 h-[2.375rem] sm:h-[2.5rem] rounded-[0.5625rem] border border-[var(--border)] text-[var(--text-primary)] text-[0.875rem] font-semibold cursor-pointer bg-[var(--bg-secondary)] hover:bg-[var(--border)] active:scale-[0.98] transition-all">
-                <History size={15} />{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}
+                className="w-full flex items-center justify-center gap-1.5 h-[2.125rem] rounded-[0.5rem] border border-[var(--border)] text-[var(--text-primary)] text-[0.75rem] font-semibold cursor-pointer bg-[var(--bg-secondary)] hover:bg-[var(--border)] active:scale-[0.98] transition-all">
+                <History size={14} />{bn ? 'পেমেন্ট ইতিহাস' : 'Payment history'}
               </button>
             </div>
           </div>
