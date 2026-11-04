@@ -707,6 +707,44 @@ export const feesApi = {
   },
 }
 
+export interface StoreResponse {
+  products?: any[]
+  categories?: any[]
+  sales?: any[]
+}
+
+export const storeApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<StoreResponse>(`/api/store${q}`)
+  },
+  update: (data: {
+    products?: any[]
+    categories?: any[]
+    sales?: any[]
+    schoolId?: string
+  }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean } & StoreResponse>('/api/store', {
+      method: 'PUT',
+      body,
+    })
+  },
+  createSale: (sale: any, schoolId?: string) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const q = (schoolId || fallbackSlug) ? `?slug=${encodeURIComponent(schoolId || fallbackSlug!)}` : ''
+    return apiRequest<{ success: boolean; sale: any; products?: any[] }>(`/api/store/sales${q}`, {
+      method: 'POST',
+      body: sale,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

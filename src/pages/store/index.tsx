@@ -280,6 +280,7 @@ export default function StorePage() {
   })
 
   useEffect(() => {
+    useStoreStore.getState().syncFromServer().catch(() => {})
     const t = setTimeout(() => setLoading(false), 400)
     return () => clearTimeout(t)
   }, [])

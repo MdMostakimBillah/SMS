@@ -8,6 +8,7 @@ import { useAssignmentStore } from '@/store/assignmentStore'
 import { useSyllabusStore } from '@/store/syllabusStore'
 import { useOnlineStore } from '@/store/onlineStore'
 import { useTodoStore } from '@/store/todoStore'
+import { useStoreStore } from '@/store/storeStore'
 
 export function resetAllInstitutionStores(): void {
   useClassStore.setState({
@@ -42,4 +43,5 @@ export function resetAllInstitutionStores(): void {
   useSyllabusStore.setState({ syllabi: [] })
   useOnlineStore.setState({ classes: [] })
   useTodoStore.setState({ todos: [] })
+  useStoreStore.setState({ products: [], categories: [], sales: [] })
 }

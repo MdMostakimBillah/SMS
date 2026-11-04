@@ -161,6 +161,18 @@ export function getItemCount(content: string): number {
         hasDomainField = true
         count += state.subjects.length
       }
+      if (Array.isArray(state.products)) {
+        hasDomainField = true
+        count += state.products.length
+      }
+      if (Array.isArray(state.categories)) {
+        hasDomainField = true
+        count += state.categories.length
+      }
+      if (Array.isArray(state.sales)) {
+        hasDomainField = true
+        count += state.sales.length
+      }
 
       if (hasDomainField) {
         return count
@@ -733,7 +745,7 @@ async function hydrateFromVault(): Promise<number> {
   }
 
   // Load primary store files first so individual slice files cleanly overlay on top
-  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json'])
+  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json'])
   const sortedEntries = Array.from(jsonGroups.entries()).sort(([slotA], [slotB]) => {
     const isPriA = PRIMARY_SLOTS.has(slotA) ? 0 : 1
     const isPriB = PRIMARY_SLOTS.has(slotB) ? 0 : 1
@@ -1006,6 +1018,39 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
         const waiversPretty = JSON.stringify(waivers, null, 2)
         await writeVaultFile(`${slug}/waivers.json`, waiversPretty)
         await writeVaultFile('waivers.json', waiversPretty)
+      }
+    } catch { /* ignore */ }
+  }
+
+  if (path === `${slug}/store.json`) {
+    await writeVaultFile('store.json', prettifyJson(rawJson))
+
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+
+      // 1. products.json
+      const products = state.products ?? []
+      if (products.length > 0 || isRecentExplicitDelete()) {
+        const prodPretty = JSON.stringify(products, null, 2)
+        await writeVaultFile(`${slug}/products.json`, prodPretty)
+        await writeVaultFile('products.json', prodPretty)
+      }
+
+      // 2. categories.json
+      const categories = state.categories ?? []
+      if (categories.length > 0 || isRecentExplicitDelete()) {
+        const catPretty = JSON.stringify(categories, null, 2)
+        await writeVaultFile(`${slug}/categories.json`, catPretty)
+        await writeVaultFile('categories.json', catPretty)
+      }
+
+      // 3. sales.json
+      const sales = state.sales ?? []
+      if (sales.length > 0 || isRecentExplicitDelete()) {
+        const salesPretty = JSON.stringify(sales, null, 2)
+        await writeVaultFile(`${slug}/sales.json`, salesPretty)
+        await writeVaultFile('sales.json', salesPretty)
       }
     } catch { /* ignore */ }
   }

@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
+import { storeApi } from '@/lib/api'
 
 export interface StoreProduct {
   id: string
@@ -61,6 +64,12 @@ interface StoreState {
   products: StoreProduct[]
   categories: StoreCategory[]
   sales: StoreSale[]
+  serverSynced: boolean
+  syncing: boolean
+  syncError: string | null
+
+  syncFromServer: (slugOrId?: string) => Promise<void>
+  syncToServer: () => Promise<void>
 
   addProduct: (p: StoreProduct) => void
   updateProduct: (id: string, data: Partial<StoreProduct>) => void
@@ -76,53 +85,171 @@ interface StoreState {
   deleteSale: (id: string) => void
 }
 
+let serverSyncTimer: any = null
+function queueServerSync(get: () => StoreState) {
+  try {
+    if (isLocalComputerMode()) return
+    const state = get()
+    // Guard: Never push empty store data to the database during startup or unhydrated state
+    if (!state.serverSynced && state.products.length === 0 && state.categories.length === 0 && state.sales.length === 0) {
+      return
+    }
+    if (serverSyncTimer) clearTimeout(serverSyncTimer)
+    serverSyncTimer = setTimeout(async () => {
+      try {
+        const s = get()
+        if (s.products.length === 0 && s.categories.length === 0 && s.sales.length === 0 && !isRecentExplicitDelete()) {
+          return
+        }
+        await storeApi.update({
+          products: s.products,
+          categories: s.categories,
+          sales: s.sales,
+        })
+      } catch {
+        // Warning only
+      }
+    }, 400)
+  } catch {
+    /* ignore */
+  }
+}
+
+function onStateMutated(get: () => StoreState) {
+  flushPendingWrites()
+  queueServerSync(get)
+}
+
 export const useStoreStore = create<StoreState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       products: [],
       categories: [],
       sales: [],
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
 
-      addProduct: (p) => set((state) => ({ products: [...state.products, p] })),
+      syncFromServer: async (slugOrId?: string) => {
+        if (isLocalComputerMode()) {
+          set({ serverSynced: true, syncing: false })
+          return
+        }
+        set({ syncing: true, syncError: null })
+        try {
+          const res = await storeApi.get(slugOrId)
+          if (res) {
+            const hasProducts = Array.isArray(res.products) && res.products.length > 0
+            const hasCategories = Array.isArray(res.categories) && res.categories.length > 0
+            const hasSales = Array.isArray(res.sales) && res.sales.length > 0
+            const state = get()
 
-      updateProduct: (id, data) =>
+            if (hasProducts || hasCategories || hasSales) {
+              set({
+                products: res.products || [],
+                categories: res.categories || [],
+                sales: res.sales || [],
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+            } else if (state.products.length > 0 || state.categories.length > 0 || state.sales.length > 0) {
+              await storeApi.update({
+                products: state.products,
+                categories: state.categories,
+                sales: state.sales,
+                schoolId: slugOrId,
+              })
+              set({ serverSynced: true, syncing: false, syncError: null })
+            } else {
+              set({ serverSynced: true, syncing: false, syncError: null })
+            }
+          } else {
+            set({ serverSynced: true, syncing: false, syncError: null })
+          }
+        } catch (err: any) {
+          console.warn('[storeStore] syncFromServer failed:', err)
+          set({ syncing: false, syncError: err?.message || 'Failed to sync store' })
+        }
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        set({ syncing: true })
+        try {
+          const state = get()
+          await storeApi.update({
+            products: state.products,
+            categories: state.categories,
+            sales: state.sales,
+          })
+          set({ serverSynced: true, syncing: false, syncError: null })
+        } catch (err: any) {
+          console.warn('[storeStore] syncToServer failed:', err)
+          set({ syncing: false, syncError: err?.message || 'Failed to push store' })
+        }
+      },
+
+      addProduct: (p) => {
+        set((state) => ({ products: [...state.products, p] }))
+        onStateMutated(get)
+      },
+
+      updateProduct: (id, data) => {
         set((state) => ({
           products: state.products.map((p) => (p.id === id ? { ...p, ...data } : p)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      deleteProduct: (id) =>
+      deleteProduct: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           products: state.products.filter((p) => p.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      toggleProductActive: (id) =>
+      toggleProductActive: (id) => {
         set((state) => ({
           products: state.products.map((p) => (p.id === id ? { ...p, isActive: !p.isActive } : p)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      adjustStock: (id, qty, direction) =>
+      adjustStock: (id, qty, direction) => {
         set((state) => ({
           products: state.products.map((p) =>
             p.id === id
               ? { ...p, stock: direction === 'in' ? p.stock + qty : Math.max(0, p.stock - qty) }
               : p
           ),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      addCategory: (c) => set((state) => ({ categories: [...state.categories, c] })),
+      addCategory: (c) => {
+        set((state) => ({ categories: [...state.categories, c] }))
+        onStateMutated(get)
+      },
 
-      updateCategory: (id, data) =>
+      updateCategory: (id, data) => {
         set((state) => ({
           categories: state.categories.map((c) => (c.id === id ? { ...c, ...data } : c)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      deleteCategory: (id) =>
+      deleteCategory: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           categories: state.categories.filter((c) => c.id !== id),
           products: state.products.map((p) => (p.categoryId === id ? { ...p, categoryId: '' } : p)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      addSale: (sale) =>
+      addSale: (sale) => {
         set((state) => {
           const newProducts = [...state.products]
           for (const item of sale.items) {
@@ -132,16 +259,29 @@ export const useStoreStore = create<StoreState>()(
             }
           }
           return { sales: [...state.sales, sale], products: newProducts }
-        }),
+        })
+        onStateMutated(get)
+      },
 
-      deleteSale: (id) => set((state) => ({ sales: state.sales.filter((s) => s.id !== id) })),
+      deleteSale: (id) => {
+        markExplicitUserDelete()
+        set((state) => ({ sales: state.sales.filter((s) => s.id !== id) }))
+        onStateMutated(get)
+      },
     }),
     { name: 'edutech-store', storage: createNamespacedStorage('edutech-store'), version: 1 }
   )
 )
 
 registerStoreReset(() => {
-  useStoreStore.setState({ products: [], categories: [], sales: [] })
+  useStoreStore.setState({
+    products: [],
+    categories: [],
+    sales: [],
+    serverSynced: false,
+    syncing: false,
+    syncError: null,
+  })
 })
 
 registerStoreLoad(() => {

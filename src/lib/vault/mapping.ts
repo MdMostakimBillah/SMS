@@ -105,6 +105,7 @@ export function vaultPathToKey(
     else if (base === 'routines' || base === 'sections' || base === 'institution') storeBase = 'classes'
     else if (base === 'staff' || base === 'departments' || base === 'subjects' || base === 'designations') storeBase = 'teachers'
     else if (base === 'fee_structures' || base === 'payments' || base === 'waivers') storeBase = 'fees'
+    else if (base === 'products' || base === 'categories' || base === 'sales') storeBase = 'store'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -931,6 +932,35 @@ export function normalizeVaultJsonForStore(
       waiverCategories: Array.isArray(inner.waiverCategories) ? inner.waiverCategories : (existingState.waiverCategories || []),
       waiverEntries: Array.isArray(inner.waiverEntries) ? inner.waiverEntries : (existingState.waiverEntries || []),
       studentWaivers: Array.isArray(inner.studentWaivers) ? inner.studentWaivers : (existingState.studentWaivers || []),
+      serverSynced: true,
+      syncing: false,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion })
+  }
+
+  if (key.includes('store')) {
+    const existing = (() => {
+      try {
+        const raw = localStorage.getItem(key)
+        return raw ? JSON.parse(raw) : {}
+      } catch {
+        return {}
+      }
+    })()
+    const existingState = existing.state || {}
+    const existingVersion = existing.version || 1
+
+    const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const products = Array.isArray(inner.products) ? inner.products : (Array.isArray(parsed) ? parsed : (existingState.products || []))
+    const categories = Array.isArray(inner.categories) ? inner.categories : (existingState.categories || [])
+    const sales = Array.isArray(inner.sales) ? inner.sales : (existingState.sales || [])
+
+    const finalState = {
+      ...existingState,
+      ...inner,
+      products,
+      categories,
+      sales,
       serverSynced: true,
       syncing: false,
     }
