@@ -67,7 +67,7 @@ const MONTH_LABELS = [
   { en: 'Dec', bn: 'ডিসেম্বর' },
 ]
 
-const selectCls = 'h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer'
+const selectCls = 'h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors'
 
 interface MonthCell {
   paid: boolean
@@ -708,7 +708,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
           <div className="relative" ref={monthDropdownRef}>
             <button
               onClick={() => setShowMonthDropdown((p) => !p)}
-              className="h-[34px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] cursor-pointer flex items-center gap-1.5 min-w-[160px] outline-none focus:border-[var(--brand)]"
+              className="h-[2.125rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-medium cursor-pointer flex items-center gap-1.5 min-w-[10rem] outline-none focus:border-[var(--brand)] transition-colors"
             >
               <CalendarDays size={13} className="text-[var(--text-muted)] flex-shrink-0" />
               <span className="truncate text-left flex-1">{monthDisplayText}</span>
@@ -770,12 +770,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               placeholder={bn ? 'শিক্ষার্থী খুঁজুন...' : 'Search student...'}
-              className="h-[34px] px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[13px] outline-none focus:border-[var(--brand)] w-[180px]"
+              className="h-[2.125rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-medium outline-none focus:border-[var(--brand)] w-[11.25rem] transition-colors"
             />
           )}
           <button
             onClick={handleFindDue}
-            className="h-[34px] px-4 rounded-lg bg-[var(--brand)] text-white font-semibold text-[13px] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+            className="h-[2.125rem] px-[1rem] rounded-[0.5rem] bg-[var(--brand)] text-white font-semibold text-[0.75rem] border-0 cursor-pointer flex items-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_2px_8px_rgba(99,102,241,0.25)]"
           >
             <Search size={14} />{bn ? 'খুঁজুন' : 'Find'}
           </button>
@@ -849,7 +849,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
               <div className="relative">
                 <button
                   onClick={() => setShowActionMenu(!showActionMenu)}
-                  className="h-8 px-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-[12px] font-semibold cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+                  className="h-[2.125rem] px-[0.75rem] rounded-[0.5rem] bg-[var(--brand-light)] border border-[var(--brand)] text-[var(--brand)] text-[0.75rem] font-semibold cursor-pointer flex items-center gap-1.5 hover:opacity-90 transition-opacity"
                 >
                   <MoreVertical size={13} />
                   {bn ? 'অ্যাকশন' : 'Action'}

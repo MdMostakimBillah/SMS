@@ -8,7 +8,6 @@ import { useTabSlider } from '@/hooks/useTabSlider'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
-import { inputCls } from '@/lib/styles'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
 import { openPrintWindow } from '@/lib/pdf'
@@ -36,7 +35,7 @@ const MONTH_LABELS = [
   { en: 'Dec', bn: 'ডিসেম্বর' },
 ]
 
-const selectCls = 'h-[34px] text-[13px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer'
+const selectCls = 'h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors'
 
 const CATEGORY_ICON_KEYWORDS: { icon: LucideIcon; keywords: string[] }[] = [
   { icon: Award, keywords: ['scholarship', 'বৃত্তি', 'merit', 'সুমেরু', 'award', 'পুরস্কার'] },
@@ -606,14 +605,20 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
               </select>
             </div>
             <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-              <input type="text" placeholder={bn ? 'শিক্ষার্থী খুঁজুন...' : 'Search students...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${inputCls} w-full pl-9 h-8 text-xs`} />
+              <Search size={14} className="absolute left-[0.625rem] top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+              <input
+                type="text"
+                placeholder={bn ? 'শিক্ষার্থী খুঁজুন...' : 'Search students...'}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full h-[2.125rem] pl-[2.125rem] pr-[0.75rem] text-[0.75rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--brand)] transition-colors"
+              />
             </div>
           </div>
 
           {/* Action Bar */}
           <div className="flex items-center justify-between px-3 py-2 mt-3">
-            <span className="text-[0.65rem] text-[var(--text-muted)]">
+            <span className="text-[0.6875rem] text-[var(--text-muted)]">
               {selectedRows.size > 0
                 ? `${selectedRows.size} ${bn ? 'নির্বাচিত' : 'selected'} / ${groupedStudents.length} ${bn ? 'শিক্ষার্থী' : 'students'}`
                 : `${groupedStudents.length} ${bn ? 'শিক্ষার্থী' : 'students'}`}
@@ -622,11 +627,11 @@ export const WaiversTab = React.memo(function WaiversTab({ onAddWaiver, onAddStu
               <div className="relative" ref={actionMenuRef}>
                 <button
                   onClick={() => setShowActionMenu(!showActionMenu)}
-                  className="flex items-center gap-1 py-1.5 px-3 rounded-lg bg-[var(--brand)] border-none text-white text-[0.65rem] font-medium cursor-pointer hover:opacity-90 transition-opacity"
+                  className="h-[2.125rem] px-[0.75rem] rounded-[0.5rem] bg-[var(--brand)] border-none text-white text-[0.75rem] font-semibold cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1.5"
                 >
-                  <MoreVertical size={12} />
-                  {bn ? 'অ্যাকশন' : 'Action'}
-                  <ChevronDown size={11} />
+                  <MoreVertical size={13} />
+                  <span>{bn ? 'অ্যাকশন' : 'Action'}</span>
+                  <ChevronDown size={12} />
                 </button>
                 {showActionMenu && (
                   <div className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-[100] overflow-hidden">

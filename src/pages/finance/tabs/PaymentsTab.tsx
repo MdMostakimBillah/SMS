@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import React from 'react'
-import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Filter, Printer } from 'lucide-react'
+import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Printer, ChevronDown } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -14,8 +14,9 @@ import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
-import { inputCls } from '@/lib/styles'
 import { PaymentDetailsModal } from '../modals/PaymentDetailsModal'
+
+const selectCls = 'h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors'
 
 interface PaymentBatch {
   batchKey: string
@@ -173,6 +174,25 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   const yearStart = `${currentYear}-01-01`
   const yearEnd = `${currentYear}-12-31`
   const todayCollected = useMemo(() => batches.filter((b) => b.paidAt.startsWith(todayStr)).reduce((sum, b) => sum + b.totalAmount, 0), [batches, todayStr])
+
+  const [datePreset, setDatePreset] = useState<'today' | 'month' | 'year' | 'all' | 'custom'>('today')
+
+  const handleDatePresetChange = useCallback((preset: string) => {
+    setDatePreset(preset as any)
+    if (preset === 'today') {
+      setDateFrom(todayStr)
+      setDateTo(todayStr)
+    } else if (preset === 'month') {
+      setDateFrom(monthStart)
+      setDateTo(todayStr)
+    } else if (preset === 'year') {
+      setDateFrom(yearStart)
+      setDateTo(yearEnd)
+    } else if (preset === 'all') {
+      setDateFrom('')
+      setDateTo('')
+    }
+  }, [todayStr, monthStart, yearStart, yearEnd])
 
   const fmt = (n: number) => n.toLocaleString()
 
@@ -536,133 +556,127 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
         </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-2">
+      {/* Minimal Filter Toolbar */}
+      <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-2.5">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative flex-1 min-w-[180px]">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-            <input type="text" placeholder={bn ? 'পেমেন্ট খুঁজুন...' : 'Search payments...'} value={search} onChange={(e) => setSearch(e.target.value)} className={`${inputCls} w-full pl-9 h-8 text-xs`} />
+          {/* Search Box */}
+          <div className="relative flex-1 min-w-[12.5rem]">
+            <Search size={14} className="absolute left-[0.625rem] top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+            <input
+              type="text"
+              placeholder={bn ? 'পেমেন্ট খুঁজুন...' : 'Search payments...'}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-[2.125rem] pl-[2.125rem] pr-[0.75rem] text-[0.75rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--brand)] transition-colors"
+            />
           </div>
+
+          {/* Session Filter */}
           <select
             value={fSession}
             onChange={(e) => setFSession(e.target.value)}
-            className={`${inputCls} h-8 text-xs px-2 min-w-[110px]`}
+            className={selectCls}
           >
             <option value="">{bn ? 'সব শিক্ষাবর্ষ' : 'All Sessions'}</option>
             {allAvailableSessions.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
-          <div className="flex items-center gap-1.5">
-            <Calendar size={12} className="text-[var(--text-muted)]" />
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
-            <span className="text-[var(--text-muted)] text-xs">—</span>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${inputCls} h-8 text-xs w-[130px]`} />
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => { setDateFrom(todayStr); setDateTo(todayStr) }}
-              className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${
-                dateFrom === todayStr && dateTo === todayStr
-                  ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
-                  : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'
-              }`}
-            >
-              {bn ? 'আজ' : 'Today'}
-            </button>
-            <button
-              onClick={() => { setDateFrom(monthStart); setDateTo(todayStr) }}
-              className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${
-                dateFrom === monthStart && dateTo === todayStr
-                  ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
-                  : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'
-              }`}
-            >
-              {bn ? 'এই মাস' : 'This Month'}
-            </button>
-            <button
-              onClick={() => { setDateFrom(yearStart); setDateTo(yearEnd) }}
-              className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${
-                dateFrom === yearStart && dateTo === yearEnd
-                  ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
-                  : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'
-              }`}
-            >
-              {bn ? 'বাৎসরিক (এই বছর)' : 'Yearly (This Year)'}
-            </button>
-            <button
-              onClick={() => { setDateFrom(''); setDateTo('') }}
-              className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${
-                !dateFrom && !dateTo
-                  ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]'
-                  : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'
-              }`}
-            >
-              {bn ? 'সব সময়' : 'All Time'}
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <Filter size={11} className="text-[var(--text-muted)]" />
-            {(['', 'cash', 'bank', 'mobile', 'other'] as const).map((m) => (
-              <button key={m} onClick={() => setFMethod(m)} className={`px-2.5 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${fMethod === m ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
-                {m ? methodLabel(m) : (bn ? 'সব' : 'All')}
-              </button>
-            ))}
-          </div>
+
+          {/* Payment Method Filter */}
+          <select
+            value={fMethod}
+            onChange={(e) => setFMethod(e.target.value)}
+            className={selectCls}
+          >
+            <option value="">{bn ? 'সব পদ্ধতি' : 'All Methods'}</option>
+            <option value="cash">{bn ? 'নগদ' : 'Cash'}</option>
+            <option value="bank">{bn ? 'ব্যাংক' : 'Bank'}</option>
+            <option value="mobile">{bn ? 'মোবাইল' : 'Mobile Banking'}</option>
+            <option value="other">{bn ? 'অন্যান্য' : 'Other'}</option>
+          </select>
+
+          {/* Collector Filter */}
           {uniqueCollectors.length > 0 && (
-            <div className="flex items-center gap-1">
-              <span className="text-[0.65rem] text-[var(--text-muted)]">{bn ? 'সংগ্রাহক:' : 'Collector:'}</span>
-              <select value={fCollector} onChange={(e) => setFCollector(e.target.value)} className={`${inputCls} h-7 text-[0.65rem] px-2 min-w-[100px]`}>
-                <option value="">{bn ? 'সব' : 'All'}</option>
-                {uniqueCollectors.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+            <select
+              value={fCollector}
+              onChange={(e) => setFCollector(e.target.value)}
+              className={selectCls}
+            >
+              <option value="">{bn ? 'সব সংগ্রাহক' : 'All Collectors'}</option>
+              {uniqueCollectors.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
+
+          {/* Date Preset Filter */}
+          <select
+            value={datePreset}
+            onChange={(e) => handleDatePresetChange(e.target.value)}
+            className={selectCls}
+          >
+            <option value="today">{bn ? 'আজকের' : 'Today'}</option>
+            <option value="month">{bn ? 'এই মাস' : 'This Month'}</option>
+            <option value="year">{bn ? 'বাৎসরিক (এই বছর)' : 'Yearly (This Year)'}</option>
+            <option value="all">{bn ? 'সব সময়' : 'All Time'}</option>
+            <option value="custom">{bn ? 'নির্দিষ্ট সময়' : 'Custom Dates'}</option>
+          </select>
+
+          {/* Custom Date Pickers */}
+          {datePreset === 'custom' && (
+            <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] px-2 h-[2.125rem] rounded-[0.5rem] border border-[var(--border)]">
+              <Calendar size={13} className="text-[var(--text-muted)] flex-shrink-0" />
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setDatePreset('custom') }}
+                className="bg-transparent text-[0.75rem] text-[var(--text-primary)] outline-none border-0 p-0 w-[7.5rem]"
+              />
+              <span className="text-[var(--text-muted)] text-[0.75rem]">—</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setDatePreset('custom') }}
+                className="bg-transparent text-[0.75rem] text-[var(--text-primary)] outline-none border-0 p-0 w-[7.5rem]"
+              />
             </div>
           )}
-          <div className="h-4 w-px bg-[var(--border)]" />
-          <div className="flex items-center gap-1">
-            <Calendar size={11} className="text-[var(--text-muted)]" />
-            {([
-              { val: 'date-desc', en: 'New → Old', bn: 'নতুন → পুরাতন' },
-              { val: 'date-asc', en: 'Old → New', bn: 'পুরাতন → নতুন' },
-            ] as const).map((o) => (
-              <button key={o.val} onClick={() => setSortBy(o.val)} className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${sortBy === o.val ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
-                {bn ? o.bn : o.en}
-              </button>
-            ))}
-          </div>
-          <div className="h-4 w-px bg-[var(--border)]" />
-          <div className="flex items-center gap-1">
-            <DollarSign size={11} className="text-[var(--text-muted)]" />
-            {([
-              { val: 'amount-desc', en: 'High → Low', bn: 'বেশি → কম' },
-              { val: 'amount-asc', en: 'Low → High', bn: 'কম → বেশি' },
-            ] as const).map((o) => (
-              <button key={o.val} onClick={() => setSortBy(o.val)} className={`px-2 py-1 rounded-lg text-[0.65rem] font-medium border cursor-pointer transition-all ${sortBy === o.val ? 'bg-[var(--brand-light)] border-[var(--brand)] text-[var(--brand)]' : 'bg-[var(--bg-primary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]'}`}>
-                {bn ? o.bn : o.en}
-              </button>
-            ))}
-          </div>
-          <div className="flex-1" />
+
+          {/* Sort By Filter */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className={selectCls}
+          >
+            <option value="date-desc">{bn ? 'তারিখ: নতুন → পুরাতন' : 'Date: Newest First'}</option>
+            <option value="date-asc">{bn ? 'তারিখ: পুরাতন → নতুন' : 'Date: Oldest First'}</option>
+            <option value="amount-desc">{bn ? 'পরিমাণ: বেশি → কম' : 'Amount: High to Low'}</option>
+            <option value="amount-asc">{bn ? 'পরিমাণ: কম → বেশি' : 'Amount: Low to High'}</option>
+          </select>
+
+          {/* Actions Menu */}
           {batches.length > 0 && (
-            <div className="relative">
-              <button onClick={() => setShowActionMenu(!showActionMenu)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--brand)] cursor-pointer transition-all">
-                <MoreVertical size={14} />{bn ? 'অ্যাকশন' : 'Actions'}
+            <div className="relative ml-auto">
+              <button
+                onClick={() => setShowActionMenu(!showActionMenu)}
+                className="h-[2.125rem] px-[0.75rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-semibold hover:border-[var(--brand)] cursor-pointer flex items-center gap-1.5 transition-colors"
+              >
+                <MoreVertical size={13} />
+                <span>{bn ? 'অ্যাকশন' : 'Actions'}</span>
+                <ChevronDown size={12} className="text-[var(--text-muted)]" />
               </button>
               {showActionMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
                   <div className="absolute right-0 top-full mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-[100] overflow-hidden">
                     {canExport('finance.fees.payments') && (
-                      <button onClick={() => { setShowActionMenu(false); exportExcel() }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                      <button onClick={() => { setShowActionMenu(false); exportExcel() }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[0.8125rem] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
                         <FileSpreadsheet size={14} className="text-[var(--green)]" />
                         {bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
                       </button>
                     )}
                     <div className="h-px bg-[var(--border)] mx-2" />
                     {canExport('finance.fees.payments') && (
-                      <button onClick={() => { setShowActionMenu(false); setShowPdfModal(true) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                      <button onClick={() => { setShowActionMenu(false); setShowPdfModal(true) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[0.8125rem] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
                         <FileText size={14} className="text-[var(--red)]" />
                         {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
                       </button>

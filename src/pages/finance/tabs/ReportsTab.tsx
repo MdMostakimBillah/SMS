@@ -5,8 +5,9 @@ import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useFeeStore } from '@/store/feeStore'
-import { inputCls } from '@/lib/styles'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
+
+const selectCls = 'h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors'
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
@@ -192,8 +193,8 @@ export const ReportsTab = React.memo(function ReportsTab() {
       {/* Filter Toolbar */}
       <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] mb-4 flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-1.5">
-          <Filter size={11} className="text-[var(--text-muted)]" />
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortMode)} className={`${inputCls} h-7 text-[0.65rem] px-2`}>
+          <Filter size={13} className="text-[var(--text-muted)]" />
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortMode)} className={selectCls}>
             <option value="default">{bn ? 'সব' : 'All'}</option>
             <option value="col-asc">{bn ? 'সংগ্রহ: কম → বেশি' : 'Collected: Min → Max'}</option>
             <option value="col-desc">{bn ? 'সংগ্রহ: বেশি → কম' : 'Collected: Max → Min'}</option>
@@ -203,8 +204,8 @@ export const ReportsTab = React.memo(function ReportsTab() {
         </div>
         {classNames.length > 0 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[0.65rem] text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span>
-            <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection('') }} className={`${inputCls} h-7 text-[0.65rem] px-2`}>
+            <span className="text-[0.75rem] font-medium text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span>
+            <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection('') }} className={selectCls}>
               <option value="">{bn ? 'সব' : 'All'}</option>
               {classNames.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -212,21 +213,21 @@ export const ReportsTab = React.memo(function ReportsTab() {
         )}
         {sections.length > 0 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[0.65rem] text-[var(--text-muted)]">{bn ? 'শাখা:' : 'Section:'}</span>
-            <select value={fSection} onChange={(e) => setFSection(e.target.value)} className={`${inputCls} h-7 text-[0.65rem] px-2`}>
+            <span className="text-[0.75rem] font-medium text-[var(--text-muted)]">{bn ? 'শাখা:' : 'Section:'}</span>
+            <select value={fSection} onChange={(e) => setFSection(e.target.value)} className={selectCls}>
               <option value="">{bn ? 'সব' : 'All'}</option>
               {sections.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
         )}
         {hasFilter && (
-          <button onClick={() => { setSortBy('default'); setFClass(''); setFSection('') }} className="px-2 py-1 rounded-lg text-[0.65rem] font-medium bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer transition-all hover:bg-[var(--red)]/20">
+          <button onClick={() => { setSortBy('default'); setFClass(''); setFSection('') }} className="h-[2.125rem] px-[0.75rem] rounded-[0.5rem] text-[0.75rem] font-medium bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer transition-all hover:bg-[var(--red)]/20">
             {bn ? 'মুছুন' : 'Clear'}
           </button>
         )}
         <div className="flex-1" />
         {sortedSummary.length > 0 && canPrint('finance.fees.reports.print') && (
-          <button onClick={() => setShowPdfModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--red)] hover:text-[var(--red)] cursor-pointer transition-all">
+          <button onClick={() => setShowPdfModal(true)} className="h-[2.125rem] px-[0.75rem] rounded-[0.5rem] text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--red)] hover:text-[var(--red)] cursor-pointer transition-all flex items-center gap-1.5">
             <FileText size={13} />
             {bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
           </button>

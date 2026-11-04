@@ -6,8 +6,9 @@ import { usePermission } from '@/hooks/usePermission'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
-import { inputCls, selectCls } from '@/lib/styles'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
+
+const selectCls = 'h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors'
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
@@ -177,47 +178,47 @@ export const InactiveDuesTab = React.memo(function InactiveDuesTab() {
 
       {/* Filter Toolbar */}
       <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] mb-4 flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[160px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+        <div className="relative flex-1 min-w-[12.5rem]">
+          <Search size={14} className="absolute left-[0.625rem] top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
           <input
             type="text"
             placeholder={bn ? 'শিক্ষার্থী খুঁজুন...' : 'Search students...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className={`${inputCls} w-full pl-9 h-8 text-xs`}
+            className="w-full h-[2.125rem] pl-[2.125rem] pr-[0.75rem] text-[0.75rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--brand)] transition-colors"
           />
         </div>
         <div className="flex items-center gap-1.5">
-          <Filter size={11} className="text-[var(--text-muted)]" />
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortMode)} className={`${selectCls} h-7 text-[0.65rem] px-2`}>
+          <Filter size={13} className="text-[var(--text-muted)]" />
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortMode)} className={selectCls}>
             <option value="default">{bn ? 'সব' : 'All'}</option>
             <option value="due-desc">{bn ? 'বকেয়: বেশি → কম' : 'Due: Max → Min'}</option>
             <option value="due-asc">{bn ? 'বকেয়: কম → বেশি' : 'Due: Min → Max'}</option>
           </select>
         </div>
-        <select value={fStatus} onChange={(e) => setFStatus(e.target.value as FilterStatus)} className={`${selectCls} h-7 text-[0.65rem] px-2`}>
+        <select value={fStatus} onChange={(e) => setFStatus(e.target.value as FilterStatus)} className={selectCls}>
           <option value="all">{bn ? 'সব' : 'All'}</option>
           <option value="paid">{bn ? 'পরিশোধিত' : 'Paid'}</option>
           <option value="due">{bn ? 'বকেয়' : 'Due'}</option>
         </select>
-        <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection('') }} className={`${selectCls} h-7 text-[0.65rem] px-2`}>
+        <select value={fClass} onChange={(e) => { setFClass(e.target.value); setFSection('') }} className={selectCls}>
           <option value="">{bn ? 'সব শ্রেণি' : 'All Classes'}</option>
           {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         {fClass && (
-          <select value={fSection} onChange={(e) => setFSection(e.target.value)} className={`${selectCls} h-7 text-[0.65rem] px-2`}>
+          <select value={fSection} onChange={(e) => setFSection(e.target.value)} className={selectCls}>
             <option value="">{bn ? 'সব সেকশন' : 'All Sections'}</option>
             {sectionOptions.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         )}
         {hasFilter && (
-          <button onClick={() => { setSearch(''); setFClass(''); setFSection(''); setSortBy('default'); setFStatus('all') }} className="px-2 py-1 rounded-lg text-[0.65rem] font-medium bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer transition-all hover:bg-[var(--red)]/20">
+          <button onClick={() => { setSearch(''); setFClass(''); setFSection(''); setSortBy('default'); setFStatus('all') }} className="h-[2.125rem] px-[0.75rem] rounded-[0.5rem] text-[0.75rem] font-medium bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer transition-all hover:bg-[var(--red)]/20">
             {bn ? 'মুছুন' : 'Clear'}
           </button>
         )}
         <div className="flex-1" />
         {filteredDues.length > 0 && canPrint('finance.fees.dues.print') && (
-          <button onClick={() => setShowPdfModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--red)] hover:text-[var(--red)] cursor-pointer transition-all">
+          <button onClick={() => setShowPdfModal(true)} className="h-[2.125rem] px-[0.75rem] rounded-[0.5rem] text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--red)] hover:text-[var(--red)] cursor-pointer transition-all flex items-center gap-1.5">
             <FileText size={13} />
             {bn ? 'পিডিএফ' : 'PDF'}
           </button>
