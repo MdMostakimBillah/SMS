@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { useMemo } from 'react'
 import type { StudentAdmission } from '@/pages/students/admission/types'
+export type { StudentAdmission } from '@/pages/students/admission/types'
 import { useClassStore } from './classStore'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getSlug } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
@@ -109,12 +110,11 @@ export const useAdmissionStore = create<AdmissionState>()(
       },
 
       bulkAddStudents: (newStudents) => {
+        if (!newStudents || newStudents.length === 0) return
         set((state) => {
-          const map = new Map(state.students.map((s) => [s.id, s]))
-          for (const s of newStudents) {
-            map.set(s.id, s)
-          }
-          return { students: Array.from(map.values()) }
+          const newMap = new Map(newStudents.map((s) => [s.id, s]))
+          const untouched = state.students.filter((s) => !newMap.has(s.id))
+          return { students: [...newStudents, ...untouched] }
         })
         flushPendingWrites()
         void flushVaultWrites()

@@ -1102,8 +1102,8 @@ async function writePath(path: string, json: string): Promise<void> {
   try {
     await writeVaultFile(path, prettifyJson(json))
     if (slug) {
-      await exportStoreImages(slug, path, json)
       await syncIndividualDomainFiles(slug, path, json)
+      void exportStoreImages(slug, path, json)
     }
     emit({ lastSyncAt: Date.now(), error: null })
   } catch {
