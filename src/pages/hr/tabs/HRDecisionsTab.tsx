@@ -72,32 +72,38 @@ export const HRDecisionsTab = React.memo(function HRDecisionsTab({
           {isBn ? 'সামগ্রিক স্কোর' : 'Performance Scores'}
         </div>
         <div className="flex flex-col gap-1.5">
-          {teacherCompositeScores.slice(0, 10).map((t, i) => (
-            <div key={t.id} className="py-[0.625rem] px-3 rounded-lg bg-[var(--bg-secondary)] transition-all">
-              <div className="flex items-center gap-[0.625rem]">
-                <span className={`text-[0.8125rem] font-bold w-[1.5rem] ${i < 3 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}>
-                  #{i + 1}
-                </span>
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0"
-                  style={{ background: getAvatarGradient(t.id) }}
-                >
-                  {getInitials(t.nameEn)}
-                </div>
-                <div className="flex-1 min-w-[0]">
-                  <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{t.nameEn}</div>
-                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
-                    {getTeacherDept(t.id)} · {t.designation}
+          {teacherCompositeScores.slice(0, 10).map((t, i) => {
+            const photo = t.photo || teachers.find((te: any) => te.id === t.id)?.photo
+            return (
+              <div key={t.id} className="py-[0.625rem] px-3 rounded-lg bg-[var(--bg-secondary)] transition-all">
+                <div className="flex items-center gap-[0.625rem]">
+                  <span className={`text-[0.8125rem] font-bold w-[1.5rem] ${i < 3 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}>
+                    #{i + 1}
+                  </span>
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[0.5625rem] font-semibold text-white shrink-0 overflow-hidden"
+                    style={{ background: photo ? 'transparent' : getAvatarGradient(t.id) }}
+                  >
+                    {photo ? (
+                      <img src={photo} alt={t.nameEn || 'Staff'} className="w-full h-full object-cover" />
+                    ) : (
+                      getInitials(t.nameEn)
+                    )}
                   </div>
+                  <div className="flex-1 min-w-[0]">
+                    <div className="text-[0.8125rem] font-medium text-[var(--text-primary)]">{t.nameEn}</div>
+                    <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                      {getTeacherDept(t.id)} · {t.designation}
+                    </div>
+                  </div>
+                  <CircularChart
+                    value={t.totalScore}
+                    size={42}
+                    stroke={5}
+                    color={t.totalScore >= 80 ? 'var(--green)' : t.totalScore >= 60 ? 'var(--amber)' : 'var(--red)'}
+                  />
                 </div>
-                <CircularChart
-                  value={t.totalScore}
-                  size={42}
-                  stroke={5}
-                  color={t.totalScore >= 80 ? 'var(--green)' : t.totalScore >= 60 ? 'var(--amber)' : 'var(--red)'}
-                />
-              </div>
-              <div className="grid grid-cols-4 gap-1.5 mt-2">
+                <div className="grid grid-cols-4 gap-1.5 mt-2">
                 {[
                   { label: isBn ? 'উপস্থিতি' : 'Att', val: `${t.attRate}%`, color: 'var(--purple)' },
                   { label: isBn ? 'হোমওয়ার্ক' : 'HW', val: `${t.hwRate}%`, color: 'var(--green)' },
@@ -113,7 +119,7 @@ export const HRDecisionsTab = React.memo(function HRDecisionsTab({
                 ))}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       </div>
 

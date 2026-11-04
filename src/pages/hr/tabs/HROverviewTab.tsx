@@ -16,6 +16,7 @@ import { sectionCls, sectionTitleCls, inputCls, getInitials, getAvatarGradient }
 interface RankingItem {
   id: string
   nameEn: string
+  photo?: string
   rate?: number
   avgScore?: number
 }
@@ -235,31 +236,38 @@ export const HROverviewTab = React.memo(function HROverviewTab({
           ].map((card) => (
             <div key={card.title} className="bg-[var(--bg-secondary)] rounded-[0.625rem] p-3">
               <div className="text-[0.6875rem] font-semibold text-[var(--text-muted)] mb-[0.625rem]">{card.title}</div>
-              {card.data.slice(0, 3).map((t, i) => (
-                <div key={t.id} className="flex items-center gap-2 py-[0.3125rem] px-0 border-b border-[var(--border)]">
-                  <span
-                    className={`text-[0.6875rem] font-bold w-[1.125rem] text-center ${i === 0 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}
-                  >
-                    #{i + 1}
-                  </span>
-                  <div
-                    className="w-[1.625rem] h-[1.625rem] rounded-[0.4375rem] flex items-center justify-center shrink-0 text-[0.5rem] font-semibold text-white"
-                    style={{ background: getAvatarGradient(t.id) }}
-                  >
-                    {getInitials(t.nameEn)}
-                  </div>
-                  <div className="flex-1 min-w-[0]">
-                    <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
-                      {t.nameEn}
+              {card.data.slice(0, 3).map((t, i) => {
+                const photo = t.photo || activeTeachers.find((at) => at.id === t.id)?.photo
+                return (
+                  <div key={t.id} className="flex items-center gap-2 py-[0.3125rem] px-0 border-b border-[var(--border)]">
+                    <span
+                      className={`text-[0.6875rem] font-bold w-[1.125rem] text-center ${i === 0 ? 'text-[var(--amber)]' : 'text-[var(--text-muted)]'}`}
+                    >
+                      #{i + 1}
+                    </span>
+                    <div
+                      className="w-[1.625rem] h-[1.625rem] rounded-[0.4375rem] flex items-center justify-center shrink-0 text-[0.5rem] font-semibold text-white overflow-hidden"
+                      style={{ background: photo ? 'transparent' : getAvatarGradient(t.id) }}
+                    >
+                      {photo ? (
+                        <img src={photo} alt={t.nameEn || 'Staff'} className="w-full h-full object-cover" />
+                      ) : (
+                        getInitials(t.nameEn)
+                      )}
                     </div>
-                    <div className="text-[0.625rem] text-[var(--text-muted)]">{getTeacherDept(t.id)}</div>
+                    <div className="flex-1 min-w-[0]">
+                      <div className="text-xs font-medium text-[var(--text-primary)] overflow-hidden text-ellipsis whitespace-nowrap">
+                        {t.nameEn}
+                      </div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">{getTeacherDept(t.id)}</div>
+                    </div>
+                    <div className="text-[0.8125rem] font-bold" style={{ color: card.color }}>
+                      {(t as any)[card.key]}
+                      {card.suffix}
+                    </div>
                   </div>
-                  <div className="text-[0.8125rem] font-bold" style={{ color: card.color }}>
-                    {(t as any)[card.key]}
-                    {card.suffix}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ))}
         </div>
