@@ -1106,7 +1106,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   {displayRows.map((row) => {
                     const edit = getRowEdit(row.key)
                     return (
-                      <tr key={row.key} className={`transition-colors border-t border-[var(--border)] hover:bg-[var(--brand-light)]/60 ${!edit.checked ? 'opacity-45' : ''}`}>
+                      <tr key={row.key} className={`transition-colors border-t border-[var(--border)] hover:bg-[var(--brand-light)] ${!edit.checked ? 'opacity-45' : ''}`}>
                         <td className="text-center py-2 px-2.5">
                           <ModernCheckbox checked={edit.checked} onChange={(checked) => {
                             setEditState((prev) => {
@@ -1161,8 +1161,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                         </td>
                         <td className="text-center px-2 py-2"><span className="font-bold text-[var(--text-primary)] text-[0.8125rem]">{fmt(row.receivable)}</span></td>
                         <td className="text-center px-1.5 py-1.5">
-                          <input type="number" value={edit.receive} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
-                            className="h-[1.875rem] w-full text-[0.8125rem] font-bold text-center px-1.5 rounded-[0.375rem] border-2 border-[var(--brand)] bg-[var(--brand-light)]/20 text-[var(--brand)] outline-none focus:border-[var(--brand)] font-mono" placeholder="0" />
+                          <input type="number" value={edit.receive || ''} onChange={(e) => updateRow(row.key, 'receive', Number(e.target.value) || 0)}
+                            className="h-[1.875rem] w-full text-[0.8125rem] font-bold text-center px-1.5 rounded-[0.375rem] border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] font-mono placeholder:text-[var(--text-muted)] transition-colors" placeholder="0" />
                         </td>
                       </tr>
                     )
