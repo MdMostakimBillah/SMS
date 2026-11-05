@@ -745,6 +745,36 @@ export const storeApi = {
   },
 }
 
+export interface TransportResponse {
+  vehicles?: any[]
+  routes?: any[]
+  assignments?: any[]
+}
+
+export const transportApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<TransportResponse>(`/api/transport${q}`)
+  },
+  update: (data: {
+    vehicles?: any[]
+    routes?: any[]
+    assignments?: any[]
+    schoolId?: string
+  }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean } & TransportResponse>('/api/transport', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

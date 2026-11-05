@@ -18,6 +18,7 @@ import { licenseRouter } from './routes/license.js'
 import { classRouter } from './routes/classes.js'
 import { feesRouter } from './routes/fees.js'
 import { storeRouter } from './routes/store.js'
+import { transportRouter } from './routes/transport.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
@@ -87,6 +88,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   app.use('/api/classes', classRouter(prisma, jwtSecret))
   app.use('/api/fees', feesRouter(prisma, jwtSecret))
   app.use('/api/store', storeRouter(prisma, jwtSecret))
+  app.use('/api/transport', transportRouter(prisma, jwtSecret))
 
   const sRouter = schoolRouter(prisma, jwtSecret, storage)
   app.use('/api/schools', sRouter)

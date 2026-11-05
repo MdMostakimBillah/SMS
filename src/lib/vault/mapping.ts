@@ -106,6 +106,7 @@ export function vaultPathToKey(
     else if (base === 'staff' || base === 'departments' || base === 'subjects' || base === 'designations') storeBase = 'teachers'
     else if (base === 'fee_structures' || base === 'payments' || base === 'waivers') storeBase = 'fees'
     else if (base === 'products' || base === 'categories' || base === 'sales') storeBase = 'store'
+    else if (base === 'vehicles' || base === 'routes' || base === 'transport_assignments' || base === 'transport') storeBase = 'transport'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -1059,6 +1060,125 @@ export function normalizeVaultJsonForStore(
       products,
       categories,
       sales,
+      serverSynced: true,
+      syncing: false,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion })
+  }
+
+  if (key.includes('transport')) {
+    const existing = (() => {
+      try {
+        const raw = localStorage.getItem(key)
+        return raw ? JSON.parse(raw) : {}
+      } catch {
+        return {}
+      }
+    })()
+    const existingState = existing.state || {}
+    const existingVersion = existing.version || 1
+
+    const isVehiclesOnly =
+      filePath?.includes('vehicles') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].registrationNo !== undefined)
+
+    if (isVehiclesOnly) {
+      const rawVehicles = Array.isArray(parsed) ? parsed : (parsed.vehicles || parsed.state?.vehicles || [])
+      const normalizedVehicles = rawVehicles.map((v: any, idx: number) => ({
+        id: String(v.id || `TV-${Date.now()}-${idx}`).trim(),
+        name: String(v.name || '').trim(),
+        nameBn: String(v.nameBn || v.name || '').trim(),
+        registrationNo: String(v.registrationNo || '').trim(),
+        capacity: Number(v.capacity) || 0,
+        driverId: String(v.driverId || '').trim(),
+        driverName: String(v.driverName || '').trim(),
+        driverNameBn: String(v.driverNameBn || v.driverName || '').trim(),
+        driverPhone: String(v.driverPhone || '').trim(),
+        driverDetails: String(v.driverDetails || '').trim(),
+        vehicleDetails: String(v.vehicleDetails || '').trim(),
+        routeIds: Array.isArray(v.routeIds) ? v.routeIds : [],
+        isActive: v.isActive !== false,
+        createdAt: String(v.createdAt || new Date().toISOString()),
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          vehicles: normalizedVehicles,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isRoutesOnly =
+      filePath?.includes('routes') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].stops !== undefined)
+
+    if (isRoutesOnly) {
+      const rawRoutes = Array.isArray(parsed) ? parsed : (parsed.routes || parsed.state?.routes || [])
+      const normalizedRoutes = rawRoutes.map((r: any, idx: number) => ({
+        id: String(r.id || `TR-${Date.now()}-${idx}`).trim(),
+        name: String(r.name || '').trim(),
+        nameBn: String(r.nameBn || r.name || '').trim(),
+        stops: String(r.stops || '').trim(),
+        stopsBn: String(r.stopsBn || r.stops || '').trim(),
+        distance: String(r.distance || '').trim(),
+        fare: Number(r.fare) || 0,
+        isActive: r.isActive !== false,
+        createdAt: String(r.createdAt || new Date().toISOString()),
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          routes: normalizedRoutes,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isAssignmentsOnly =
+      filePath?.includes('assignment') ||
+      (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].pickupStop !== undefined || (parsed[0].vehicleId !== undefined && parsed[0].routeId !== undefined)))
+
+    if (isAssignmentsOnly) {
+      const rawAssignments = Array.isArray(parsed) ? parsed : (parsed.assignments || parsed.state?.assignments || [])
+      const normalizedAssignments = rawAssignments.map((a: any, idx: number) => ({
+        id: String(a.id || `TA-${Date.now()}-${idx}`).trim(),
+        studentId: String(a.studentId || '').trim(),
+        vehicleId: String(a.vehicleId || '').trim(),
+        routeId: String(a.routeId || '').trim(),
+        pickupStop: String(a.pickupStop || '').trim(),
+        monthlyFare: Number(a.monthlyFare) || 0,
+        academicYear: String(a.academicYear || '2025-26'),
+        months: Array.isArray(a.months) ? a.months : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        assignedDate: String(a.assignedDate || new Date().toISOString().split('T')[0]),
+        isActive: a.isActive !== false,
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          assignments: normalizedAssignments,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const vehicles = Array.isArray(inner.vehicles) ? inner.vehicles : (existingState.vehicles || [])
+    const routes = Array.isArray(inner.routes) ? inner.routes : (existingState.routes || [])
+    const assignments = Array.isArray(inner.assignments) ? inner.assignments : (existingState.assignments || [])
+
+    const finalState = {
+      ...existingState,
+      ...inner,
+      vehicles,
+      routes,
+      assignments,
       serverSynced: true,
       syncing: false,
     }

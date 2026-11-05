@@ -173,6 +173,18 @@ export function getItemCount(content: string): number {
         hasDomainField = true
         count += state.sales.length
       }
+      if (Array.isArray(state.vehicles)) {
+        hasDomainField = true
+        count += state.vehicles.length
+      }
+      if (Array.isArray(state.routes)) {
+        hasDomainField = true
+        count += state.routes.length
+      }
+      if (Array.isArray(state.assignments)) {
+        hasDomainField = true
+        count += state.assignments.length
+      }
 
       if (hasDomainField) {
         return count
@@ -199,6 +211,9 @@ export interface DomainCounts {
   products: number
   categories: number
   sales: number
+  vehicles: number
+  routes: number
+  assignments: number
 }
 
 export function extractDomainCounts(text: string, path = ''): DomainCounts {
@@ -216,6 +231,9 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
     products: -1,
     categories: -1,
     sales: -1,
+    vehicles: -1,
+    routes: -1,
+    assignments: -1,
   }
   if (!text || !text.trim()) return counts
 
@@ -238,6 +256,9 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       else if (base.includes('product')) counts.products = state.length
       else if (base.includes('category') || base.includes('categories')) counts.categories = state.length
       else if (base.includes('sale')) counts.sales = state.length
+      else if (base.includes('vehicle')) counts.vehicles = state.length
+      else if (base.includes('route')) counts.routes = state.length
+      else if (base.includes('assignment')) counts.assignments = state.length
       return counts
     }
 
@@ -257,6 +278,9 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       if (Array.isArray(state.products)) counts.products = state.products.length
       if (Array.isArray(state.categories)) counts.categories = state.categories.length
       if (Array.isArray(state.sales)) counts.sales = state.sales.length
+      if (Array.isArray(state.vehicles)) counts.vehicles = state.vehicles.length
+      if (Array.isArray(state.routes)) counts.routes = state.routes.length
+      if (Array.isArray(state.assignments)) counts.assignments = state.assignments.length
     }
   } catch {
     /* ignore parse error */
@@ -306,6 +330,15 @@ export function shouldBlockDomainOverwrite(subPath: string, incomingText: string
   }
   if (diskCounts.sales > 0 && inCounts.sales === 0) {
     return { blocked: true, reason: `sales on disk (${diskCounts.sales}) vs incoming (0)` }
+  }
+  if (diskCounts.vehicles > 0 && inCounts.vehicles === 0) {
+    return { blocked: true, reason: `vehicles on disk (${diskCounts.vehicles}) vs incoming (0)` }
+  }
+  if (diskCounts.routes > 0 && inCounts.routes === 0) {
+    return { blocked: true, reason: `routes on disk (${diskCounts.routes}) vs incoming (0)` }
+  }
+  if (diskCounts.assignments > 0 && inCounts.assignments === 0) {
+    return { blocked: true, reason: `assignments on disk (${diskCounts.assignments}) vs incoming (0)` }
   }
 
   const inItemCount = getItemCount(incomingText)
@@ -766,7 +799,7 @@ async function hydrateFromVault(): Promise<number> {
   }
 
   // Load primary store files first so individual slice files cleanly overlay on top
-  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json'])
+  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json', 'transport.json'])
   const sortedEntries = Array.from(jsonGroups.entries()).sort(([slotA], [slotB]) => {
     const isPriA = PRIMARY_SLOTS.has(slotA) ? 0 : 1
     const isPriB = PRIMARY_SLOTS.has(slotB) ? 0 : 1
@@ -1072,6 +1105,39 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
         const salesPretty = JSON.stringify(sales, null, 2)
         await writeVaultFile(`${slug}/sales.json`, salesPretty)
         await writeVaultFile('sales.json', salesPretty)
+      }
+    } catch { /* ignore */ }
+  }
+
+  if (path === `${slug}/transport.json`) {
+    await writeVaultFile('transport.json', prettifyJson(rawJson))
+
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+
+      // 1. vehicles.json
+      const vehicles = state.vehicles ?? []
+      if (vehicles.length > 0 || isRecentExplicitDelete()) {
+        const vPretty = JSON.stringify(vehicles, null, 2)
+        await writeVaultFile(`${slug}/vehicles.json`, vPretty)
+        await writeVaultFile('vehicles.json', vPretty)
+      }
+
+      // 2. routes.json
+      const routes = state.routes ?? []
+      if (routes.length > 0 || isRecentExplicitDelete()) {
+        const rPretty = JSON.stringify(routes, null, 2)
+        await writeVaultFile(`${slug}/routes.json`, rPretty)
+        await writeVaultFile('routes.json', rPretty)
+      }
+
+      // 3. transport_assignments.json
+      const assignments = state.assignments ?? []
+      if (assignments.length > 0 || isRecentExplicitDelete()) {
+        const aPretty = JSON.stringify(assignments, null, 2)
+        await writeVaultFile(`${slug}/transport_assignments.json`, aPretty)
+        await writeVaultFile('transport_assignments.json', aPretty)
       }
     } catch { /* ignore */ }
   }

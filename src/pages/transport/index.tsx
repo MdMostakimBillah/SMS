@@ -58,6 +58,7 @@ export default function TransportPage() {
   })
 
   useEffect(() => {
+    useTransportStore.getState().syncFromServer().catch(() => {})
     pruneExpiredAssignments()
     const t = setTimeout(() => setLoading(false), 400)
     return () => clearTimeout(t)
