@@ -5,6 +5,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useStoreStore } from '@/store/storeStore'
 import { useTransportStore } from '@/store/transportStore'
+import { useHostelStore } from '@/store/hostelStore'
 import { getActiveVaultHandle } from '@/lib/vault/vault'
 import { listAllVaultFiles } from '@/lib/vault/fsAccess'
 
@@ -147,6 +148,7 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
   const sales = useStoreStore((s) => s.sales)
   const vehicles = useTransportStore((s) => s.vehicles)
   const routes = useTransportStore((s) => s.routes)
+  const rooms = useHostelStore((s) => s.rooms)
 
   const [storageUsage, setStorageUsage] = useState<DeviceStorageStats>(getInitialStorageStats)
 
@@ -158,7 +160,7 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
     return () => {
       mounted = false
     }
-  }, [students.length, teachers.length, classes.length, routines.length, products.length, sales.length, vehicles.length, routes.length, folderPath])
+  }, [students.length, teachers.length, classes.length, routines.length, products.length, sales.length, vehicles.length, routes.length, rooms.length, folderPath])
 
   const totalSections = useMemo(() => {
     return classes.reduce((sum, c) => sum + (c.sections?.length || 0), 0)

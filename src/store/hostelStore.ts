@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
+import { hostelApi } from '@/lib/api'
 import { useAdmissionStore } from './admissionStore'
 import { useFeeStore, type FeeStructure } from './feeStore'
 import { useClassStore } from './classStore'
@@ -115,6 +118,12 @@ export function pruneExpiredHostelAssignments() {
 interface HostelState {
   rooms: HostelRoom[]
   assignments: HostelAssignment[]
+  serverSynced: boolean
+  syncing: boolean
+  syncError: string | null
+
+  syncFromServer: (slugOrId?: string) => Promise<void>
+  syncToServer: () => Promise<void>
 
   addRoom: (r: HostelRoom) => void
   updateRoom: (id: string, data: Partial<HostelRoom>) => void
@@ -127,9 +136,43 @@ interface HostelState {
   toggleAssignmentActive: (id: string) => void
 }
 
+let serverSyncTimer: any = null
+function queueServerSync(get: () => HostelState) {
+  try {
+    if (isLocalComputerMode()) return
+    const state = get()
+    // Guard: Never push empty hostel data to the database during startup or unhydrated state
+    if (!state.serverSynced && state.rooms.length === 0 && state.assignments.length === 0) {
+      return
+    }
+    if (serverSyncTimer) clearTimeout(serverSyncTimer)
+    serverSyncTimer = setTimeout(async () => {
+      try {
+        const s = get()
+        if (s.rooms.length === 0 && s.assignments.length === 0 && !isRecentExplicitDelete()) {
+          return
+        }
+        await hostelApi.update({
+          rooms: s.rooms,
+          assignments: s.assignments,
+        })
+      } catch {
+        // Warning only
+      }
+    }, 400)
+  } catch {
+    /* ignore */
+  }
+}
+
+function onStateMutated(get: () => HostelState) {
+  flushPendingWrites()
+  queueServerSync(get)
+}
+
 export const useHostelStore = create<HostelState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       rooms: [
         { id: 'HR-001', name: 'Room A-101', nameBn: 'রুম A-১০১', roomNumber: 'A-101', floor: '1st Floor', capacity: 4, monthlyRent: 5000, amenities: 'Fan, Wardrobe, Study Table', amenitiesBn: 'পাখা, আলমারি, পড়ার টেবিল', isActive: true, createdAt: '2025-01-10' },
         { id: 'HR-002', name: 'Room A-102', nameBn: 'রুম A-১০২', roomNumber: 'A-102', floor: '1st Floor', capacity: 4, monthlyRent: 5000, amenities: 'Fan, Wardrobe, Study Table', amenitiesBn: 'পাখা, আলমারি, পড়ার টেবিল', isActive: true, createdAt: '2025-01-10' },
@@ -143,11 +186,76 @@ export const useHostelStore = create<HostelState>()(
         { id: 'HA-003', studentId: 'ET-2025-10003', roomId: 'HR-002', bedNumber: '1', monthlyRent: 5000, academicYear: '2025-26', months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], assignedDate: '2025-02-01', isActive: true },
         { id: 'HA-004', studentId: 'ET-2025-10004', roomId: 'HR-003', bedNumber: '1', monthlyRent: 4500, academicYear: '2025-26', months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], assignedDate: '2025-02-15', isActive: true },
       ],
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
 
-      addRoom: (r) => set((state) => ({ rooms: [...state.rooms, r] })),
-      updateRoom: (id, data) =>
-        set((state) => ({ rooms: state.rooms.map((r) => (r.id === id ? { ...r, ...data } : r)) })),
-      deleteRoom: (id) =>
+      syncFromServer: async (slugOrId?: string) => {
+        if (isLocalComputerMode()) {
+          set({ serverSynced: true, syncing: false })
+          return
+        }
+        set({ syncing: true, syncError: null })
+        try {
+          const res = await hostelApi.get(slugOrId)
+          if (res) {
+            const hasRooms = Array.isArray(res.rooms) && res.rooms.length > 0
+            const hasAssignments = Array.isArray(res.assignments) && res.assignments.length > 0
+            const state = get()
+
+            if (hasRooms || hasAssignments) {
+              set({
+                rooms: res.rooms || [],
+                assignments: res.assignments || [],
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+            } else if (state.rooms.length > 0 || state.assignments.length > 0) {
+              await hostelApi.update({
+                rooms: state.rooms,
+                assignments: state.assignments,
+                schoolId: slugOrId,
+              })
+              set({ serverSynced: true, syncing: false, syncError: null })
+            } else {
+              set({ serverSynced: true, syncing: false, syncError: null })
+            }
+          } else {
+            set({ serverSynced: true, syncing: false, syncError: null })
+          }
+        } catch (err: any) {
+          console.warn('[hostelStore] syncFromServer failed:', err)
+          set({ syncing: false, syncError: err?.message || 'Failed to sync hostel' })
+        }
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        set({ syncing: true })
+        try {
+          const state = get()
+          await hostelApi.update({
+            rooms: state.rooms,
+            assignments: state.assignments,
+          })
+          set({ serverSynced: true, syncing: false, syncError: null })
+        } catch (err: any) {
+          console.warn('[hostelStore] syncToServer failed:', err)
+          set({ syncing: false, syncError: err?.message || 'Failed to push hostel' })
+        }
+      },
+
+      addRoom: (r) => {
+        set((state) => ({ rooms: [...state.rooms, r] }))
+        onStateMutated(get)
+      },
+      updateRoom: (id, data) => {
+        set((state) => ({ rooms: state.rooms.map((r) => (r.id === id ? { ...r, ...data } : r)) }))
+        onStateMutated(get)
+      },
+      deleteRoom: (id) => {
+        markExplicitUserDelete()
         set((state) => {
           for (const a of state.assignments.filter((a) => a.roomId === id)) {
             removeHostelFeeStructure(a.id)
@@ -156,13 +264,18 @@ export const useHostelStore = create<HostelState>()(
             rooms: state.rooms.filter((r) => r.id !== id),
             assignments: state.assignments.filter((a) => a.roomId !== id),
           }
-        }),
-      toggleRoomActive: (id) =>
-        set((state) => ({ rooms: state.rooms.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)) })),
+        })
+        onStateMutated(get)
+      },
+      toggleRoomActive: (id) => {
+        set((state) => ({ rooms: state.rooms.map((r) => (r.id === id ? { ...r, isActive: !r.isActive } : r)) }))
+        onStateMutated(get)
+      },
 
       addAssignment: (a) => {
         set((state) => ({ assignments: [...state.assignments, a] }))
         syncHostelFeeStructure(a)
+        onStateMutated(get)
       },
       updateAssignment: (id, data) => {
         let updated: HostelAssignment | undefined
@@ -173,10 +286,13 @@ export const useHostelStore = create<HostelState>()(
           return { assignments: state.assignments.map((a) => (a.id === id ? updated! : a)) }
         })
         if (updated) syncHostelFeeStructure(updated)
+        onStateMutated(get)
       },
       deleteAssignment: (id) => {
+        markExplicitUserDelete()
         set((state) => ({ assignments: state.assignments.filter((a) => a.id !== id) }))
         removeHostelFeeStructure(id)
+        onStateMutated(get)
       },
       toggleAssignmentActive: (id) => {
         let updated: HostelAssignment | undefined
@@ -188,6 +304,7 @@ export const useHostelStore = create<HostelState>()(
           }),
         }))
         if (updated) syncHostelFeeStructure(updated)
+        onStateMutated(get)
       },
     }),
     { name: 'edutech-hostel', storage: createNamespacedStorage('edutech-hostel'), version: 1 }
@@ -195,7 +312,7 @@ export const useHostelStore = create<HostelState>()(
 )
 
 registerStoreReset(() => {
-  useHostelStore.setState({ rooms: [], assignments: [] })
+  useHostelStore.setState({ rooms: [], assignments: [], serverSynced: false, syncing: false, syncError: null })
 })
 
 registerStoreLoad(() => {

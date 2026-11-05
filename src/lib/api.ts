@@ -775,6 +775,34 @@ export const transportApi = {
   },
 }
 
+export interface HostelResponse {
+  rooms?: any[]
+  assignments?: any[]
+}
+
+export const hostelApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<HostelResponse>(`/api/hostel${q}`)
+  },
+  update: (data: {
+    rooms?: any[]
+    assignments?: any[]
+    schoolId?: string
+  }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean } & HostelResponse>('/api/hostel', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

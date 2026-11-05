@@ -185,6 +185,10 @@ export function getItemCount(content: string): number {
         hasDomainField = true
         count += state.assignments.length
       }
+      if (Array.isArray(state.rooms)) {
+        hasDomainField = true
+        count += state.rooms.length
+      }
 
       if (hasDomainField) {
         return count
@@ -214,6 +218,7 @@ export interface DomainCounts {
   vehicles: number
   routes: number
   assignments: number
+  rooms: number
 }
 
 export function extractDomainCounts(text: string, path = ''): DomainCounts {
@@ -234,6 +239,7 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
     vehicles: -1,
     routes: -1,
     assignments: -1,
+    rooms: -1,
   }
   if (!text || !text.trim()) return counts
 
@@ -259,6 +265,7 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       else if (base.includes('vehicle')) counts.vehicles = state.length
       else if (base.includes('route')) counts.routes = state.length
       else if (base.includes('assignment')) counts.assignments = state.length
+      else if (base.includes('room')) counts.rooms = state.length
       return counts
     }
 
@@ -281,6 +288,7 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       if (Array.isArray(state.vehicles)) counts.vehicles = state.vehicles.length
       if (Array.isArray(state.routes)) counts.routes = state.routes.length
       if (Array.isArray(state.assignments)) counts.assignments = state.assignments.length
+      if (Array.isArray(state.rooms)) counts.rooms = state.rooms.length
     }
   } catch {
     /* ignore parse error */
@@ -339,6 +347,9 @@ export function shouldBlockDomainOverwrite(subPath: string, incomingText: string
   }
   if (diskCounts.assignments > 0 && inCounts.assignments === 0) {
     return { blocked: true, reason: `assignments on disk (${diskCounts.assignments}) vs incoming (0)` }
+  }
+  if (diskCounts.rooms > 0 && inCounts.rooms === 0) {
+    return { blocked: true, reason: `rooms on disk (${diskCounts.rooms}) vs incoming (0)` }
   }
 
   const inItemCount = getItemCount(incomingText)
@@ -799,7 +810,7 @@ async function hydrateFromVault(): Promise<number> {
   }
 
   // Load primary store files first so individual slice files cleanly overlay on top
-  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json', 'transport.json'])
+  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json', 'transport.json', 'hostel.json'])
   const sortedEntries = Array.from(jsonGroups.entries()).sort(([slotA], [slotB]) => {
     const isPriA = PRIMARY_SLOTS.has(slotA) ? 0 : 1
     const isPriB = PRIMARY_SLOTS.has(slotB) ? 0 : 1
@@ -1138,6 +1149,31 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
         const aPretty = JSON.stringify(assignments, null, 2)
         await writeVaultFile(`${slug}/transport_assignments.json`, aPretty)
         await writeVaultFile('transport_assignments.json', aPretty)
+      }
+    } catch { /* ignore */ }
+  }
+
+  if (path === `${slug}/hostel.json`) {
+    await writeVaultFile('hostel.json', prettifyJson(rawJson))
+
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+
+      // 1. rooms.json
+      const rooms = state.rooms ?? []
+      if (rooms.length > 0 || isRecentExplicitDelete()) {
+        const rPretty = JSON.stringify(rooms, null, 2)
+        await writeVaultFile(`${slug}/rooms.json`, rPretty)
+        await writeVaultFile('rooms.json', rPretty)
+      }
+
+      // 2. hostel_assignments.json
+      const assignments = state.assignments ?? []
+      if (assignments.length > 0 || isRecentExplicitDelete()) {
+        const aPretty = JSON.stringify(assignments, null, 2)
+        await writeVaultFile(`${slug}/hostel_assignments.json`, aPretty)
+        await writeVaultFile('hostel_assignments.json', aPretty)
       }
     } catch { /* ignore */ }
   }

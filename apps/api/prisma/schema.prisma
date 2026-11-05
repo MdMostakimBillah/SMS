@@ -47,6 +47,7 @@ model School {
   feesData String? @default("{}") @map("fees_data")
   storeData String? @default("{}") @map("store_data")
   transportData String? @default("{}") @map("transport_data")
+  hostelData String? @default("{}") @map("hostel_data")
   status      String   @default("active")
   plan        String   @default("basic")
   expiresAt   DateTime? @map("expires_at")

@@ -107,6 +107,7 @@ export function vaultPathToKey(
     else if (base === 'fee_structures' || base === 'payments' || base === 'waivers') storeBase = 'fees'
     else if (base === 'products' || base === 'categories' || base === 'sales') storeBase = 'store'
     else if (base === 'vehicles' || base === 'routes' || base === 'transport_assignments' || base === 'transport') storeBase = 'transport'
+    else if (base === 'rooms' || base === 'hostel_assignments' || base === 'hostel') storeBase = 'hostel'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -1178,6 +1179,91 @@ export function normalizeVaultJsonForStore(
       ...inner,
       vehicles,
       routes,
+      assignments,
+      serverSynced: true,
+      syncing: false,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion })
+  }
+
+  if (key.includes('hostel')) {
+    const existing = (() => {
+      try {
+        const raw = localStorage.getItem(key)
+        return raw ? JSON.parse(raw) : {}
+      } catch {
+        return {}
+      }
+    })()
+    const existingState = existing.state || {}
+    const existingVersion = existing.version || 1
+
+    const isRoomsOnly =
+      filePath?.includes('rooms') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].roomNumber !== undefined)
+
+    if (isRoomsOnly) {
+      const rawRooms = Array.isArray(parsed) ? parsed : (parsed.rooms || parsed.state?.rooms || [])
+      const normalizedRooms = rawRooms.map((r: any, idx: number) => ({
+        id: String(r.id || `HR-${Date.now()}-${idx}`).trim(),
+        name: String(r.name || '').trim(),
+        nameBn: String(r.nameBn || r.name || '').trim(),
+        roomNumber: String(r.roomNumber || '').trim(),
+        floor: String(r.floor || '').trim(),
+        capacity: Number(r.capacity) || 0,
+        monthlyRent: Number(r.monthlyRent) || 0,
+        amenities: String(r.amenities || '').trim(),
+        amenitiesBn: String(r.amenitiesBn || r.amenities || '').trim(),
+        isActive: r.isActive !== false,
+        createdAt: String(r.createdAt || new Date().toISOString()),
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          rooms: normalizedRooms,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isAssignmentsOnly =
+      filePath?.includes('assignment') ||
+      (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].bedNumber !== undefined || parsed[0].roomId !== undefined))
+
+    if (isAssignmentsOnly) {
+      const rawAssignments = Array.isArray(parsed) ? parsed : (parsed.assignments || parsed.state?.assignments || [])
+      const normalizedAssignments = rawAssignments.map((a: any, idx: number) => ({
+        id: String(a.id || `HA-${Date.now()}-${idx}`).trim(),
+        studentId: String(a.studentId || '').trim(),
+        roomId: String(a.roomId || '').trim(),
+        bedNumber: String(a.bedNumber || '').trim(),
+        monthlyRent: Number(a.monthlyRent) || 0,
+        academicYear: String(a.academicYear || '2025-26'),
+        months: Array.isArray(a.months) ? a.months : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        assignedDate: String(a.assignedDate || new Date().toISOString().split('T')[0]),
+        isActive: a.isActive !== false,
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          assignments: normalizedAssignments,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const rooms = Array.isArray(inner.rooms) ? inner.rooms : (existingState.rooms || [])
+    const assignments = Array.isArray(inner.assignments) ? inner.assignments : (existingState.assignments || [])
+
+    const finalState = {
+      ...existingState,
+      ...inner,
+      rooms,
       assignments,
       serverSynced: true,
       syncing: false,

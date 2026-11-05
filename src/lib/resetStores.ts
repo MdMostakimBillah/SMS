@@ -10,6 +10,7 @@ import { useOnlineStore } from '@/store/onlineStore'
 import { useTodoStore } from '@/store/todoStore'
 import { useStoreStore } from '@/store/storeStore'
 import { useTransportStore } from '@/store/transportStore'
+import { useHostelStore } from '@/store/hostelStore'
 
 export function resetAllInstitutionStores(): void {
   useClassStore.setState({
@@ -46,4 +47,5 @@ export function resetAllInstitutionStores(): void {
   useTodoStore.setState({ todos: [] })
   useStoreStore.setState({ products: [], categories: [], sales: [] })
   useTransportStore.setState({ vehicles: [], routes: [], assignments: [] })
+  useHostelStore.setState({ rooms: [], assignments: [] })
 }
