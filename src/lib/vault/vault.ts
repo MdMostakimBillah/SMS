@@ -196,6 +196,9 @@ export interface DomainCounts {
   structures: number
   payments: number
   waivers: number
+  products: number
+  categories: number
+  sales: number
 }
 
 export function extractDomainCounts(text: string, path = ''): DomainCounts {
@@ -210,6 +213,9 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
     structures: -1,
     payments: -1,
     waivers: -1,
+    products: -1,
+    categories: -1,
+    sales: -1,
   }
   if (!text || !text.trim()) return counts
 
@@ -229,6 +235,9 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       else if (base.includes('structure')) counts.structures = state.length
       else if (base.includes('payment')) counts.payments = state.length
       else if (base.includes('waiver')) counts.waivers = state.length
+      else if (base.includes('product')) counts.products = state.length
+      else if (base.includes('category') || base.includes('categories')) counts.categories = state.length
+      else if (base.includes('sale')) counts.sales = state.length
       return counts
     }
 
@@ -245,6 +254,9 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       if (Array.isArray(state.waiverEntries) || Array.isArray(state.waivers)) {
         counts.waivers = (state.waiverEntries || state.waivers).length
       }
+      if (Array.isArray(state.products)) counts.products = state.products.length
+      if (Array.isArray(state.categories)) counts.categories = state.categories.length
+      if (Array.isArray(state.sales)) counts.sales = state.sales.length
     }
   } catch {
     /* ignore parse error */
@@ -285,6 +297,15 @@ export function shouldBlockDomainOverwrite(subPath: string, incomingText: string
   }
   if (diskCounts.waivers > 0 && inCounts.waivers === 0) {
     return { blocked: true, reason: `waivers on disk (${diskCounts.waivers}) vs incoming (0)` }
+  }
+  if (diskCounts.products > 0 && inCounts.products === 0) {
+    return { blocked: true, reason: `products on disk (${diskCounts.products}) vs incoming (0)` }
+  }
+  if (diskCounts.categories > 0 && inCounts.categories === 0) {
+    return { blocked: true, reason: `categories on disk (${diskCounts.categories}) vs incoming (0)` }
+  }
+  if (diskCounts.sales > 0 && inCounts.sales === 0) {
+    return { blocked: true, reason: `sales on disk (${diskCounts.sales}) vs incoming (0)` }
   }
 
   const inItemCount = getItemCount(incomingText)

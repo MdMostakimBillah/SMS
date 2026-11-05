@@ -3,6 +3,7 @@ import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw,
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
+import { useStoreStore } from '@/store/storeStore'
 import { getActiveVaultHandle } from '@/lib/vault/vault'
 import { listAllVaultFiles } from '@/lib/vault/fsAccess'
 
@@ -141,6 +142,8 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
   const departments = useTeacherStore((s) => s.departments)
   const classes = useClassStore((s) => s.classes)
   const routines = useClassStore((s) => s.routines)
+  const products = useStoreStore((s) => s.products)
+  const sales = useStoreStore((s) => s.sales)
 
   const [storageUsage, setStorageUsage] = useState<DeviceStorageStats>(getInitialStorageStats)
 
@@ -152,7 +155,7 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
     return () => {
       mounted = false
     }
-  }, [students.length, teachers.length, classes.length, routines.length, folderPath])
+  }, [students.length, teachers.length, classes.length, routines.length, products.length, sales.length, folderPath])
 
   const totalSections = useMemo(() => {
     return classes.reduce((sum, c) => sum + (c.sections?.length || 0), 0)
