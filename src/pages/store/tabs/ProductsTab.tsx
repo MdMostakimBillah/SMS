@@ -35,7 +35,7 @@ export const ProductsTab = ({ isMobile, searchQuery }: Props) => {
       const q = searchQuery.toLowerCase()
       list = list.filter((p) => p.name.toLowerCase().includes(q) || p.nameBn.includes(q) || p.sku.toLowerCase().includes(q))
     }
-    if (filterClass) list = list.filter((p) => p.classNames.includes(filterClass))
+    if (filterClass) list = list.filter((p) => (p.classNames || []).includes(filterClass))
     if (filterCategory) list = list.filter((p) => p.categoryId === filterCategory)
     return list.sort((a, b) => a.name.localeCompare(b.name))
   }, [products, searchQuery, filterClass, filterCategory])
@@ -98,7 +98,7 @@ export const ProductsTab = ({ isMobile, searchQuery }: Props) => {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">
-                  {p.classNames.map((cn) => (
+                  {(p.classNames || []).map((cn) => (
                     <span key={cn} className="px-1.5 py-0.5 rounded bg-[var(--brand)]/10 text-[var(--brand)] text-[0.625rem] font-medium">
                       {bn ? `শ্রেণি ${cn}` : `Class ${cn}`}
                     </span>
@@ -147,7 +147,7 @@ export const ProductsTab = ({ isMobile, searchQuery }: Props) => {
                     <td className="py-2.5 px-3 text-[0.8125rem]">{getCategoryName(p.categoryId)}</td>
                     <td className="py-2.5 px-3">
                       <div className="flex flex-wrap gap-1">
-                        {p.classNames.map((cn) => (
+                        {(p.classNames || []).map((cn) => (
                           <span key={cn} className="px-1.5 py-0.5 rounded bg-[var(--brand)]/10 text-[var(--brand)] text-[0.625rem] font-medium">
                             {cn}
                           </span>

@@ -41,7 +41,7 @@ export function ProductModal({ existing, onSaved, onClose }: Props) {
   const [name, setName] = useState(existing?.name || '')
   const [nameBn, setNameBn] = useState(existing?.nameBn || '')
   const [categoryId, setCategoryId] = useState(existing?.categoryId || '')
-  const [classNames, setClassNames] = useState<string[]>(existing?.classNames || [])
+  const [classNames, setClassNames] = useState<string[]>(Array.isArray(existing?.classNames) ? existing.classNames : [])
   const [price, setPrice] = useState(existing?.price?.toString() || '')
   const [cost, setCost] = useState(existing?.cost?.toString() || '')
   const [stock, setStock] = useState(existing?.stock?.toString() || '')
@@ -54,7 +54,7 @@ export function ProductModal({ existing, onSaved, onClose }: Props) {
   const classOptions = classes.map((c) => ({ name: c.name, num: extractClassNumber(c.name) }))
 
   const toggleClass = (num: string) => {
-    setClassNames((prev) => (prev.includes(num) ? prev.filter((n) => n !== num) : [...prev, num]))
+    setClassNames((prev) => ((prev || []).includes(num) ? (prev || []).filter((n) => n !== num) : [...(prev || []), num]))
     setErrors((prev) => ({ ...prev, classes: false }))
   }
 
@@ -73,7 +73,7 @@ export function ProductModal({ existing, onSaved, onClose }: Props) {
   const validate = () => {
     const newErrors: Record<string, boolean> = {}
     if (!name.trim()) newErrors.name = true
-    if (classNames.length === 0) newErrors.classes = true
+    if ((classNames || []).length === 0) newErrors.classes = true
     if (!price || Number(price) <= 0) newErrors.price = true
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -87,7 +87,7 @@ export function ProductModal({ existing, onSaved, onClose }: Props) {
       name: name.trim(),
       nameBn: nameBn.trim() || name.trim(),
       categoryId: categoryId || '',
-      classNames,
+      classNames: classNames || [],
       price: Number(price) || 0,
       cost: Number(cost) || 0,
       stock: Number(stock) || 0,
@@ -194,13 +194,13 @@ export function ProductModal({ existing, onSaved, onClose }: Props) {
                 <span className="text-[0.75rem] font-bold text-[var(--text-primary)] uppercase tracking-wider">{bn ? 'শ্রেণি নির্বাচন' : 'Available Classes'}</span>
                 <span className="text-red-400 text-[0.75rem]">*</span>
               </div>
-              {classNames.length > 0 && (
-                <span className="text-[0.6875rem] text-[var(--brand)] font-medium">{classNames.length} {bn ? 'নির্বাচিত' : 'selected'}</span>
+              {(classNames || []).length > 0 && (
+                <span className="text-[0.6875rem] text-[var(--brand)] font-medium">{(classNames || []).length} {bn ? 'নির্বাচিত' : 'selected'}</span>
               )}
             </div>
             <div className="flex flex-wrap gap-2">
               {classOptions.map((c) => {
-                const active = classNames.includes(c.num)
+                const active = (classNames || []).includes(c.num)
                 return (
                   <button
                     key={c.num}
@@ -309,7 +309,7 @@ export function ProductModal({ existing, onSaved, onClose }: Props) {
           </button>
           <button
             onClick={handleSave}
-            disabled={!name.trim() || classNames.length === 0}
+            disabled={!name.trim() || (classNames || []).length === 0}
             className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[var(--brand)] text-white text-[0.8125rem] font-semibold cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[var(--brand)]/25 hover:scale-[1.01] active:scale-[0.99]"
           >
             <Package size={15} />

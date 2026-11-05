@@ -950,8 +950,106 @@ export function normalizeVaultJsonForStore(
     const existingState = existing.state || {}
     const existingVersion = existing.version || 1
 
+    const isSalesOnly =
+      filePath?.includes('sales') ||
+      (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].soldToId !== undefined || parsed[0].soldToName !== undefined || parsed[0].items !== undefined))
+
+    if (isSalesOnly) {
+      const rawSales = Array.isArray(parsed) ? parsed : (parsed.sales || parsed.state?.sales || [])
+      const normalizedSales = rawSales.map((s: any, idx: number) => ({
+        id: String(s.id || `sale-${Date.now()}-${idx}`).trim(),
+        items: Array.isArray(s.items) ? s.items : [],
+        total: Number(s.total) || 0,
+        paymentMethod: s.paymentMethod || 'cash',
+        soldToId: String(s.soldToId || ''),
+        soldToName: String(s.soldToName || ''),
+        soldToNameBn: String(s.soldToNameBn || s.soldToName || ''),
+        soldToClass: String(s.soldToClass || ''),
+        soldToSection: String(s.soldToSection || ''),
+        note: String(s.note || ''),
+        createdBy: String(s.createdBy || 'admin'),
+        createdAt: String(s.createdAt || new Date().toISOString()),
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          sales: normalizedSales,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isCategoriesOnly =
+      filePath?.includes('categories') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].unit !== undefined && parsed[0].price === undefined)
+
+    if (isCategoriesOnly) {
+      const rawCats = Array.isArray(parsed) ? parsed : (parsed.categories || parsed.state?.categories || [])
+      const normalizedCats = rawCats.map((c: any, idx: number) => ({
+        id: String(c.id || `CAT-${Date.now()}-${idx}`).trim(),
+        name: String(c.name || '').trim(),
+        nameBn: String(c.nameBn || c.name || '').trim(),
+        unit: String(c.unit || 'pc').trim(),
+        unitBn: String(c.unitBn || 'পিস').trim(),
+        description: String(c.description || '').trim(),
+        descriptionBn: String(c.descriptionBn || '').trim(),
+        isActive: c.isActive !== false,
+        createdAt: String(c.createdAt || new Date().toISOString()),
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          categories: normalizedCats,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isProductsOnly =
+      filePath?.includes('products') ||
+      (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].price !== undefined || parsed[0].sku !== undefined))
+
+    if (isProductsOnly) {
+      const rawProds = Array.isArray(parsed) ? parsed : (parsed.products || parsed.state?.products || [])
+      const normalizedProds = rawProds.map((p: any, idx: number) => ({
+        id: String(p.id || `SP-${Date.now()}-${idx}`).trim(),
+        name: String(p.name || '').trim(),
+        nameBn: String(p.nameBn || p.name || '').trim(),
+        categoryId: String(p.categoryId || '').trim(),
+        classNames: Array.isArray(p.classNames) ? p.classNames : [],
+        price: Number(p.price) || 0,
+        cost: Number(p.cost) || 0,
+        stock: Number(p.stock) || 0,
+        minStock: Number(p.minStock) || 5,
+        sku: String(p.sku || `SKU-${Date.now()}-${idx}`).trim(),
+        unit: String(p.unit || 'pc').trim(),
+        unitBn: String(p.unitBn || 'পিস').trim(),
+        description: String(p.description || '').trim(),
+        descriptionBn: String(p.descriptionBn || '').trim(),
+        isActive: p.isActive !== false,
+        createdAt: String(p.createdAt || new Date().toISOString()),
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          products: normalizedProds,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
     const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
-    const products = Array.isArray(inner.products) ? inner.products : (Array.isArray(parsed) ? parsed : (existingState.products || []))
+    const rawProducts = Array.isArray(inner.products) ? inner.products : (Array.isArray(parsed) ? parsed : (existingState.products || []))
+    const products = rawProducts.map((p: any) => ({
+      ...p,
+      classNames: Array.isArray(p.classNames) ? p.classNames : [],
+    }))
     const categories = Array.isArray(inner.categories) ? inner.categories : (existingState.categories || [])
     const sales = Array.isArray(inner.sales) ? inner.sales : (existingState.sales || [])
 

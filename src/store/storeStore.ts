@@ -145,10 +145,18 @@ export const useStoreStore = create<StoreState>()(
             const state = get()
 
             if (hasProducts || hasCategories || hasSales) {
+              const safeProducts = (res.products || []).map((p: any) => ({
+                ...p,
+                classNames: Array.isArray(p.classNames) ? p.classNames : [],
+              }))
+              const safeSales = (res.sales || []).map((s: any) => ({
+                ...s,
+                items: Array.isArray(s.items) ? s.items : [],
+              }))
               set({
-                products: res.products || [],
+                products: safeProducts,
                 categories: res.categories || [],
-                sales: res.sales || [],
+                sales: safeSales,
                 serverSynced: true,
                 syncing: false,
                 syncError: null,
@@ -191,13 +199,24 @@ export const useStoreStore = create<StoreState>()(
       },
 
       addProduct: (p) => {
-        set((state) => ({ products: [...state.products, p] }))
+        const safeP = {
+          ...p,
+          classNames: Array.isArray(p.classNames) ? p.classNames : [],
+        }
+        set((state) => ({ products: [...state.products, safeP] }))
         onStateMutated(get)
       },
 
       updateProduct: (id, data) => {
         set((state) => ({
-          products: state.products.map((p) => (p.id === id ? { ...p, ...data } : p)),
+          products: state.products.map((p) => {
+            if (p.id !== id) return p
+            const merged = { ...p, ...data }
+            return {
+              ...merged,
+              classNames: Array.isArray(merged.classNames) ? merged.classNames : [],
+            }
+          }),
         }))
         onStateMutated(get)
       },
@@ -250,15 +269,19 @@ export const useStoreStore = create<StoreState>()(
       },
 
       addSale: (sale) => {
+        const safeSale = {
+          ...sale,
+          items: Array.isArray(sale.items) ? sale.items : [],
+        }
         set((state) => {
           const newProducts = [...state.products]
-          for (const item of sale.items) {
+          for (const item of safeSale.items) {
             const idx = newProducts.findIndex((p) => p.id === item.productId)
             if (idx !== -1) {
-              newProducts[idx] = { ...newProducts[idx], stock: Math.max(0, newProducts[idx].stock - item.qty) }
+              newProducts[idx] = { ...newProducts[idx], stock: Math.max(0, newProducts[idx].stock - (item.qty || 0)) }
             }
           }
-          return { sales: [...state.sales, sale], products: newProducts }
+          return { sales: [...state.sales, safeSale], products: newProducts }
         })
         onStateMutated(get)
       },

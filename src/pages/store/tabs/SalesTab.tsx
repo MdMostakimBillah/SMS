@@ -25,8 +25,8 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   const deleteSale = useStoreStore((s) => s.deleteSale)
 
   const [searchParams] = useSearchParams()
-  const initDateFrom = searchParams.get('dateFrom') || new Date().toISOString().split('T')[0]
-  const initDateTo = searchParams.get('dateTo') || new Date().toISOString().split('T')[0]
+  const initDateFrom = searchParams.get('dateFrom') || ''
+  const initDateTo = searchParams.get('dateTo') || ''
   const initProduct = searchParams.get('product') || ''
 
   const [dateFrom, setDateFrom] = useState(initDateFrom)
@@ -63,24 +63,24 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     let list = [...sales].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      list = list.filter((s) => s.soldToName.toLowerCase().includes(q) || s.soldToNameBn.includes(q) || s.soldToClass.includes(q) || s.id.toLowerCase().includes(q) || s.items.some((i) => i.productName.toLowerCase().includes(q) || i.productNameBn.includes(q)))
+      list = list.filter((s) => (s.soldToName || '').toLowerCase().includes(q) || (s.soldToNameBn || '').includes(q) || (s.soldToClass || '').includes(q) || (s.id || '').toLowerCase().includes(q) || (s.items || []).some((i) => (i.productName || '').toLowerCase().includes(q) || (i.productNameBn || '').includes(q)))
     }
     if (quickSearch) {
       const q = quickSearch.toLowerCase()
-      list = list.filter((s) => s.soldToName.toLowerCase().includes(q) || s.soldToNameBn.includes(q) || s.soldToId.toLowerCase().includes(q) || s.soldToClass.includes(q) || getReceiptNo(s.note).toLowerCase().includes(q) || s.items.some((i) => i.productName.toLowerCase().includes(q) || i.productNameBn.includes(q)))
+      list = list.filter((s) => (s.soldToName || '').toLowerCase().includes(q) || (s.soldToNameBn || '').includes(q) || (s.soldToId || '').toLowerCase().includes(q) || (s.soldToClass || '').includes(q) || getReceiptNo(s.note || '').toLowerCase().includes(q) || (s.items || []).some((i) => (i.productName || '').toLowerCase().includes(q) || (i.productNameBn || '').includes(q)))
     }
     if (dateFrom) list = list.filter((s) => s.createdAt >= dateFrom)
     if (dateTo) list = list.filter((s) => s.createdAt <= dateTo + 'T23:59:59')
     if (filterPayment) list = list.filter((s) => s.paymentMethod === filterPayment)
     if (filterCategory) {
       const catProductIds = new Set(products.filter((p) => p.categoryId === filterCategory).map((p) => p.id))
-      list = list.filter((s) => s.items.some((i) => catProductIds.has(i.productId)))
+      list = list.filter((s) => (s.items || []).some((i) => catProductIds.has(i.productId)))
     }
     return list
   }, [sales, searchQuery, quickSearch, dateFrom, dateTo, filterPayment, filterCategory, products])
 
-  const totalRevenue = filtered.reduce((sum, s) => sum + s.total, 0)
-  const totalItems = filtered.reduce((sum, s) => sum + s.items.reduce((is2, i) => is2 + i.qty, 0), 0)
+  const totalRevenue = filtered.reduce((sum, s) => sum + (s.total || 0), 0)
+  const totalItems = filtered.reduce((sum, s) => sum + (s.items || []).reduce((is2, i) => is2 + (i.qty || 0), 0), 0)
   const feeCollectCount = filtered.filter((s) => isFeeCollect(s)).length
   const directCount = filtered.length - feeCollectCount
   const hasActiveFilters = dateFrom || dateTo || filterPayment || filterCategory || quickSearch
@@ -120,7 +120,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
     const q = quickSearch?.toLowerCase() || ''
     const rows: FlatItemRow[] = []
     for (const s of filtered) {
-      for (const item of s.items) {
+      for (const item of (s.items || [])) {
         if (q) {
           const name = (bn ? item.productNameBn : item.productName).toLowerCase()
           if (!name.includes(q)) continue
@@ -129,7 +129,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
           key: `${s.id}-${item.productId}`,
           saleId: s.id,
           createdAt: s.createdAt,
-          receipt: getReceiptNo(s.note),
+          receipt: getReceiptNo(s.note || ''),
           studentName: s.soldToName,
           studentNameBn: s.soldToNameBn,
           studentId: s.soldToId,
@@ -527,7 +527,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
                         </td>
                         <td className="py-2.5 px-3">
                           <div className="flex flex-wrap gap-1 max-w-[200px]">
-                            {s.items.map((item, i) => (
+                            {(s.items || []).map((item, i) => (
                               <span key={i} className="inline-flex items-center text-[0.6875rem] bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-2 py-0.5 rounded whitespace-nowrap">
                                 {bn ? item.productNameBn : item.productName}<span className="ml-0.5 font-medium text-[var(--text-primary)]">×{item.qty}</span>
                               </span>

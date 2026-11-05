@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getAuditUser } from '@/lib/auditUser'
 import { useSessionStudents } from '@/store/admissionStore'
 import { isMatchingSession } from '@/lib/classStudentCount'
-import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
+import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useStoreStore } from '@/store/storeStore'
 import type { FeeDue, FeeStructure, FeePayment } from '@/store/feeStore'
@@ -464,11 +464,17 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         const lastDash = row.key.lastIndexOf('-')
         const productId = row.key.substring(5, lastDash)
         const product = storeProducts.find((pp) => pp.id === productId)
-        if (product) {
-          const qtyMatch = row.remarks?.match(/^(\d+)\s*×/)
-          const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1
-          shopSaleItems.push({ productId: product.id, productName: product.name, productNameBn: product.nameBn, qty, unitPrice: product.price })
-        }
+        const remarksToParse = edit.remarks || row.remarks || ''
+        const qtyMatch = remarksToParse.match(/^(\d+)\s*×/)
+        const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1
+        const unitPrice = product ? product.price : Math.round(row.amount / Math.max(1, qty))
+        shopSaleItems.push({
+          productId: product?.id || productId,
+          productName: product?.name || row.feeName,
+          productNameBn: product?.nameBn || row.feeNameBn || row.feeName,
+          qty,
+          unitPrice,
+        })
       }
       let feeName = row.feeName
       let feeNameBn = row.feeNameBn
@@ -518,11 +524,11 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         paymentMethod: 'cash',
         soldToId: selectedStudent.id,
         soldToName: selectedStudent.nameEn,
-        soldToNameBn: selectedStudent.nameBn,
+        soldToNameBn: selectedStudent.nameBn || selectedStudent.nameEn,
         soldToClass: selectedStudent.class,
         soldToSection: selectedStudent.section,
         note: `Fee Collect — ${rn}`,
-        createdBy: 'admin',
+        createdBy: getAuditUser(user) || 'admin',
         createdAt: new Date().toISOString(),
       })
     }
@@ -808,7 +814,13 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   const classProducts = useMemo(() => {
     if (!selectedStudent) return []
-    return storeProducts.filter((p) => p.isActive && p.stock > 0 && p.classNames.includes(selectedStudent.class))
+    const studentClassNum = extractClassNumber(selectedStudent.class || '')
+    return storeProducts.filter((p) => {
+      if (!p.isActive || p.stock <= 0) return false
+      const cNames = Array.isArray(p.classNames) ? p.classNames : []
+      if (cNames.length === 0) return true
+      return cNames.includes(selectedStudent.class) || (studentClassNum && cNames.includes(studentClassNum))
+    })
   }, [storeProducts, selectedStudent])
 
   const handleAddOneTimeFees = useCallback(() => {
@@ -844,7 +856,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
         amount: subtotal, discount: 0, remarks: `${qty} × ৳${product.price}`, receivable: subtotal, receive: subtotal,
         structureId: '', isOnetime: true, waivedAmount: 0, waiverReason: '', waiverReasonBn: ''
       })
-      newEditState[key] = { discount: 0, remarks: `${qty} × ৳${product.price}`, receive: subtotal, checked: false }
+      newEditState[key] = { discount: 0, remarks: `${qty} × ৳${product.price}`, receive: subtotal, checked: true }
     }
     setExtraRows((prev) => [...prev, ...newRows])
     setEditState((prev) => ({ ...prev, ...newEditState }))

@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getAuditUser } from '@/lib/auditUser'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useFeeStore } from '@/store/feeStore'
+import { useStoreStore } from '@/store/storeStore'
 import { useAppStore } from '@/store/appStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { usePermission } from '@/hooks/usePermission'
@@ -205,6 +206,7 @@ export default function FeeManagementPage() {
   useEffect(() => {
     trackVisit('/finance', bn ? 'ফি ব্যবস্থাপনা' : 'Fee Management', 'Wallet')
     useFeeStore.getState().syncFromServer().catch(() => {})
+    useStoreStore.getState().syncFromServer().catch(() => {})
   }, [bn, trackVisit])
 
   useEffect(() => {

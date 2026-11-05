@@ -34,7 +34,7 @@ export function SaleModal({ onSaved, onClose, initialStudentId }: Props) {
 
   const availableProducts = useMemo(() => {
     if (!selectedClass) return []
-    return products.filter((p) => p.isActive && p.classNames.includes(selectedClass) && p.stock > 0)
+    return products.filter((p) => p.isActive && ((p.classNames || []).length === 0 || (p.classNames || []).includes(selectedClass)) && p.stock > 0)
   }, [selectedClass, products])
 
   const classStudents = useMemo(() => {

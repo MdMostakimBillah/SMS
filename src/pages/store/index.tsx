@@ -49,11 +49,12 @@ interface RestockModalProps {
 function RestockModal({ product, bn, onSaved, onClose }: RestockModalProps) {
   const classes = useClassStore((s) => s.classes)
   const adjustStock = useStoreStore((s) => s.adjustStock)
-  const [selectedClass, setSelectedClass] = useState(product.classNames[0] || '')
+  const cNames = Array.isArray(product.classNames) ? product.classNames : []
+  const [selectedClass, setSelectedClass] = useState(cNames[0] || '')
   const [qty, setQty] = useState('')
   const us = getUnitStyle(product.unit)
   const classOptions = classes
-    .filter((c) => product.classNames.includes(extractClassNumber(c.name)))
+    .filter((c) => cNames.length === 0 || cNames.includes(extractClassNumber(c.name)))
     .map((c) => ({ name: c.name, num: extractClassNumber(c.name) }))
 
   const handleAdd = () => {
@@ -206,10 +207,10 @@ function ProductCard({ product, bn, onRestock, onEdit, onDelete }: { product: St
             </div>
           </div>
           {/* Classes */}
-          {product.classNames.length > 0 && (
+          {(product.classNames || []).length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
               <span className="text-[0.6875rem] text-[var(--text-secondary)]">{bn ? 'শ্রেণি' : 'Classes'}:</span>
-              {product.classNames.map((cn) => (
+              {(product.classNames || []).map((cn) => (
                 <span key={cn} className="px-2 py-0.5 rounded-full bg-[var(--brand)]/8 text-[var(--brand)] text-[0.625rem] font-medium">
                   {bn ? `শ্রেণি ${cn}` : `Class ${cn}`}
                 </span>
