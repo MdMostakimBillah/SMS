@@ -784,7 +784,7 @@ export default function AttendancePage() {
 
       {/* Tabs */}
       <div className="relative glass rounded-xl mt-3 mb-3 w-full">
-        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile || isTablet ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
+        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile || isTablet ? 'overflow-x-auto flex-nowrap scrollbar-hide' : 'flex-wrap'}`}>
           {/* Sliding indicator */}
           <div
             ref={sliderRef}

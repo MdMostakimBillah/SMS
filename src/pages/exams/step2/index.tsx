@@ -282,7 +282,7 @@ export default function Step2Schedule() {
 
       {/* Sub-tabs */}
       <div className={`relative glass rounded-xl mt-3 mb-3 w-full`}>
-        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile || isTablet ? 'overflow-x-auto flex-nowrap' : 'flex-wrap'}`}>
+        <div className={`relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] ${isMobile || isTablet ? 'overflow-x-auto flex-nowrap scrollbar-hide' : 'flex-wrap'}`}>
           <div
             ref={sliderRef}
             className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out] z-0"
