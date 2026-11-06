@@ -132,7 +132,7 @@ export function t(key: TranslationKey, lang: 'bn' | 'en'): string {
 
 const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
 
-export function toBnNum(n: number): string {
+export function toBnNum(n: number | string): string {
   return String(n).replace(/\d/g, (d) => BN_DIGITS[+d])
 }
 

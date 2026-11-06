@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useOthersIncomeStore } from './othersIncomeStore'
+import { useOthersIncomeStore, otherFeeStructureId } from './othersIncomeStore'
+import { useFeeStore } from './feeStore'
 import { othersIncomeApi } from '@/lib/api'
 import { normalizeVaultJsonForStore, vaultPathToKey } from '@/lib/vault/mapping'
 
@@ -115,5 +116,56 @@ describe('othersIncomeStore', () => {
     const parsedAgg = JSON.parse(normalizedAgg)
     expect(parsedAgg.state.categories).toHaveLength(1)
     expect(parsedAgg.state.assignments).toHaveLength(1)
+  })
+
+  it('synchronizes fee structures in feeStore when others income assignments and categories change', () => {
+    useFeeStore.setState({ structures: [] })
+
+    // 1. Add Category
+    const cat = {
+      id: 'OIC-SYNC',
+      name: 'Daycare Fee',
+      nameBn: 'ডেকেয়ার ফি',
+      amount: 1000,
+      type: 'monthly' as const,
+      totalMonths: [0, 1, 2],
+      description: 'Daycare',
+      descriptionBn: 'ডেকেয়ার',
+      isActive: true,
+      createdAt: '2026-11-06',
+    }
+    useOthersIncomeStore.getState().addCategory(cat)
+
+    // 2. Add Assignment -> should create structure in feeStore
+    const assign = {
+      id: 'OIA-SYNC',
+      categoryId: 'OIC-SYNC',
+      studentId: 'ST-SYNC-1',
+      months: [0, 1, 2],
+      academicYear: '2025-26',
+      assignedDate: '2026-11-06',
+      isActive: true,
+    }
+    useOthersIncomeStore.getState().addAssignment(assign)
+
+    const structId = otherFeeStructureId('OIA-SYNC')
+    let feeStruct = useFeeStore.getState().structures.find((s) => s.id === structId)
+    expect(feeStruct).toBeDefined()
+    expect(feeStruct?.amount).toBe(1000)
+    expect(feeStruct?.isActive).toBe(true)
+
+    // 3. Update Category amount -> should update fee structure in feeStore
+    useOthersIncomeStore.getState().updateCategory('OIC-SYNC', { amount: 1200 })
+    feeStruct = useFeeStore.getState().structures.find((s) => s.id === structId)
+    expect(feeStruct?.amount).toBe(1200)
+
+    // 4. Toggle category inactive -> should deactivate fee structure
+    useOthersIncomeStore.getState().toggleCategoryActive('OIC-SYNC')
+    feeStruct = useFeeStore.getState().structures.find((s) => s.id === structId)
+    expect(feeStruct?.isActive).toBe(false)
+
+    // 5. Delete category -> should remove fee structure
+    useOthersIncomeStore.getState().deleteCategory('OIC-SYNC')
+    expect(useFeeStore.getState().structures.find((s) => s.id === structId)).toBeUndefined()
   })
 })

@@ -66,7 +66,7 @@ function buildOtherFeeStructure(
     amount: cat.amount,
     description: cat.description,
     descriptionBn: cat.descriptionBn,
-    isActive: a.isActive,
+    isActive: a.isActive && cat.isActive,
     type: cat.type,
     studentId: a.studentId,
     applicableMonths: cat.type === 'monthly' ? [...(a.months || [])] : undefined,
@@ -261,6 +261,12 @@ export const useOthersIncomeStore = create<OthersIncomeState>()(
       },
       updateCategory: (id, data) => {
         set((state) => ({ categories: state.categories.map((c) => (c.id === id ? { ...c, ...data } : c)) }))
+        const updatedCat = get().categories.find((c) => c.id === id)
+        if (updatedCat) {
+          for (const a of get().assignments.filter((a) => a.categoryId === id)) {
+            syncOtherFeeStructure(a)
+          }
+        }
         onStateMutated(get)
       },
       deleteCategory: (id) => {
@@ -278,6 +284,9 @@ export const useOthersIncomeStore = create<OthersIncomeState>()(
       },
       toggleCategoryActive: (id) => {
         set((state) => ({ categories: state.categories.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)) }))
+        for (const a of get().assignments.filter((a) => a.categoryId === id)) {
+          syncOtherFeeStructure(a)
+        }
         onStateMutated(get)
       },
 

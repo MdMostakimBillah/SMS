@@ -36,25 +36,30 @@ export function CategoryModal({ existing, onSaved, onClose }: Props) {
   const handleSave = () => {
     if (!validate()) return
     const now = new Date().toISOString()
+    const trimmedName = name.trim()
+    const trimmedNameBn = nameBn.trim() || trimmedName
+    const trimmedDesc = description.trim()
+    const trimmedDescBn = descriptionBn.trim() || trimmedDesc
+
     if (existing) {
       updateCategory(existing.id, {
-        name: name.trim(),
-        nameBn: nameBn.trim(),
+        name: trimmedName,
+        nameBn: trimmedNameBn,
         amount: Number(amount),
         type,
-        description: description.trim(),
-        descriptionBn: descriptionBn.trim(),
+        description: trimmedDesc,
+        descriptionBn: trimmedDescBn,
       })
     } else {
       addCategory({
         id: otherIncomeCategoryId(),
-        name: name.trim(),
-        nameBn: nameBn.trim(),
+        name: trimmedName,
+        nameBn: trimmedNameBn,
         amount: Number(amount),
         type,
         totalMonths: type === 'monthly' ? [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] : [],
-        description: description.trim(),
-        descriptionBn: descriptionBn.trim(),
+        description: trimmedDesc,
+        descriptionBn: trimmedDescBn,
         isActive: true,
         createdAt: now,
       })

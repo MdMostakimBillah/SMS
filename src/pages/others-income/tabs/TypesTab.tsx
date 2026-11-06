@@ -46,7 +46,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
     let list = categories
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
-      list = list.filter((c) => c.name.toLowerCase().includes(q) || c.nameBn.includes(q))
+      list = list.filter((c) => (c.name && c.name.toLowerCase().includes(q)) || (c.nameBn && c.nameBn.includes(q)))
     }
     return list
   }, [categories, searchQuery])
@@ -55,6 +55,12 @@ export const TypesTab = ({ searchQuery }: Props) => {
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
 
   useEffect(() => { setPage(1) }, [searchQuery, perPage])
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   useEffect(() => { setSelected(new Set()) }, [searchQuery, perPage])
 
@@ -76,12 +82,12 @@ export const TypesTab = ({ searchQuery }: Props) => {
     }
   }, [selected.size, paginated])
 
-  const fmt = (n: number) => `৳${n.toLocaleString()}`
+  const fmt = (n: number) => (bn ? `৳${toBnNum(n)}` : `৳${n.toLocaleString()}`)
 
   const handleExportExcel = () => {
     const data = selected.size > 0 ? filtered.filter((c) => selected.has(c.id)) : filtered
     const rows = data.map((c) => ({
-      [bn ? 'নাম' : 'Name']: bn ? c.nameBn : c.name,
+      [bn ? 'নাম' : 'Name']: bn ? (c.nameBn || c.name) : c.name,
       [bn ? 'পরিমাণ' : 'Amount']: c.amount,
       [bn ? 'ধরন' : 'Type']: c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
       [bn ? 'স্ট্যাটাস' : 'Status']: c.isActive ? (bn ? 'সক্রিয়' : 'Active') : (bn ? 'নিষ্ক্রিয়' : 'Inactive'),
@@ -103,7 +109,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
   const buildPdfRow = useCallback((c: (typeof filtered)[number], cols: string[], idx: number): Record<string, string | number> => {
     const row: Record<string, string | number> = {}
     if (cols.includes('sn')) row[bn ? 'ক্রমিক' : 'S/N'] = idx + 1
-    if (cols.includes('name')) row[bn ? 'নাম' : 'Name'] = bn ? c.nameBn : c.name
+    if (cols.includes('name')) row[bn ? 'নাম' : 'Name'] = bn ? (c.nameBn || c.name) : c.name
     if (cols.includes('amount')) row[bn ? 'পরিমাণ' : 'Amount'] = c.amount
     if (cols.includes('type')) row[bn ? 'ধরন' : 'Type'] = c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')
     return row
@@ -115,7 +121,7 @@ export const TypesTab = ({ searchQuery }: Props) => {
       const row: Record<string, string> = { '#': String(i + 1) }
       for (const key of opts.selectedCols) {
         switch (key) {
-          case 'name': row[bn ? 'নাম' : 'Name'] = bn ? c.nameBn : c.name; break
+          case 'name': row[bn ? 'নাম' : 'Name'] = bn ? (c.nameBn || c.name) : c.name; break
           case 'amount': row[bn ? 'পরিমাণ' : 'Amount'] = `৳${c.amount.toLocaleString()}`; break
           case 'type': row[bn ? 'ধরন' : 'Type'] = c.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'); break
         }
@@ -244,14 +250,14 @@ export const TypesTab = ({ searchQuery }: Props) => {
                       })
                     }} />
                   </td>
-                  <td className="py-2.5 px-3 text-center">
-                    <div className="flex items-center gap-2 justify-center">
+                  <td className="py-2.5 px-4 text-left">
+                    <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: 'var(--brand)18', color: 'var(--brand)' }}>
                         <Tag size={13} />
                       </div>
                       <div className="text-left">
-                        <div className="text-[12px] font-semibold text-[var(--text-primary)]">{bn ? c.nameBn : c.name}</div>
-                        {c.description && <div className="text-[10px] text-[var(--text-muted)]">{bn ? c.descriptionBn : c.description}</div>}
+                        <div className="text-[12px] font-semibold text-[var(--text-primary)]">{bn ? (c.nameBn || c.name) : c.name}</div>
+                        {(c.description || c.descriptionBn) && <div className="text-[10px] text-[var(--text-muted)]">{bn ? (c.descriptionBn || c.description) : c.description}</div>}
                       </div>
                     </div>
                   </td>

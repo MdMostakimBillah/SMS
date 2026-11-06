@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Tag, Users, Coins, Search } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, pruneExpiredOthersIncomeAssignments } from '@/store/othersIncomeStore'
+import { useAdmissionStore } from '@/store/admissionStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
 import { TypesTab } from './tabs/TypesTab'
@@ -59,6 +60,7 @@ export default function OthersIncomePage() {
 
   useEffect(() => {
     useOthersIncomeStore.getState().syncFromServer().catch(() => {})
+    useAdmissionStore.getState().syncFromServer().catch(() => {})
     pruneExpiredOthersIncomeAssignments()
     const t = setTimeout(() => setLoading(false), 400)
     return () => clearTimeout(t)
@@ -67,12 +69,12 @@ export default function OthersIncomePage() {
   const stats = useMemo(() => {
     const totalCategories = categories.length
     const activeCategories = categories.filter((c) => c.isActive).length
-    const assignedStudents = assignments.filter((a) => a.isActive).length
+    const assignedStudents = new Set(assignments.filter((a) => a.isActive).map((a) => a.studentId)).size
     const totalMonthlyIncome = assignments
       .filter((a) => a.isActive)
       .reduce((sum, a) => {
         const cat = categories.find((c) => c.id === a.categoryId)
-        if (cat && cat.type === 'monthly') return sum + cat.amount
+        if (cat && cat.isActive && cat.type === 'monthly') return sum + cat.amount
         return sum
       }, 0)
     return { totalCategories, activeCategories, assignedStudents, totalMonthlyIncome }
@@ -109,7 +111,7 @@ export default function OthersIncomePage() {
 
       <StatCards stats={stats} bn={bn} />
 
-      <div className="relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] w-full">
+      <div className="relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] w-full overflow-x-auto scrollbar-hide">
         <div
           ref={sliderRef}
           className="absolute top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out]"

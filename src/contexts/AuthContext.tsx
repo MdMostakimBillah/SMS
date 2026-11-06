@@ -263,10 +263,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         syncUserSchool(res.user.school, res.user)
       }
     } catch (err) {
-      setUser(null)
-      setSessionSource(null)
-      if (!(err instanceof ApiError && err.status === 401)) {
-        setRestoreFailed(true)
+      if (typeof window !== 'undefined') {
+        setUser(null)
+        setSessionSource(null)
+        if (!(err instanceof ApiError && err.status === 401)) {
+          setRestoreFailed(true)
+        }
       }
     } finally {
       if (typeof window !== 'undefined') {

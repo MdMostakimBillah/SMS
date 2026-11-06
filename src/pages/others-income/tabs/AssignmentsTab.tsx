@@ -51,13 +51,14 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
       const cat = categories.find((c) => c.id === a.categoryId)
       return {
         ...a,
-        studentName: student ? (bn ? student.nameBn : student.nameEn) : a.studentId,
-        studentNameBn: student?.nameBn || a.studentId,
+        studentName: student ? (bn ? student.nameBn || student.nameEn : student.nameEn) : a.studentId,
+        studentNameBn: student?.nameBn || student?.nameEn || a.studentId,
         studentNameEn: student?.nameEn || a.studentId,
         className: student?.class || '',
         section: student?.section || '',
-        categoryName: cat ? (bn ? cat.nameBn : cat.name) : '—',
-        categoryNameBn: cat?.nameBn || '—',
+        roll: student?.roll || '',
+        categoryName: cat ? (bn ? cat.nameBn || cat.name : cat.name) : '—',
+        categoryNameBn: cat?.nameBn || cat?.name || '—',
         amount: cat?.amount || 0,
         type: cat?.type || 'monthly',
         monthLabels: a.months.map((m) => bn ? MONTH_NAMES_BN[m] : MONTH_NAMES[m]),
@@ -70,7 +71,14 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase()
       list = list.filter(
-        (a) => a.studentName.toLowerCase().includes(q) || a.studentNameBn.includes(q) || a.studentNameEn.toLowerCase().includes(q) || a.categoryName.toLowerCase().includes(q) || a.categoryNameBn.includes(q)
+        (a) =>
+          (a.studentName && a.studentName.toLowerCase().includes(q)) ||
+          (a.studentNameBn && a.studentNameBn.includes(q)) ||
+          (a.studentNameEn && a.studentNameEn.toLowerCase().includes(q)) ||
+          (a.categoryName && a.categoryName.toLowerCase().includes(q)) ||
+          (a.categoryNameBn && a.categoryNameBn.includes(q)) ||
+          (a.roll && a.roll.includes(q)) ||
+          (a.className && a.className.toLowerCase().includes(q))
       )
     }
     return list
@@ -80,6 +88,12 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
 
   useEffect(() => { setPage(1) }, [searchQuery, perPage])
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
 
   useEffect(() => { setSelected(new Set()) }, [searchQuery, perPage])
 
@@ -101,12 +115,12 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
     }
   }, [selected.size, paginated])
 
-  const fmt = (n: number) => `৳${n.toLocaleString()}`
+  const fmt = (n: number) => (bn ? `৳${toBnNum(n)}` : `৳${n.toLocaleString()}`)
 
   const handleExportExcel = () => {
     const data = selected.size > 0 ? filtered.filter((a) => selected.has(a.id)) : filtered
     const rows = data.map((a) => ({
-      [bn ? 'ছাত্র' : 'Student']: bn ? a.studentNameBn : a.studentNameEn,
+      [bn ? 'ছাত্র' : 'Student']: bn ? (a.studentNameBn || a.studentNameEn) : a.studentNameEn,
       [bn ? 'ক্যাটাগরি' : 'Category']: a.categoryName,
       [bn ? 'পরিমাণ' : 'Amount']: a.amount,
       [bn ? 'ধরন' : 'Type']: a.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time'),
@@ -132,7 +146,7 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
   const buildPdfRow = useCallback((a: (typeof filtered)[number], cols: string[], idx: number): Record<string, string | number> => {
     const row: Record<string, string | number> = {}
     if (cols.includes('sn')) row[bn ? 'ক্রমিক' : 'S/N'] = idx + 1
-    if (cols.includes('student')) row[bn ? 'ছাত্র' : 'Student'] = bn ? a.studentNameBn : a.studentNameEn
+    if (cols.includes('student')) row[bn ? 'ছাত্র' : 'Student'] = bn ? (a.studentNameBn || a.studentNameEn) : a.studentNameEn
     if (cols.includes('category')) row[bn ? 'ক্যাটাগরি' : 'Category'] = a.categoryName
     if (cols.includes('amount')) row[bn ? 'পরিমাণ' : 'Amount'] = a.amount
     if (cols.includes('type')) row[bn ? 'ধরন' : 'Type'] = a.type === 'monthly' ? (bn ? 'মাসিক' : 'Monthly') : (bn ? 'এককালীন' : 'One-time')
@@ -285,8 +299,10 @@ export const AssignmentsTab = ({ searchQuery }: Props) => {
                         {a.studentNameEn?.charAt(0) || '?'}
                       </div>
                       <div>
-                        <div className="text-[12px] font-semibold text-[var(--text-primary)]">{bn ? a.studentNameBn : a.studentNameEn}</div>
-                        <div className="text-[10px] text-[var(--text-muted)]">{a.className}{a.section ? ` - ${a.section}` : ''}</div>
+                        <div className="text-[12px] font-semibold text-[var(--text-primary)]">{bn ? (a.studentNameBn || a.studentNameEn) : a.studentNameEn}</div>
+                        <div className="text-[10px] text-[var(--text-muted)]">
+                          {a.className}{a.section ? ` - ${a.section}` : ''}{a.roll ? ` | ${bn ? 'রোল' : 'Roll'}: ${bn ? toBnNum(a.roll) : a.roll}` : ''}
+                        </div>
                       </div>
                     </div>
                   </td>

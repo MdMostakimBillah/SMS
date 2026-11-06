@@ -40,7 +40,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
 
   const assignedStudentIds = useMemo(
     () => {
-      if (!categoryId) return assignments.filter((a) => a.isActive && a.id !== existing?.id).map((a) => a.studentId)
+      if (!categoryId) return []
       return assignments.filter((a) => a.isActive && a.id !== existing?.id && a.categoryId === categoryId).map((a) => a.studentId)
     },
     [assignments, existing?.id, categoryId]
@@ -71,10 +71,14 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       list = list.filter(
-        (s) => s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(q) || s.id.toLowerCase().includes(q) || s.roll.includes(q)
+        (s) =>
+          (s.nameEn && s.nameEn.toLowerCase().includes(q)) ||
+          (s.nameBn && s.nameBn.includes(q)) ||
+          (s.id && s.id.toLowerCase().includes(q)) ||
+          (s.roll && s.roll.includes(q))
       )
     }
-    return list.sort((a, b) => a.nameEn.localeCompare(b.nameEn))
+    return list.sort((a, b) => (a.nameEn || '').localeCompare(b.nameEn || ''))
   }, [students, assignedStudentIds, filterClass, filterSection, searchQuery])
 
   const selectedStudent = useMemo(() => students.find((s) => s.id === studentId), [students, studentId])
@@ -89,8 +93,16 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
   }, [showDropdown])
 
   useEffect(() => {
-    if (selectedCategory?.type === 'onetime') setMonths([])
-  }, [selectedCategory?.type])
+    if (selectedCategory?.type === 'onetime') {
+      setMonths([])
+    } else if (selectedCategory?.type === 'monthly' && !existing && months.length === 0) {
+      setMonths(
+        selectedCategory.totalMonths && selectedCategory.totalMonths.length > 0
+          ? [...selectedCategory.totalMonths]
+          : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+      )
+    }
+  }, [selectedCategory?.type, selectedCategory?.id, existing])
 
   const toggleMonth = (m: number) => {
     setMonths((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]))
@@ -170,7 +182,7 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
           <div>
             <label className={labelCls}>{bn ? 'ছাত্র' : 'Student'}</label>
             <div className="relative" ref={dropdownRef}>
-              <input type="text" readOnly value={selectedStudent ? `${bn ? selectedStudent.nameBn : selectedStudent.nameEn} (${selectedStudent.class})` : ''} onClick={() => setShowDropdown(!showDropdown)}
+              <input type="text" readOnly value={selectedStudent ? `${(bn ? selectedStudent.nameBn || selectedStudent.nameEn : selectedStudent.nameEn) || selectedStudent.id} (${selectedStudent.class || ''})` : ''} onClick={() => setShowDropdown(!showDropdown)}
                 className={`${inputCls} cursor-pointer ${errors.studentId ? 'border-[var(--red)]' : ''}`}
                 placeholder={bn ? 'ছাত্র নির্বাচন করুন' : 'Select student'} />
               {showDropdown && (
@@ -199,11 +211,13 @@ export function AssignmentModal({ existing, onSaved, onClose }: Props) {
                     <div key={s.id} onClick={() => { setStudentId(s.id); setShowDropdown(false); setSearchQuery('') }}
                       className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors ${s.id === studentId ? 'bg-[var(--brand)]/10' : ''}`}>
                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ background: 'var(--brand)' }}>
-                        {s.nameEn.charAt(0)}
+                        {s.nameEn?.charAt(0) || '?'}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[11px] font-medium text-[var(--text-primary)] truncate">{bn ? s.nameBn : s.nameEn}</div>
-                        <div className="text-[9px] text-[var(--text-muted)]">{s.class}{s.section ? ` - ${s.section}` : ''} | {s.id}</div>
+                        <div className="text-[11px] font-medium text-[var(--text-primary)] truncate">{bn ? (s.nameBn || s.nameEn) : s.nameEn}</div>
+                        <div className="text-[9px] text-[var(--text-muted)]">
+                          {s.class}{s.section ? ` - ${s.section}` : ''}{s.roll ? ` | ${bn ? 'রোল' : 'Roll'}: ${s.roll}` : ''} | {s.id}
+                        </div>
                       </div>
                       {s.id === studentId && <Check size={12} className="text-[var(--brand)] flex-shrink-0" />}
                     </div>
