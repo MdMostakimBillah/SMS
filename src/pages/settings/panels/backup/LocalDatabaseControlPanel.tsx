@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react'
-import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw, FolderOpen, Cloud } from 'lucide-react'
+import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw, FolderOpen, Cloud, Bus, Home, ShoppingBag } from 'lucide-react'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
@@ -339,6 +339,23 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Domain sync badges strip */}
+      <div className="flex items-center gap-2 flex-wrap text-[0.6875rem] text-[var(--text-muted)] pt-0.5">
+        <span className="font-semibold text-[var(--text-secondary)]">{isBn ? 'অন্যান্য লোকাল ডোমেইন:' : 'Additional local domains:'}</span>
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]">
+          <Bus size={12} className="text-[var(--brand)] shrink-0" />
+          {isBn ? `পরিবহন: ${vehicles.length} যানবাহন, ${routes.length} রুট` : `Transport: ${vehicles.length} vehicles, ${routes.length} routes`}
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]">
+          <Home size={12} className="text-[var(--teal)] shrink-0" />
+          {isBn ? `হোস্টেল: ${rooms.length} রুম` : `Hostel: ${rooms.length} rooms`}
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]">
+          <ShoppingBag size={12} className="text-[var(--amber)] shrink-0" />
+          {isBn ? `স্টোর: ${products.length} পণ্য, ${sales.length} বিক্রয়` : `Store: ${products.length} products, ${sales.length} sales`}
+        </span>
       </div>
 
       {/* Bottom Row: Storage Directory + Actions */}
