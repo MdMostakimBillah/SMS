@@ -332,6 +332,8 @@ export function studentRouter(prisma: PrismaClient, jwtSecret: string) {
           updateData[key] = typeof val === 'string' ? val.trim() : val
         }
       }
+      delete updateData.id
+      delete updateData.schoolId
 
       const student = await prisma.student.update({
         where: { id },

@@ -78,6 +78,11 @@ export function feesRouter(prisma: PrismaClient, jwtSecret: string) {
         where: {
           OR: [{ id: targetSchoolId }, { domain: targetSchoolId }],
         },
+        select: {
+          id: true,
+          storageMode: true,
+          feesData: true,
+        },
       })
 
       if (!school) {

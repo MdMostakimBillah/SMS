@@ -72,6 +72,11 @@ export function storeRouter(prisma: PrismaClient, jwtSecret: string) {
         where: {
           OR: [{ id: targetSchoolId }, { domain: targetSchoolId }],
         },
+        select: {
+          id: true,
+          storageMode: true,
+          storeData: true,
+        },
       })
 
       if (!school) {

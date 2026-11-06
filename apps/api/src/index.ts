@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import { hash } from '@node-rs/argon2'
 import { createApp } from './app.js'
 import { createStorageFromEnv } from './storage.js'
+import { ensureDatabaseSchema } from './lib/ensure-schema.js'
 
 const PORT = process.env.PORT || 3001
 
@@ -64,6 +65,7 @@ async function ensureSuperAdmin(prisma: PrismaClient) {
 }
 
 const prisma = new PrismaClient()
+await ensureDatabaseSchema(prisma)
 void ensureSuperAdmin(prisma)
 const storage = createStorageFromEnv()
 if (!storage) {

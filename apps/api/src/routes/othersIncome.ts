@@ -70,6 +70,11 @@ export function othersIncomeRouter(prisma: PrismaClient, jwtSecret: string) {
         where: {
           OR: [{ id: targetSchoolId }, { domain: targetSchoolId }],
         },
+        select: {
+          id: true,
+          storageMode: true,
+          othersIncomeData: true,
+        },
       })
 
       if (!school) {

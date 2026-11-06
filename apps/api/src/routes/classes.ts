@@ -102,6 +102,10 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         where: {
           OR: [{ id: targetSchoolId }, { domain: targetSchoolId }],
         },
+        select: {
+          id: true,
+          storageMode: true,
+        },
       })
 
       if (!school) {
@@ -182,6 +186,10 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
       const school = await prisma.school.findFirst({
         where: {
           OR: [{ id: targetSchoolId }, { domain: targetSchoolId }],
+        },
+        select: {
+          id: true,
+          storageMode: true,
         },
       })
 

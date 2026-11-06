@@ -108,7 +108,8 @@ async function resolveSession(
       ok: true,
       ctx: { userId: user.id, userRole: user.role, schoolId: resolvedSchoolId, sessionId: claims.jti },
     }
-  } catch {
+  } catch (err) {
+    console.error('[auth] session resolution error:', err instanceof Error ? err.message : err)
     return { ok: false, status: 500, message: 'Internal server error' }
   }
 }

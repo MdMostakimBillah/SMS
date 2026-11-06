@@ -305,6 +305,12 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         where: {
           OR: [{ id: requestedId }, { domain: requestedId }],
         },
+        select: {
+          id: true,
+          storageMode: true,
+          logo: true,
+          banner: true,
+        },
       })
 
       if (!existingSchool) {
@@ -482,8 +488,9 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
 
       res.json({ success: true, school: updated })
     } catch (err) {
-      console.error('[schools] patch failed:', err instanceof Error ? err.message : err)
-      res.status(500).json({ error: 'Failed to update institution' })
+      console.error('[schools] patch failed:', err instanceof Error ? err.stack || err.message : err)
+      const details = err instanceof Error ? err.message : undefined
+      res.status(500).json({ error: 'Failed to update institution', ...(details ? { details } : {}) })
     }
   })
 
