@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getSlug } from '@/lib/storage'
-import { flushVaultWrites } from '@/lib/vault/vault'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug } from '@/lib/storage'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { feesApi } from '@/lib/api'
@@ -237,8 +236,6 @@ function queueServerSync(get: () => FeeState) {
 }
 
 function onStateMutated(get: () => FeeState) {
-  flushPendingWrites()
-  void flushVaultWrites()
   queueServerSync(get)
 }
 

@@ -151,11 +151,15 @@ export function isStoreResetInProgress(): boolean {
 }
 
 export function registerStoreReset(resetFn: () => void): void {
-  resetFns.push(resetFn)
+  if (!resetFns.includes(resetFn)) {
+    resetFns.push(resetFn)
+  }
 }
 
 export function registerStoreLoad(loadFn: () => void): void {
-  loadFns.push(loadFn)
+  if (!loadFns.includes(loadFn)) {
+    loadFns.push(loadFn)
+  }
 }
 
 function resetAllStores(): void {

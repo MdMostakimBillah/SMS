@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { transportApi } from '@/lib/api'
@@ -177,7 +177,6 @@ function queueServerSync(get: () => TransportState) {
 }
 
 function onStateMutated(get: () => TransportState) {
-  flushPendingWrites()
   queueServerSync(get)
 }
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { hostelApi } from '@/lib/api'
@@ -166,7 +166,6 @@ function queueServerSync(get: () => HostelState) {
 }
 
 function onStateMutated(get: () => HostelState) {
-  flushPendingWrites()
   queueServerSync(get)
 }
 

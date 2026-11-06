@@ -92,6 +92,15 @@ function trackInFlight(p: Promise<void>): void {
   p.finally(() => inFlightWrites.delete(p))
 }
 const fileContentCache = new Map<string, string>() // path → compact content we last saw/wrote
+const MAX_FILE_CACHE_ENTRIES = 500
+
+function cacheFileContent(path: string, compactContent: string): void {
+  if (fileContentCache.size >= MAX_FILE_CACHE_ENTRIES && !fileContentCache.has(path)) {
+    const oldestKey = fileContentCache.keys().next().value
+    if (oldestKey) fileContentCache.delete(oldestKey)
+  }
+  fileContentCache.set(path, compactContent)
+}
 const fileMtimeCache = new Map<string, number>() // path → last known mtime
 const ownWriteAt = new Map<string, number>() // path → when we last wrote it
 const knownVaultFiles = new Set<string>() // all known paths currently present in the vault
@@ -855,7 +864,7 @@ async function hydrateFromVault(): Promise<number> {
 
     const normalized = normalizeVaultJsonForStore(key, winner.text!, localStorage.getItem(key), winner.file.path)
     localStorage.setItem(key, normalized)
-    fileContentCache.set(winner.file.path, compactJson(normalized))
+    cacheFileContent(winner.file.path, compactJson(normalized))
     fileMtimeCache.set(winner.file.path, winner.file.lastModified)
     knownVaultFiles.add(winner.file.path)
     applied++
@@ -867,7 +876,7 @@ async function hydrateFromVault(): Promise<number> {
       if (winner.count === 0 && loser.count > 0) continue
       try {
         await writeTextFile(handle!, loser.file.path, winner.text!)
-        fileContentCache.set(loser.file.path, compactJson(winner.text!))
+        cacheFileContent(loser.file.path, compactJson(winner.text!))
         fileMtimeCache.delete(loser.file.path)
         ownWriteAt.set(loser.file.path, Date.now())
         knownVaultFiles.add(loser.file.path)
@@ -942,7 +951,7 @@ async function writeVaultFile(subPath: string, content: string): Promise<void> {
     const candidatePaths = [subPath, ...getTwinPaths(subPath, slug)]
     for (const candPath of candidatePaths) {
       try {
-        const diskText = await readTextFile(handle, candPath)
+        const diskText = fileContentCache.get(candPath) ?? (await readTextFile(handle, candPath))
         if (diskText !== null) {
           const check = shouldBlockDomainOverwrite(subPath, content, diskText)
           if (check.blocked) {
@@ -963,7 +972,7 @@ async function writeVaultFile(subPath: string, content: string): Promise<void> {
   }
 
   await writeTextFile(handle, subPath, content)
-  fileContentCache.set(subPath, compactJson(content))
+  cacheFileContent(subPath, compactJson(content))
   fileMtimeCache.delete(subPath)
   ownWriteAt.set(subPath, Date.now())
   knownVaultFiles.add(subPath)
@@ -1346,16 +1355,21 @@ export async function flushVaultWrites(): Promise<void> {
 // External-change watcher: files edited/deleted by hand → live stores
 // ---------------------------------------------------------------------------
 
+let watchTickRunning = false
+
 export async function watchTick(): Promise<void> {
+  if (watchTickRunning) return
   if (!handle || typeof document === 'undefined' || document.visibilityState !== 'visible') return
   const slug = currentSlug()
   if (!slug) return
   const userId = currentUserId()
 
-  let changed = false
-  const currentFiles = await listAllVaultFiles(handle)
-  const currentPathSet = new Set(currentFiles.map((f) => f.path))
-  const deletedKeys = new Set<string>()
+  watchTickRunning = true
+  try {
+    let changed = false
+    const currentFiles = await listAllVaultFiles(handle)
+    const currentPathSet = new Set(currentFiles.map((f) => f.path))
+    const deletedKeys = new Set<string>()
 
   // -------------------------------------------------------------------------
   // 1. Detect DELETED files from local disk (Obsidian-style deletion)
@@ -1528,7 +1542,7 @@ export async function watchTick(): Promise<void> {
         fileMtimeCache.set(file.path, file.lastModified)
         const fileCompact = compactJson(text)
         if (fileContentCache.get(file.path) === fileCompact) continue
-        fileContentCache.set(file.path, fileCompact)
+        cacheFileContent(file.path, fileCompact)
         try {
           const parsedBundle = JSON.parse(text)
           if (parsedBundle?.stores) {
@@ -1561,7 +1575,7 @@ export async function watchTick(): Promise<void> {
       }
       const normalized = normalizeVaultJsonForStore(key, text, localStorage.getItem(key), file.path)
       localStorage.setItem(key, normalized)
-      fileContentCache.set(file.path, fileCompact)
+      cacheFileContent(file.path, fileCompact)
       changed = true
 
       // Immediately sync this external edit to twin files so disk files stay in sync
@@ -1569,7 +1583,7 @@ export async function watchTick(): Promise<void> {
       for (const twin of twins) {
         try {
           await writeTextFile(handle, twin, text)
-          fileContentCache.set(twin, fileCompact)
+          cacheFileContent(twin, fileCompact)
           fileMtimeCache.delete(twin)
           ownWriteAt.set(twin, Date.now())
           knownVaultFiles.add(twin)
@@ -1603,9 +1617,12 @@ export async function watchTick(): Promise<void> {
     }
   }
 
-  if (changed) {
-    requestStoreReload()
-    emit({ lastSyncAt: Date.now() })
+    if (changed) {
+      requestStoreReload()
+      emit({ lastSyncAt: Date.now() })
+    }
+  } finally {
+    watchTickRunning = false
   }
 }
 

@@ -1,6 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
+import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import cookieParser from 'cookie-parser'
 import type { PrismaClient } from '@prisma/client'
@@ -54,6 +55,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   }
 
   app.use(helmet())
+  app.use(compression())
   app.use(cors({ origin: corsDelegate, credentials: true }))
   app.use(express.json({ limit: '10mb' }))
   app.use(cookieParser())

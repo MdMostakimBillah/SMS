@@ -75,15 +75,19 @@ async function resolveSession(
   }
 
   try {
-    const session = await prisma.session.findUnique({ where: { id: claims.jti } })
+    const session = await prisma.session.findUnique({
+      where: { id: claims.jti },
+      include: {
+        user: {
+          select: { id: true, role: true, schoolId: true, isActive: true },
+        },
+      },
+    })
     if (!session || session.userId !== claims.userId || session.revokedAt || session.expiresAt.getTime() <= Date.now()) {
       return { ok: false, status: 401, message: 'Session expired or revoked' }
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: claims.userId },
-      select: { id: true, role: true, schoolId: true, isActive: true },
-    })
+    const user = session.user
     if (!user || !user.isActive) {
       return { ok: false, status: 401, message: 'Authentication required' }
     }
