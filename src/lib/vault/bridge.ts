@@ -38,9 +38,17 @@ export function notifyVaultRemove(key: string): void {
   hooks?.onRemove(key)
 }
 
+let isReloading = false
+
 /** Ask every registered store to re-read localStorage (used after vault files change). */
 export function requestStoreReload(): void {
-  reloadRequester?.()
+  if (isReloading) return
+  isReloading = true
+  try {
+    reloadRequester?.()
+  } finally {
+    isReloading = false
+  }
 }
 
 /**

@@ -1748,8 +1748,12 @@ export async function vaultDisconnect(): Promise<void> {
 }
 
 // Re-hydrate when the active institution changes (multi-tenant folders).
-onSlugChange(() => {
-  if (handle) void hydrateFromVault()
+let lastHydratedSlug: string | null = null
+onSlugChange((newSlug) => {
+  if (handle && newSlug && newSlug !== lastHydratedSlug) {
+    lastHydratedSlug = newSlug
+    void hydrateFromVault()
+  }
 })
 
 if (typeof window !== 'undefined') {

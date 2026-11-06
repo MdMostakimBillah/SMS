@@ -413,6 +413,16 @@ export const useClassStore = create<ClassState>()(
       syncing: false,
 
       updateInstitution: (data) => {
+        const current = _get().institution
+        let hasChanges = false
+        for (const [k, v] of Object.entries(data)) {
+          if (JSON.stringify((current as any)[k]) !== JSON.stringify(v)) {
+            hasChanges = true
+            break
+          }
+        }
+        if (!hasChanges) return
+
         set((state) => ({ institution: { ...state.institution, ...data } }))
         flushPendingWrites()
         void flushVaultWrites()

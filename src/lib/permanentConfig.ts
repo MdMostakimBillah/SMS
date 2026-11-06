@@ -199,26 +199,40 @@ export function applyPermanentConfigToStores(): void {
     }
 
     try {
-      useAppStore.getState().updateSettings({
-        storageSettings: {
-          ...(useAppStore.getState().settings.storageSettings || { serverUrl: '', folderName: '' }),
-          mode: config.storageMode,
-          ...(config.serverUrl ? { serverUrl: config.serverUrl } : {}),
-          ...(config.folderName ? { folderName: config.folderName } : {}),
-        },
-      })
+      const currentStorageSettings = useAppStore.getState().settings.storageSettings
+      if (
+        currentStorageSettings?.mode !== config.storageMode ||
+        (config.serverUrl && currentStorageSettings?.serverUrl !== config.serverUrl) ||
+        (config.folderName && currentStorageSettings?.folderName !== config.folderName)
+      ) {
+        useAppStore.getState().updateSettings({
+          storageSettings: {
+            ...(currentStorageSettings || { serverUrl: '', folderName: '' }),
+            mode: config.storageMode,
+            ...(config.serverUrl ? { serverUrl: config.serverUrl } : {}),
+            ...(config.folderName ? { folderName: config.folderName } : {}),
+          },
+        })
+      }
     } catch {
       /* ignore */
     }
 
     try {
       const inst = useClassStore.getState().institution
-      if (inst) {
-        useClassStore.getState().updateInstitution({
-          ...inst,
-          storageMode: config.storageMode,
-          ...(config.serverUrl ? { serverUrl: config.serverUrl } : {}),
-          ...(config.folderName ? { folderName: config.folderName } : {}),
+      if (
+        inst &&
+        (inst.storageMode !== config.storageMode ||
+          (config.serverUrl && inst.serverUrl !== config.serverUrl) ||
+          (config.folderName && inst.folderName !== config.folderName))
+      ) {
+        useClassStore.setState({
+          institution: {
+            ...inst,
+            storageMode: config.storageMode,
+            ...(config.serverUrl ? { serverUrl: config.serverUrl } : {}),
+            ...(config.folderName ? { folderName: config.folderName } : {}),
+          },
         })
       }
     } catch {
@@ -234,51 +248,64 @@ export function applyPermanentConfigToStores(): void {
         ...(currentTg || { botToken: '', chatId: '', autoBackup: false }),
         ...config.telegramBackup,
       }
+      const isTgDifferent =
+        currentTg?.botToken !== mergedTg.botToken ||
+        currentTg?.chatId !== mergedTg.chatId ||
+        currentTg?.autoBackup !== mergedTg.autoBackup
 
-      useAppStore.getState().updateSettings({
-        telegramBackup: mergedTg,
-      })
-
-      // Also mirror onto institution object if available
-      const inst = useClassStore.getState().institution
-      if (inst) {
-        useClassStore.getState().updateInstitution({
-          ...inst,
+      if (isTgDifferent) {
+        useAppStore.getState().updateSettings({
           telegramBackup: mergedTg,
-        } as any)
-      }
+        })
 
-      // Re-populate localStorage keys for settings
-      if (typeof localStorage !== 'undefined') {
-        const slug =
-          (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : null) ||
-          localStorage.getItem('edutech_inst_slug') ||
-          config.institutionSlug ||
-          'demo'
-
-        const keysToUpdate = [
-          'edutech-settings',
-          `edutech-settings_${slug}`,
-        ]
-        const userId =
-          (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_user_id') : null) ||
-          localStorage.getItem('edutech_user_id')
-        if (userId) {
-          keysToUpdate.push(`edutech-settings_${slug}_${userId}`)
+        // Also mirror onto institution object if available
+        const inst = useClassStore.getState().institution
+        if (
+          inst &&
+          (inst.telegramBackup?.botToken !== mergedTg.botToken ||
+            inst.telegramBackup?.chatId !== mergedTg.chatId ||
+            inst.telegramBackup?.autoBackup !== mergedTg.autoBackup)
+        ) {
+          useClassStore.setState({
+            institution: {
+              ...inst,
+              telegramBackup: mergedTg,
+            },
+          })
         }
 
-        for (const k of keysToUpdate) {
-          try {
-            const raw = localStorage.getItem(k)
-            if (raw) {
-              const parsed = JSON.parse(raw)
-              if (parsed?.state?.settings) {
-                parsed.state.settings.telegramBackup = mergedTg
-                localStorage.setItem(k, JSON.stringify(parsed))
+        // Re-populate localStorage keys for settings
+        if (typeof localStorage !== 'undefined') {
+          const slug =
+            (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : null) ||
+            localStorage.getItem('edutech_inst_slug') ||
+            config.institutionSlug ||
+            'demo'
+
+          const keysToUpdate = [
+            'edutech-settings',
+            `edutech-settings_${slug}`,
+          ]
+          const userId =
+            (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_user_id') : null) ||
+            localStorage.getItem('edutech_user_id')
+          if (userId) {
+            keysToUpdate.push(`edutech-settings_${slug}_${userId}`)
+          }
+
+          for (const k of keysToUpdate) {
+            try {
+              const raw = localStorage.getItem(k)
+              if (raw) {
+                const parsed = JSON.parse(raw)
+                if (parsed?.state?.settings) {
+                  parsed.state.settings.telegramBackup = mergedTg
+                  localStorage.setItem(k, JSON.stringify(parsed))
+                }
               }
+            } catch {
+              /* ignore */
             }
-          } catch {
-            /* ignore */
           }
         }
       }

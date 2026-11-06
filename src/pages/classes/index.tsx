@@ -69,6 +69,7 @@ export default function ClassesPage() {
   const [newSessionInput, setNewSessionInput] = useState('')
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
+  const lastFetchedSlugRef = useRef<string | null>(null)
 
   const tabs = useMemo(() => [
     { id: 'institution' as const, icon: Settings, label: isBn ? 'প্রতিষ্ঠান' : 'Institution' },
@@ -104,6 +105,9 @@ export default function ClassesPage() {
     const viewingId = useSuperAdminStore.getState().viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
     const slug = (user?.role === 'super_admin' && viewingId) ? viewingId : (getSlug() || user?.subdomain || (user?.schoolId ? String(user.schoolId) : null) || viewingId)
     if (slug) {
+      if (lastFetchedSlugRef.current === slug) return
+      lastFetchedSlugRef.current = slug
+
       authApi
         .getPublicSchool(slug)
         .then((res) => {

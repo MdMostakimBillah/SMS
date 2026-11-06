@@ -176,6 +176,8 @@ function loadAllStores(): void {
 registerReloadRequester(loadAllStores)
 
 export function setSlug(slug: string): void {
+  const current = getSlug()
+  if (current === slug) return
   try {
     sessionStorage.setItem('edutech_inst_slug', slug)
     localStorage.setItem('edutech_inst_slug', slug)

@@ -51,6 +51,7 @@ export default function AppLayout() {
   const [loadingLogoErr, setLoadingLogoErr] = useState(false)
   const backdropRef = useRef<HTMLDivElement>(null)
   const drawerRef = useRef<HTMLDivElement>(null)
+  const lastSyncedKeyRef = useRef<string | null>(null)
 
   // Fresh attempt whenever the institution (and therefore its logo) changes.
   useEffect(() => { setLoadingLogoErr(false) }, [institution.logo])
@@ -72,6 +73,10 @@ export default function AppLayout() {
   useEffect(() => {
     const viewingId = viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
     if (user?.role === 'super_admin' && viewingId) {
+      const syncKey = `viewing:${viewingId}`
+      if (lastSyncedKeyRef.current === syncKey) return
+      lastSyncedKeyRef.current = syncKey
+
       authApi.getPublicSchool(viewingId).then((res) => {
         if (res?.school) {
           const targetSlug = res.school.domain || res.school.slug || viewingId
@@ -102,6 +107,11 @@ export default function AppLayout() {
         user.school.domain ||
         user.school.slug ||
         (user.schoolName ? user.schoolName.toLowerCase().replace(/\s+/g, '-') : '')
+      const schoolId = user.school.id || targetSlug || 'school'
+      const syncKey = `school:${schoolId}`
+      if (lastSyncedKeyRef.current === syncKey) return
+      lastSyncedKeyRef.current = syncKey
+
       if (targetSlug) {
         setSlug(targetSlug)
       }
@@ -126,6 +136,10 @@ export default function AppLayout() {
         sessionStorage.getItem('edutech_inst_slug') ||
         localStorage.getItem('edutech_inst_slug')
       if (pathSlug && pathSlug !== 'super-admin' && (!institution.name || institution.brandName === 'EduTech')) {
+        const syncKey = `path:${pathSlug}`
+        if (lastSyncedKeyRef.current === syncKey) return
+        lastSyncedKeyRef.current = syncKey
+
         authApi.getPublicSchool(pathSlug).then((res) => {
           if (res?.school) {
             setSlug(pathSlug)
@@ -148,7 +162,7 @@ export default function AppLayout() {
         }).catch(() => {})
       }
     }
-  }, [user?.school, user?.role, viewingInstitutionId, theme])
+  }, [user?.school?.id, user?.schoolId, user?.role, viewingInstitutionId, theme])
 
   useEffect(() => {
     const slug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
