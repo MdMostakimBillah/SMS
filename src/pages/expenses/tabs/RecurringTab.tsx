@@ -59,6 +59,9 @@ export const RecurringTab = ({ searchQuery }: Props) => {
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
 
   useEffect(() => { setPage(1) }, [searchQuery, perPage])
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
   useEffect(() => { setSelected(new Set()) }, [searchQuery, perPage])
   useEffect(() => {
     if (selected.size === 0) return
@@ -71,7 +74,7 @@ export const RecurringTab = ({ searchQuery }: Props) => {
     else setSelected(new Set(paginated.map((e) => e.id)))
   }, [selected.size, paginated])
 
-  const fmt = (n: number) => `৳${n.toLocaleString()}`
+  const fmt = (n: number) => (bn ? `৳${toBnNum(n)}` : `৳${n.toLocaleString()}`)
 
   const handleExportExcel = () => {
     const data = selected.size > 0 ? filtered.filter((e) => selected.has(e.id)) : filtered

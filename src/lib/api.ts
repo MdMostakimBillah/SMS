@@ -831,6 +831,34 @@ export const othersIncomeApi = {
   },
 }
 
+export interface ExpensesResponse {
+  categories?: any[]
+  expenses?: any[]
+}
+
+export const expensesApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<ExpensesResponse>(`/api/expenses${q}`)
+  },
+  update: (data: {
+    categories?: any[]
+    expenses?: any[]
+    schoolId?: string
+  }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean } & ExpensesResponse>('/api/expenses', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

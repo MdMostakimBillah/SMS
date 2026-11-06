@@ -1,5 +1,6 @@
 -- AlterTable: add missing columns to schools
 ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "others_income_data" TEXT DEFAULT '{}';
+ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "expenses_data" TEXT DEFAULT '{}';
 ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "hostel_data" TEXT DEFAULT '{}';
 ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "transport_data" TEXT DEFAULT '{}';
 ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "store_data" TEXT DEFAULT '{}';

@@ -52,13 +52,15 @@ export function CategoryModal({ existing, onSaved, onClose }: Props) {
   const handleSave = () => {
     if (!validate()) return
     const now = new Date().toISOString()
+    const trimmedName = name.trim()
+    const trimmedNameBn = nameBn.trim() || trimmedName
     if (existing) {
-      updateCategory(existing.id, { name: name.trim(), nameBn: nameBn.trim(), icon })
+      updateCategory(existing.id, { name: trimmedName, nameBn: trimmedNameBn, icon })
     } else {
       addCategory({
         id: expenseCategoryId(),
-        name: name.trim(),
-        nameBn: nameBn.trim(),
+        name: trimmedName,
+        nameBn: trimmedNameBn,
         icon,
         isSystem: false,
         isActive: true,

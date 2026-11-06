@@ -52,13 +52,15 @@ export function ExpenseModal({ existing, onSaved, onClose }: Props) {
   const handleSave = () => {
     if (!validate()) return
     const now = new Date().toISOString()
+    const trimmedDesc = description.trim()
+    const trimmedDescBn = descriptionBn.trim() || trimmedDesc
     if (existing) {
       updateExpense(existing.id, {
         categoryId,
         amount: Number(amount),
         date,
-        description: description.trim(),
-        descriptionBn: descriptionBn.trim(),
+        description: trimmedDesc,
+        descriptionBn: trimmedDescBn,
         paymentMethod,
         isRecurring,
         recurringMonths: isRecurring ? recurringMonths : [],
@@ -69,8 +71,8 @@ export function ExpenseModal({ existing, onSaved, onClose }: Props) {
         categoryId,
         amount: Number(amount),
         date,
-        description: description.trim(),
-        descriptionBn: descriptionBn.trim(),
+        description: trimmedDesc,
+        descriptionBn: trimmedDescBn,
         paymentMethod,
         isRecurring,
         recurringMonths: isRecurring ? recurringMonths : [],
@@ -124,11 +126,11 @@ export function ExpenseModal({ existing, onSaved, onClose }: Props) {
 
           <div>
             <label className={labelCls}>{bn ? 'বিবরণ (ইংরেজি)' : 'Description (English)'}</label>
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className={`${inputCls} resize-none`} />
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="e.g. Purchased printer ink" className={`${inputCls} resize-none`} />
           </div>
           <div>
             <label className={labelCls}>{bn ? 'বিবরণ (বাংলা)' : 'Description (Bengali)'}</label>
-            <textarea value={descriptionBn} onChange={(e) => setDescriptionBn(e.target.value)} rows={2} className={`${inputCls} resize-none`} />
+            <textarea value={descriptionBn} onChange={(e) => setDescriptionBn(e.target.value)} rows={2} placeholder="e.g. প্রিন্টারের কালি ক্রয়" className={`${inputCls} resize-none`} />
           </div>
 
           <div>

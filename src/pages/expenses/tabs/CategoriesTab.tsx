@@ -63,6 +63,10 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
 
   useEffect(() => { setPage(1) }, [searchQuery, perPage])
 
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
+
   useEffect(() => { setSelected(new Set()) }, [searchQuery, perPage])
 
   useEffect(() => {

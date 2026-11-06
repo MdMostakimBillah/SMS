@@ -109,6 +109,7 @@ export function vaultPathToKey(
     else if (base === 'vehicles' || base === 'routes' || base === 'transport_assignments' || base === 'transport') storeBase = 'transport'
     else if (base === 'rooms' || base === 'hostel_assignments' || base === 'hostel') storeBase = 'hostel'
     else if (base === 'others_income' || base === 'others-income' || base === 'others_income_categories' || base === 'others_income_assignments' || base === 'other_income') storeBase = 'others-income'
+    else if (base === 'expenses' || base === 'expense_categories' || base === 'expense_entries') storeBase = 'expenses'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -1348,6 +1349,91 @@ export function normalizeVaultJsonForStore(
       ...inner,
       categories,
       assignments,
+      serverSynced: true,
+      syncing: false,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion })
+  }
+
+  if (key.includes('expenses')) {
+    const existing = (() => {
+      try {
+        const raw = localStorage.getItem(key)
+        return raw ? JSON.parse(raw) : {}
+      } catch {
+        return {}
+      }
+    })()
+    const existingState = existing.state || {}
+    const existingVersion = existing.version || 1
+
+    const isCategoriesOnly =
+      filePath?.includes('categories') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].name !== undefined && parsed[0].isSystem !== undefined)
+
+    if (isCategoriesOnly) {
+      const rawCats = Array.isArray(parsed) ? parsed : (parsed.categories || parsed.state?.categories || [])
+      const normalizedCats = rawCats.map((c: any, idx: number) => ({
+        id: String(c.id || `EXP-CAT-${Date.now()}-${idx}`).trim(),
+        name: String(c.name || '').trim(),
+        nameBn: String(c.nameBn || c.name || '').trim(),
+        icon: String(c.icon || 'tag').trim(),
+        isSystem: Boolean(c.isSystem),
+        isActive: c.isActive !== false,
+        createdAt: String(c.createdAt || new Date().toISOString().split('T')[0]),
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          categories: normalizedCats,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isExpensesOnly =
+      filePath?.includes('entries') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].categoryId !== undefined && parsed[0].amount !== undefined)
+
+    if (isExpensesOnly) {
+      const rawExpenses = Array.isArray(parsed) ? parsed : (parsed.expenses || parsed.state?.expenses || [])
+      const normalizedExpenses = rawExpenses.map((e: any, idx: number) => ({
+        id: String(e.id || `EXP-${Date.now()}-${idx}`).trim(),
+        categoryId: String(e.categoryId || '').trim(),
+        amount: Number(e.amount) || 0,
+        date: String(e.date || new Date().toISOString().split('T')[0]),
+        description: String(e.description || '').trim(),
+        descriptionBn: String(e.descriptionBn || e.description || '').trim(),
+        paymentMethod: ['cash', 'bank', 'mobile'].includes(e.paymentMethod) ? e.paymentMethod : 'cash',
+        isRecurring: Boolean(e.isRecurring),
+        recurringMonths: Array.isArray(e.recurringMonths) ? e.recurringMonths : [],
+        academicYear: String(e.academicYear || '2025-26'),
+        createdBy: String(e.createdBy || ''),
+        createdAt: String(e.createdAt || new Date().toISOString().split('T')[0]),
+        isActive: e.isActive !== false,
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          expenses: normalizedExpenses,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const categories = Array.isArray(inner.categories) ? inner.categories : (existingState.categories || [])
+    const expenses = Array.isArray(inner.expenses) ? inner.expenses : (existingState.expenses || [])
+
+    const finalState = {
+      ...existingState,
+      ...inner,
+      categories,
+      expenses,
       serverSynced: true,
       syncing: false,
     }

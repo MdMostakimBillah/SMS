@@ -74,7 +74,11 @@ export default function AccountingReportPage() {
 
   useTabSlider({ activeTab, tabRefs, sliderRef, getContainer: (slider) => slider?.parentElement ?? null })
 
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 400); return () => clearTimeout(t) }, [])
+  useEffect(() => {
+    useExpenseStore.getState().syncFromServer().catch(() => {})
+    const t = setTimeout(() => setLoading(false), 400)
+    return () => clearTimeout(t)
+  }, [])
 
   useEffect(() => {
     if (!showActionMenu) return
