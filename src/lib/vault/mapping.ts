@@ -108,6 +108,7 @@ export function vaultPathToKey(
     else if (base === 'products' || base === 'categories' || base === 'sales') storeBase = 'store'
     else if (base === 'vehicles' || base === 'routes' || base === 'transport_assignments' || base === 'transport') storeBase = 'transport'
     else if (base === 'rooms' || base === 'hostel_assignments' || base === 'hostel') storeBase = 'hostel'
+    else if (base === 'others_income' || base === 'others-income' || base === 'others_income_categories' || base === 'others_income_assignments' || base === 'other_income') storeBase = 'others-income'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -1264,6 +1265,88 @@ export function normalizeVaultJsonForStore(
       ...existingState,
       ...inner,
       rooms,
+      assignments,
+      serverSynced: true,
+      syncing: false,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion })
+  }
+
+  if (key.includes('others-income') || key.includes('others_income')) {
+    const existing = (() => {
+      try {
+        const raw = localStorage.getItem(key)
+        return raw ? JSON.parse(raw) : {}
+      } catch {
+        return {}
+      }
+    })()
+    const existingState = existing.state || {}
+    const existingVersion = existing.version || 1
+
+    const isCategoriesOnly =
+      filePath?.includes('categories') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].amount !== undefined && parsed[0].type !== undefined)
+
+    if (isCategoriesOnly) {
+      const rawCats = Array.isArray(parsed) ? parsed : (parsed.categories || parsed.state?.categories || [])
+      const normalizedCats = rawCats.map((c: any, idx: number) => ({
+        id: String(c.id || `OIC-${Date.now()}-${idx}`).trim(),
+        name: String(c.name || '').trim(),
+        nameBn: String(c.nameBn || c.name || '').trim(),
+        amount: Number(c.amount) || 0,
+        type: c.type === 'onetime' ? 'onetime' : 'monthly',
+        totalMonths: Array.isArray(c.totalMonths) ? c.totalMonths : undefined,
+        description: String(c.description || '').trim(),
+        descriptionBn: String(c.descriptionBn || c.description || '').trim(),
+        isActive: c.isActive !== false,
+        createdAt: String(c.createdAt || new Date().toISOString()),
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          categories: normalizedCats,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isAssignmentsOnly =
+      filePath?.includes('assignment') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].categoryId !== undefined && parsed[0].studentId !== undefined)
+
+    if (isAssignmentsOnly) {
+      const rawAssignments = Array.isArray(parsed) ? parsed : (parsed.assignments || parsed.state?.assignments || [])
+      const normalizedAssignments = rawAssignments.map((a: any, idx: number) => ({
+        id: String(a.id || `OIA-${Date.now()}-${idx}`).trim(),
+        categoryId: String(a.categoryId || '').trim(),
+        studentId: String(a.studentId || '').trim(),
+        months: Array.isArray(a.months) ? a.months : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        academicYear: String(a.academicYear || '2025-26'),
+        assignedDate: String(a.assignedDate || new Date().toISOString().split('T')[0]),
+        isActive: a.isActive !== false,
+      }))
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          assignments: normalizedAssignments,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const categories = Array.isArray(inner.categories) ? inner.categories : (existingState.categories || [])
+    const assignments = Array.isArray(inner.assignments) ? inner.assignments : (existingState.assignments || [])
+
+    const finalState = {
+      ...existingState,
+      ...inner,
+      categories,
       assignments,
       serverSynced: true,
       syncing: false,

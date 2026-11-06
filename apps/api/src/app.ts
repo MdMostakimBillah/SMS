@@ -21,6 +21,7 @@ import { feesRouter } from './routes/fees.js'
 import { storeRouter } from './routes/store.js'
 import { transportRouter } from './routes/transport.js'
 import { hostelRouter } from './routes/hostel.js'
+import { othersIncomeRouter } from './routes/othersIncome.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
@@ -93,6 +94,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   app.use('/api/store', storeRouter(prisma, jwtSecret))
   app.use('/api/transport', transportRouter(prisma, jwtSecret))
   app.use('/api/hostel', hostelRouter(prisma, jwtSecret))
+  app.use('/api/others-income', othersIncomeRouter(prisma, jwtSecret))
 
   const sRouter = schoolRouter(prisma, jwtSecret, storage)
   app.use('/api/schools', sRouter)

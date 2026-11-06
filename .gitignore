@@ -46,3 +46,5 @@ public/version.txt
 edutech-dist/
 dist-staging/
 backups/
+.agents/
+.planning/

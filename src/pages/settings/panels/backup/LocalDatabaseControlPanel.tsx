@@ -1,11 +1,12 @@
 import React, { useMemo, useState, useEffect } from 'react'
-import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw, FolderOpen, Cloud, Bus, Home, ShoppingBag } from 'lucide-react'
+import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw, FolderOpen, Cloud, Bus, Home, ShoppingBag, Coins } from 'lucide-react'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useStoreStore } from '@/store/storeStore'
 import { useTransportStore } from '@/store/transportStore'
 import { useHostelStore } from '@/store/hostelStore'
+import { useOthersIncomeStore } from '@/store/othersIncomeStore'
 import { getActiveVaultHandle } from '@/lib/vault/vault'
 import { listAllVaultFiles } from '@/lib/vault/fsAccess'
 
@@ -149,6 +150,8 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
   const vehicles = useTransportStore((s) => s.vehicles)
   const routes = useTransportStore((s) => s.routes)
   const rooms = useHostelStore((s) => s.rooms)
+  const otherCategories = useOthersIncomeStore((s) => s.categories)
+  const otherAssignments = useOthersIncomeStore((s) => s.assignments)
 
   const [storageUsage, setStorageUsage] = useState<DeviceStorageStats>(getInitialStorageStats)
 
@@ -355,6 +358,10 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]">
           <ShoppingBag size={12} className="text-[var(--amber)] shrink-0" />
           {isBn ? `স্টোর: ${products.length} পণ্য, ${sales.length} বিক্রয়` : `Store: ${products.length} products, ${sales.length} sales`}
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]">
+          <Coins size={12} className="text-[var(--purple)] shrink-0" />
+          {isBn ? `অন্যান্য আয়: ${otherCategories.length} ক্যাটাগরি, ${otherAssignments.length} বরাদ্দ` : `Others Income: ${otherCategories.length} categories, ${otherAssignments.length} assigned`}
         </span>
       </div>
 

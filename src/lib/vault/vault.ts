@@ -1186,6 +1186,31 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       }
     } catch { /* ignore */ }
   }
+
+  if (path === `${slug}/others-income.json`) {
+    await writeVaultFile('others-income.json', prettifyJson(rawJson))
+
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+
+      // 1. others_income_categories.json
+      const categories = state.categories ?? []
+      if (categories.length > 0 || isRecentExplicitDelete()) {
+        const cPretty = JSON.stringify(categories, null, 2)
+        await writeVaultFile(`${slug}/others_income_categories.json`, cPretty)
+        await writeVaultFile('others_income_categories.json', cPretty)
+      }
+
+      // 2. others_income_assignments.json
+      const assignments = state.assignments ?? []
+      if (assignments.length > 0 || isRecentExplicitDelete()) {
+        const aPretty = JSON.stringify(assignments, null, 2)
+        await writeVaultFile(`${slug}/others_income_assignments.json`, aPretty)
+        await writeVaultFile('others_income_assignments.json', aPretty)
+      }
+    } catch { /* ignore */ }
+  }
 }
 
 async function seedVaultFromStorage(): Promise<number> {
@@ -1394,6 +1419,7 @@ export async function watchTick(): Promise<void> {
       const hasTeachersOnDisk = currentPathSet.has('teachers.json') || currentPathSet.has(`${slug}/teachers.json`)
       const hasClassesOnDisk = currentPathSet.has('classes.json') || currentPathSet.has(`${slug}/classes.json`)
       const hasFeesOnDisk = currentPathSet.has('fees.json') || currentPathSet.has(`${slug}/fees.json`)
+      const hasOthersIncomeOnDisk = currentPathSet.has('others-income.json') || currentPathSet.has(`${slug}/others-income.json`)
 
       // Check if twin slice path exists on disk
       const twins = getTwinPaths(knownPath, slug)
@@ -1478,6 +1504,10 @@ export async function watchTick(): Promise<void> {
       } else if (knownPath.includes('fee_structures') || knownPath.includes('payments') || knownPath.includes('waivers')) {
         if (!hasFeesOnDisk && !hasTwinSliceOnDisk) {
           // Keep fee slices intact unless fees.json is also deleted
+        }
+      } else if (knownPath.includes('others_income_categories') || knownPath.includes('others_income_assignments')) {
+        if (!hasOthersIncomeOnDisk && !hasTwinSliceOnDisk) {
+          // Keep others income slices intact unless others-income.json is also deleted
         }
       } else {
         // Main domain file genuinely deleted by user from file manager

@@ -803,6 +803,34 @@ export const hostelApi = {
   },
 }
 
+export interface OthersIncomeResponse {
+  categories?: any[]
+  assignments?: any[]
+}
+
+export const othersIncomeApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<OthersIncomeResponse>(`/api/others-income${q}`)
+  },
+  update: (data: {
+    categories?: any[]
+    assignments?: any[]
+    schoolId?: string
+  }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean } & OthersIncomeResponse>('/api/others-income', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

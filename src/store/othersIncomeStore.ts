@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { othersIncomeApi } from '@/lib/api'
 import { useAdmissionStore } from './admissionStore'
 import { useFeeStore, type FeeStructure } from './feeStore'
 import { useClassStore } from './classStore'
@@ -138,6 +141,13 @@ interface OthersIncomeState {
   categories: OthersIncomeCategory[]
   assignments: OthersIncomeAssignment[]
 
+  serverSynced: boolean
+  syncing: boolean
+  syncError: string | null
+
+  syncFromServer: (slugOrId?: string) => Promise<void>
+  syncToServer: () => Promise<void>
+
   addCategory: (c: OthersIncomeCategory) => void
   updateCategory: (id: string, data: Partial<OthersIncomeCategory>) => void
   deleteCategory: (id: string) => void
@@ -149,16 +159,112 @@ interface OthersIncomeState {
   toggleAssignmentActive: (id: string) => void
 }
 
+let serverSyncTimer: any = null
+function queueServerSync(get: () => OthersIncomeState) {
+  try {
+    if (isLocalComputerMode()) return
+    const state = get()
+    if (!state.serverSynced && state.categories.length === 0 && state.assignments.length === 0) {
+      return
+    }
+    if (serverSyncTimer) clearTimeout(serverSyncTimer)
+    serverSyncTimer = setTimeout(async () => {
+      try {
+        const s = get()
+        if (s.categories.length === 0 && s.assignments.length === 0 && !isRecentExplicitDelete()) {
+          return
+        }
+        await othersIncomeApi.update({
+          categories: s.categories,
+          assignments: s.assignments,
+        })
+      } catch {
+        // Warning only
+      }
+    }, 400)
+  } catch {
+    /* ignore */
+  }
+}
+
+function onStateMutated(get: () => OthersIncomeState) {
+  queueServerSync(get)
+}
+
 export const useOthersIncomeStore = create<OthersIncomeState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       categories: [],
       assignments: [],
 
-      addCategory: (c) => set((state) => ({ categories: [...state.categories, c] })),
-      updateCategory: (id, data) =>
-        set((state) => ({ categories: state.categories.map((c) => (c.id === id ? { ...c, ...data } : c)) })),
-      deleteCategory: (id) =>
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
+
+      syncFromServer: async (slugOrId?: string) => {
+        if (isLocalComputerMode()) {
+          set({ serverSynced: true, syncing: false })
+          return
+        }
+        set({ syncing: true, syncError: null })
+        try {
+          const res = await othersIncomeApi.get(slugOrId)
+          if (res) {
+            const hasCats = Array.isArray(res.categories) && res.categories.length > 0
+            const hasAssigns = Array.isArray(res.assignments) && res.assignments.length > 0
+            const state = get()
+
+            if (hasCats || hasAssigns) {
+              set({
+                categories: res.categories || [],
+                assignments: res.assignments || [],
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+            } else if (state.categories.length > 0 || state.assignments.length > 0) {
+              await othersIncomeApi.update({
+                categories: state.categories,
+                assignments: state.assignments,
+                schoolId: slugOrId,
+              })
+              set({ serverSynced: true, syncing: false, syncError: null })
+            } else {
+              set({ serverSynced: true, syncing: false, syncError: null })
+            }
+          } else {
+            set({ serverSynced: true, syncing: false, syncError: null })
+          }
+        } catch (err: any) {
+          set({ syncing: false, syncError: err?.message || 'Failed to sync others income' })
+        }
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        set({ syncing: true, syncError: null })
+        try {
+          const state = get()
+          await othersIncomeApi.update({
+            categories: state.categories,
+            assignments: state.assignments,
+          })
+          set({ syncing: false, serverSynced: true, syncError: null })
+        } catch (err: any) {
+          set({ syncing: false, syncError: err?.message || 'Failed to push others income' })
+        }
+      },
+
+      addCategory: (c) => {
+        set((state) => ({ categories: [...state.categories, c] }))
+        onStateMutated(get)
+      },
+      updateCategory: (id, data) => {
+        set((state) => ({ categories: state.categories.map((c) => (c.id === id ? { ...c, ...data } : c)) }))
+        onStateMutated(get)
+      },
+      deleteCategory: (id) => {
+        markExplicitUserDelete()
         set((state) => {
           for (const a of state.assignments.filter((a) => a.categoryId === id)) {
             removeOtherFeeStructure(a.id)
@@ -167,13 +273,18 @@ export const useOthersIncomeStore = create<OthersIncomeState>()(
             categories: state.categories.filter((c) => c.id !== id),
             assignments: state.assignments.filter((a) => a.categoryId !== id),
           }
-        }),
-      toggleCategoryActive: (id) =>
-        set((state) => ({ categories: state.categories.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)) })),
+        })
+        onStateMutated(get)
+      },
+      toggleCategoryActive: (id) => {
+        set((state) => ({ categories: state.categories.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)) }))
+        onStateMutated(get)
+      },
 
       addAssignment: (a) => {
         set((state) => ({ assignments: [...state.assignments, a] }))
         syncOtherFeeStructure(a)
+        onStateMutated(get)
       },
       updateAssignment: (id, data) => {
         let updated: OthersIncomeAssignment | undefined
@@ -184,10 +295,13 @@ export const useOthersIncomeStore = create<OthersIncomeState>()(
           return { assignments: state.assignments.map((a) => (a.id === id ? updated! : a)) }
         })
         if (updated) syncOtherFeeStructure(updated)
+        onStateMutated(get)
       },
       deleteAssignment: (id) => {
+        markExplicitUserDelete()
         set((state) => ({ assignments: state.assignments.filter((a) => a.id !== id) }))
         removeOtherFeeStructure(id)
+        onStateMutated(get)
       },
       toggleAssignmentActive: (id) => {
         let updated: OthersIncomeAssignment | undefined
@@ -199,6 +313,7 @@ export const useOthersIncomeStore = create<OthersIncomeState>()(
           }),
         }))
         if (updated) syncOtherFeeStructure(updated)
+        onStateMutated(get)
       },
     }),
     { name: 'edutech-others-income', storage: createNamespacedStorage('edutech-others-income'), version: 1 }
