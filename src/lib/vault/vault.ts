@@ -26,6 +26,11 @@ import {
   requestStoreReload,
   isRecentExplicitDelete,
 } from './bridge'
+export {
+  registerVaultHooks,
+  requestStoreReload,
+  isRecentExplicitDelete,
+}
 import {
   keyToVaultPath,
   vaultPathToKey,
@@ -1324,6 +1329,20 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
         const smcPretty = JSON.stringify(subMarkConfigs, null, 2)
         await writeVaultFile(`${slug}/subject_mark_configs.json`, smcPretty)
         await writeVaultFile('subject_mark_configs.json', smcPretty)
+      }
+    } catch { /* ignore */ }
+  }
+
+  if (path === `${slug}/syllabus.json`) {
+    await writeVaultFile('syllabus.json', prettifyJson(rawJson))
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+      const syllabi = state.syllabi ?? (Array.isArray(state) ? state : [])
+      if (syllabi.length > 0 || isRecentExplicitDelete()) {
+        const sylPretty = JSON.stringify(syllabi, null, 2)
+        await writeVaultFile(`${slug}/syllabi.json`, sylPretty)
+        await writeVaultFile('syllabi.json', sylPretty)
       }
     } catch { /* ignore */ }
   }
