@@ -7,6 +7,29 @@ import { useSyllabusStore } from '@/store/syllabusStore'
 import { useClassStore } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
 
+vi.mock('@/hooks/usePermission', () => ({
+  usePermission: () => ({
+    canView: () => true,
+    canCreate: () => true,
+    canEdit: () => true,
+    canDelete: () => true,
+    canDownload: () => true,
+    canExport: () => true,
+    canPrint: () => true,
+  }),
+}))
+
+vi.mock('@/lib/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/api')>()
+  return {
+    ...actual,
+    syllabusApi: {
+      get: vi.fn().mockImplementation(async () => ({ syllabi: useSyllabusStore.getState().syllabi })),
+      update: vi.fn().mockResolvedValue({ success: true }),
+    },
+  }
+})
+
 describe('SyllabusPage Integration & LocalPC/Database Parity', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -109,7 +132,7 @@ describe('SyllabusPage Integration & LocalPC/Database Parity', () => {
     })
   })
 
-  it('renders header, syllabus statistics cards, and database synced badge in database mode', async () => {
+  it('renders header, syllabus statistics cards, and refresh button without Local PC badge', async () => {
     render(
       <TestWrapper>
         <SyllabusPage />
@@ -120,11 +143,12 @@ describe('SyllabusPage Integration & LocalPC/Database Parity', () => {
       expect(screen.getByText(/Syllabus Management|পাঠ্যক্রম ব্যবস্থাপনা/i)).toBeInTheDocument()
     })
 
-    expect(screen.getByText(/Database Synced|ডাটাবেস কানেক্টেড/i)).toBeInTheDocument()
     expect(screen.getByTitle(/Refresh from server|রিফ্রেশ করুন/i)).toBeInTheDocument()
+    // Local PC indicator text must NOT be present
+    expect(screen.queryByText(/Local PC|লোকাল পিসি/i)).not.toBeInTheDocument()
   })
 
-  it('renders Local PC storage badge when in local_computer mode without network calls', async () => {
+  it('runs cleanly in local_computer mode without displaying Local PC header badge', async () => {
     sessionStorage.setItem('edutech_storage_mode', 'local_computer')
     const syncSpy = vi.spyOn(useSyllabusStore.getState(), 'syncFromServer')
 
@@ -135,8 +159,11 @@ describe('SyllabusPage Integration & LocalPC/Database Parity', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText(/Local PC|লোকাল পিসি/i)).toBeInTheDocument()
+      expect(screen.getByText(/Syllabus Management|পাঠ্যক্রম ব্যবস্থাপনা/i)).toBeInTheDocument()
     })
+
+    // Local PC indicator text must NOT be present
+    expect(screen.queryByText(/Local PC|লোকাল পিসি/i)).not.toBeInTheDocument()
 
     syncSpy.mockRestore()
   })
@@ -207,6 +234,179 @@ describe('SyllabusPage Integration & LocalPC/Database Parity', () => {
     // Now in detail view: Chapter "Algebra Basics" should be visible
     await waitFor(() => {
       expect(screen.getByText(/Algebra Basics|বীজগণিত পরিচিতি/i)).toBeInTheDocument()
+    })
+  })
+
+  it('allows full back navigation from detail to subjects, sections, and home', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper>
+        <SyllabusPage />
+      </TestWrapper>
+    )
+
+    // Navigate to Class 9 -> Section A -> Mathematics
+    await waitFor(() => expect(screen.getByText(/Class 9|৯ম শ্রেণি/i)).toBeInTheDocument())
+    await user.click(screen.getByText(/Class 9|৯ম শ্রেণি/i))
+
+    await waitFor(() => expect(screen.getByText((_, el) => el?.textContent?.trim() === 'Section A')).toBeInTheDocument())
+    await user.click(screen.getByText((_, el) => el?.textContent?.trim() === 'Section A'))
+
+    await waitFor(() => expect(screen.getByText(/Mathematics|গণিত/i)).toBeInTheDocument())
+    await user.click(screen.getByText(/Mathematics|গণিত/i))
+
+    await waitFor(() => expect(screen.getByText(/Algebra Basics|বীজগণিত পরিচিতি/i)).toBeInTheDocument())
+
+    // Back from detail -> subjects
+    const backBtn1 = screen.getAllByRole('button').find((b) => b.querySelector('svg.lucide-arrow-left'))
+    expect(backBtn1).toBeDefined()
+    if (backBtn1) await user.click(backBtn1)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Mathematics|গণিত/i)).toBeInTheDocument()
+    })
+
+    // Back from subjects -> sections
+    const backBtn2 = screen.getAllByRole('button').find((b) => b.querySelector('svg.lucide-arrow-left'))
+    expect(backBtn2).toBeDefined()
+    if (backBtn2) await user.click(backBtn2)
+
+    await waitFor(() => {
+      expect(screen.getByText((_, el) => el?.textContent?.trim() === 'Section A')).toBeInTheDocument()
+    })
+
+    // Back from sections -> home
+    const backBtn3 = screen.getAllByRole('button').find((b) => b.querySelector('svg.lucide-arrow-left'))
+    expect(backBtn3).toBeDefined()
+    if (backBtn3) await user.click(backBtn3)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Class 9|৯ম শ্রেণি/i)).toBeInTheDocument()
+    })
+  })
+
+  it('can open Add Chapter modal and save a new chapter', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper>
+        <SyllabusPage />
+      </TestWrapper>
+    )
+
+    // Navigate to detail
+    await waitFor(() => expect(screen.getByText(/Class 9|৯ম শ্রেণি/i)).toBeInTheDocument())
+    await user.click(screen.getByText(/Class 9|৯ম শ্রেণি/i))
+
+    await waitFor(() => expect(screen.getByText((_, el) => el?.textContent?.trim() === 'Section A')).toBeInTheDocument())
+    await user.click(screen.getByText((_, el) => el?.textContent?.trim() === 'Section A'))
+
+    await waitFor(() => expect(screen.getByText(/Mathematics|গণিত/i)).toBeInTheDocument())
+    await user.click(screen.getByText(/Mathematics|গণিত/i))
+
+    await waitFor(() => expect(screen.getByText(/Add Chapter|অধ্যায় যোগ/i)).toBeInTheDocument())
+
+    // Click Add Chapter
+    await user.click(screen.getByText(/Add Chapter|অধ্যায় যোগ/i))
+
+    // Modal should be visible
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /New Chapter|নতুন অধ্যায়/i })).toBeInTheDocument()
+    })
+
+    // Enter Chapter Name (EN)
+    const nameInput = screen.getByPlaceholderText(/e.g. Force & Motion/i)
+    await user.type(nameInput, 'Geometry')
+
+    // Click Save
+    const saveBtn = screen.getByRole('button', { name: /Save|সংরক্ষণ/i })
+    await user.click(saveBtn)
+
+    // Modal closes and new chapter appears in store
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: /New Chapter|নতুন অধ্যায়/i })).not.toBeInTheDocument()
+      const current = useSyllabusStore.getState().syllabi[0]
+      expect(current.chapters.some((c) => c.title === 'Geometry')).toBe(true)
+    })
+  })
+
+  it('toggles topic completion status when clicking the status icon', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper>
+        <SyllabusPage />
+      </TestWrapper>
+    )
+
+    // Navigate to detail
+    await waitFor(() => expect(screen.getByText(/Class 9|৯ম শ্রেণি/i)).toBeInTheDocument())
+    await user.click(screen.getByText(/Class 9|৯ম শ্রেণি/i))
+
+    await waitFor(() => expect(screen.getByText((_, el) => el?.textContent?.trim() === 'Section A')).toBeInTheDocument())
+    await user.click(screen.getByText((_, el) => el?.textContent?.trim() === 'Section A'))
+
+    await waitFor(() => expect(screen.getByText(/Mathematics|গণিত/i)).toBeInTheDocument())
+    await user.click(screen.getByText(/Mathematics|গণিত/i))
+
+    await waitFor(() => expect(screen.getByText(/Algebra Basics|বীজগণিত পরিচিতি/i)).toBeInTheDocument())
+
+    // The topic status buttons have title "Toggle status" or "অবস্থা পরিবর্তন"
+    const toggleBtns = screen.getAllByTitle(/Toggle status|অবস্থা পরিবর্তন/i)
+    expect(toggleBtns.length).toBeGreaterThan(0)
+
+    // Click the toggle button for the second topic (which starts as pending)
+    await user.click(toggleBtns[1])
+
+    // In store, status should change to in-progress
+    await waitFor(() => {
+      const topic2 = useSyllabusStore.getState().syllabi[0].chapters[0].topics[1]
+      expect(topic2.status).toBe('in-progress')
+    })
+  })
+
+  it('renders Go to Class Management empty state when no classes exist', async () => {
+    useClassStore.setState({ classes: [] })
+
+    render(
+      <TestWrapper>
+        <SyllabusPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Go to Class Management|শ্রেণি ব্যবস্থাপনায় যান/i).length).toBeGreaterThan(0)
+    })
+  })
+
+  it('opens PDF preview modal when clicking the PDF button', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper>
+        <SyllabusPage />
+      </TestWrapper>
+    )
+
+    // Navigate to detail
+    await waitFor(() => expect(screen.getByText(/Class 9|৯ম শ্রেণি/i)).toBeInTheDocument())
+    await user.click(screen.getByText(/Class 9|৯ম শ্রেণি/i))
+
+    await waitFor(() => expect(screen.getByText((_, el) => el?.textContent?.trim() === 'Section A')).toBeInTheDocument())
+    await user.click(screen.getByText((_, el) => el?.textContent?.trim() === 'Section A'))
+
+    await waitFor(() => expect(screen.getByText(/Mathematics|গণিত/i)).toBeInTheDocument())
+    await user.click(screen.getByText(/Mathematics|গণিত/i))
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /^PDF$/i })).toBeInTheDocument())
+
+    // Click PDF button
+    await user.click(screen.getByRole('button', { name: /^PDF$/i }))
+
+    // Modal should be open with options
+    await waitFor(() => {
+      expect(screen.getByText(/Syllabus PDF|সিলেবাস PDF/i)).toBeInTheDocument()
     })
   })
 })

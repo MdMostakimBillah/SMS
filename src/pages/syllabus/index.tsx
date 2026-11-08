@@ -20,10 +20,7 @@ import {
   GraduationCap,
   Settings,
   RefreshCw,
-  HardDrive,
-  Cloud,
 } from 'lucide-react'
-import { isLocalComputerMode } from '@/lib/storageMode'
 import { useBn } from '@/hooks/useBn'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -72,7 +69,6 @@ export default function SyllabusPage() {
   const subjects = useTeacherStore((s) => s.subjects)
   const {
     syllabi: allSyllabi,
-    serverSynced,
     syncing,
     syncFromServer,
     addSyllabus,
@@ -92,7 +88,6 @@ export default function SyllabusPage() {
   const [refreshing, setRefreshing] = useState(false)
   const isMountedRef = useRef(true)
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isLocalComputer = isLocalComputerMode()
 
   useEffect(() => {
     isMountedRef.current = true
@@ -288,6 +283,7 @@ export default function SyllabusPage() {
   const goBack = () => {
     if (view === 'detail') {
       setView('subjects')
+      setSelectedSubject('')
       setSelectedSyllabus(null)
     } else if (view === 'subjects') {
       setView('sections')
@@ -545,34 +541,6 @@ export default function SyllabusPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Storage Mode & Sync Status Indicator */}
-          <div
-            className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[0.6875rem] font-semibold border ${
-              isLocalComputer
-                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-                : serverSynced
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                : 'bg-[var(--brand)]/10 text-[var(--brand)] border-[var(--brand)]/20'
-            }`}
-            title={
-              isLocalComputer
-                ? isBn ? 'লোকাল পিসিতে সংরক্ষিত (অফলাইন মোড)' : 'Stored on Local PC (Offline Mode)'
-                : isBn ? 'ক্লাউড ডেটাবেসের সাথে সংযুক্ত' : 'Synced with Cloud Database'
-            }
-          >
-            {isLocalComputer ? (
-              <>
-                <HardDrive size={12} className="stroke-[2.2]" />
-                <span>{isBn ? 'লোকাল পিসি' : 'Local PC'}</span>
-              </>
-            ) : (
-              <>
-                <Cloud size={12} className="stroke-[2.2]" />
-                <span>{syncing || refreshing ? (isBn ? 'সিঙ্ক হচ্ছে...' : 'Syncing...') : (isBn ? 'ডাটাবেস কানেক্টেড' : 'Database Synced')}</span>
-              </>
-            )}
-          </div>
-
           {/* Refresh Button */}
           <button
             type="button"
