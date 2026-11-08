@@ -369,8 +369,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               <button
                 type="button"
                 onClick={handlePrintAll}
-                style={{ borderColor: 'var(--brand)' }}
-                className="h-8.5 px-3.5 rounded-xl border bg-[var(--brand-light)] hover:bg-[var(--brand)] text-[var(--brand)] hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                className="glass h-8.5 px-3.5 rounded-xl bg-[var(--brand-light)] hover:bg-[var(--brand)] text-[var(--brand)] hover:text-white hover:border-[var(--brand)] text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                 title={bn ? 'সব রসিদ প্রিন্ট' : 'Print Receipt'}
                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
               >
@@ -381,8 +380,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
             <button
               type="button"
               onClick={onClose}
-              style={{ borderColor: 'var(--border)' }}
-              className="h-8.5 w-8.5 rounded-xl flex items-center justify-center bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] border text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors shadow-2xs"
+              className="glass h-8.5 w-8.5 rounded-xl flex items-center justify-center bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               aria-label={bn ? 'বন্ধ করুন' : 'Close'}
               title="Esc"
             >
@@ -678,8 +676,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                               <button
                                 type="button"
                                 onClick={() => handlePrintSingle(p)}
-                                style={{ borderColor: 'var(--green)' }}
-                                className="w-7.5 h-7.5 rounded-lg bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white border text-[var(--green)] cursor-pointer flex items-center justify-center mx-auto transition-colors shadow-2xs"
+                                className="glass w-7.5 h-7.5 rounded-lg bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white text-[var(--green)] hover:border-[var(--green)] cursor-pointer flex items-center justify-center mx-auto transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                                 title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                               >
@@ -782,8 +779,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
             <button
               type="button"
               onClick={onClose}
-              style={{ borderColor: 'var(--border)' }}
-              className="h-8.5 px-4 rounded-xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
+              className="glass h-8.5 px-4 rounded-xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
               {bn ? 'বন্ধ করুন' : 'Close'}
             </button>
