@@ -34,6 +34,7 @@ import { usePermissionStore } from '@/store/permissionStore'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { getNavBase, getSuperAdminViewNavBase, getLogoutRedirect } from '@/lib/navUtils'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 import type { Theme, Language } from '@/types'
@@ -175,6 +176,18 @@ export default React.memo(function Topbar() {
   const msgRef = useRef<HTMLDivElement>(null)
   const profileRef = useRef<HTMLDivElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true))
+
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true)
+    const onOffline = () => setIsOnline(false)
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [])
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement)
@@ -345,6 +358,49 @@ export default React.memo(function Topbar() {
           flexShrink: 0,
         }}
       >
+        {/* Local PC / Offline Indicator */}
+        {(isLocalComputerMode() || !isOnline) && (
+          <div
+            title={
+              !isOnline
+                ? (isBn ? 'অফলাইন মোড সক্রিয় - লোকাল স্টোরেজে সম্পূর্ণ কাজ চলবে' : 'Offline Mode Active - Running from Local PC with full access')
+                : (isBn ? 'লোকাল পিসি মোড সক্রিয় (অনলাইন)' : 'Local PC Mode Active (Online)')
+            }
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.375rem',
+              padding: isMobile ? '2px 6px' : '3px 8px',
+              borderRadius: '9999px',
+              fontSize: '0.6875rem',
+              fontWeight: 500,
+              background: !isOnline ? 'rgba(234, 179, 8, 0.12)' : 'rgba(34, 197, 94, 0.12)',
+              border: `1px solid ${!isOnline ? 'rgba(234, 179, 8, 0.35)' : 'rgba(34, 197, 94, 0.35)'}`,
+              color: !isOnline ? '#eab308' : '#22c55e',
+              cursor: 'default',
+              userSelect: 'none',
+              marginRight: isMobile ? '2px' : '0.25rem',
+            }}
+          >
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: !isOnline ? '#eab308' : '#22c55e',
+                boxShadow: `0 0 6px ${!isOnline ? '#eab308' : '#22c55e'}`,
+              }}
+            />
+            {!isMobile && (
+              <span>
+                {!isOnline
+                  ? (isBn ? 'লোকাল পিসি (অফলাইন)' : 'Local PC (Offline)')
+                  : (isBn ? 'লোকাল পিসি' : 'Local PC')}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Notification */}
         <div ref={notifRef} style={{ position: 'relative' }}>
           <button

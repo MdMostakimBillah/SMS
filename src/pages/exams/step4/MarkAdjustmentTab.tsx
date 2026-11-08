@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { ClipboardCheck, Save, Trash2, Settings, X, Award, BookOpen, Users } from 'lucide-react'
 import { sectionCls, sectionTitleCls, inputCls, btnPrimary } from '@/lib/styles'
 import { usePermission } from '@/hooks/usePermission'
@@ -71,19 +71,30 @@ export const MarkAdjustmentTab = React.memo(function MarkAdjustmentTab({
   const [saved, setSaved] = useState(false)
   const [pctWarning, setPctWarning] = useState('')
 
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+    }
+  }, [])
+
   const handleAcademicChange = (val: number) => {
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
     if (val > 100) {
       setPctWarning(isBn ? 'সর্বোচ্চ 100% হতে পারে' : 'Max 100% allowed')
       setAcademicPct(100)
       setExtraPctSetting(0)
-      setTimeout(() => setPctWarning(''), 2000)
+      warningTimerRef.current = setTimeout(() => setPctWarning(''), 2000)
       return
     }
     if (val < 0) {
       setPctWarning(isBn ? 'ন্যূনতম 0%' : 'Min 0%')
       setAcademicPct(0)
       setExtraPctSetting(100)
-      setTimeout(() => setPctWarning(''), 2000)
+      warningTimerRef.current = setTimeout(() => setPctWarning(''), 2000)
       return
     }
     setPctWarning('')
@@ -92,18 +103,19 @@ export const MarkAdjustmentTab = React.memo(function MarkAdjustmentTab({
   }
 
   const handleExtraChange = (val: number) => {
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current)
     if (val > 100) {
       setPctWarning(isBn ? 'সর্বোচ্চ 100% হতে পারে' : 'Max 100% allowed')
       setExtraPctSetting(100)
       setAcademicPct(0)
-      setTimeout(() => setPctWarning(''), 2000)
+      warningTimerRef.current = setTimeout(() => setPctWarning(''), 2000)
       return
     }
     if (val < 0) {
       setPctWarning(isBn ? 'ন্যূনতম 0%' : 'Min 0%')
       setExtraPctSetting(0)
       setAcademicPct(100)
-      setTimeout(() => setPctWarning(''), 2000)
+      warningTimerRef.current = setTimeout(() => setPctWarning(''), 2000)
       return
     }
     setPctWarning('')
@@ -201,8 +213,9 @@ export const MarkAdjustmentTab = React.memo(function MarkAdjustmentTab({
       createdAt: now,
     }))
     onSave(marks)
+    if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    savedTimerRef.current = setTimeout(() => setSaved(false), 2000)
   }
 
   const handleClearAll = () => {

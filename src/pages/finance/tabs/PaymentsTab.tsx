@@ -1,12 +1,12 @@
 import { useState, useMemo, useCallback } from 'react'
 import React from 'react'
-import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Printer, ChevronDown } from 'lucide-react'
+import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Printer, ChevronDown, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
-import { useFeeStore } from '@/store/feeStore'
-import type { FeePayment } from '@/store/feeStore'
+import { useFeeStore, formatReceiptNo, parseReceiptNumber } from '@/store/feeStore'
+import type { FeePayment, FeeDue } from '@/store/feeStore'
 import { useStoreStore } from '@/store/storeStore'
 import { XLSX } from '@/lib/excelExport'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
@@ -36,6 +36,7 @@ interface PaymentBatch {
 
 interface Props {
   onViewReceipt?: (batch: PaymentBatch) => void
+  onCollect?: (due: FeeDue) => void
 }
 
 function stripCatPrefix(note: string): string {
@@ -43,25 +44,28 @@ function stripCatPrefix(note: string): string {
   return m ? note.slice(m[0].length) : note
 }
 
-export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
+export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onViewReceipt, onCollect }: Props = {}) {
   const bn = useBn()
   const { canDelete, canExport } = usePermission()
   const allAdmissionStudents = useAdmissionStore((s) => s.students)
-  const { institution } = useClassStore()
-  const { payments, structures, deletePayment } = useFeeStore()
+  const institution = useClassStore((s) => s.institution)
+  const payments = useFeeStore((s) => s.payments)
+  const structures = useFeeStore((s) => s.structures)
+  const deletePayment = useFeeStore((s) => s.deletePayment)
   const storeProducts = useStoreStore((s) => s.products)
   const storeCategories = useStoreStore((s) => s.categories)
   const [search, setSearch] = useState('')
   const [fMethod, setFMethod] = useState('')
   const [fCollector, setFCollector] = useState('')
   const [fSession, setFSession] = useState('')
-  const [dateFrom, setDateFrom] = useState(new Date().toISOString().split('T')[0])
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0])
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [sortBy, setSortBy] = useState<'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'>('date-desc')
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set())
   const [selectedBatchForDetails, setSelectedBatchForDetails] = useState<PaymentBatch | null>(null)
+  const [batchToDelete, setBatchToDelete] = useState<PaymentBatch | null>(null)
 
   const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -121,26 +125,38 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     }
     if (fMethod) list = list.filter((p) => p.method === fMethod)
     if (fCollector) list = list.filter((p) => p.collectedBy === fCollector)
-    if (dateFrom) list = list.filter((p) => p.paidAt >= dateFrom)
-    if (dateTo) list = list.filter((p) => p.paidAt <= dateTo)
+    if (dateFrom) {
+      list = list.filter((p) => {
+        const d = p.paidAt.includes('T') ? p.paidAt.split('T')[0] : p.paidAt
+        return d >= dateFrom
+      })
+    }
+    if (dateTo) {
+      list = list.filter((p) => {
+        const d = p.paidAt.includes('T') ? p.paidAt.split('T')[0] : p.paidAt
+        return d <= dateTo
+      })
+    }
     if (search) {
       const q = search.toLowerCase()
       list = list.filter((p) => {
         const sn = studentMap[p.studentId]
         const fn = structureMap[p.feeStructureId]
-        return (sn?.nameEn.toLowerCase().includes(q) || sn?.nameBn.includes(q) || fn?.name.toLowerCase().includes(q) || p.note.toLowerCase().includes(q))
+        return (sn?.nameEn.toLowerCase().includes(q) || sn?.nameBn.includes(q) || fn?.name.toLowerCase().includes(q) || p.note.toLowerCase().includes(q) || (p.receiptNo && p.receiptNo.toLowerCase().includes(q)))
       })
     }
     const grouped = new Map<string, FeePayment[]>()
     for (const p of list) {
-      const key = p.batchId || `${p.studentId}__${p.paidAt}__${p.method}`
+      const key = p.receiptNo ? `rcp_${p.receiptNo}` : (p.batchId || `${p.studentId}__${p.paidAt}__${p.method}`)
       const group = grouped.get(key) || []
       group.push(p)
       grouped.set(key, group)
     }
-    let result: PaymentBatch[] = Array.from(grouped.entries()).map(([key, group]) => {
+    let result: PaymentBatch[] = Array.from(grouped.entries()).map(([key, group], idx) => {
       const first = group[0]
       const sn = studentMap[first.studentId]
+      const rawDate = first.paidAt.includes('T') ? first.paidAt.split('T')[0] : first.paidAt
+      const receiptNo = first.receiptNo || (first.batchId && parseReceiptNumber(first.batchId) ? formatReceiptNo(parseReceiptNumber(first.batchId)!) : formatReceiptNo(idx + 1))
       return {
         batchKey: key,
         payments: group,
@@ -149,11 +165,11 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
         studentNameBn: sn?.nameBn || '',
         class: sn?.class || '',
         section: sn?.section || '',
-        paidAt: first.paidAt,
+        paidAt: rawDate,
         method: first.method,
         totalAmount: group.reduce((s, p) => s + p.amount, 0),
         totalDiscount: group.reduce((s, p) => s + (p.discount || 0), 0),
-        receiptNo: `RCP-${key.slice(-10).toUpperCase()}`,
+        receiptNo,
         collectedBy: first.collectedBy || '',
       }
     })
@@ -166,33 +182,24 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
     return result
   }, [payments, search, fMethod, fCollector, fSession, dateFrom, dateTo, sortBy, studentMap, structureMap, structures])
 
-  const totalCollected = useMemo(() => batches.reduce((sum, b) => sum + b.totalAmount, 0), [batches])
-  const totalDiscount = useMemo(() => batches.reduce((sum, b) => sum + b.totalDiscount, 0), [batches])
-  const todayStr = new Date().toISOString().split('T')[0]
-  const monthStart = (() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] })()
-  const currentYear = new Date().getFullYear()
-  const yearStart = `${currentYear}-01-01`
-  const yearEnd = `${currentYear}-12-31`
-  const todayCollected = useMemo(() => batches.filter((b) => b.paidAt.startsWith(todayStr)).reduce((sum, b) => sum + b.totalAmount, 0), [batches, todayStr])
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], [])
+  const monthStart = useMemo(() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] }, [])
 
-  const [datePreset, setDatePreset] = useState<'today' | 'month' | 'year' | 'all' | 'custom'>('today')
-
-  const handleDatePresetChange = useCallback((preset: string) => {
-    setDatePreset(preset as any)
-    if (preset === 'today') {
-      setDateFrom(todayStr)
-      setDateTo(todayStr)
-    } else if (preset === 'month') {
-      setDateFrom(monthStart)
-      setDateTo(todayStr)
-    } else if (preset === 'year') {
-      setDateFrom(yearStart)
-      setDateTo(yearEnd)
-    } else if (preset === 'all') {
-      setDateFrom('')
-      setDateTo('')
+  const { totalCollected, totalDiscount, todayCollected } = useMemo(() => {
+    let collected = 0
+    let discount = 0
+    let today = 0
+    for (let i = 0; i < batches.length; i++) {
+      const b = batches[i]
+      collected += b.totalAmount
+      discount += b.totalDiscount
+      if (b.paidAt.startsWith(todayStr)) {
+        today += b.totalAmount
+      }
     }
-  }, [todayStr, monthStart, yearStart, yearEnd])
+    return { totalCollected: collected, totalDiscount: discount, todayCollected: today }
+  }, [batches, todayStr])
+
 
   const fmt = (n: number) => n.toLocaleString()
 
@@ -371,13 +378,8 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
   }, [batches, selectedBatches, hasSelection, bn, structureMap, storeProducts, storeCategoryMap])
 
   const handleDeleteBatch = useCallback((batch: PaymentBatch) => {
-    const msg = bn
-      ? `এই পেমেন্ট মুছে ফেলতে চান? (${batch.payments.length} টি পেমেন্ট)`
-      : `Delete this payment? (${batch.payments.length} payments)`
-    if (confirm(msg)) {
-      batch.payments.forEach((p) => deletePayment(p.id))
-    }
-  }, [bn, deletePayment])
+    setBatchToDelete(batch)
+  }, [])
 
   const numberToWords = useCallback((n: number): string => {
     if (n === 0) return 'Zero'
@@ -608,38 +610,62 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
             </select>
           )}
 
-          {/* Date Preset Filter */}
-          <select
-            value={datePreset}
-            onChange={(e) => handleDatePresetChange(e.target.value)}
-            className={selectCls}
-          >
-            <option value="today">{bn ? 'আজকের' : 'Today'}</option>
-            <option value="month">{bn ? 'এই মাস' : 'This Month'}</option>
-            <option value="year">{bn ? 'বাৎসরিক (এই বছর)' : 'Yearly (This Year)'}</option>
-            <option value="all">{bn ? 'সব সময়' : 'All Time'}</option>
-            <option value="custom">{bn ? 'নির্দিষ্ট সময়' : 'Custom Dates'}</option>
-          </select>
+          {/* Date Range Filter (From ... To ...) */}
+          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] px-2.5 h-[2.125rem] rounded-[0.5rem] border border-[var(--border)] focus-within:border-[var(--brand)] transition-colors">
+            <Calendar size={13} className="text-[var(--text-muted)] shrink-0" />
+            <span className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] whitespace-nowrap">{bn ? 'হতে:' : 'From:'}</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="bg-transparent text-[0.75rem] text-[var(--text-primary)] outline-none border-0 p-0 w-[7.8rem] cursor-pointer"
+              title={bn ? 'শুরুর তারিখ' : 'From date'}
+            />
+            <span className="text-[var(--text-muted)] text-[0.75rem] font-medium">—</span>
+            <span className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] whitespace-nowrap">{bn ? 'পর্যন্ত:' : 'To:'}</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="bg-transparent text-[0.75rem] text-[var(--text-primary)] outline-none border-0 p-0 w-[7.8rem] cursor-pointer"
+              title={bn ? 'শেষ তারিখ' : 'To date'}
+            />
+            {(dateFrom || dateTo) && (
+              <button
+                type="button"
+                onClick={() => { setDateFrom(''); setDateTo('') }}
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] ml-1 p-0.5 rounded cursor-pointer transition-colors"
+                title={bn ? 'তারিখ ফিল্টার মুছুন' : 'Clear date filter'}
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
 
-          {/* Custom Date Pickers */}
-          {datePreset === 'custom' && (
-            <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] px-2 h-[2.125rem] rounded-[0.5rem] border border-[var(--border)]">
-              <Calendar size={13} className="text-[var(--text-muted)] flex-shrink-0" />
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => { setDateFrom(e.target.value); setDatePreset('custom') }}
-                className="bg-transparent text-[0.75rem] text-[var(--text-primary)] outline-none border-0 p-0 w-[7.5rem]"
-              />
-              <span className="text-[var(--text-muted)] text-[0.75rem]">—</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => { setDateTo(e.target.value); setDatePreset('custom') }}
-                className="bg-transparent text-[0.75rem] text-[var(--text-primary)] outline-none border-0 p-0 w-[7.5rem]"
-              />
-            </div>
-          )}
+          {/* Quick Date Shortcuts */}
+          <div className="inline-flex items-center rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] p-0.5 h-[2.125rem]">
+            <button
+              type="button"
+              onClick={() => { setDateFrom(todayStr); setDateTo(todayStr) }}
+              className={`px-2 py-1 text-[0.6875rem] font-semibold rounded-[0.375rem] border-0 cursor-pointer transition-colors ${dateFrom === todayStr && dateTo === todayStr ? 'bg-[var(--brand)] text-white shadow-2xs' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-transparent'}`}
+            >
+              {bn ? 'আজ' : 'Today'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setDateFrom(monthStart); setDateTo(todayStr) }}
+              className={`px-2 py-1 text-[0.6875rem] font-semibold rounded-[0.375rem] border-0 cursor-pointer transition-colors ${dateFrom === monthStart && dateTo === todayStr ? 'bg-[var(--brand)] text-white shadow-2xs' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-transparent'}`}
+            >
+              {bn ? 'এই মাস' : 'This Month'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setDateFrom(''); setDateTo('') }}
+              className={`px-2 py-1 text-[0.6875rem] font-semibold rounded-[0.375rem] border-0 cursor-pointer transition-colors ${!dateFrom && !dateTo ? 'bg-[var(--brand)] text-white shadow-2xs' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-transparent'}`}
+            >
+              {bn ? 'সব' : 'All'}
+            </button>
+          </div>
 
           {/* Sort By Filter */}
           <select
@@ -738,17 +764,39 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
                     </td>
                     <td className="px-3 py-2 text-[11px] text-[var(--text-secondary)]">{b.collectedBy || '—'}</td>
                     <td className="px-3 py-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => setSelectedBatchForDetails(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}>
-                          <Eye size={12} />
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setSelectedBatchForDetails(b)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)]/20 cursor-pointer hover:bg-[var(--brand)] hover:text-white transition-all shadow-2xs"
+                          title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
+                          aria-label={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
+                        >
+                          <Eye size={13} />
                         </button>
-                        <button onClick={() => generateReceipt(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--green-light)] text-[var(--green)] border-0 cursor-pointer hover:bg-[var(--green)]/20 transition-colors" title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}>
-                          <Printer size={12} />
+                        <button
+                          onClick={() => generateReceipt(b)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--green-light)] text-[var(--green)] border border-[var(--green)]/20 cursor-pointer hover:bg-[var(--green)] hover:text-white transition-all shadow-2xs"
+                          title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
+                          aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
+                        >
+                          <Printer size={13} />
                         </button>
-                        {canDelete('finance.fees.payments') && (
-                          <button onClick={() => handleDeleteBatch(b)} className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border-0 cursor-pointer hover:bg-[var(--red)]/20 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                            <Trash2 size={12} />
+                        {canDelete('finance.fees.payments') ? (
+                          <button
+                            onClick={() => handleDeleteBatch(b)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border border-[var(--red)]/20 cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all shadow-2xs"
+                            title={bn ? 'মুছুন' : 'Delete'}
+                            aria-label={bn ? 'মুছুন' : 'Delete'}
+                          >
+                            <Trash2 size={13} />
                           </button>
+                        ) : (
+                          <div
+                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] opacity-40 cursor-not-allowed"
+                            title={bn ? 'অনুমতি নেই' : 'No delete permission'}
+                          >
+                            <Trash2 size={13} />
+                          </div>
                         )}
                       </div>
                     </td>
@@ -806,7 +854,88 @@ export const PaymentsTab = React.memo(function PaymentsTab(_props?: Props) {
           session={fSession || institution?.currentSession}
           batchReceiptNo={selectedBatchForDetails.receiptNo}
           onClose={() => setSelectedBatchForDetails(null)}
+          onCollect={onCollect}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {batchToDelete && (
+        <div
+          className="fixed inset-0 z-[700] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setBatchToDelete(null)}
+        >
+          <div
+            className="relative w-full max-w-md bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl p-5 sm:p-6 text-[var(--text-primary)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-500 border border-rose-500/20 flex items-center justify-center shrink-0">
+                <Trash2 size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-[1rem] font-bold text-[var(--text-primary)]">
+                  {bn ? 'পেমেন্ট মুছে ফেলার নিশ্চিতকরণ' : 'Confirm Delete Payment'}
+                </h3>
+                <p className="text-[0.75rem] text-[var(--text-muted)] mt-1">
+                  {bn
+                    ? 'আপনি কি নিশ্চিত যে এই পেমেন্ট রেকর্ডটি মুছে ফেলতে চান? এই কাজটি পূর্বাবস্থায় ফেরানো যাবে না।'
+                    : 'Are you sure you want to delete this payment record? This action cannot be undone.'}
+                </p>
+
+                {/* Details Summary Card */}
+                <div className="mt-3.5 p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.75rem] space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--text-muted)]">{bn ? 'রসিদ নং:' : 'Receipt No:'}</span>
+                    <span className="font-mono font-bold text-[var(--brand)]">{batchToDelete.receiptNo}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--text-muted)]">{bn ? 'শিক্ষার্থী:' : 'Student:'}</span>
+                    <span className="font-semibold text-[var(--text-primary)] truncate max-w-[13rem]">
+                      {bn ? batchToDelete.studentNameBn || batchToDelete.studentName : batchToDelete.studentName}
+                    </span>
+                  </div>
+                  {batchToDelete.class && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span>
+                      <span className="font-medium text-[var(--text-secondary)]">
+                        {batchToDelete.class}{batchToDelete.section ? ` - ${batchToDelete.section}` : ''}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-[var(--text-muted)]">{bn ? 'তারিখ:' : 'Date:'}</span>
+                    <span className="text-[var(--text-secondary)]">{batchToDelete.paidAt}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1.5 border-t border-[var(--border)]">
+                    <span className="font-semibold text-[var(--text-primary)]">{bn ? 'মোট পরিমাণ:' : 'Total Amount:'}</span>
+                    <span className="font-bold text-rose-600 dark:text-rose-400">৳{batchToDelete.totalAmount.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 mt-5 pt-3.5 border-t border-[var(--border)]">
+              <button
+                type="button"
+                onClick={() => setBatchToDelete(null)}
+                className="px-4 py-2 rounded-xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border)] text-[0.75rem] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+              >
+                {bn ? 'বাতিল' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  batchToDelete.payments.forEach((p) => deletePayment(p.id))
+                  setBatchToDelete(null)
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[0.75rem] font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+              >
+                <Trash2 size={13} />
+                <span>{bn ? 'মুছে ফেলুন' : 'Delete Payment'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

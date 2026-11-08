@@ -110,6 +110,8 @@ export function vaultPathToKey(
     else if (base === 'rooms' || base === 'hostel_assignments' || base === 'hostel') storeBase = 'hostel'
     else if (base === 'others_income' || base === 'others-income' || base === 'others_income_categories' || base === 'others_income_assignments' || base === 'other_income') storeBase = 'others-income'
     else if (base === 'expenses' || base === 'expense_categories' || base === 'expense_entries') storeBase = 'expenses'
+    else if (base === 'hr' || base === 'hr_increments' || base === 'hr_bonuses' || base === 'hr_promotions' || base === 'hr_funds' || base === 'hr_facilities') storeBase = 'hr'
+    else if (base === 'exams' || base === 'exam_configs' || base === 'subject_mark_configs' || base === 'student_marks' || base === 'exam_routines' || base === 'marksheet_configs') storeBase = 'exams'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -1434,6 +1436,230 @@ export function normalizeVaultJsonForStore(
       ...inner,
       categories,
       expenses,
+      serverSynced: true,
+      syncing: false,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion })
+  }
+
+  if (key.includes('hr')) {
+    const existing = (() => {
+      try {
+        const raw = localStorage.getItem(key)
+        return raw ? JSON.parse(raw) : {}
+      } catch {
+        return {}
+      }
+    })()
+    const existingState = existing.state || {}
+    const existingVersion = existing.version || 1
+
+    const isFacilitiesOnly =
+      filePath?.includes('facilities') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].defaultAmount !== undefined)
+    if (isFacilitiesOnly) {
+      const rawFacilities = Array.isArray(parsed) ? parsed : (parsed.facilities || parsed.state?.facilities || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          facilities: rawFacilities,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isIncrementsOnly =
+      filePath?.includes('increments') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].percentage !== undefined)
+    if (isIncrementsOnly) {
+      const rawIncrements = Array.isArray(parsed) ? parsed : (parsed.increments || parsed.state?.increments || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          increments: rawIncrements,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isBonusesOnly =
+      filePath?.includes('bonuses') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].month !== undefined && parsed[0].amount !== undefined && !parsed[0].bonus)
+    if (isBonusesOnly) {
+      const rawBonuses = Array.isArray(parsed) ? parsed : (parsed.bonuses || parsed.state?.bonuses || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          bonuses: rawBonuses,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isPromotionsOnly =
+      filePath?.includes('promotions') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].toDesignation !== undefined)
+    if (isPromotionsOnly) {
+      const rawPromotions = Array.isArray(parsed) ? parsed : (parsed.promotions || parsed.state?.promotions || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          promotions: rawPromotions,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isFundsOnly =
+      filePath?.includes('funds') ||
+      (Array.isArray(parsed) &&
+        parsed.length > 0 &&
+        parsed[0].description !== undefined &&
+        (parsed[0].type === 'contribution' ||
+          parsed[0].type === 'withdrawal' ||
+          parsed[0].type === 'bonus_pool' ||
+          parsed[0].type === 'increment_pool'))
+    if (isFundsOnly) {
+      const rawFunds = Array.isArray(parsed) ? parsed : (parsed.funds || parsed.state?.funds || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          funds: rawFunds,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const finalState = {
+      ...existingState,
+      ...inner,
+      increments: Array.isArray(inner.increments) ? inner.increments : (existingState.increments || []),
+      bonuses: Array.isArray(inner.bonuses) ? inner.bonuses : (existingState.bonuses || []),
+      promotions: Array.isArray(inner.promotions) ? inner.promotions : (existingState.promotions || []),
+      funds: Array.isArray(inner.funds) ? inner.funds : (existingState.funds || []),
+      homeworkRecords: Array.isArray(inner.homeworkRecords) ? inner.homeworkRecords : (existingState.homeworkRecords || []),
+      dailyReports: Array.isArray(inner.dailyReports) ? inner.dailyReports : (existingState.dailyReports || []),
+      recommendations: Array.isArray(inner.recommendations) ? inner.recommendations : (existingState.recommendations || []),
+      monthlySalaryConfigs: Array.isArray(inner.monthlySalaryConfigs) ? inner.monthlySalaryConfigs : (existingState.monthlySalaryConfigs || []),
+      facilities: Array.isArray(inner.facilities) ? inner.facilities : (existingState.facilities || []),
+      teacherFacilities: Array.isArray(inner.teacherFacilities) ? inner.teacherFacilities : (existingState.teacherFacilities || []),
+      serverSynced: true,
+      syncing: false,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion })
+  }
+
+  if (key.includes('exams')) {
+    const existing = (() => {
+      try {
+        const raw = localStorage.getItem(key)
+        return raw ? JSON.parse(raw) : {}
+      } catch {
+        return {}
+      }
+    })()
+    const existingState = existing.state || {}
+    const existingVersion = existing.version || 8
+
+    const isConfigsOnly =
+      filePath?.includes('exam_configs') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].type !== undefined && parsed[0].session !== undefined)
+    if (isConfigsOnly) {
+      const rawConfigs = Array.isArray(parsed) ? parsed : (parsed.examConfigs || parsed.state?.examConfigs || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          examConfigs: rawConfigs,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isSubjectConfigsOnly =
+      filePath?.includes('subject_mark_configs') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].subExams !== undefined && parsed[0].passMarks !== undefined)
+    if (isSubjectConfigsOnly) {
+      const rawSubConfigs = Array.isArray(parsed) ? parsed : (parsed.subjectMarkConfigs || parsed.state?.subjectMarkConfigs || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          subjectMarkConfigs: rawSubConfigs,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isMarksOnly =
+      filePath?.includes('student_marks') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].subExamMarks !== undefined)
+    if (isMarksOnly) {
+      const rawMarks = Array.isArray(parsed) ? parsed : (parsed.studentMarks || parsed.state?.studentMarks || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          studentMarks: rawMarks,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isRoutinesOnly =
+      filePath?.includes('exam_routines') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].startTime !== undefined && parsed[0].roomNo !== undefined)
+    if (isRoutinesOnly) {
+      const rawRoutines = Array.isArray(parsed) ? parsed : (parsed.routines || parsed.state?.routines || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          routines: rawRoutines,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const finalState = {
+      ...existingState,
+      ...inner,
+      examConfigs: Array.isArray(inner.examConfigs) ? inner.examConfigs : (existingState.examConfigs || []),
+      subjectMarkConfigs: Array.isArray(inner.subjectMarkConfigs) ? inner.subjectMarkConfigs : (existingState.subjectMarkConfigs || []),
+      studentMarks: Array.isArray(inner.studentMarks) ? inner.studentMarks : (existingState.studentMarks || []),
+      routines: Array.isArray(inner.routines) ? inner.routines : (existingState.routines || []),
+      rooms: Array.isArray(inner.rooms) ? inner.rooms : (existingState.rooms || []),
+      seatPlans: Array.isArray(inner.seatPlans) ? inner.seatPlans : (existingState.seatPlans || []),
+      invigilators: Array.isArray(inner.invigilators) ? inner.invigilators : (existingState.invigilators || []),
+      attendances: Array.isArray(inner.attendances) ? inner.attendances : (existingState.attendances || []),
+      omrConfigs: Array.isArray(inner.omrConfigs) ? inner.omrConfigs : (existingState.omrConfigs || []),
+      extraMarks: Array.isArray(inner.extraMarks) ? inner.extraMarks : (existingState.extraMarks || []),
+      extraMarkTypes: Array.isArray(inner.extraMarkTypes) ? inner.extraMarkTypes : (existingState.extraMarkTypes || []),
+      marksheetConfigs: Array.isArray(inner.marksheetConfigs) ? inner.marksheetConfigs : (existingState.marksheetConfigs || []),
+      generalAbilities: Array.isArray(inner.generalAbilities) ? inner.generalAbilities : (existingState.generalAbilities || []),
+      gradeScales: Array.isArray(inner.gradeScales) ? inner.gradeScales : (existingState.gradeScales || []),
+      workingDays: Array.isArray(inner.workingDays) ? inner.workingDays : (existingState.workingDays || []),
+      promotions: Array.isArray(inner.promotions) ? inner.promotions : (existingState.promotions || []),
+      cumulativeSheets: Array.isArray(inner.cumulativeSheets) ? inner.cumulativeSheets : (existingState.cumulativeSheets || []),
+      marksEntryStatuses: Array.isArray(inner.marksEntryStatuses) ? inner.marksEntryStatuses : (existingState.marksEntryStatuses || []),
+      omrTemplates: Array.isArray(inner.omrTemplates) ? inner.omrTemplates : (existingState.omrTemplates || []),
+      markAdjustments: Array.isArray(inner.markAdjustments) ? inner.markAdjustments : (existingState.markAdjustments || []),
       serverSynced: true,
       syncing: false,
     }

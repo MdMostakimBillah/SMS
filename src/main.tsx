@@ -73,6 +73,17 @@ if ('serviceWorker' in navigator) {
           }).catch(() => {
             reg.active?.postMessage({ type: 'SET_BRAND_COLOR', color: brandColor })
           })
+
+          // Warm Service Worker cache with loaded page bundles for offline execution
+          try {
+            const assetElements = Array.from(document.querySelectorAll<HTMLScriptElement | HTMLLinkElement>('script[src], link[rel="stylesheet"]'))
+            const assetUrls = assetElements.map((el) => ('src' in el && el.src ? el.src : ('href' in el && el.href ? el.href : ''))).filter(Boolean)
+            if (assetUrls.length > 0) {
+              reg.active?.postMessage({ type: 'CACHE_ASSETS', urls: assetUrls })
+            }
+          } catch {
+            // Ignore asset discovery failures
+          }
         })
       }
       if (reg.active) {

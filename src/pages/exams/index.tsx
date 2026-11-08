@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   ClipboardList,
   Plus,
@@ -14,6 +14,7 @@ import {
   ArrowRight,
   FileSpreadsheet,
   GraduationCap,
+  RefreshCw,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
@@ -24,6 +25,7 @@ import { useExamStore } from '@/store/examStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
+import { getSlug } from '@/lib/storage'
 import StepProgress from '@/components/ui/StepProgress'
 import { QuickAccessGrid, type QuickAccessItem } from '@/components/shared/QuickAccessGrid'
 import { toBnNum } from '@/lib/i18n'
@@ -71,12 +73,40 @@ function ExamSkeleton() {
 
 export default function ExamDashboard() {
   const navigate = useNavigate()
+  const { slug } = useParams<{ slug: string }>()
+  const effectiveSlug = slug || getSlug() || undefined
   const nav = useNavPath()
   const { canCreate, canRead } = usePermission()
   const { isMobile, isTablet } = useWindowSize()
   const students = useSessionStudents()
   const subjects = useTeacherStore((s) => s.subjects)
   const currentSession = useClassStore((s) => s.institution.currentSession)
+
+  const [refreshing, setRefreshing] = useState(false)
+  const syncFromServer = useExamStore((s) => s.syncFromServer)
+  const isMountedRef = useRef(true)
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    syncFromServer(effectiveSlug).catch(() => {})
+    return () => {
+      isMountedRef.current = false
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    }
+  }, [syncFromServer, effectiveSlug])
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await syncFromServer(effectiveSlug)
+    } finally {
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+      refreshTimerRef.current = setTimeout(() => {
+        if (isMountedRef.current) setRefreshing(false)
+      }, 500)
+    }
+  }, [syncFromServer, effectiveSlug])
 
   const allExamConfigs = useExamStore((s) => s.examConfigs)
   const examConfigs = useMemo(() => allExamConfigs.filter((e) => e.session === currentSession), [allExamConfigs, currentSession])
@@ -113,8 +143,13 @@ export default function ExamDashboard() {
 
   useEffect(() => {
     if (isLoading || !containerRef.current) return
-    const cards = containerRef.current.querySelectorAll('.gsap-fade-up')
-    gsap.fromTo(cards, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: 'power2.out' })
+    const ctx = gsap.context(() => {
+      const cards = containerRef.current?.querySelectorAll('.gsap-fade-up')
+      if (cards && cards.length > 0) {
+        gsap.fromTo(cards, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: 'power2.out' })
+      }
+    }, containerRef)
+    return () => ctx.revert()
   }, [isLoading])
 
   // ── Derived Stats (memoized) ──
@@ -463,11 +498,23 @@ export default function ExamDashboard() {
             {isBn ? 'পরীক্ষার পুরো প্রক্রিয়া পরিচালনা করুন' : 'Manage the complete examination lifecycle'}
           </p>
         </div>
-        {canCreate('exams.create.create') && (
-          <button className="btn-minimal" onClick={navPlanning}>
-            <Plus size={14} /> {isBn ? 'নতুন পরীক্ষা' : 'New Exam'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button
+            className="btn-minimal"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', cursor: refreshing ? 'not-allowed' : 'pointer' }}
+            title={isBn ? 'ডাটা সিঙ্ক / রিফ্রেশ' : 'Refresh / Sync'}
+          >
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+            <span>{isBn ? 'রিফ্রেশ' : 'Refresh'}</span>
           </button>
-        )}
+          {canCreate('exams.create.create') && (
+            <button className="btn-minimal" onClick={navPlanning}>
+              <Plus size={14} /> {isBn ? 'নতুন পরীক্ষা' : 'New Exam'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Active Exam Alert */}

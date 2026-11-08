@@ -15,7 +15,7 @@ import { useBn } from '@/hooks/useBn'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAuditUser } from '@/lib/auditUser'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useFeeStore } from '@/store/feeStore'
+import { useFeeStore, getNextReceiptNo } from '@/store/feeStore'
 import { useStoreStore } from '@/store/storeStore'
 import { useAppStore } from '@/store/appStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -366,7 +366,11 @@ export default function FeeManagementPage() {
             setSearchParams({ view: 'collect' })
           }} />}
           {activeView === 'collect' && <CollectTab initialStudentId={collectFromDue?.studentId || null} initialFeeStructureId={collectFromDue?.feeStructureId || null} onClearCollectFromDue={() => setCollectFromDue(null)} onCollect={(d) => setCollectPayment(d)} />}
-          {activeView === 'payments' && <PaymentsTab />}
+          {activeView === 'payments' && <PaymentsTab onCollect={(d) => {
+            setCollectFromDue({ studentId: d.studentId, feeStructureId: d.feeStructureId })
+            setActiveView('collect')
+            setSearchParams({ view: 'collect' })
+          }} />}
           {activeView === 'waivers' && <WaiversTab onAddWaiver={(mode) => { setWaiverModalMode(mode); setShowWaiverModal(true) }} onAddStudentWaiver={() => setShowStudentWaiverModal(true)} />}
           {activeView === 'reports' && <ReportsTab />}
           {activeView === 'inactive' && <InactiveDuesTab />}
@@ -398,6 +402,7 @@ export default function FeeManagementPage() {
           <CollectPaymentModal
             due={collectPayment}
             onCollected={(amount, method, note) => {
+              const nextRcp = getNextReceiptNo(payments)
               const payment: FeePayment = {
                 id: `PAY-${Date.now()}`,
                 studentId: collectPayment.studentId,
@@ -410,6 +415,7 @@ export default function FeeManagementPage() {
                 note,
                 collectedBy: getAuditUser(user),
                 createdAt: today,
+                receiptNo: nextRcp,
               }
               addPayment(payment)
               setReceiptData({

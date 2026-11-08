@@ -174,6 +174,16 @@ export default function Step3Evaluation() {
 
   const prevInputsRef = useRef<Record<string, Record<string, number>>>({})
   const prevContextRef = useRef('')
+  const isMountedRef = useRef(true)
+  const savingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+      if (savingTimerRef.current) clearTimeout(savingTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (!selectedExamId || !entryClassId || !entrySectionId || !entrySubjectId) {
@@ -225,6 +235,57 @@ export default function Step3Evaluation() {
     setMarkErrors((prev) => ({ ...prev, [studentId]: { ...(prev[studentId] || {}), [subExamId]: hasError } }))
   }, [])
 
+  const flushMarksSave = useCallback(() => {
+    if (!selectedExamId || !entryClassId || !entrySectionId || !entrySubjectId || !entrySubjectConfig) return
+    const validSubIds = new Set(entrySubjectConfig.subExams.map((se) => se.id))
+    const marksToSave = classStudents
+      .map((s) => {
+        const raw = markInputs[s.id] || {}
+        const filtered: Record<string, number> = {}
+        for (const [k, v] of Object.entries(raw)) {
+          if (validSubIds.has(k)) filtered[k] = v
+        }
+        return {
+          examId: selectedExamId,
+          studentId: s.id,
+          subjectId: entrySubjectId,
+          classId: entryClassId,
+          sectionId: entrySectionId,
+          subExamMarks: filtered,
+          totalMarks: Object.values(filtered).reduce((a, b) => a + b, 0),
+          enteredAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      })
+      .filter((m) => Object.keys(m.subExamMarks).length > 0)
+
+    if (marksToSave.length > 0) {
+      saveBulkStudentMarks(marksToSave)
+      setSaving(true)
+      if (savingTimerRef.current) clearTimeout(savingTimerRef.current)
+      savingTimerRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          setSaving(false)
+          setLastSaved(new Date().toLocaleTimeString())
+        }
+      }, 500)
+    }
+  }, [selectedExamId, entryClassId, entrySectionId, entrySubjectId, entrySubjectConfig, classStudents, markInputs, saveBulkStudentMarks])
+
+  // Keyboard shortcut Ctrl+S / Cmd+S for saving marks
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        if (activeSubTab === 'entry' && selectedExamId && entryClassId && entrySectionId && entrySubjectId) {
+          e.preventDefault()
+          flushMarksSave()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [activeSubTab, selectedExamId, entryClassId, entrySectionId, entrySubjectId, flushMarksSave])
+
   useEffect(() => {
     if (!selectedExamId || !entryClassId || !entrySectionId || !entrySubjectId || !entrySubjectConfig) return
     const currentContext = `${selectedExamId}|${entryClassId}|${entrySectionId}|${entrySubjectId}`
@@ -235,39 +296,13 @@ export default function Step3Evaluation() {
     })
     if (!hasChanges) return
     const timer = setTimeout(() => {
-      const validSubIds = new Set(entrySubjectConfig.subExams.map((se) => se.id))
-      const marksToSave = classStudents
-        .map((s) => {
-          const raw = markInputs[s.id] || {}
-          const filtered: Record<string, number> = {}
-          for (const [k, v] of Object.entries(raw)) {
-            if (validSubIds.has(k)) filtered[k] = v
-          }
-          return {
-            examId: selectedExamId,
-            studentId: s.id,
-            subjectId: entrySubjectId,
-            classId: entryClassId,
-            sectionId: entrySectionId,
-            subExamMarks: filtered,
-            totalMarks: Object.values(filtered).reduce((a, b) => a + b, 0),
-            enteredAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }
-        })
-        .filter((m) => Object.keys(m.subExamMarks).length > 0)
-      if (marksToSave.length > 0) {
-        saveBulkStudentMarks(marksToSave)
-        setSaving(true)
-        setTimeout(() => {
-          setSaving(false)
-          setLastSaved(new Date().toLocaleTimeString())
-        }, 600)
-      }
+      flushMarksSave()
     }, 1000)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markInputs, selectedExamId, entryClassId, entrySectionId, entrySubjectId, entrySubjectConfig])
+  }, [markInputs, selectedExamId, entryClassId, entrySectionId, entrySubjectId, entrySubjectConfig, flushMarksSave])
 
   // Entry status summary
   const entryStatusSummary = useMemo(() => {
@@ -801,18 +836,32 @@ export default function Step3Evaluation() {
                   </select>
                 </div>
               </div>
-              <div className="mt-2 flex items-center gap-1.5 text-[0.6875rem] min-h-[1.25rem]">
-                {saving ? (
-                  <>
-                    <Loader size={12} className="animate-spin text-[var(--green)]" />
-                    <span className="text-[var(--green)]">{isBn ? 'সেভ হচ্ছে...' : 'Saving...'}</span>
-                  </>
-                ) : lastSaved ? (
-                  <>
-                    <CheckCircle size={12} className="text-[var(--text-muted)]" />
-                    <span className="text-[var(--text-muted)]">{isBn ? `শেষ সেভ: ${lastSaved}` : `Last saved: ${lastSaved}`}</span>
-                  </>
-                ) : null}
+              <div className="mt-2 flex items-center justify-between flex-wrap gap-2 text-[0.6875rem] min-h-[1.75rem]">
+                <div className="flex items-center gap-1.5">
+                  {saving ? (
+                    <>
+                      <Loader size={12} className="animate-spin text-[var(--green)]" />
+                      <span className="text-[var(--green)]">{isBn ? 'সেভ হচ্ছে...' : 'Saving...'}</span>
+                    </>
+                  ) : lastSaved ? (
+                    <>
+                      <CheckCircle size={12} className="text-[var(--text-muted)]" />
+                      <span className="text-[var(--text-muted)]">{isBn ? `শেষ সেভ: ${lastSaved}` : `Last saved: ${lastSaved}`}</span>
+                    </>
+                  ) : null}
+                </div>
+                {selectedExamId && entryClassId && entrySectionId && entrySubjectId && !isEntrySubjectLocked && (
+                  <button
+                    onClick={flushMarksSave}
+                    disabled={saving}
+                    className="h-6 px-2.5 rounded-md bg-[var(--brand)] text-white text-[0.6875rem] font-medium flex items-center gap-1 hover:opacity-90 transition-opacity cursor-pointer shadow-2xs"
+                    title={isBn ? 'নম্বর সংরক্ষণ করুন (Ctrl+S)' : 'Save Marks (Ctrl+S)'}
+                  >
+                    <Save size={11} />
+                    <span>{isBn ? 'সংরক্ষণ' : 'Save'}</span>
+                    <span className="opacity-70 text-[0.625rem]">Ctrl+S</span>
+                  </button>
+                )}
               </div>
             </div>
 

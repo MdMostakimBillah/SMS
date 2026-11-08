@@ -98,6 +98,14 @@ export const MarksheetTab = React.memo(function MarksheetTab({
 
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [showSmsModal, setShowSmsModal] = useState(false)
+  const smsTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  useEffect(() => {
+    return () => {
+      smsTimersRef.current.forEach(clearTimeout)
+      smsTimersRef.current = []
+    }
+  }, [])
   const [smsSelectedIds, setSmsSelectedIds] = useState<string[]>(enrichedData.map((s) => s.student.id))
   const [smsSearch, setSmsSearch] = useState('')
   const [smsTemplate, setSmsTemplate] = useState<'result' | 'pass' | 'fail' | 'custom'>('result')
@@ -237,11 +245,14 @@ export const MarksheetTab = React.memo(function MarksheetTab({
       return
     }
 
+    smsTimersRef.current.forEach(clearTimeout)
+    smsTimersRef.current = []
     messages.forEach((m, i) => {
-      setTimeout(() => {
+      const t = setTimeout(() => {
         const encoded = encodeURIComponent(m.message)
         window.open(`sms:${m.phone}?body=${encoded}`, '_blank')
       }, i * 500)
+      smsTimersRef.current.push(t)
     })
 
     alert(isBn

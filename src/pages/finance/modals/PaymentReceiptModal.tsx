@@ -14,6 +14,7 @@ interface ReceiptData {
   paidAt: string
   method: string
   note: string
+  receiptNo?: string
 }
 
 interface Props {
@@ -63,8 +64,8 @@ export function PaymentReceiptModal({ data, onClose }: Props) {
             <div className="flex items-center gap-2">
               <Hash size={12} className="text-[var(--text-muted)]" />
               <div className="flex-1">
-                <p className="text-[0.6rem] text-[var(--text-muted)]">{bn ? 'পেমেন্ট আইডি' : 'Payment ID'}</p>
-                <p className="font-mono font-medium text-[var(--text-primary)]">{data.id}</p>
+                <p className="text-[0.6rem] text-[var(--text-muted)]">{bn ? 'রসিদ / ইনভয়েস নং' : 'Receipt / Invoice No'}</p>
+                <p className="font-mono font-bold text-[var(--brand)]">{data.receiptNo || data.id}</p>
               </div>
             </div>
 

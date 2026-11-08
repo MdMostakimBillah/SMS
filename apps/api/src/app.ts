@@ -23,6 +23,8 @@ import { transportRouter } from './routes/transport.js'
 import { hostelRouter } from './routes/hostel.js'
 import { othersIncomeRouter } from './routes/othersIncome.js'
 import { expensesRouter } from './routes/expenses.js'
+import { hrRouter } from './routes/hr.js'
+import { examsRouter } from './routes/exams.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
@@ -97,6 +99,8 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   app.use('/api/hostel', hostelRouter(prisma, jwtSecret))
   app.use('/api/others-income', othersIncomeRouter(prisma, jwtSecret))
   app.use('/api/expenses', expensesRouter(prisma, jwtSecret))
+  app.use('/api/hr', hrRouter(prisma, jwtSecret))
+  app.use('/api/exams', examsRouter(prisma, jwtSecret))
 
   const sRouter = schoolRouter(prisma, jwtSecret, storage)
   app.use('/api/schools', sRouter)

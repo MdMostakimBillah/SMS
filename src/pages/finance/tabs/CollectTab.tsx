@@ -9,7 +9,7 @@ import { getAuditUser } from '@/lib/auditUser'
 import { useSessionStudents } from '@/store/admissionStore'
 import { isMatchingSession } from '@/lib/classStudentCount'
 import { useClassStore, getClassOptions, buildSectionsMap, extractClassNumber } from '@/store/classStore'
-import { useFeeStore } from '@/store/feeStore'
+import { useFeeStore, getNextReceiptNo } from '@/store/feeStore'
 import { useStoreStore } from '@/store/storeStore'
 import type { FeeDue, FeeStructure, FeePayment } from '@/store/feeStore'
 import { openPrintWindow } from '@/lib/pdf'
@@ -438,6 +438,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
     const checkedRows = displayRows.filter((r) => { const e = getRowEdit(r.key); return e.checked && (e.receive > 0 || e.discount > 0) })
     if (checkedRows.length === 0) return
     const batchId = `batch-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const rn = getNextReceiptNo(payments)
     const receiptFees: ReceiptData['fees'] = []
     let totalDiscount = 0
     const shopSaleItems: { productId: string; productName: string; productNameBn: string; qty: number; unitPrice: number }[] = []
@@ -457,7 +458,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           }
         }
       }
-      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: paymentNote, collectedBy: getAuditUser(user), createdAt: new Date().toISOString(), batchId, forMonth }
+      const payment: FeePayment = { id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, studentId: selectedStudent.id, feeStructureId: row.structureId, amount: edit.receive, discount: edit.discount, paidAt: receivedDate, method: 'cash', reference: '', note: paymentNote, collectedBy: getAuditUser(user), createdAt: new Date().toISOString(), batchId, forMonth, receiptNo: rn }
       addPayment(payment)
       // Handle shop product sales — deduct stock
       if (row.key.startsWith('shop-')) {
@@ -513,7 +514,6 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
       receiptFees.push(feeItem)
       totalDiscount += edit.discount
     }
-    const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
     // Create store sale for shop products
     if (shopSaleItems.length > 0) {
       const saleTotal = shopSaleItems.reduce((s, item) => s + item.unitPrice * item.qty, 0)
@@ -699,7 +699,7 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
 
   const generateBatchReceipt = useCallback((batch: { payments: FeePayment[]; totalAmount: number; paidAt: string }) => {
     if (!selectedStudent || !institution) return
-    const rn = `RCP-${Date.now().toString(36).toUpperCase()}`
+    const rn = batch.payments[0]?.receiptNo || getNextReceiptNo(payments)
     const ds = new Date(batch.paidAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     const fees: ReceiptData['fees'] = batch.payments.map((p) => {
       const struct = structures.find((s) => s.id === p.feeStructureId)

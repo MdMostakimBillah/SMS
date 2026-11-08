@@ -859,6 +859,80 @@ export const expensesApi = {
   },
 }
 
+export interface HRResponse {
+  increments?: any[]
+  bonuses?: any[]
+  promotions?: any[]
+  funds?: any[]
+  homeworkRecords?: any[]
+  dailyReports?: any[]
+  recommendations?: any[]
+  monthlySalaryConfigs?: any[]
+  facilities?: any[]
+  teacherFacilities?: any[]
+}
+
+export const hrApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<HRResponse>(`/api/hr${q}`)
+  },
+  update: (data: HRResponse & { schoolId?: string }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean } & HRResponse>('/api/hr', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
+export interface ExamsResponse {
+  examConfigs?: any[]
+  subjectMarkConfigs?: any[]
+  studentMarks?: any[]
+  routines?: any[]
+  rooms?: any[]
+  seatPlans?: any[]
+  invigilators?: any[]
+  attendances?: any[]
+  omrConfigs?: any[]
+  extraMarks?: any[]
+  extraMarkTypes?: any[]
+  marksheetConfigs?: any[]
+  generalAbilities?: any[]
+  gradeScales?: any[]
+  workingDays?: any[]
+  promotions?: any[]
+  cumulativeSheets?: any[]
+  marksEntryStatuses?: any[]
+  omrTemplates?: any[]
+  markAdjustments?: any[]
+}
+
+export const examsApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<ExamsResponse>(`/api/exams${q}`)
+  },
+  update: (data: ExamsResponse & { schoolId?: string }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean } & ExamsResponse>('/api/exams', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

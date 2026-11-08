@@ -5,27 +5,24 @@ import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, gen
 import { useAppStore } from '@/store/appStore'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import {
+  saveOfflineSession,
+  getOfflineSession,
+  clearOfflineSession,
+  isOfflineSessionValid,
+  type OfflineUser,
+} from '@/lib/offlineSession'
 
-interface User {
-  id: string
-  email: string
-  name: string | null
-  role: string
-  schoolId: string | null
-  schoolName: string | null
-  avatar: string | null
-  subdomain: string | null
-  schoolDomain?: string | null
-  school?: any
-  staffId?: string
-  photo?: string | null
-}
+export type SessionSource = 'server' | 'offline_cache' | null
+
+export type User = OfflineUser
 
 interface AuthContextType {
   user: User | null
   loading: boolean
-  /** True when the last /me check failed for a non-401 reason (server unreachable). */
+  /** True when the last /me check failed for a non-401 reason (server unreachable) and no offline session exists. */
   restoreFailed: boolean
+  sessionSource: SessionSource
   /** Re-runs the server session check (used by the connection-error screen). */
   retryRestore: () => void
   login: (email: string, password: string) => Promise<User | void>
@@ -130,6 +127,16 @@ function serverUserToUser(u: SessionUser): User {
   }
 }
 
+function resolveUserSlug(u: User): string {
+  return (
+    u.schoolDomain ||
+    u.subdomain ||
+    u.school?.domain ||
+    (u.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : '') ||
+    'default'
+  )
+}
+
 export function syncUserSchool(school: any, u: SessionUser | User): void {
   if (!school) return
   const targetSlug =
@@ -184,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [isLockedOut, setIsLockedOut] = useState(isCurrentlyLockedOut)
   const [lockoutRemaining, setLockoutRemaining] = useState(getLockoutRemaining)
-  const [sessionSource, setSessionSource] = useState<'server' | null>(null)
+  const [sessionSource, setSessionSource] = useState<SessionSource>(null)
   const [restoreFailed, setRestoreFailed] = useState(false)
   const loginTimestampRef = useRef<number | null>(null)
 
@@ -217,20 +224,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     nsRemove('institutionId')
     nsRemove('institutionSubdomain')
     clearAllIdentityKeys()
+    clearOfflineSession()
     clearUserId()
     clearSlug() // resets all institution stores via storage.ts listeners
   }, [])
 
   /**
-   * Phase 7 — restore ONLY from the server session (HttpOnly cookie + /me).
-   * Legacy localStorage identity is never consulted: a 401 is clean
-   * "not signed in", and any other failure (server unreachable) is surfaced
-   * as `restoreFailed` so the UI can offer a retry instead of trusting a
-   * cached role/school or spinning forever.
+   * Phase 7 & Offline-First:
+   * - Attempts to restore from server session (/api/auth/me) when online.
+   * - When offline or if network/server is unreachable, restores seamlessly
+   *   from the validated offline session snapshot saved during online login.
+   * - A 401 explicitly clears offline snapshot and logs out.
    */
   const runRestore = useCallback(async () => {
     setLoading(true)
     setRestoreFailed(false)
+
+    // Immediate offline check
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine
+    if (isOffline) {
+      const offline = getOfflineSession()
+      if (offline && isOfflineSessionValid(offline)) {
+        setUser(offline.user)
+        setSessionSource('offline_cache')
+        loginTimestampRef.current = offline.savedAt
+        setUserId(offline.user.email)
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem('edutech_user_role', offline.user.role)
+        }
+        if (offline.user.school) {
+          syncUserSchool(offline.user.school, offline.user)
+        }
+        setRestoreFailed(false)
+        setLoading(false)
+        return
+      }
+    }
+
     try {
       const res = await authApi.me()
       const userObj = serverUserToUser(res.user)
@@ -241,6 +271,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.setItem('edutech_user_role', res.user.role)
       }
+      saveOfflineSession({
+        user: userObj,
+        savedAt: Date.now(),
+        slug: resolveUserSlug(userObj),
+        role: userObj.role,
+      })
       if (res.user.role === 'super_admin' && typeof sessionStorage !== 'undefined') {
         const viewingId = sessionStorage.getItem('edutech_viewing_id')
         if (viewingId) {
@@ -263,11 +299,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         syncUserSchool(res.user.school, res.user)
       }
     } catch (err) {
-      if (typeof window !== 'undefined') {
-        setUser(null)
-        setSessionSource(null)
-        if (!(err instanceof ApiError && err.status === 401)) {
-          setRestoreFailed(true)
+      if (err instanceof ApiError && err.status === 401) {
+        clearOfflineSession()
+        if (typeof window !== 'undefined') {
+          setUser(null)
+          setSessionSource(null)
+          setRestoreFailed(false)
+        }
+      } else {
+        // Network failure, fetch failed, or server unreachable
+        const offline = getOfflineSession()
+        if (offline && isOfflineSessionValid(offline)) {
+          setUser(offline.user)
+          setSessionSource('offline_cache')
+          loginTimestampRef.current = offline.savedAt
+          setUserId(offline.user.email)
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('edutech_user_role', offline.user.role)
+          }
+          if (offline.user.school) {
+            syncUserSchool(offline.user.school, offline.user)
+          }
+          setRestoreFailed(false)
+        } else {
+          if (typeof window !== 'undefined') {
+            setUser(null)
+            setSessionSource(null)
+            setRestoreFailed(true)
+          }
         }
       }
     } finally {
@@ -285,17 +344,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void runRestore()
   }, [runRestore])
 
-  // Server sessions: validate periodically so an expired/revoked session
-  // actually ends the UI session instead of persisting until reload.
+  // Server sessions: validate periodically when online
   useEffect(() => {
     if (sessionSource !== 'server') return
 
     const id = setInterval(() => {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return
       authApi
         .me()
-        .then((res) => setUser(serverUserToUser(res.user)))
+        .then((res) => {
+          const userObj = serverUserToUser(res.user)
+          setUser(userObj)
+          saveOfflineSession({
+            user: userObj,
+            savedAt: Date.now(),
+            slug: resolveUserSlug(userObj),
+            role: userObj.role,
+          })
+        })
         .catch((err) => {
           if (err instanceof ApiError && err.status === 401) {
+            clearOfflineSession()
             logout()
           }
         })
@@ -303,6 +372,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => clearInterval(id)
   }, [sessionSource, logout])
+
+  // Background re-verification when device reconnects online
+  useEffect(() => {
+    const handleOnline = () => {
+      authApi
+        .me()
+        .then((res) => {
+          const userObj = serverUserToUser(res.user)
+          setUser(userObj)
+          setSessionSource('server')
+          saveOfflineSession({
+            user: userObj,
+            savedAt: Date.now(),
+            slug: resolveUserSlug(userObj),
+            role: userObj.role,
+          })
+        })
+        .catch((err) => {
+          if (err instanceof ApiError && err.status === 401) {
+            clearOfflineSession()
+            logout()
+          }
+        })
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', handleOnline)
+      return () => window.removeEventListener('online', handleOnline)
+    }
+  }, [logout])
 
   const setLockoutState = useCallback((locked: boolean, remaining: number) => {
     setIsLockedOut(locked)
@@ -330,6 +429,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.setItem('edutech_user_role', res.user.role)
       }
       clearLoginAttempts()
+      saveOfflineSession({
+        user: userObj,
+        savedAt: Date.now(),
+        slug: resolveUserSlug(userObj),
+        role: userObj.role,
+      })
       if (res.user.role === 'super_admin' && typeof sessionStorage !== 'undefined') {
         const viewingId = sessionStorage.getItem('edutech_viewing_id')
         if (viewingId) {
@@ -363,10 +468,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null)
     try {
       const res = await authApi.register(email, password, name, role)
-      setUser(serverUserToUser(res.user))
+      const userObj = serverUserToUser(res.user)
+      setUser(userObj)
       setSessionSource('server')
       loginTimestampRef.current = Date.now()
       clearLoginAttempts()
+      saveOfflineSession({
+        user: userObj,
+        savedAt: Date.now(),
+        slug: resolveUserSlug(userObj),
+        role: userObj.role,
+      })
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : 'Registration failed'
       setError(msg)
@@ -377,8 +489,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearError = useCallback(() => setError(null), [])
 
   const ctxValue = useMemo(() => ({
-    user, loading, restoreFailed, retryRestore, login, register, logout, error, clearError, isLockedOut, lockoutRemaining
-  }), [user, loading, restoreFailed, retryRestore, login, register, logout, error, clearError, isLockedOut, lockoutRemaining])
+    user, loading, restoreFailed, sessionSource, retryRestore, login, register, logout, error, clearError, isLockedOut, lockoutRemaining
+  }), [user, loading, restoreFailed, sessionSource, retryRestore, login, register, logout, error, clearError, isLockedOut, lockoutRemaining])
 
   return (
     <AuthContext.Provider value={ctxValue}>

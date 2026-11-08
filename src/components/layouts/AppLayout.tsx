@@ -18,6 +18,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo'
 import { clearSlug, setSlug } from '@/lib/storage'
 import { useBn } from '@/hooks/useBn'
 import { getVaultStatus, subscribeVault, vaultReconnect, type VaultStatus } from '@/lib/vault/vault'
+import { prefetchAllRoutes } from '@/lib/prefetchRoutes'
 
 export default function AppLayout() {
   const isBn = useBn()
@@ -68,6 +69,13 @@ export default function AppLayout() {
   useEffect(() => {
     document.documentElement.setAttribute('data-lang', language)
   }, [language])
+
+  // Warm Service Worker cache with all route chunks during idle time for offline usage
+  useEffect(() => {
+    if (user) {
+      prefetchAllRoutes()
+    }
+  }, [user])
 
   // Synchronize institution data from database on mount / refresh
   useEffect(() => {

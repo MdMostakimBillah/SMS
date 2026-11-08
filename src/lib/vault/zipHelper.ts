@@ -170,6 +170,79 @@ export async function createBackupZip(
         }
       }
 
+      // hr store: extract individual slice files
+      if (baseName === 'hr') {
+        const state = storeData?.state || storeData
+        if (Array.isArray(state?.facilities) && !zip.file('hr_facilities.json')) {
+          const fJson = JSON.stringify(state.facilities, null, 2)
+          zip.file('hr_facilities.json', fJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_facilities.json`)) {
+            zip.file(`${targetSlug}/hr_facilities.json`, fJson)
+          }
+        }
+        if (Array.isArray(state?.increments) && !zip.file('hr_increments.json')) {
+          const iJson = JSON.stringify(state.increments, null, 2)
+          zip.file('hr_increments.json', iJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_increments.json`)) {
+            zip.file(`${targetSlug}/hr_increments.json`, iJson)
+          }
+        }
+        if (Array.isArray(state?.bonuses) && !zip.file('hr_bonuses.json')) {
+          const bJson = JSON.stringify(state.bonuses, null, 2)
+          zip.file('hr_bonuses.json', bJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_bonuses.json`)) {
+            zip.file(`${targetSlug}/hr_bonuses.json`, bJson)
+          }
+        }
+        if (Array.isArray(state?.promotions) && !zip.file('hr_promotions.json')) {
+          const pJson = JSON.stringify(state.promotions, null, 2)
+          zip.file('hr_promotions.json', pJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_promotions.json`)) {
+            zip.file(`${targetSlug}/hr_promotions.json`, pJson)
+          }
+        }
+        if (Array.isArray(state?.funds) && !zip.file('hr_funds.json')) {
+          const fndJson = JSON.stringify(state.funds, null, 2)
+          zip.file('hr_funds.json', fndJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_funds.json`)) {
+            zip.file(`${targetSlug}/hr_funds.json`, fndJson)
+          }
+        }
+      }
+
+      // exams store: extract individual slice files
+      if (baseName === 'exams') {
+        const state = storeData?.state || storeData
+        if (Array.isArray(state?.examConfigs) && !zip.file('exam_configs.json')) {
+          const cJson = JSON.stringify(state.examConfigs, null, 2)
+          zip.file('exam_configs.json', cJson)
+          if (targetSlug && !zip.file(`${targetSlug}/exam_configs.json`)) {
+            zip.file(`${targetSlug}/exam_configs.json`, cJson)
+          }
+        }
+        if (Array.isArray(state?.studentMarks) && !zip.file('student_marks.json')) {
+          const mJson = JSON.stringify(state.studentMarks, null, 2)
+          zip.file('student_marks.json', mJson)
+          if (targetSlug && !zip.file(`${targetSlug}/student_marks.json`)) {
+            zip.file(`${targetSlug}/student_marks.json`, mJson)
+          }
+        }
+        if (Array.isArray(state?.routines) && !zip.file('exam_routines.json')) {
+          const rJson = JSON.stringify(state.routines, null, 2)
+          zip.file('exam_routines.json', rJson)
+          if (targetSlug && !zip.file(`${targetSlug}/exam_routines.json`)) {
+            zip.file(`${targetSlug}/exam_routines.json`, rJson)
+          }
+        }
+        if (Array.isArray(state?.subjectMarkConfigs) && !zip.file('subject_mark_configs.json')) {
+          const smcJson = JSON.stringify(state.subjectMarkConfigs, null, 2)
+          zip.file('subject_mark_configs.json', smcJson)
+          if (targetSlug && !zip.file(`${targetSlug}/subject_mark_configs.json`)) {
+            zip.file(`${targetSlug}/subject_mark_configs.json`, smcJson)
+          }
+        }
+      }
+
       // teachers store: also extract departments.json, designations.json, subjects.json
       if (baseName === 'teachers') {
         const depts = storeData?.state?.departments || storeData?.departments
@@ -196,6 +269,79 @@ export async function createBackupZip(
           zip.file('subjects.json', subsJson)
           if (targetSlug && !zip.file(`${targetSlug}/subjects.json`)) {
             zip.file(`${targetSlug}/subjects.json`, subsJson)
+          }
+        }
+      }
+
+      // hr store: extract individual slice files
+      if (baseName === 'hr') {
+        const state = storeData?.state || storeData
+        if (Array.isArray(state?.facilities) && !zip.file('hr_facilities.json')) {
+          const fJson = JSON.stringify(state.facilities, null, 2)
+          zip.file('hr_facilities.json', fJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_facilities.json`)) {
+            zip.file(`${targetSlug}/hr_facilities.json`, fJson)
+          }
+        }
+        if (Array.isArray(state?.increments) && !zip.file('hr_increments.json')) {
+          const iJson = JSON.stringify(state.increments, null, 2)
+          zip.file('hr_increments.json', iJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_increments.json`)) {
+            zip.file(`${targetSlug}/hr_increments.json`, iJson)
+          }
+        }
+        if (Array.isArray(state?.bonuses) && !zip.file('hr_bonuses.json')) {
+          const bJson = JSON.stringify(state.bonuses, null, 2)
+          zip.file('hr_bonuses.json', bJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_bonuses.json`)) {
+            zip.file(`${targetSlug}/hr_bonuses.json`, bJson)
+          }
+        }
+        if (Array.isArray(state?.promotions) && !zip.file('hr_promotions.json')) {
+          const pJson = JSON.stringify(state.promotions, null, 2)
+          zip.file('hr_promotions.json', pJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_promotions.json`)) {
+            zip.file(`${targetSlug}/hr_promotions.json`, pJson)
+          }
+        }
+        if (Array.isArray(state?.funds) && !zip.file('hr_funds.json')) {
+          const fndJson = JSON.stringify(state.funds, null, 2)
+          zip.file('hr_funds.json', fndJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_funds.json`)) {
+            zip.file(`${targetSlug}/hr_funds.json`, fndJson)
+          }
+        }
+      }
+
+      // exams store: extract individual slice files
+      if (baseName === 'exams') {
+        const state = storeData?.state || storeData
+        if (Array.isArray(state?.examConfigs) && !zip.file('exam_configs.json')) {
+          const cJson = JSON.stringify(state.examConfigs, null, 2)
+          zip.file('exam_configs.json', cJson)
+          if (targetSlug && !zip.file(`${targetSlug}/exam_configs.json`)) {
+            zip.file(`${targetSlug}/exam_configs.json`, cJson)
+          }
+        }
+        if (Array.isArray(state?.studentMarks) && !zip.file('student_marks.json')) {
+          const mJson = JSON.stringify(state.studentMarks, null, 2)
+          zip.file('student_marks.json', mJson)
+          if (targetSlug && !zip.file(`${targetSlug}/student_marks.json`)) {
+            zip.file(`${targetSlug}/student_marks.json`, mJson)
+          }
+        }
+        if (Array.isArray(state?.routines) && !zip.file('exam_routines.json')) {
+          const rJson = JSON.stringify(state.routines, null, 2)
+          zip.file('exam_routines.json', rJson)
+          if (targetSlug && !zip.file(`${targetSlug}/exam_routines.json`)) {
+            zip.file(`${targetSlug}/exam_routines.json`, rJson)
+          }
+        }
+        if (Array.isArray(state?.subjectMarkConfigs) && !zip.file('subject_mark_configs.json')) {
+          const smcJson = JSON.stringify(state.subjectMarkConfigs, null, 2)
+          zip.file('subject_mark_configs.json', smcJson)
+          if (targetSlug && !zip.file(`${targetSlug}/subject_mark_configs.json`)) {
+            zip.file(`${targetSlug}/subject_mark_configs.json`, smcJson)
           }
         }
       }
@@ -295,12 +441,15 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
   const classesFile = zip.file('classes.json') || zip.file(/(^|\/)classes\.json$/i)[0]
   const teachersFile = zip.file('teachers.json') || zip.file(/(^|\/)teachers\.json$/i)[0]
   const admissionsFile = zip.file('admissions.json') || zip.file('students.json') || zip.file(/(^|\/)(admissions|students)\.json$/i)[0]
+  const hrFile = zip.file('hr.json') || zip.file(/(^|\/)hr\.json$/i)[0]
+  const examsFile = zip.file('exams.json') || zip.file(/(^|\/)exams\.json$/i)[0]
 
-  if (classesFile || teachersFile || admissionsFile) {
+  if (classesFile || teachersFile || admissionsFile || hrFile || examsFile) {
     const stores: Record<string, any> = {}
     let classesCount = 0
     let teachersCount = 0
     let studentsCount = 0
+    let examsCount = 0
     let deptsCount = 0
     let subjectsCount = 0
 
@@ -344,6 +493,107 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
       }
     }
 
+    if (hrFile) {
+      try {
+        const text = await hrFile.async('text')
+        const parsed = JSON.parse(text)
+        stores['edutech-hr'] = parsed
+      } catch {
+        /* skip invalid json */
+      }
+    } else {
+      const hrIncFile = zip.file('hr_increments.json') || zip.file(/(^|\/)hr_increments\.json$/i)[0]
+      const hrBonFile = zip.file('hr_bonuses.json') || zip.file(/(^|\/)hr_bonuses\.json$/i)[0]
+      const hrFacFile = zip.file('hr_facilities.json') || zip.file(/(^|\/)hr_facilities\.json$/i)[0]
+      const hrProFile = zip.file('hr_promotions.json') || zip.file(/(^|\/)hr_promotions\.json$/i)[0]
+      const hrFndFile = zip.file('hr_funds.json') || zip.file(/(^|\/)hr_funds\.json$/i)[0]
+
+      if (hrIncFile || hrBonFile || hrFacFile || hrProFile || hrFndFile) {
+        try {
+          const incs = hrIncFile ? JSON.parse(await hrIncFile.async('text')) : []
+          const bons = hrBonFile ? JSON.parse(await hrBonFile.async('text')) : []
+          const facs = hrFacFile ? JSON.parse(await hrFacFile.async('text')) : []
+          const pros = hrProFile ? JSON.parse(await hrProFile.async('text')) : []
+          const fnds = hrFndFile ? JSON.parse(await hrFndFile.async('text')) : []
+
+          stores['edutech-hr'] = {
+            state: {
+              increments: Array.isArray(incs) ? incs : [],
+              bonuses: Array.isArray(bons) ? bons : [],
+              facilities: Array.isArray(facs) ? facs : [],
+              promotions: Array.isArray(pros) ? pros : [],
+              funds: Array.isArray(fnds) ? fnds : [],
+              teacherFacilities: [],
+              monthlySalaryConfigs: [],
+              recommendations: [],
+              homeworkRecords: [],
+              dailyReports: [],
+              serverSynced: true,
+            },
+            version: 1,
+          }
+        } catch {
+          /* skip invalid slice json */
+        }
+      }
+    }
+
+    if (examsFile) {
+      try {
+        const text = await examsFile.async('text')
+        const parsed = JSON.parse(text)
+        stores['edutech-exams'] = parsed
+        const list = parsed?.state?.examConfigs || parsed?.examConfigs
+        if (Array.isArray(list)) examsCount = list.length
+      } catch {
+        /* skip invalid json */
+      }
+    } else {
+      const examCfgFile = zip.file('exam_configs.json') || zip.file(/(^|\/)exam_configs\.json$/i)[0]
+      const subMarkCfgFile = zip.file('subject_mark_configs.json') || zip.file(/(^|\/)subject_mark_configs\.json$/i)[0]
+      const marksFile = zip.file('student_marks.json') || zip.file(/(^|\/)student_marks\.json$/i)[0]
+      const routinesFile = zip.file('exam_routines.json') || zip.file(/(^|\/)exam_routines\.json$/i)[0]
+
+      if (examCfgFile || subMarkCfgFile || marksFile || routinesFile) {
+        try {
+          const cfgs = examCfgFile ? JSON.parse(await examCfgFile.async('text')) : []
+          const subCfgs = subMarkCfgFile ? JSON.parse(await subMarkCfgFile.async('text')) : []
+          const marks = marksFile ? JSON.parse(await marksFile.async('text')) : []
+          const rts = routinesFile ? JSON.parse(await routinesFile.async('text')) : []
+
+          stores['edutech-exams'] = {
+            state: {
+              examConfigs: Array.isArray(cfgs) ? cfgs : [],
+              subjectMarkConfigs: Array.isArray(subCfgs) ? subCfgs : [],
+              studentMarks: Array.isArray(marks) ? marks : [],
+              routines: Array.isArray(rts) ? rts : [],
+              rooms: [],
+              seatPlans: [],
+              invigilators: [],
+              attendances: [],
+              omrConfigs: [],
+              extraMarks: [],
+              extraMarkTypes: [],
+              marksheetConfigs: [],
+              generalAbilities: [],
+              gradeScales: [],
+              workingDays: [],
+              promotions: [],
+              cumulativeSheets: [],
+              marksEntryStatuses: [],
+              omrTemplates: [],
+              markAdjustments: [],
+              serverSynced: true,
+            },
+            version: 8,
+          }
+          if (Array.isArray(cfgs)) examsCount = cfgs.length
+        } catch {
+          /* skip invalid slice json */
+        }
+      }
+    }
+
     const bundle: BackupBundle = {
       metadata: {
         app: 'EduTech SMS',
@@ -354,7 +604,7 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
           classes: classesCount,
           teachers: teachersCount,
           students: studentsCount,
-          exams: 0,
+          exams: examsCount,
           departments: deptsCount,
           subjects: subjectsCount,
         },

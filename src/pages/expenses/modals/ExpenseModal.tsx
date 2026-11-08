@@ -23,7 +23,9 @@ export function ExpenseModal({ existing, onSaved, onClose }: Props) {
   const { categories, addExpense, updateExpense } = useExpenseStore()
   const currentSession = useClassStore((s) => s.institution.currentSession) || '2025-26'
 
-  const activeCategories = useMemo(() => categories.filter((c) => c.isActive), [categories])
+  const activeCategories = useMemo(() => {
+    return categories.filter((c) => c.isActive !== false || (existing && c.id === existing.categoryId))
+  }, [categories, existing])
 
   const [categoryId, setCategoryId] = useState(existing?.categoryId || '')
   const [amount, setAmount] = useState(existing?.amount?.toString() || '')

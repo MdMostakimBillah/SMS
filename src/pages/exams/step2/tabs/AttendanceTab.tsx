@@ -110,7 +110,13 @@ function QRScannerModal({
           },
           () => {}
         )
-        if (mounted) setScannerReady(true)
+        if (!mounted) {
+          scanner.stop().catch(() => {})
+          scanner.clear().catch(() => {})
+          html5QrCodeRef.current = null
+          return
+        }
+        setScannerReady(true)
       } catch (err) {
         logger.warn('QR Scanner error', { error: err instanceof Error ? err.message : String(err) })
         if (mounted) setScannerReady(false)
@@ -205,6 +211,13 @@ export const AttendanceTab = React.memo(function AttendanceTab({
   const [attShift, setAttShift] = useState<'morning' | 'afternoon'>('morning')
   const [showQRScanner, setShowQRScanner] = useState(false)
   const [lastScanned, setLastScanned] = useState('')
+  const lastScannedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (lastScannedTimerRef.current) clearTimeout(lastScannedTimerRef.current)
+    }
+  }, [])
 
   return (
     <>
@@ -315,7 +328,8 @@ export const AttendanceTab = React.memo(function AttendanceTab({
               scannedAt: new Date().toISOString(),
             })
             setLastScanned(`${student.nameEn} - ${isBn ? 'উপস্থিত' : 'Present'}`)
-            setTimeout(() => setLastScanned(''), 2000)
+            if (lastScannedTimerRef.current) clearTimeout(lastScannedTimerRef.current)
+            lastScannedTimerRef.current = setTimeout(() => setLastScanned(''), 2000)
           }}
           onClose={() => setShowQRScanner(false)}
           lastScanned={lastScanned}

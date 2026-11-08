@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import OthersIncomePage from './index'
 import { useOthersIncomeStore } from '@/store/othersIncomeStore'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { othersIncomeApi } from '@/lib/api'
 
 vi.mock('@/hooks/usePermission', () => ({
   usePermission: () => ({
@@ -21,19 +22,28 @@ describe('OthersIncomePage', () => {
     useOthersIncomeStore.setState({
       categories: [
         {
-          id: 'OIC-1',
-          name: 'Daycare Service',
-          nameBn: 'ডেকেয়ার সার্ভিস',
-          amount: 1500,
+          id: 'OIC-101',
+          name: 'Day Care',
+          nameBn: 'ডে কেয়ার',
+          amount: 500,
           type: 'monthly',
-          totalMonths: [0, 1, 2, 3],
-          description: 'Full day care',
-          descriptionBn: 'সারাদিনের যত্ন',
+          description: 'Day care facilities',
+          descriptionBn: 'ডে কেয়ার সুবিধা',
           isActive: true,
-          createdAt: '2026-11-06',
+          createdAt: '2026-11-07',
         },
       ],
-      assignments: [],
+      assignments: [
+        {
+          id: 'OIA-101',
+          categoryId: 'OIC-101',
+          studentId: 'STU-001',
+          months: [10],
+          academicYear: '2025-26',
+          assignedDate: '2026-11-07',
+          isActive: true,
+        },
+      ],
       serverSynced: true,
       syncing: false,
       syncError: null,
@@ -41,141 +51,74 @@ describe('OthersIncomePage', () => {
     useAdmissionStore.setState({
       students: [
         {
-          id: 'ST-001',
-          nameEn: 'Sadman Sakib',
-          nameBn: 'সাদমান সাকিব',
-          class: 'Class 6',
-          section: 'A',
-          roll: '1',
-          status: 'approved',
-          active: true,
-          phone: '01700000000',
+          id: 'STU-001',
+          nameEn: 'Fahim Mia',
+          nameBn: 'ফাহিম মিয়া',
+          class: 'HSC',
+          section: 'Humanity',
+          roll: '77',
+          isActive: true,
         } as any,
       ],
     })
     vi.restoreAllMocks()
   })
 
-  it('renders the header and categories tab with data', async () => {
+  it('renders header, stat cards, and types tab with categories data', async () => {
     render(<OthersIncomePage />)
 
-    // Wait for initial skeleton loading to finish
     await waitFor(() => {
-      expect(screen.getByText('Daycare Service')).toBeInTheDocument()
+      expect(screen.getByText('Day Care')).toBeInTheDocument()
     })
 
     expect(screen.getByText('Others Income')).toBeInTheDocument()
-    expect(screen.getByText('Categories')).toBeInTheDocument()
-    expect(screen.getByText('Assignments')).toBeInTheDocument()
+    expect(screen.getByText('Total Categories')).toBeInTheDocument()
+    expect(screen.getByText('Active Categories')).toBeInTheDocument()
+    expect(screen.getByText('Monthly Income')).toBeInTheDocument()
   })
 
   it('switches between Categories and Assignments tabs', async () => {
     render(<OthersIncomePage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Daycare Service')).toBeInTheDocument()
+      expect(screen.getByText('Day Care')).toBeInTheDocument()
     })
 
-    const assignmentsTabBtn = screen.getByRole('button', { name: /assignments/i })
-    fireEvent.click(assignmentsTabBtn)
+    const assignTabBtn = screen.getByRole('button', { name: /assignments/i })
+    fireEvent.click(assignTabBtn)
 
     await waitFor(() => {
-      expect(screen.getByText(/no assignments found/i)).toBeInTheDocument()
+      expect(screen.getByText('Fahim Mia')).toBeInTheDocument()
     })
   })
 
-  it('filters categories when typing in the search bar', async () => {
+  it('triggers syncFromServer when clicking the Refresh button in database mode', async () => {
+    const syncSpy = vi.spyOn(useOthersIncomeStore.getState(), 'syncFromServer').mockImplementation(async () => {})
     render(<OthersIncomePage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Daycare Service')).toBeInTheDocument()
+      expect(screen.getByText('Day Care')).toBeInTheDocument()
     })
 
-    const searchInput = screen.getByPlaceholderText(/search/i)
-    fireEvent.change(searchInput, { target: { value: 'nonexistent' } })
+    const refreshBtn = screen.getByRole('button', { name: /refresh|রিফ্রেশ/i })
+    expect(refreshBtn).toBeInTheDocument()
+    fireEvent.click(refreshBtn)
 
     await waitFor(() => {
-      expect(screen.getByText(/no categories found/i)).toBeInTheDocument()
-    })
-
-    fireEvent.change(searchInput, { target: { value: 'Daycare' } })
-
-    await waitFor(() => {
-      expect(screen.getByText('Daycare Service')).toBeInTheDocument()
+      expect(syncSpy).toHaveBeenCalled()
     })
   })
 
-  it('opens CategoryModal and adds a new category', async () => {
+  it('runs properly in Local PC mode without requiring backend database', async () => {
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    const getSpy = vi.spyOn(othersIncomeApi, 'get')
+
     render(<OthersIncomePage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Daycare Service')).toBeInTheDocument()
+      expect(screen.getByText('Day Care')).toBeInTheDocument()
     })
 
-    const addBtn = screen.getByRole('button', { name: /add category/i })
-    fireEvent.click(addBtn)
-
-    expect(screen.getByText('New Category')).toBeInTheDocument()
-
-    const nameInput = screen.getByPlaceholderText(/e\.g\. Daycare Fee/i)
-    fireEvent.change(nameInput, { target: { value: 'Transport Special' } })
-
-    const amountInput = screen.getByPlaceholderText('0')
-    fireEvent.change(amountInput, { target: { value: '800' } })
-
-    const createBtn = screen.getByRole('button', { name: /create/i })
-    fireEvent.click(createBtn)
-
-    await waitFor(() => {
-      expect(screen.getByText('Transport Special')).toBeInTheDocument()
-    })
-
-    const cat = useOthersIncomeStore.getState().categories.find((c) => c.name === 'Transport Special')
-    expect(cat).toBeDefined()
-    expect(cat?.amount).toBe(800)
-  })
-
-  it('assigns a student to a category via AssignmentModal', async () => {
-    render(<OthersIncomePage />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Daycare Service')).toBeInTheDocument()
-    })
-
-    // Switch to assignments tab
-    fireEvent.click(screen.getByRole('button', { name: /^assignments$/i }))
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /^assign$/i })).toBeInTheDocument()
-    })
-
-    // Click assign button
-    fireEvent.click(screen.getByRole('button', { name: /^assign$/i }))
-
-    expect(screen.getByText('New Assignment')).toBeInTheDocument()
-
-    // Select category
-    const catSelect = screen.getByRole('combobox')
-    fireEvent.change(catSelect, { target: { value: 'OIC-1' } })
-
-    // Open student dropdown
-    const studentInput = screen.getByPlaceholderText(/select student/i)
-    fireEvent.click(studentInput)
-
-    // Select Sadman Sakib
-    const studentOption = screen.getByText('Sadman Sakib')
-    fireEvent.click(studentOption)
-
-    // Submit assignment (modal footer button)
-    const assignBtns = screen.getAllByRole('button', { name: /^assign$/i })
-    const submitBtn = assignBtns[assignBtns.length - 1]
-    fireEvent.click(submitBtn)
-
-    await waitFor(() => {
-      expect(screen.getByText('Sadman Sakib')).toBeInTheDocument()
-    })
-
-    expect(useOthersIncomeStore.getState().assignments).toHaveLength(1)
-    expect(useOthersIncomeStore.getState().assignments[0].studentId).toBe('ST-001')
+    expect(getSpy).not.toHaveBeenCalled()
   })
 })

@@ -57,7 +57,7 @@ export const SalesTab = ({ isMobile: _isMobile, searchQuery }: Props) => {
   }
 
   const isFeeCollect = (s: typeof sales[number]) => s.note?.includes('Fee Collect')
-  const getReceiptNo = (note: string) => note?.match(/RCP-\w+/)?.[0] || ''
+  const getReceiptNo = (note: string) => note?.match(/(?:RCP-[\w-]+|\b\d{6}\b)/)?.[0] || ''
 
   const filtered = useMemo(() => {
     let list = [...sales].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

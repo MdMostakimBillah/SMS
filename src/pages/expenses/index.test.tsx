@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import ExpensesManagementPage from './index'
 import { useExpenseStore, PREDEFINED_CATEGORIES } from '@/store/expenseStore'
+import { expensesApi } from '@/lib/api'
 
 vi.mock('@/hooks/usePermission', () => ({
   usePermission: () => ({
@@ -185,5 +186,104 @@ describe('ExpensesManagementPage', () => {
     const exp = useExpenseStore.getState().expenses.find((e) => e.description === 'High-speed printer paper')
     expect(exp).toBeDefined()
     expect(exp?.amount).toBe(2500)
+  })
+
+  it('triggers syncFromServer when clicking the Refresh button in database mode', async () => {
+    const syncSpy = vi.spyOn(useExpenseStore.getState(), 'syncFromServer').mockImplementation(async () => {})
+    render(<ExpensesManagementPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Annual Sports Day')).toBeInTheDocument()
+    })
+
+    const refreshBtn = screen.getByRole('button', { name: /refresh|রিফ্রেশ/i })
+    expect(refreshBtn).toBeInTheDocument()
+    fireEvent.click(refreshBtn)
+
+    await waitFor(() => {
+      expect(syncSpy).toHaveBeenCalled()
+    })
+  })
+
+  it('functions properly in Local PC mode without requiring backend database', async () => {
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    const getSpy = vi.spyOn(expensesApi, 'get')
+
+    render(<ExpensesManagementPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Annual Sports Day')).toBeInTheDocument()
+    })
+
+    // No network calls made
+    expect(getSpy).not.toHaveBeenCalled()
+
+    // Add local expense in Local PC mode
+    act(() => {
+      useExpenseStore.getState().addExpense({
+        id: 'EXP-LOCAL-01',
+        categoryId: 'EXP-CAT-001',
+        amount: 8000,
+        date: '2026-11-06',
+        description: 'Local Vault Emergency Expense',
+        descriptionBn: 'লোকাল জরুরি খরচ',
+        paymentMethod: 'cash',
+        isRecurring: false,
+        recurringMonths: [],
+        academicYear: '2025-26',
+        createdBy: 'Offline Admin',
+        createdAt: '2026-11-06',
+        isActive: true,
+      })
+    })
+
+    expect(useExpenseStore.getState().expenses.some((e) => e.id === 'EXP-LOCAL-01')).toBe(true)
+    expect(getSpy).not.toHaveBeenCalled()
+  })
+
+  it('toggles expense active state with multiple expenses safely without error', async () => {
+    useExpenseStore.setState({
+      expenses: [
+        {
+          id: 'EXP-1',
+          categoryId: 'EXP-CAT-001',
+          amount: 5000,
+          date: '2026-11-01',
+          description: 'First Expense',
+          descriptionBn: 'প্রথম খরচ',
+          paymentMethod: 'cash',
+          isRecurring: false,
+          recurringMonths: [],
+          academicYear: '2025-26',
+          createdBy: 'Admin',
+          createdAt: '2026-11-01',
+          isActive: true,
+        },
+        {
+          id: 'EXP-2',
+          categoryId: 'EXP-CAT-002',
+          amount: 7000,
+          date: '2026-11-02',
+          description: 'Second Expense',
+          descriptionBn: 'দ্বিতীয় খরচ',
+          paymentMethod: 'bank',
+          isRecurring: false,
+          recurringMonths: [],
+          academicYear: '2025-26',
+          createdBy: 'Admin',
+          createdAt: '2026-11-02',
+          isActive: true,
+        },
+      ],
+    })
+
+    // Toggle first expense
+    expect(() => {
+      useExpenseStore.getState().toggleExpenseActive('EXP-1')
+    }).not.toThrow()
+
+    const state = useExpenseStore.getState()
+    expect(state.expenses.find((e) => e.id === 'EXP-1')?.isActive).toBe(false)
+    expect(state.expenses.find((e) => e.id === 'EXP-2')?.isActive).toBe(true)
   })
 })

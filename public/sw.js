@@ -1,13 +1,37 @@
-const CACHE_NAME = 'edutech-pwa-v4'
+const CACHE_NAME = 'edutech-pwa-v5'
+const PRECACHE_ASSETS = ['/', '/index.html', '/favicon.svg']
+
 let brandColor = '#6366f1'
 let institution = null // { name, brandName, slug, logo, brandColor }
 
-self.addEventListener('install', () => {
-  self.skipWaiting()
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(PRECACHE_ASSETS).catch((err) => {
+          console.warn('[SW] Precache warning:', err)
+        })
+      })
+      .then(() => self.skipWaiting())
+  )
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim())
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => {
+        return Promise.all(
+          keys.map((key) => {
+            if (key !== CACHE_NAME) {
+              return caches.delete(key)
+            }
+          })
+        )
+      })
+      .then(() => self.clients.claim())
+  )
 })
 
 function generateManifest(color) {
@@ -54,13 +78,27 @@ self.addEventListener('message', (event) => {
   } else if (data.type === 'SET_BRAND_COLOR') {
     brandColor = data.color
     if (institution) institution.brandColor = data.color
+  } else if (data.type === 'CACHE_ASSETS' && Array.isArray(data.urls)) {
+    caches.open(CACHE_NAME).then((cache) => {
+      data.urls.forEach((url) => {
+        fetch(url)
+          .then((res) => {
+            if (res.ok) cache.put(url, res)
+          })
+          .catch(() => {})
+      })
+    })
   }
 })
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
 
+  // Only handle same-origin requests
   if (url.origin !== self.location.origin) return
+
+  // Never cache or hijack backend API endpoints; local stores handle offline persistence
+  if (url.pathname.startsWith('/api/')) return
 
   // Auto-detect institution from URL path if not set via message
   if (!institution) {
@@ -81,7 +119,6 @@ self.addEventListener('fetch', (event) => {
       )
       return
     }
-    // No .ico ships — the animated brand SVG stands in for it.
     if (url.pathname === '/favicon.ico') {
       event.respondWith(fetch('/favicon.svg'))
       return
@@ -89,10 +126,87 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // Dynamic PWA manifest
   if (url.pathname === '/manifest.json') {
     event.respondWith(
       new Response(JSON.stringify(generateManifest(brandColor)), {
         headers: { 'Content-Type': 'application/json' },
+      })
+    )
+    return
+  }
+
+  // 1. Navigation requests (HTML documents): Network-First, falling back to cached /index.html
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse.ok) {
+            const clone = networkResponse.clone()
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone)
+              cache.put('/index.html', networkResponse.clone())
+            })
+          }
+          return networkResponse
+        })
+        .catch(async () => {
+          const cachedRoute = await caches.match(event.request)
+          if (cachedRoute) return cachedRoute
+          const cachedIndex = await caches.match('/index.html')
+          if (cachedIndex) return cachedIndex
+          const cachedRoot = await caches.match('/')
+          return cachedRoot || new Response('Offline: EduTech Shell not cached yet.', { status: 503 })
+        })
+    )
+    return
+  }
+
+  // 2. Static application assets: Cache-First with Stale-While-Revalidate
+  const isStaticAsset =
+    url.pathname.startsWith('/assets/') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.woff') ||
+    url.pathname.endsWith('.woff2') ||
+    url.pathname.endsWith('.ttf') ||
+    url.pathname.endsWith('.svg') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.ico') ||
+    url.pathname.endsWith('.json')
+
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          // In background, fetch and update cache
+          fetch(event.request)
+            .then((networkResponse) => {
+              if (networkResponse.ok) {
+                caches.open(CACHE_NAME).then((cache) => {
+                  cache.put(event.request, networkResponse)
+                })
+              }
+            })
+            .catch(() => {})
+          return cachedResponse
+        }
+
+        // Not in cache yet: fetch from network and save to cache
+        return fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse.ok) {
+              const clone = networkResponse.clone()
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, clone)
+              })
+            }
+            return networkResponse
+          })
+          .catch(() => {
+            return new Response('', { status: 408, statusText: 'Offline asset not available' })
+          })
       })
     )
     return

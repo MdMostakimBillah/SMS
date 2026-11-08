@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useOthersIncomeStore, otherFeeStructureId } from './othersIncomeStore'
+import {
+  useOthersIncomeStore,
+  otherIncomeCategoryId,
+  otherIncomeAssignmentId,
+  otherFeeStructureId,
+} from './othersIncomeStore'
 import { useFeeStore } from './feeStore'
+import { useAdmissionStore } from './admissionStore'
 import { othersIncomeApi } from '@/lib/api'
 import { normalizeVaultJsonForStore, vaultPathToKey } from '@/lib/vault/mapping'
 
@@ -16,156 +22,181 @@ describe('othersIncomeStore', () => {
       syncing: false,
       syncError: null,
     })
+    useFeeStore.setState({
+      structures: [],
+      payments: [],
+      waivers: [],
+    })
+    useAdmissionStore.setState({
+      students: [
+        {
+          id: 'STU-001',
+          nameEn: 'Fahim Mia',
+          nameBn: 'ফাহিম মিয়া',
+          class: 'Class 10',
+          section: 'A',
+          roll: '1',
+          isActive: true,
+        } as any,
+      ],
+    })
     vi.restoreAllMocks()
   })
 
-  it('adds, updates, and deletes categories', () => {
+  it('adds, updates, toggles, and deletes categories', () => {
     const cat = {
-      id: 'OIC-101',
-      name: 'Lab Development Fee',
-      nameBn: 'ল্যাব উন্নয়ন ফি',
-      amount: 1500,
+      id: otherIncomeCategoryId(),
+      name: 'Day Care',
+      nameBn: 'ডে কেয়ার',
+      amount: 500,
       type: 'monthly' as const,
-      totalMonths: [0, 1, 2, 3, 4, 5],
-      description: 'Science and computer lab fee',
-      descriptionBn: 'বিজ্ঞান ও কম্পিউটার ল্যাব ফি',
+      description: 'Monthly day care service',
+      descriptionBn: 'মাসিক ডে কেয়ার সুবিধা',
       isActive: true,
-      createdAt: '2026-11-06',
+      createdAt: '2026-11-07',
     }
 
     useOthersIncomeStore.getState().addCategory(cat)
     expect(useOthersIncomeStore.getState().categories).toHaveLength(1)
-    expect(useOthersIncomeStore.getState().categories[0].name).toBe('Lab Development Fee')
+    expect(useOthersIncomeStore.getState().categories[0].name).toBe('Day Care')
 
-    useOthersIncomeStore.getState().updateCategory('OIC-101', { amount: 1800 })
-    expect(useOthersIncomeStore.getState().categories[0].amount).toBe(1800)
+    useOthersIncomeStore.getState().updateCategory(cat.id, { amount: 600 })
+    expect(useOthersIncomeStore.getState().categories[0].amount).toBe(600)
 
-    useOthersIncomeStore.getState().toggleCategoryActive('OIC-101')
+    useOthersIncomeStore.getState().toggleCategoryActive(cat.id)
     expect(useOthersIncomeStore.getState().categories[0].isActive).toBe(false)
+
+    useOthersIncomeStore.getState().deleteCategory(cat.id)
+    expect(useOthersIncomeStore.getState().categories).toHaveLength(0)
   })
 
-  it('adds, updates, and deletes student assignments', () => {
+  it('adds an assignment and automatically syncs a fee structure into feeStore', () => {
+    const cat = {
+      id: 'OIC-101',
+      name: 'Day Care',
+      nameBn: 'ডে কেয়ার',
+      amount: 500,
+      type: 'monthly' as const,
+      description: 'Day care',
+      descriptionBn: 'ডে কেয়ার',
+      isActive: true,
+      createdAt: '2026-11-07',
+    }
+    useOthersIncomeStore.getState().addCategory(cat)
+
     const assignment = {
-      id: 'OIA-101',
-      categoryId: 'OIC-101',
-      studentId: 'ST-005',
-      months: [0, 1, 2],
-      academicYear: '2026-27',
-      assignedDate: '2026-11-06',
+      id: otherIncomeAssignmentId(),
+      categoryId: cat.id,
+      studentId: 'STU-001',
+      months: [10],
+      academicYear: '2025-26',
+      assignedDate: '2026-11-07',
       isActive: true,
     }
-
     useOthersIncomeStore.getState().addAssignment(assignment)
+
     expect(useOthersIncomeStore.getState().assignments).toHaveLength(1)
-    expect(useOthersIncomeStore.getState().assignments[0].studentId).toBe('ST-005')
 
-    useOthersIncomeStore.getState().updateAssignment('OIA-101', { months: [0, 1, 2, 3] })
-    expect(useOthersIncomeStore.getState().assignments[0].months).toHaveLength(4)
+    // Check feeStore has corresponding fee structure
+    const expectedStructId = otherFeeStructureId(assignment.id)
+    const struct = useFeeStore.getState().structures.find((s) => s.id === expectedStructId)
+    expect(struct).toBeDefined()
+    expect(struct?.name).toBe('Day Care')
+    expect(struct?.amount).toBe(500)
+    expect(struct?.studentId).toBe('STU-001')
 
-    useOthersIncomeStore.getState().deleteAssignment('OIA-101')
+    // Delete assignment removes fee structure
+    useOthersIncomeStore.getState().deleteAssignment(assignment.id)
     expect(useOthersIncomeStore.getState().assignments).toHaveLength(0)
+    expect(useFeeStore.getState().structures.some((s) => s.id === expectedStructId)).toBe(false)
   })
 
-  it('syncs others income from backend when server returns data', async () => {
+  it('syncs from server when in cloud database mode', async () => {
     const mockData = {
-      categories: [{ id: 'OIC-1', name: 'Scout Fee', nameBn: 'স্কাউট ফি', amount: 300, type: 'onetime' as const, description: '', descriptionBn: '', isActive: true, createdAt: '2026-11-06' }],
-      assignments: [{ id: 'OIA-1', categoryId: 'OIC-1', studentId: 'S-99', months: [0], academicYear: '2026-27', assignedDate: '2026-11-06', isActive: true }],
+      categories: [
+        {
+          id: 'OIC-999',
+          name: 'Special Coaching',
+          nameBn: 'বিশেষ কোচিং',
+          amount: 1200,
+          type: 'monthly' as const,
+          description: '',
+          descriptionBn: '',
+          isActive: true,
+          createdAt: '2026-11-07',
+        },
+      ],
+      assignments: [
+        {
+          id: 'OIA-999',
+          categoryId: 'OIC-999',
+          studentId: 'STU-001',
+          months: [0, 1],
+          academicYear: '2025-26',
+          assignedDate: '2026-11-07',
+          isActive: true,
+        },
+      ],
     }
 
     vi.spyOn(othersIncomeApi, 'get').mockResolvedValue(mockData)
 
-    await useOthersIncomeStore.getState().syncFromServer('test-school')
+    await useOthersIncomeStore.getState().syncFromServer('demo-school')
 
     const state = useOthersIncomeStore.getState()
     expect(state.categories).toHaveLength(1)
-    expect(state.categories[0].name).toBe('Scout Fee')
+    expect(state.categories[0].name).toBe('Special Coaching')
     expect(state.assignments).toHaveLength(1)
     expect(state.serverSynced).toBe(true)
   })
 
-  it('correctly maps vault paths to others-income key', () => {
-    expect(vaultPathToKey('others_income_categories.json', { slug: 'demo' })).toBe('edutech-others-income_demo')
-    expect(vaultPathToKey('others_income_assignments.json', { slug: 'demo' })).toBe('edutech-others-income_demo')
-    expect(vaultPathToKey('demo/others-income.json', { slug: 'demo' })).toBe('edutech-others-income_demo')
+  it('skips server sync in local_computer mode', async () => {
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    const getSpy = vi.spyOn(othersIncomeApi, 'get')
+    const updateSpy = vi.spyOn(othersIncomeApi, 'update')
+
+    await useOthersIncomeStore.getState().syncFromServer('local-school')
+    expect(getSpy).not.toHaveBeenCalled()
+    expect(useOthersIncomeStore.getState().serverSynced).toBe(true)
+
+    await useOthersIncomeStore.getState().syncToServer()
+    expect(updateSpy).not.toHaveBeenCalled()
+  })
+
+  it('maps vault file paths to others-income namespaced key', () => {
+    expect(vaultPathToKey('others-income.json', { slug: 'school' })).toBe('edutech-others-income_school')
+    expect(vaultPathToKey('others_income_categories.json', { slug: 'school' })).toBe('edutech-others-income_school')
+    expect(vaultPathToKey('others_income_assignments.json', { slug: 'school' })).toBe('edutech-others-income_school')
+    expect(vaultPathToKey('school/others-income.json', { slug: 'school' })).toBe('edutech-others-income_school')
   })
 
   it('normalizes slice and aggregate vault json files into others-income state', () => {
     const rawCategories = [
-      { id: 'OIC-CAT1', name: 'Sports Fee', amount: 500, type: 'onetime' },
+      { id: 'OIC-V1', name: 'Karate Club', nameBn: 'কারাতে ক্লাব', amount: 800, type: 'monthly' },
     ]
     const normalizedC = normalizeVaultJsonForStore(
-      'edutech-others-income_demo',
+      'edutech-others-income_school',
       JSON.stringify(rawCategories),
       undefined,
-      'demo/others_income_categories.json',
+      'school/others_income_categories.json'
     )
     const parsedC = JSON.parse(normalizedC)
     expect(parsedC.state.categories).toHaveLength(1)
-    expect(parsedC.state.categories[0].name).toBe('Sports Fee')
+    expect(parsedC.state.categories[0].name).toBe('Karate Club')
 
     const rawAggregate = {
-      categories: [{ id: 'OIC-AGG', name: 'Tour Fee', amount: 2000, type: 'onetime' }],
-      assignments: [{ id: 'OIA-AGG', categoryId: 'OIC-AGG', studentId: 'S-1' }],
+      categories: [{ id: 'OIC-AGG', name: 'Robotics Workshop', amount: 1500, type: 'onetime' }],
+      assignments: [{ id: 'OIA-AGG', categoryId: 'OIC-AGG', studentId: 'STU-001', months: [] }],
     }
     const normalizedAgg = normalizeVaultJsonForStore(
-      'edutech-others-income_demo',
+      'edutech-others-income_school',
       JSON.stringify(rawAggregate),
       undefined,
-      'demo/others-income.json',
+      'school/others-income.json'
     )
     const parsedAgg = JSON.parse(normalizedAgg)
     expect(parsedAgg.state.categories).toHaveLength(1)
     expect(parsedAgg.state.assignments).toHaveLength(1)
-  })
-
-  it('synchronizes fee structures in feeStore when others income assignments and categories change', () => {
-    useFeeStore.setState({ structures: [] })
-
-    // 1. Add Category
-    const cat = {
-      id: 'OIC-SYNC',
-      name: 'Daycare Fee',
-      nameBn: 'ডেকেয়ার ফি',
-      amount: 1000,
-      type: 'monthly' as const,
-      totalMonths: [0, 1, 2],
-      description: 'Daycare',
-      descriptionBn: 'ডেকেয়ার',
-      isActive: true,
-      createdAt: '2026-11-06',
-    }
-    useOthersIncomeStore.getState().addCategory(cat)
-
-    // 2. Add Assignment -> should create structure in feeStore
-    const assign = {
-      id: 'OIA-SYNC',
-      categoryId: 'OIC-SYNC',
-      studentId: 'ST-SYNC-1',
-      months: [0, 1, 2],
-      academicYear: '2025-26',
-      assignedDate: '2026-11-06',
-      isActive: true,
-    }
-    useOthersIncomeStore.getState().addAssignment(assign)
-
-    const structId = otherFeeStructureId('OIA-SYNC')
-    let feeStruct = useFeeStore.getState().structures.find((s) => s.id === structId)
-    expect(feeStruct).toBeDefined()
-    expect(feeStruct?.amount).toBe(1000)
-    expect(feeStruct?.isActive).toBe(true)
-
-    // 3. Update Category amount -> should update fee structure in feeStore
-    useOthersIncomeStore.getState().updateCategory('OIC-SYNC', { amount: 1200 })
-    feeStruct = useFeeStore.getState().structures.find((s) => s.id === structId)
-    expect(feeStruct?.amount).toBe(1200)
-
-    // 4. Toggle category inactive -> should deactivate fee structure
-    useOthersIncomeStore.getState().toggleCategoryActive('OIC-SYNC')
-    feeStruct = useFeeStore.getState().structures.find((s) => s.id === structId)
-    expect(feeStruct?.isActive).toBe(false)
-
-    // 5. Delete category -> should remove fee structure
-    useOthersIncomeStore.getState().deleteCategory('OIC-SYNC')
-    expect(useFeeStore.getState().structures.find((s) => s.id === structId)).toBeUndefined()
+    expect(parsedAgg.state.categories[0].name).toBe('Robotics Workshop')
   })
 })

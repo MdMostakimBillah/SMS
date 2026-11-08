@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Tag, Users, Coins, Search } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { Tag, Users, Coins, Search, RefreshCw } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useOthersIncomeStore, pruneExpiredOthersIncomeAssignments } from '@/store/othersIncomeStore'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
+import { getSlug } from '@/lib/storage'
 import { TypesTab } from './tabs/TypesTab'
 import { AssignmentsTab } from './tabs/AssignmentsTab'
 import { usePermission } from '@/hooks/usePermission'
@@ -40,6 +42,8 @@ function StatCards({ stats, bn }: { stats: { totalCategories: number; activeCate
 
 export default function OthersIncomePage() {
   const bn = useBn()
+  const { slug: paramSlug } = useParams<{ slug?: string }>()
+  const slug = paramSlug || getSlug() || undefined
   const { canRead } = usePermission()
   const categories = useOthersIncomeStore((s) => s.categories)
   const assignments = useOthersIncomeStore((s) => s.assignments)
@@ -47,6 +51,7 @@ export default function OthersIncomePage() {
   const [activeTab, setActiveTab] = useState<View>('types')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
@@ -58,26 +63,52 @@ export default function OthersIncomePage() {
     getContainer: (slider) => slider?.parentElement ?? null,
   })
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await Promise.allSettled([
+        useOthersIncomeStore.getState().syncFromServer(slug),
+        useAdmissionStore.getState().syncFromServer(),
+      ])
+    } finally {
+      setRefreshing(false)
+    }
+  }, [slug])
+
   useEffect(() => {
-    useOthersIncomeStore.getState().syncFromServer().catch(() => {})
+    useOthersIncomeStore.getState().syncFromServer(slug).catch(() => {})
     useAdmissionStore.getState().syncFromServer().catch(() => {})
     pruneExpiredOthersIncomeAssignments()
     const t = setTimeout(() => setLoading(false), 400)
     return () => clearTimeout(t)
-  }, [])
+  }, [slug])
 
   const stats = useMemo(() => {
-    const totalCategories = categories.length
-    const activeCategories = categories.filter((c) => c.isActive).length
-    const assignedStudents = new Set(assignments.filter((a) => a.isActive).map((a) => a.studentId)).size
-    const totalMonthlyIncome = assignments
-      .filter((a) => a.isActive)
-      .reduce((sum, a) => {
-        const cat = categories.find((c) => c.id === a.categoryId)
-        if (cat && cat.isActive && cat.type === 'monthly') return sum + cat.amount
-        return sum
-      }, 0)
-    return { totalCategories, activeCategories, assignedStudents, totalMonthlyIncome }
+    const catMap = new Map<string, (typeof categories)[0]>()
+    let activeCategories = 0
+    for (let i = 0; i < categories.length; i++) {
+      const c = categories[i]
+      catMap.set(c.id, c)
+      if (c.isActive !== false) activeCategories++
+    }
+    const studentSet = new Set<string>()
+    let totalMonthlyIncome = 0
+    for (let i = 0; i < assignments.length; i++) {
+      const a = assignments[i]
+      if (a.isActive !== false) {
+        studentSet.add(a.studentId)
+        const cat = catMap.get(a.categoryId)
+        if (cat && cat.isActive !== false && cat.type === 'monthly') {
+          totalMonthlyIncome += cat.amount
+        }
+      }
+    }
+    return {
+      totalCategories: categories.length,
+      activeCategories,
+      assignedStudents: studentSet.size,
+      totalMonthlyIncome,
+    }
   }, [categories, assignments])
 
   const allTabs = useMemo(() => [
@@ -103,10 +134,21 @@ export default function OthersIncomePage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-          {bn ? 'অন্যান্য আয়' : 'Others Income'}
-        </h1>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
+            {bn ? 'অন্যান্য আয়' : 'Others Income'}
+          </h1>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] text-[0.75rem] font-medium hover:text-[var(--text-primary)] hover:border-[var(--brand)] transition-colors cursor-pointer disabled:opacity-50"
+          title={bn ? 'তথ্য রিফ্রেশ করুন' : 'Refresh data'}
+        >
+          <RefreshCw size={13} className={refreshing ? 'animate-spin text-[var(--brand)]' : ''} />
+          <span>{bn ? 'রিফ্রেশ' : 'Refresh'}</span>
+        </button>
       </div>
 
       <StatCards stats={stats} bn={bn} />

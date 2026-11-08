@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug } from '@/lib/storage'
+import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { examsApi } from '@/lib/api'
 
 // ─── Types ───
 
@@ -397,6 +400,13 @@ interface ExamState {
   attendances: ExamAttendance[]
   markAdjustments: MarkAdjustment[]
 
+  serverSynced: boolean
+  syncing: boolean
+  syncError: string | null
+
+  syncFromServer: (slugOrId?: string) => Promise<void>
+  syncToServer: () => Promise<void>
+
   addExamConfig: (config: Omit<ExamConfig, 'id' | 'createdAt'>) => void
   updateExamConfig: (id: string, data: Partial<ExamConfig>) => void
   deleteExamConfig: (id: string) => void
@@ -492,6 +502,84 @@ interface ExamState {
   importExamDataFromSession: (sourceSession: string, targetSession: string) => void
 }
 
+let serverSyncTimer: any = null
+function queueServerSync(get: () => ExamState) {
+  try {
+    if (isLocalComputerMode()) return
+    const state = get()
+    if (
+      !state.serverSynced &&
+      state.examConfigs.length === 0 &&
+      state.subjectMarkConfigs.length === 0 &&
+      state.studentMarks.length === 0 &&
+      state.routines.length === 0 &&
+      state.rooms.length === 0 &&
+      state.seatPlans.length === 0 &&
+      state.invigilators.length === 0 &&
+      state.attendances.length === 0 &&
+      state.markAdjustments.length === 0 &&
+      state.omrConfigs.length === 0 &&
+      state.omrTemplates.length === 0 &&
+      state.extraMarks.length === 0 &&
+      state.extraMarkTypes.length === 0 &&
+      state.marksheetConfigs.length === 0 &&
+      state.generalAbilities.length === 0 &&
+      state.gradeScales.length === 0 &&
+      state.workingDays.length === 0 &&
+      state.promotions.length === 0 &&
+      state.cumulativeSheets.length === 0 &&
+      state.marksEntryStatuses.length === 0
+    ) {
+      return
+    }
+    if (serverSyncTimer) clearTimeout(serverSyncTimer)
+    serverSyncTimer = setTimeout(async () => {
+      try {
+        const s = get()
+        if (
+          s.examConfigs.length === 0 &&
+          s.subjectMarkConfigs.length === 0 &&
+          s.studentMarks.length === 0 &&
+          s.routines.length === 0 &&
+          !isRecentExplicitDelete()
+        ) {
+          return
+        }
+        await examsApi.update({
+          examConfigs: s.examConfigs,
+          subjectMarkConfigs: s.subjectMarkConfigs,
+          studentMarks: s.studentMarks,
+          routines: s.routines,
+          rooms: s.rooms,
+          seatPlans: s.seatPlans,
+          invigilators: s.invigilators,
+          attendances: s.attendances,
+          markAdjustments: s.markAdjustments,
+          omrConfigs: s.omrConfigs,
+          omrTemplates: s.omrTemplates,
+          extraMarks: s.extraMarks,
+          extraMarkTypes: s.extraMarkTypes,
+          marksheetConfigs: s.marksheetConfigs,
+          generalAbilities: s.generalAbilities,
+          gradeScales: s.gradeScales,
+          workingDays: s.workingDays,
+          promotions: s.promotions,
+          cumulativeSheets: s.cumulativeSheets,
+          marksEntryStatuses: s.marksEntryStatuses,
+        })
+      } catch {
+        // Warning only
+      }
+    }, 400)
+  } catch {
+    /* ignore */
+  }
+}
+
+function onStateMutated(get: () => ExamState) {
+  queueServerSync(get)
+}
+
 export const useExamStore = create<ExamState>()(
   persist(
     (set, get) => ({
@@ -516,37 +604,184 @@ export const useExamStore = create<ExamState>()(
       marksEntryStatuses: [],
       omrTemplates: [],
 
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
+
+      syncFromServer: async (slugOrId?: string) => {
+        if (isLocalComputerMode()) {
+          set({ serverSynced: true, syncing: false, syncError: null })
+          return
+        }
+        const effectiveSlug = slugOrId || getSlug() || undefined
+        set({ syncing: true, syncError: null })
+        try {
+          const res = await examsApi.get(effectiveSlug)
+          if (res) {
+            const hasAny =
+              (Array.isArray(res.examConfigs) && res.examConfigs.length > 0) ||
+              (Array.isArray(res.subjectMarkConfigs) && res.subjectMarkConfigs.length > 0) ||
+              (Array.isArray(res.studentMarks) && res.studentMarks.length > 0) ||
+              (Array.isArray(res.routines) && res.routines.length > 0) ||
+              (Array.isArray(res.rooms) && res.rooms.length > 0) ||
+              (Array.isArray(res.seatPlans) && res.seatPlans.length > 0) ||
+              (Array.isArray(res.invigilators) && res.invigilators.length > 0) ||
+              (Array.isArray(res.attendances) && res.attendances.length > 0) ||
+              (Array.isArray(res.omrConfigs) && res.omrConfigs.length > 0) ||
+              (Array.isArray(res.omrTemplates) && res.omrTemplates.length > 0) ||
+              (Array.isArray(res.extraMarks) && res.extraMarks.length > 0) ||
+              (Array.isArray(res.extraMarkTypes) && res.extraMarkTypes.length > 0) ||
+              (Array.isArray(res.marksheetConfigs) && res.marksheetConfigs.length > 0) ||
+              (Array.isArray(res.generalAbilities) && res.generalAbilities.length > 0) ||
+              (Array.isArray(res.gradeScales) && res.gradeScales.length > 0) ||
+              (Array.isArray(res.workingDays) && res.workingDays.length > 0) ||
+              (Array.isArray(res.promotions) && res.promotions.length > 0) ||
+              (Array.isArray(res.cumulativeSheets) && res.cumulativeSheets.length > 0) ||
+              (Array.isArray(res.marksEntryStatuses) && res.marksEntryStatuses.length > 0)
+
+            const state = get()
+            if (hasAny) {
+              set({
+                examConfigs: res.examConfigs || [],
+                subjectMarkConfigs: res.subjectMarkConfigs || [],
+                studentMarks: res.studentMarks || [],
+                routines: res.routines || [],
+                rooms: res.rooms || [],
+                seatPlans: res.seatPlans || [],
+                invigilators: res.invigilators || [],
+                attendances: res.attendances || [],
+                markAdjustments: res.markAdjustments || [],
+                omrConfigs: res.omrConfigs || [],
+                omrTemplates: res.omrTemplates || [],
+                extraMarks: res.extraMarks || [],
+                extraMarkTypes: res.extraMarkTypes || [],
+                marksheetConfigs: res.marksheetConfigs || [],
+                generalAbilities: res.generalAbilities || [],
+                gradeScales: res.gradeScales || [],
+                workingDays: res.workingDays || [],
+                promotions: res.promotions || [],
+                cumulativeSheets: res.cumulativeSheets || [],
+                marksEntryStatuses: res.marksEntryStatuses || [],
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+            } else if (
+              state.examConfigs.length > 0 ||
+              state.subjectMarkConfigs.length > 0 ||
+              state.studentMarks.length > 0 ||
+              state.routines.length > 0
+            ) {
+              await examsApi.update({
+                examConfigs: state.examConfigs,
+                subjectMarkConfigs: state.subjectMarkConfigs,
+                studentMarks: state.studentMarks,
+                routines: state.routines,
+                rooms: state.rooms,
+                seatPlans: state.seatPlans,
+                invigilators: state.invigilators,
+                attendances: state.attendances,
+                markAdjustments: state.markAdjustments,
+                omrConfigs: state.omrConfigs,
+                omrTemplates: state.omrTemplates,
+                extraMarks: state.extraMarks,
+                extraMarkTypes: state.extraMarkTypes,
+                marksheetConfigs: state.marksheetConfigs,
+                generalAbilities: state.generalAbilities,
+                gradeScales: state.gradeScales,
+                workingDays: state.workingDays,
+                promotions: state.promotions,
+                cumulativeSheets: state.cumulativeSheets,
+                marksEntryStatuses: state.marksEntryStatuses,
+                schoolId: effectiveSlug,
+              })
+              set({ serverSynced: true, syncing: false, syncError: null })
+            } else {
+              set({ serverSynced: true, syncing: false, syncError: null })
+            }
+          } else {
+            set({ serverSynced: true, syncing: false, syncError: null })
+          }
+        } catch (err: any) {
+          set({ syncing: false, syncError: err?.message || 'Failed to sync exams' })
+        }
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        const s = get()
+        set({ syncing: true, syncError: null })
+        try {
+          await examsApi.update({
+            examConfigs: s.examConfigs,
+            subjectMarkConfigs: s.subjectMarkConfigs,
+            studentMarks: s.studentMarks,
+            routines: s.routines,
+            rooms: s.rooms,
+            seatPlans: s.seatPlans,
+            invigilators: s.invigilators,
+            attendances: s.attendances,
+            markAdjustments: s.markAdjustments,
+            omrConfigs: s.omrConfigs,
+            omrTemplates: s.omrTemplates,
+            extraMarks: s.extraMarks,
+            extraMarkTypes: s.extraMarkTypes,
+            marksheetConfigs: s.marksheetConfigs,
+            generalAbilities: s.generalAbilities,
+            gradeScales: s.gradeScales,
+            workingDays: s.workingDays,
+            promotions: s.promotions,
+            cumulativeSheets: s.cumulativeSheets,
+            marksEntryStatuses: s.marksEntryStatuses,
+          })
+          set({ serverSynced: true, syncing: false, syncError: null })
+        } catch (err: any) {
+          set({ syncing: false, syncError: err?.message || 'Failed to sync exams to server' })
+        }
+      },
+
       // ─── Exam Config ───
-      addExamConfig: (config) =>
+      addExamConfig: (config) => {
         set((state) => ({
           examConfigs: [...state.examConfigs, { ...config, id: `EXAM-${Date.now()}`, isPublished: config.isPublished ?? false, publishedAt: config.publishedAt ?? null, publishedClasses: config.publishedClasses ?? [], createdAt: new Date().toISOString() }],
-        })),
-      updateExamConfig: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateExamConfig: (id, data) => {
         set((state) => ({
           examConfigs: state.examConfigs.map((e) => (e.id === id ? { ...e, ...data } : e)),
-        })),
-      deleteExamConfig: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteExamConfig: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           examConfigs: state.examConfigs.filter((e) => e.id !== id),
           subjectMarkConfigs: state.subjectMarkConfigs.filter((s) => s.examId !== id),
           studentMarks: state.studentMarks.filter((m) => m.examId !== id),
           routines: state.routines.filter((r) => r.examId !== id),
-        })),
-      toggleExamActive: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      toggleExamActive: (id) => {
         set((state) => ({
           examConfigs: state.examConfigs.map((e) => {
             if (e.id === id) return { ...e, isActive: !e.isActive }
             if (e.isActive) return { ...e, isActive: false }
             return e
           }),
-        })),
-      toggleExamPublished: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      toggleExamPublished: (id) => {
         set((state) => ({
           examConfigs: state.examConfigs.map((e) =>
             e.id === id ? { ...e, isPublished: !e.isPublished, publishedAt: !e.isPublished ? new Date().toISOString() : null } : e
           ),
-        })),
-      toggleClassPublished: (examId, className) =>
+        }))
+        onStateMutated(get)
+      },
+      toggleClassPublished: (examId, className) => {
         set((state) => ({
           examConfigs: state.examConfigs.map((e) => {
             if (e.id !== examId) return e
@@ -555,10 +790,12 @@ export const useExamStore = create<ExamState>()(
             const updated = hasClass ? classes.filter((c) => c !== className) : [...classes, className]
             return { ...e, publishedClasses: updated }
           }),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Subject Mark Config ───
-      upsertSubjectMarkConfig: (config) =>
+      upsertSubjectMarkConfig: (config) => {
         set((state) => {
           const existing = state.subjectMarkConfigs.find(
             (s) => s.examId === config.examId && s.classId === config.classId && s.subjectId === config.subjectId
@@ -569,12 +806,17 @@ export const useExamStore = create<ExamState>()(
             }
           }
           return { subjectMarkConfigs: [...state.subjectMarkConfigs, { ...config, id: `SMC-${Date.now()}` }] }
-        }),
-      deleteSubjectMarkConfig: (id) =>
+        })
+        onStateMutated(get)
+      },
+      deleteSubjectMarkConfig: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           subjectMarkConfigs: state.subjectMarkConfigs.filter((s) => s.id !== id),
-        })),
-      copyClassMarkConfig: (examId, fromClassId, toClassId) =>
+        }))
+        onStateMutated(get)
+      },
+      copyClassMarkConfig: (examId, fromClassId, toClassId) => {
         set((state) => {
           const sourceConfigs = state.subjectMarkConfigs.filter((s) => s.examId === examId && s.classId === fromClassId)
           const newConfigs = sourceConfigs.map((s) => ({
@@ -585,8 +827,10 @@ export const useExamStore = create<ExamState>()(
           }))
           const withoutTarget = state.subjectMarkConfigs.filter((s) => !(s.examId === examId && s.classId === toClassId))
           return { subjectMarkConfigs: [...withoutTarget, ...newConfigs] }
-        }),
-      copyExamPlan: (fromExamId, toExamId) =>
+        })
+        onStateMutated(get)
+      },
+      copyExamPlan: (fromExamId, toExamId) => {
         set((state) => {
           const sourceConfigs = state.subjectMarkConfigs.filter((s) => s.examId === fromExamId)
           const newConfigs = sourceConfigs.map((s) => ({
@@ -597,8 +841,10 @@ export const useExamStore = create<ExamState>()(
           }))
           const withoutTarget = state.subjectMarkConfigs.filter((s) => s.examId !== toExamId)
           return { subjectMarkConfigs: [...withoutTarget, ...newConfigs] }
-        }),
-      copySubjectConfig: (examId, classId, sourceSubjectId, targetSubjectIds) =>
+        })
+        onStateMutated(get)
+      },
+      copySubjectConfig: (examId, classId, sourceSubjectId, targetSubjectIds) => {
         set((state) => {
           const source = state.subjectMarkConfigs.find(
             (s) => s.examId === examId && s.classId === classId && s.subjectId === sourceSubjectId
@@ -623,28 +869,37 @@ export const useExamStore = create<ExamState>()(
             (s) => !(s.examId === examId && s.classId === classId && targetSubjectIds.includes(s.subjectId))
           )
           return { subjectMarkConfigs: [...withoutTargets, ...newConfigs] }
-        }),
-      addSubExamToSubject: (configId, subExam) =>
+        })
+        onStateMutated(get)
+      },
+      addSubExamToSubject: (configId, subExam) => {
         set((state) => ({
           subjectMarkConfigs: state.subjectMarkConfigs.map((s) =>
             s.id === configId ? { ...s, subExams: [...s.subExams, { ...subExam, id: `SE-${Date.now()}` }] } : s
           ),
-        })),
-      removeSubExam: (configId, subExamId) =>
+        }))
+        onStateMutated(get)
+      },
+      removeSubExam: (configId, subExamId) => {
+        markExplicitUserDelete()
         set((state) => ({
           subjectMarkConfigs: state.subjectMarkConfigs.map((s) =>
             s.id === configId ? { ...s, subExams: s.subExams.filter((se) => se.id !== subExamId) } : s
           ),
-        })),
-      updateSubExam: (configId, subExamId, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateSubExam: (configId, subExamId, data) => {
         set((state) => ({
           subjectMarkConfigs: state.subjectMarkConfigs.map((s) =>
             s.id === configId ? { ...s, subExams: s.subExams.map((se) => (se.id === subExamId ? { ...se, ...data } : se)) } : s
           ),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Student Marks ───
-      saveStudentMark: (mark) =>
+      saveStudentMark: (mark) => {
         set((state) => {
           const fullConfig = state.subjectMarkConfigs.find((s) => s.examId === mark.examId && s.subjectId === mark.subjectId)
           const total = Object.values(mark.subExamMarks).reduce((a, b) => a + b, 0)
@@ -665,7 +920,9 @@ export const useExamStore = create<ExamState>()(
               { ...mark, id: `SM-${Date.now()}-${mark.studentId}`, totalMarks: total, grade, updatedAt: new Date().toISOString() },
             ],
           }
-        }),
+        })
+        onStateMutated(get)
+      },
       saveBulkStudentMarks: (marks) => {
         const state = get()
         const updated = [...state.studentMarks]
@@ -704,11 +961,15 @@ export const useExamStore = create<ExamState>()(
           }
         }
         set({ studentMarks: updated })
+        onStateMutated(get)
       },
-      deleteStudentMark: (id) =>
+      deleteStudentMark: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           studentMarks: state.studentMarks.filter((m) => m.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
       getStudentMarksForExam: (examId, classId, sectionId, subjectId) => {
         return get().studentMarks.filter(
           (m) => m.examId === examId && m.classId === classId && m.sectionId === sectionId && m.subjectId === subjectId
@@ -716,50 +977,71 @@ export const useExamStore = create<ExamState>()(
       },
 
       // ─── Routines ───
-      addRoutine: (routine) =>
+      addRoutine: (routine) => {
         set((state) => ({
           routines: [...state.routines, { ...routine, id: `RT-${Date.now()}`, createdAt: new Date().toISOString() }],
-        })),
-      updateRoutine: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateRoutine: (id, data) => {
         set((state) => ({
           routines: state.routines.map((r) => (r.id === id ? { ...r, ...data } : r)),
-        })),
-      deleteRoutine: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteRoutine: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           routines: state.routines.filter((r) => r.id !== id),
-        })),
-      bulkAddRoutines: (routines) =>
+        }))
+        onStateMutated(get)
+      },
+      bulkAddRoutines: (routines) => {
         set((state) => ({
           routines: [
             ...state.routines,
             ...routines.map((r, i) => ({ ...r, id: `RT-${Date.now()}-${i}`, createdAt: new Date().toISOString() })),
           ],
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Rooms ───
-      addRoom: (room) =>
+      addRoom: (room) => {
         set((state) => ({
           rooms: [...state.rooms, { ...room, id: `RM-${Date.now()}` }],
-        })),
-      updateRoom: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateRoom: (id, data) => {
         set((state) => ({
           rooms: state.rooms.map((r) => (r.id === id ? { ...r, ...data } : r)),
-        })),
-      deleteRoom: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteRoom: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           rooms: state.rooms.filter((r) => r.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Seat Plans ───
-      addSeatPlan: (plan) =>
+      addSeatPlan: (plan) => {
         set((state) => ({
           seatPlans: [...state.seatPlans, { ...plan, id: `SP-${Date.now()}`, assignedAt: new Date().toISOString() }],
-        })),
-      removeSeatPlan: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      removeSeatPlan: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           seatPlans: state.seatPlans.filter((sp) => sp.id !== id),
-        })),
-      autoAssignSeats: (examId, classId, sectionId, studentIds, roomIds) =>
+        }))
+        onStateMutated(get)
+      },
+      autoAssignSeats: (examId, classId, sectionId, studentIds, roomIds) => {
         set((state) => {
           const existing = state.seatPlans.filter((sp) => !(sp.examId === examId && sp.classId === classId && sp.sectionId === sectionId))
           const newPlans: ExamSeatPlan[] = []
@@ -786,20 +1068,27 @@ export const useExamStore = create<ExamState>()(
             }
           }
           return { seatPlans: [...existing, ...newPlans] }
-        }),
+        })
+        onStateMutated(get)
+      },
 
       // ─── Invigilators ───
-      addInvigilator: (inv) =>
+      addInvigilator: (inv) => {
         set((state) => ({
           invigilators: [...state.invigilators, { ...inv, id: `INV-${Date.now()}` }],
-        })),
-      removeInvigilator: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      removeInvigilator: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           invigilators: state.invigilators.filter((i) => i.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Attendance ───
-      addAttendance: (att) =>
+      addAttendance: (att) => {
         set((state) => {
           const existing = state.attendances.find(
             (a) => a.examId === att.examId && a.studentId === att.studentId && a.date === att.date && a.shift === att.shift
@@ -808,45 +1097,62 @@ export const useExamStore = create<ExamState>()(
             return { attendances: state.attendances.map((a) => (a.id === existing.id ? { ...a, ...att, id: existing.id } : a)) }
           }
           return { attendances: [...state.attendances, { ...att, id: `ATT-${Date.now()}` }] }
-        }),
-      removeAttendance: (id) =>
+        })
+        onStateMutated(get)
+      },
+      removeAttendance: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           attendances: state.attendances.filter((a) => a.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── OMR Config ───
-      upsertOMRConfig: (config) =>
+      upsertOMRConfig: (config) => {
         set((state) => {
           const existing = state.omrConfigs.find((o) => o.examId === config.examId && o.subjectId === config.subjectId)
           if (existing) {
             return { omrConfigs: state.omrConfigs.map((o) => (o.id === existing.id ? { ...o, ...config, id: existing.id } : o)) }
           }
           return { omrConfigs: [...state.omrConfigs, { ...config, id: `OMR-${Date.now()}`, createdAt: new Date().toISOString() }] }
-        }),
-      deleteOMRConfig: (id) =>
+        })
+        onStateMutated(get)
+      },
+      deleteOMRConfig: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           omrConfigs: state.omrConfigs.filter((o) => o.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── OMR Template ───
-      saveOMRTemplate: (template) =>
+      saveOMRTemplate: (template) => {
         set((state) => ({
           omrTemplates: [
             ...state.omrTemplates,
             { ...template, id: `OMRT-${Date.now()}`, version: 1, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
           ],
-        })),
-      updateOMRTemplate: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateOMRTemplate: (id, data) => {
         set((state) => ({
           omrTemplates: state.omrTemplates.map((t) =>
             t.id === id ? { ...t, ...data, version: t.version + 1, updatedAt: new Date().toISOString() } : t
           ),
-        })),
-      deleteOMRTemplate: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteOMRTemplate: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           omrTemplates: state.omrTemplates.filter((t) => t.id !== id),
-        })),
-      duplicateOMRTemplate: (id, name) =>
+        }))
+        onStateMutated(get)
+      },
+      duplicateOMRTemplate: (id, name) => {
         set((state) => {
           const src = state.omrTemplates.find((t) => t.id === id)
           if (!src) return state
@@ -857,51 +1163,73 @@ export const useExamStore = create<ExamState>()(
               { ...src, id: `OMRT-${Date.now()}`, name, nameBn: name, version: 1, isArchived: false, createdAt: now, updatedAt: now },
             ],
           }
-        }),
-      archiveOMRTemplate: (id) =>
+        })
+        onStateMutated(get)
+      },
+      archiveOMRTemplate: (id) => {
         set((state) => ({
           omrTemplates: state.omrTemplates.map((t) => (t.id === id ? { ...t, isArchived: true, updatedAt: new Date().toISOString() } : t)),
-        })),
-      restoreOMRTemplate: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      restoreOMRTemplate: (id) => {
         set((state) => ({
           omrTemplates: state.omrTemplates.map((t) => (t.id === id ? { ...t, isArchived: false, updatedAt: new Date().toISOString() } : t)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Extra Marks ───
-      addExtraMark: (entry) =>
+      addExtraMark: (entry) => {
         set((state) => ({
           extraMarks: [...state.extraMarks, { ...entry, id: `EM-${Date.now()}`, createdAt: new Date().toISOString() }],
-        })),
-      updateExtraMark: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateExtraMark: (id, data) => {
         set((state) => ({
           extraMarks: state.extraMarks.map((e) => (e.id === id ? { ...e, ...data } : e)),
-        })),
-      deleteExtraMark: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteExtraMark: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           extraMarks: state.extraMarks.filter((e) => e.id !== id),
-        })),
-      bulkAddExtraMarks: (entries) =>
+        }))
+        onStateMutated(get)
+      },
+      bulkAddExtraMarks: (entries) => {
         set((state) => ({
           extraMarks: [
             ...state.extraMarks,
             ...entries.map((e, i) => ({ ...e, id: `EM-${Date.now()}-${i}`, createdAt: new Date().toISOString() })),
           ],
-        })),
-      addExtraMarkType: (type) =>
+        }))
+        onStateMutated(get)
+      },
+      addExtraMarkType: (type) => {
         set((state) => ({
           extraMarkTypes: [...state.extraMarkTypes, { ...type, id: `EMT-${Date.now()}` }],
-        })),
-      updateExtraMarkType: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateExtraMarkType: (id, data) => {
         set((state) => ({
           extraMarkTypes: state.extraMarkTypes.map((t) => (t.id === id ? { ...t, ...data } : t)),
-        })),
-      deleteExtraMarkType: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteExtraMarkType: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           extraMarkTypes: state.extraMarkTypes.filter((t) => t.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Mark Adjustments ───
-      setMarkAdjustments: (adjustments) =>
+      setMarkAdjustments: (adjustments) => {
         set((state) => {
           const newAdj = adjustments.map((a, i) => ({
             ...a,
@@ -912,120 +1240,173 @@ export const useExamStore = create<ExamState>()(
             (e) => !newAdj.some((n) => n.examId === e.examId && n.studentId === e.studentId && n.classId === e.classId && n.sectionId === e.sectionId)
           )
           return { markAdjustments: [...existing, ...newAdj] }
-        }),
-      clearMarkAdjustments: (examId, classId, sectionId) =>
+        })
+        onStateMutated(get)
+      },
+      clearMarkAdjustments: (examId, classId, sectionId) => {
+        markExplicitUserDelete()
         set((state) => ({
           markAdjustments: state.markAdjustments.filter(
             (a) => !(a.examId === examId && a.classId === classId && a.sectionId === sectionId)
           ),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
-      addMarksheetConfig: (config) =>
+      addMarksheetConfig: (config) => {
         set((state) => ({
           marksheetConfigs: [...state.marksheetConfigs, { ...config, id: `MS-${Date.now()}`, createdAt: new Date().toISOString() }],
-        })),
-      updateMarksheetConfig: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateMarksheetConfig: (id, data) => {
         set((state) => ({
           marksheetConfigs: state.marksheetConfigs.map((m) => (m.id === id ? { ...m, ...data } : m)),
-        })),
-      deleteMarksheetConfig: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteMarksheetConfig: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           marksheetConfigs: state.marksheetConfigs.filter((m) => m.id !== id),
-        })),
-      toggleMarksheetPublished: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      toggleMarksheetPublished: (id) => {
         set((state) => ({
           marksheetConfigs: state.marksheetConfigs.map((m) => (m.id === id ? { ...m, isPublished: !m.isPublished } : m)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── General Ability ───
-      addGeneralAbility: (ability) =>
+      addGeneralAbility: (ability) => {
         set((state) => ({
           generalAbilities: [...state.generalAbilities, { ...ability, id: `GA-${Date.now()}` }],
-        })),
-      updateGeneralAbility: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateGeneralAbility: (id, data) => {
         set((state) => ({
           generalAbilities: state.generalAbilities.map((a) => (a.id === id ? { ...a, ...data } : a)),
-        })),
-      deleteGeneralAbility: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteGeneralAbility: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           generalAbilities: state.generalAbilities.filter((a) => a.id !== id),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Grade Scale ───
-      addGradeScale: (scale) =>
+      addGradeScale: (scale) => {
         set((state) => ({
           gradeScales: [...state.gradeScales, { ...scale, id: `GS-${Date.now()}` }],
-        })),
-      updateGradeScale: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateGradeScale: (id, data) => {
         set((state) => ({
           gradeScales: state.gradeScales.map((g) => (g.id === id ? { ...g, ...data } : g)),
-        })),
-      deleteGradeScale: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteGradeScale: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           gradeScales: state.gradeScales.filter((g) => g.id !== id),
-        })),
-      toggleGradeScaleActive: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      toggleGradeScaleActive: (id) => {
         set((state) => ({
           gradeScales: state.gradeScales.map((g) => {
             if (g.id === id) return { ...g, isActive: true }
             return { ...g, isActive: false }
           }),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Working Days ───
-      addWorkingDays: (config) =>
+      addWorkingDays: (config) => {
         set((state) => ({
           workingDays: [...state.workingDays, { ...config, id: `WD-${Date.now()}` }],
-        })),
-      updateWorkingDays: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateWorkingDays: (id, data) => {
         set((state) => ({
           workingDays: state.workingDays.map((w) => (w.id === id ? { ...w, ...data } : w)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Promotions ───
-      addPromotion: (promo) =>
+      addPromotion: (promo) => {
         set((state) => ({
           promotions: [...state.promotions, { ...promo, id: `PRM-${Date.now()}` }],
-        })),
-      updatePromotion: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updatePromotion: (id, data) => {
         set((state) => ({
           promotions: state.promotions.map((p) => (p.id === id ? { ...p, ...data } : p)),
-        })),
-      bulkPromote: (promotions) =>
+        }))
+        onStateMutated(get)
+      },
+      bulkPromote: (promotions) => {
         set((state) => ({
           promotions: [...state.promotions, ...promotions.map((p, i) => ({ ...p, id: `PRM-${Date.now()}-${i}` }))],
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Cumulative Marksheet ───
-      addCumulativeSheet: (sheet) =>
+      addCumulativeSheet: (sheet) => {
         set((state) => ({
           cumulativeSheets: [...state.cumulativeSheets, { ...sheet, id: `CMS-${Date.now()}`, createdAt: new Date().toISOString() }],
-        })),
-      updateCumulativeSheet: (id, data) =>
+        }))
+        onStateMutated(get)
+      },
+      updateCumulativeSheet: (id, data) => {
         set((state) => ({
           cumulativeSheets: state.cumulativeSheets.map((c) => (c.id === id ? { ...c, ...data } : c)),
-        })),
-      deleteCumulativeSheet: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      deleteCumulativeSheet: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           cumulativeSheets: state.cumulativeSheets.filter((c) => c.id !== id),
-        })),
-      toggleCumulativePublished: (id) =>
+        }))
+        onStateMutated(get)
+      },
+      toggleCumulativePublished: (id) => {
         set((state) => ({
           cumulativeSheets: state.cumulativeSheets.map((c) => (c.id === id ? { ...c, isPublished: !c.isPublished } : c)),
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Marks Entry Status ───
-      updateMarksEntryStatus: (id, data) =>
+      updateMarksEntryStatus: (id, data) => {
         set((state) => ({
           marksEntryStatuses: state.marksEntryStatuses.map((m) => (m.id === id ? { ...m, ...data } : m)),
-        })),
-      addMarksEntryStatus: (entry) =>
+        }))
+        onStateMutated(get)
+      },
+      addMarksEntryStatus: (entry) => {
         set((state) => ({
           marksEntryStatuses: [...state.marksEntryStatuses, { ...entry, id: `MES-${Date.now()}` }],
-        })),
+        }))
+        onStateMutated(get)
+      },
 
       // ─── Lock/Unlock Marks ───
-      lockMarks: (examId, classId, sectionId, subjectId) =>
+      lockMarks: (examId, classId, sectionId, subjectId) => {
         set((state) => {
           const entry = state.marksEntryStatuses.find(
             (m) => m.examId === examId && m.classId === classId && m.sectionId === sectionId && m.subjectId === subjectId
@@ -1051,8 +1432,10 @@ export const useExamStore = create<ExamState>()(
             lockedAt: new Date().toISOString(),
           }
           return { marksEntryStatuses: [...state.marksEntryStatuses, newEntry] }
-        }),
-      unlockMarks: (examId, classId, _sectionId, subjectId) =>
+        })
+        onStateMutated(get)
+      },
+      unlockMarks: (examId, classId, _sectionId, subjectId) => {
         set((state) => {
           // Unlock all entries for this exam+class+subject (any section)
           const entries = state.marksEntryStatuses.filter(
@@ -1067,9 +1450,11 @@ export const useExamStore = create<ExamState>()(
             }
           }
           return state
-        }),
+        })
+        onStateMutated(get)
+      },
 
-      importExamDataFromSession: (sourceSession, targetSession) =>
+      importExamDataFromSession: (sourceSession, targetSession) => {
         set((state) => {
           const sourceExams = state.examConfigs.filter((e) => e.session === sourceSession)
           if (sourceExams.length === 0) return state
@@ -1107,7 +1492,9 @@ export const useExamStore = create<ExamState>()(
             examConfigs: [...state.examConfigs, ...newExams],
             subjectMarkConfigs: [...state.subjectMarkConfigs, ...newConfigs],
           }
-        }),
+        })
+        onStateMutated(get)
+      },
     }),
     {
       name: 'edutech-exams',
@@ -1158,6 +1545,7 @@ registerStoreReset(() => {
     markAdjustments: [], omrConfigs: [], extraMarks: [], extraMarkTypes: [],
     marksheetConfigs: [], generalAbilities: [], gradeScales: [], workingDays: [],
     promotions: [], cumulativeSheets: [], marksEntryStatuses: [], omrTemplates: [],
+    serverSynced: false, syncing: false, syncError: null,
   })
 })
 
@@ -1168,11 +1556,11 @@ registerStoreLoad(() => {
     const raw = localStorage.getItem(`edutech-exams_${slug}`)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed.state) useExamStore.setState(parsed.state)
+      if (parsed.state) useExamStore.setState({ ...parsed.state, serverSynced: false, syncing: false, syncError: null })
     } else {
-      useExamStore.setState({ examConfigs: [], subjectMarkConfigs: [], studentMarks: [], routines: [], rooms: [], seatPlans: [], invigilators: [], attendances: [], markAdjustments: [], omrConfigs: [], extraMarks: [], extraMarkTypes: [], marksheetConfigs: [], generalAbilities: [], gradeScales: [], workingDays: [], promotions: [], cumulativeSheets: [], marksEntryStatuses: [], omrTemplates: [] })
+      useExamStore.setState({ examConfigs: [], subjectMarkConfigs: [], studentMarks: [], routines: [], rooms: [], seatPlans: [], invigilators: [], attendances: [], markAdjustments: [], omrConfigs: [], extraMarks: [], extraMarkTypes: [], marksheetConfigs: [], generalAbilities: [], gradeScales: [], workingDays: [], promotions: [], cumulativeSheets: [], marksEntryStatuses: [], omrTemplates: [], serverSynced: false, syncing: false, syncError: null })
     }
   } catch {
-    useExamStore.setState({ examConfigs: [], subjectMarkConfigs: [], studentMarks: [], routines: [], rooms: [], seatPlans: [], invigilators: [], attendances: [], markAdjustments: [], omrConfigs: [], extraMarks: [], extraMarkTypes: [], marksheetConfigs: [], generalAbilities: [], gradeScales: [], workingDays: [], promotions: [], cumulativeSheets: [], marksEntryStatuses: [], omrTemplates: [] })
+    useExamStore.setState({ examConfigs: [], subjectMarkConfigs: [], studentMarks: [], routines: [], rooms: [], seatPlans: [], invigilators: [], attendances: [], markAdjustments: [], omrConfigs: [], extraMarks: [], extraMarkTypes: [], marksheetConfigs: [], generalAbilities: [], gradeScales: [], workingDays: [], promotions: [], cumulativeSheets: [], marksEntryStatuses: [], omrTemplates: [], serverSynced: false, syncing: false, syncError: null })
   }
 })

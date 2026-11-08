@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useExamStore } from './examStore'
+import { examsApi } from '@/lib/api'
 
 let counter = 0
 beforeEach(() => {
@@ -585,5 +586,92 @@ describe('examStore - cumulative marksheets', () => {
     const id = useExamStore.getState().cumulativeSheets[0].id
     useExamStore.getState().toggleCumulativePublished(id)
     expect(useExamStore.getState().cumulativeSheets[0].isPublished).toBe(true)
+  })
+})
+
+describe('examStore - server sync and offline tolerance', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    localStorage.clear()
+    sessionStorage.clear()
+    useExamStore.persist.clearStorage()
+    useExamStore.setState({
+      examConfigs: [],
+      subjectMarkConfigs: [],
+      studentMarks: [],
+      routines: [],
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
+    })
+  })
+
+  it('syncFromServer hydrates store when remote data exists', async () => {
+    const fakeRemote = {
+      examConfigs: [{ id: 'EXAM-100', name: 'Mid Term', nameBn: 'মিড টার্ম', type: 'midterm', session: '2026', startDate: '2026-06-01', endDate: '2026-06-10', isActive: true, isPublished: false, publishedAt: null, publishedClasses: [], createdAt: '2026-01-01' }],
+      subjectMarkConfigs: [],
+      studentMarks: [],
+      routines: [],
+      rooms: [],
+      seatPlans: [],
+      invigilators: [],
+      attendances: [],
+      markAdjustments: [],
+      omrConfigs: [],
+      omrTemplates: [],
+      extraMarks: [],
+      extraMarkTypes: [],
+      marksheetConfigs: [],
+      generalAbilities: [],
+      gradeScales: [],
+      workingDays: [],
+      promotions: [],
+      cumulativeSheets: [],
+      marksEntryStatuses: [],
+    }
+    vi.spyOn(examsApi, 'get').mockResolvedValue(fakeRemote as any)
+
+    await useExamStore.getState().syncFromServer('test-school')
+    const state = useExamStore.getState()
+    expect(state.serverSynced).toBe(true)
+    expect(state.examConfigs).toHaveLength(1)
+    expect(state.examConfigs[0].name).toBe('Mid Term')
+  })
+
+  it('syncFromServer pushes local state if server has no records', async () => {
+    useExamStore.setState({
+      examConfigs: [{ id: 'EXAM-200', name: 'Annual', nameBn: 'বার্ষিক', type: 'annual', session: '2026', startDate: '2026-11-01', endDate: '2026-11-10', isActive: true, isPublished: false, publishedAt: null, publishedClasses: [], createdAt: '2026-01-01' }],
+    })
+    vi.spyOn(examsApi, 'get').mockResolvedValue({} as any)
+    const updateSpy = vi.spyOn(examsApi, 'update').mockResolvedValue({} as any)
+
+    await useExamStore.getState().syncFromServer('test-school')
+    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({
+      examConfigs: expect.arrayContaining([expect.objectContaining({ id: 'EXAM-200' })]),
+      schoolId: 'test-school',
+    }))
+    expect(useExamStore.getState().serverSynced).toBe(true)
+  })
+
+  it('bypasses remote sync when local_computer mode is enabled', async () => {
+    localStorage.setItem('edutech_storage_mode', 'local_computer')
+    const getSpy = vi.spyOn(examsApi, 'get')
+
+    await useExamStore.getState().syncFromServer('test-school')
+    expect(getSpy).not.toHaveBeenCalled()
+    expect(useExamStore.getState().serverSynced).toBe(true)
+  })
+
+  it('syncToServer pushes exam state to backend', async () => {
+    const updateSpy = vi.spyOn(examsApi, 'update').mockResolvedValue({} as any)
+    useExamStore.setState({
+      examConfigs: [{ id: 'EXAM-300', name: 'Final', nameBn: 'চূড়ান্ত', type: 'final', session: '2026', startDate: '2026-12-01', endDate: '2026-12-10', isActive: true, isPublished: false, publishedAt: null, publishedClasses: [], createdAt: '2026-01-01' }],
+    })
+
+    await useExamStore.getState().syncToServer()
+    expect(updateSpy).toHaveBeenCalledWith(expect.objectContaining({
+      examConfigs: expect.arrayContaining([expect.objectContaining({ id: 'EXAM-300' })]),
+    }))
+    expect(useExamStore.getState().serverSynced).toBe(true)
   })
 })

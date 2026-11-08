@@ -1237,6 +1237,96 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       }
     } catch { /* ignore */ }
   }
+
+  if (path === `${slug}/hr.json`) {
+    await writeVaultFile('hr.json', prettifyJson(rawJson))
+
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+
+      // 1. hr_facilities.json
+      const facilities = state.facilities ?? []
+      if (facilities.length > 0 || isRecentExplicitDelete()) {
+        const fPretty = JSON.stringify(facilities, null, 2)
+        await writeVaultFile(`${slug}/hr_facilities.json`, fPretty)
+        await writeVaultFile('hr_facilities.json', fPretty)
+      }
+
+      // 2. hr_increments.json
+      const increments = state.increments ?? []
+      if (increments.length > 0 || isRecentExplicitDelete()) {
+        const iPretty = JSON.stringify(increments, null, 2)
+        await writeVaultFile(`${slug}/hr_increments.json`, iPretty)
+        await writeVaultFile('hr_increments.json', iPretty)
+      }
+
+      // 3. hr_bonuses.json
+      const bonuses = state.bonuses ?? []
+      if (bonuses.length > 0 || isRecentExplicitDelete()) {
+        const bPretty = JSON.stringify(bonuses, null, 2)
+        await writeVaultFile(`${slug}/hr_bonuses.json`, bPretty)
+        await writeVaultFile('hr_bonuses.json', bPretty)
+      }
+
+      // 4. hr_promotions.json
+      const promotions = state.promotions ?? []
+      if (promotions.length > 0 || isRecentExplicitDelete()) {
+        const pPretty = JSON.stringify(promotions, null, 2)
+        await writeVaultFile(`${slug}/hr_promotions.json`, pPretty)
+        await writeVaultFile('hr_promotions.json', pPretty)
+      }
+
+      // 5. hr_funds.json
+      const funds = state.funds ?? []
+      if (funds.length > 0 || isRecentExplicitDelete()) {
+        const fPretty = JSON.stringify(funds, null, 2)
+        await writeVaultFile(`${slug}/hr_funds.json`, fPretty)
+        await writeVaultFile('hr_funds.json', fPretty)
+      }
+    } catch { /* ignore */ }
+  }
+
+  if (path === `${slug}/exams.json`) {
+    await writeVaultFile('exams.json', prettifyJson(rawJson))
+
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+
+      // 1. exam_configs.json
+      const configs = state.examConfigs ?? []
+      if (configs.length > 0 || isRecentExplicitDelete()) {
+        const cPretty = JSON.stringify(configs, null, 2)
+        await writeVaultFile(`${slug}/exam_configs.json`, cPretty)
+        await writeVaultFile('exam_configs.json', cPretty)
+      }
+
+      // 2. student_marks.json
+      const marks = state.studentMarks ?? []
+      if (marks.length > 0 || isRecentExplicitDelete()) {
+        const mPretty = JSON.stringify(marks, null, 2)
+        await writeVaultFile(`${slug}/student_marks.json`, mPretty)
+        await writeVaultFile('student_marks.json', mPretty)
+      }
+
+      // 3. exam_routines.json
+      const routines = state.routines ?? []
+      if (routines.length > 0 || isRecentExplicitDelete()) {
+        const rPretty = JSON.stringify(routines, null, 2)
+        await writeVaultFile(`${slug}/exam_routines.json`, rPretty)
+        await writeVaultFile('exam_routines.json', rPretty)
+      }
+
+      // 4. subject_mark_configs.json
+      const subMarkConfigs = state.subjectMarkConfigs ?? []
+      if (subMarkConfigs.length > 0 || isRecentExplicitDelete()) {
+        const smcPretty = JSON.stringify(subMarkConfigs, null, 2)
+        await writeVaultFile(`${slug}/subject_mark_configs.json`, smcPretty)
+        await writeVaultFile('subject_mark_configs.json', smcPretty)
+      }
+    } catch { /* ignore */ }
+  }
 }
 
 async function seedVaultFromStorage(): Promise<number> {

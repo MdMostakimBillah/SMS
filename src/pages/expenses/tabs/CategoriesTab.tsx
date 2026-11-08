@@ -268,7 +268,12 @@ export const CategoriesTab = ({ searchQuery }: Props) => {
                         </button>
                       )}
                       {canDelete('finance.expenses.categories') && (
-                        <button onClick={() => setDeleteId(c.id)} className="p-1 rounded hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500 transition-colors">
+                        <button
+                          onClick={() => setDeleteId(c.id)}
+                          disabled={c.isSystem}
+                          className={`p-1 rounded transition-colors ${c.isSystem ? 'text-[var(--text-muted)] opacity-30 cursor-not-allowed' : 'hover:bg-[var(--surface)] text-[var(--text-secondary)] hover:text-red-500'}`}
+                          title={c.isSystem ? (bn ? 'সিস্টেম ক্যাটাগরি মুছে ফেলা যাবে না' : 'System categories cannot be deleted') : (bn ? 'মুছে ফেলুন' : 'Delete')}
+                        >
                           <Trash2 size={13} />
                         </button>
                       )}

@@ -19,7 +19,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/lib/api'
 import { getSlug, flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
-import { setLocalStorageMode } from '@/lib/storageMode'
+import { setLocalStorageMode, isLocalComputerMode } from '@/lib/storageMode'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { useAppStore } from '@/store/appStore'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -148,6 +148,9 @@ export default function ClassesPage() {
         const brandColor = instForm.lightColors?.brand || '#6366f1'
         const isLocalComp = instForm.storageMode === 'local_computer'
         setLocalStorageMode(instForm.storageMode || 'cloud', instForm.serverUrl || '')
+        if (isLocalComp || isLocalComputerMode()) {
+          return
+        }
         const res = await authApi.updateSchool(targetId, {
           name: instForm.name,
           nameBn: instForm.nameBn,

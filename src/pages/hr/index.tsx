@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAuditUser } from '@/lib/auditUser'
+import { getSlug } from '@/lib/storage'
 import {
   TrendingUp,
   Gift,
@@ -14,6 +16,7 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  RefreshCw,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
@@ -113,6 +116,7 @@ export default function HRPage() {
     addPromotion,
     deletePromotion,
     addFund,
+    deleteFund,
     addRecommendation,
     updateRecommendation,
     upsertManyMonthlySalaryConfigs,
@@ -142,6 +146,7 @@ export default function HRPage() {
       addPromotion: s.addPromotion,
       deletePromotion: s.deletePromotion,
       addFund: s.addFund,
+      deleteFund: s.deleteFund,
       addRecommendation: s.addRecommendation,
       updateRecommendation: s.updateRecommendation,
       upsertManyMonthlySalaryConfigs: s.upsertManyMonthlySalaryConfigs,
@@ -200,6 +205,30 @@ export default function HRPage() {
   const [editAssign, setEditAssign] = useState<{ id: string; teacherId: string; facilityId: string; amount: number } | null>(null)
 
   // ─── UI State ───
+  const { slug: paramSlug } = useParams<{ slug?: string }>()
+  const slug = paramSlug || getSlug() || undefined
+  const [refreshing, setRefreshing] = useState(false)
+  const isHRSyncing = useHRStore((s) => s.syncing)
+  const isTeacherSyncing = useTeacherStore((s) => s.syncing)
+  const isSyncing = isHRSyncing || isTeacherSyncing
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await Promise.allSettled([
+        useHRStore.getState().syncFromServer(slug),
+        useTeacherStore.getState().syncFromServer(),
+      ])
+    } finally {
+      setRefreshing(false)
+    }
+  }, [slug])
+
+  useEffect(() => {
+    useHRStore.getState().syncFromServer(slug).catch(() => {})
+    useTeacherStore.getState().syncFromServer().catch(() => {})
+  }, [slug])
+
   const [employeeSearch, setEmployeeSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
@@ -387,11 +416,15 @@ export default function HRPage() {
 
   // ─── Totals ───
   const totalSalary = useMemo(() => salaryActiveTeachers.reduce((s, t) => s + t.salary, 0), [salaryActiveTeachers])
-  const totalIncrements = increments.reduce((s, i) => s + i.amount, 0)
-  const totalBonuses = bonuses.reduce((s, b) => s + b.amount, 0)
-  const fundBalance = funds.reduce(
-    (s, f) => s + (f.type === 'contribution' || f.type === 'bonus_pool' || f.type === 'increment_pool' ? f.amount : -f.amount),
-    0
+  const totalIncrements = useMemo(() => increments.reduce((s, i) => s + i.amount, 0), [increments])
+  const totalBonuses = useMemo(() => bonuses.reduce((s, b) => s + b.amount, 0), [bonuses])
+  const fundBalance = useMemo(
+    () =>
+      funds.reduce(
+        (s, f) => s + (f.type === 'contribution' || f.type === 'bonus_pool' || f.type === 'increment_pool' ? f.amount : -f.amount),
+        0
+      ),
+    [funds]
   )
 
   const attendanceToday = useMemo(() => {
@@ -690,6 +723,7 @@ export default function HRPage() {
       reason: proForm.reason,
       createdBy: getAuditUser(user),
     })
+    useTeacherStore.getState().bulkUpdateTeachers([{ id: proForm.teacherId, data: { designation: proForm.toDesignation } }])
     setProForm({ teacherId: '', fromDesignation: '', toDesignation: '', reason: '' })
     setModalType(null)
   }
@@ -847,16 +881,19 @@ export default function HRPage() {
       })
     } else if (rec.type === 'promotion') {
       const t = teachers.find((tx) => tx.id === rec.teacherId)
-      if (t)
+      if (t) {
+        const nextDesignation = 'Senior ' + t.designation
         addPromotion({
           id: `PRO-${Date.now()}`,
           teacherId: rec.teacherId,
           fromDesignation: t.designation,
-          toDesignation: 'Senior ' + t.designation,
+          toDesignation: nextDesignation,
           date: today,
           reason: rec.reason,
           createdBy: getAuditUser(user),
         })
+        useTeacherStore.getState().bulkUpdateTeachers([{ id: rec.teacherId, data: { designation: nextDesignation } }])
+      }
     } else if (rec.type === 'increment') {
       const t = teachers.find((tx) => tx.id === rec.teacherId)
       if (t)
@@ -1039,7 +1076,7 @@ export default function HRPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
+      <div className="flex items-center justify-between gap-[0.625rem] mb-4 flex-wrap">
         <div>
           <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
             {isBn ? 'HR ও কর্মচারী ব্যবস্থাপনা' : 'HR & Staff Management'}
@@ -1050,6 +1087,15 @@ export default function HRPage() {
               : `${activeTeachers.length} active staff · ${departments.length} departments`}
           </p>
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing || isSyncing}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] text-[0.75rem] font-medium hover:text-[var(--text-primary)] hover:border-[var(--brand)] transition-colors cursor-pointer disabled:opacity-50"
+          title={isBn ? 'তথ্য রিফ্রেশ করুন' : 'Refresh data'}
+        >
+          <RefreshCw size={13} className={refreshing || isSyncing ? 'animate-spin text-[var(--brand)]' : ''} />
+          <span>{isBn ? 'রিফ্রেশ' : 'Refresh'}</span>
+        </button>
       </div>
 
       {/* Tabs */}
@@ -1265,6 +1311,7 @@ export default function HRPage() {
           setShowPDFModal={setShowPDFModal as any}
           fundBalance={fundBalance}
           monthlySalaryConfigs={monthlySalaryConfigs}
+          deleteFund={deleteFund}
         />
       )}
 

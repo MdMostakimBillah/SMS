@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronsRight,
   ChevronRight,
+  Trash2,
 } from 'lucide-react'
 import { sectionCls, sectionTitleCls, StaffAvatar } from '@/pages/hr/utils'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
@@ -37,6 +38,7 @@ interface HRFundTabProps {
   setShowPDFModal: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary' | null) => void
   fundBalance: number
   monthlySalaryConfigs: any[]
+  deleteFund?: (id: string) => void
 }
 
 export const HRFundTab = React.memo(function HRFundTab({
@@ -62,8 +64,9 @@ export const HRFundTab = React.memo(function HRFundTab({
   setShowPDFModal,
   fundBalance,
   monthlySalaryConfigs,
+  deleteFund,
 }: HRFundTabProps) {
-  const { canCreate, canPrint } = usePermission()
+  const { canCreate, canPrint, canDelete } = usePermission()
 
   return (
     <>
@@ -207,7 +210,7 @@ export const HRFundTab = React.memo(function HRFundTab({
                     size="xs"
                   />
                 </th>
-                {[isBn ? 'তারিখ' : 'Date', isBn ? 'ধরন' : 'Type', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'বিবরণ' : 'Description'].map(
+                {[isBn ? 'তারিখ' : 'Date', isBn ? 'ধরন' : 'Type', isBn ? 'পরিমাণ' : 'Amount', isBn ? 'বিবরণ' : 'Description', isBn ? 'অ্যাকশন' : 'Action'].map(
                   (h) => (
                     <th
                       key={h}
@@ -253,6 +256,17 @@ export const HRFundTab = React.memo(function HRFundTab({
                     {f.type === 'withdrawal' ? '-' : '+'}৳{f.amount.toLocaleString()}
                   </td>
                   <td className="py-2 px-2 text-[0.6875rem] text-[var(--text-secondary)]">{f.description}</td>
+                  <td className="py-2 px-2 text-right">
+                    {deleteFund && canDelete('hr.fund') && (
+                      <button
+                        onClick={() => deleteFund(f.id)}
+                        className="py-1 px-2 rounded border border-[var(--red)] bg-[var(--red-light)] text-[var(--red)] cursor-pointer text-[0.625rem] font-[inherit]"
+                        title={isBn ? 'মুছুন' : 'Delete'}
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -374,7 +388,8 @@ export const HRFundTab = React.memo(function HRFundTab({
                   .map((c) => c.fundContributionPercent)
                 const avgPercent =
                   fundPercents.length > 0 ? Math.round(fundPercents.reduce((a, b) => a + b, 0) / fundPercents.length) : 0
-                const monthlyDeduction = Math.round((t.salary * avgPercent) / 100)
+                const teacherSalary = Number(t.salary || t.basicSalary) || 0
+                const monthlyDeduction = Math.round((teacherSalary * avgPercent) / 100)
                 const monthsWithFund = fundPercents.length
                 const totalDeposited = monthlyDeduction * monthsWithFund
                 return (
@@ -401,7 +416,7 @@ export const HRFundTab = React.memo(function HRFundTab({
                         </div>
                       </div>
                     </td>
-                    <td className="py-2 px-2 text-xs text-[var(--text-secondary)]">৳{t.salary.toLocaleString()}</td>
+                    <td className="py-2 px-2 text-xs text-[var(--text-secondary)]">৳{teacherSalary.toLocaleString()}</td>
                     <td className="py-2 px-2 text-xs font-medium text-[var(--brand)]">{avgPercent > 0 ? `${avgPercent}%` : '—'}</td>
                     <td className="py-2 px-2 text-xs font-semibold text-[var(--red)]">
                       {monthlyDeduction > 0 ? `৳${monthlyDeduction.toLocaleString()}` : '—'}

@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import { Tag, Receipt, RefreshCw, Search, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useExpenseStore } from '@/store/expenseStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
+import { getSlug } from '@/lib/storage'
 import { CategoriesTab } from './tabs/CategoriesTab'
 import { ExpensesTab } from './tabs/ExpensesTab'
 import { RecurringTab } from './tabs/RecurringTab'
@@ -40,6 +42,8 @@ function StatCards({ stats, bn }: { stats: { totalCategories: number; activeCate
 
 export default function ExpensesManagementPage() {
   const bn = useBn()
+  const { slug: paramSlug } = useParams<{ slug?: string }>()
+  const slug = paramSlug || getSlug() || undefined
   const { canRead } = usePermission()
   const categories = useExpenseStore((s) => s.categories)
   const expenses = useExpenseStore((s) => s.expenses)
@@ -47,6 +51,7 @@ export default function ExpensesManagementPage() {
   const [activeTab, setActiveTab] = useState<View>('categories')
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
@@ -58,18 +63,36 @@ export default function ExpensesManagementPage() {
     getContainer: (slider) => slider?.parentElement ?? null,
   })
 
+  const syncData = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await useExpenseStore.getState().syncFromServer(slug)
+    } finally {
+      setRefreshing(false)
+    }
+  }, [slug])
+
   useEffect(() => {
-    useExpenseStore.getState().syncFromServer().catch(() => {})
+    useExpenseStore.getState().syncFromServer(slug).catch(() => {})
     const t = setTimeout(() => setLoading(false), 400)
     return () => clearTimeout(t)
-  }, [])
+  }, [slug])
 
   const stats = useMemo(() => {
     const totalCategories = categories.length
-    const activeCategories = categories.filter((c) => c.isActive).length
-    const activeExpenses = expenses.filter((e) => e.isActive)
-    const totalExpenses = activeExpenses.reduce((sum, e) => sum + e.amount, 0)
-    const totalRecurring = activeExpenses.filter((e) => e.isRecurring).reduce((sum, e) => sum + e.amount, 0)
+    let activeCategories = 0
+    for (let i = 0; i < categories.length; i++) {
+      if (categories[i].isActive !== false) activeCategories++
+    }
+    let totalExpenses = 0
+    let totalRecurring = 0
+    for (let i = 0; i < expenses.length; i++) {
+      const e = expenses[i]
+      if (e.isActive !== false) {
+        totalExpenses += e.amount
+        if (e.isRecurring) totalRecurring += e.amount
+      }
+    }
     return { totalCategories, activeCategories, totalExpenses, totalRecurring }
   }, [categories, expenses])
 
@@ -97,10 +120,21 @@ export default function ExpensesManagementPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
-          {bn ? 'খরচ ব্যবস্থাপনা' : 'Expense Management'}
-        </h1>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
+            {bn ? 'খরচ ব্যবস্থাপনা' : 'Expense Management'}
+          </h1>
+        </div>
+        <button
+          onClick={syncData}
+          disabled={refreshing}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] text-[0.75rem] font-medium hover:text-[var(--text-primary)] hover:border-[var(--brand)] transition-colors cursor-pointer disabled:opacity-50"
+          title={bn ? 'তথ্য রিফ্রেশ করুন' : 'Refresh data'}
+        >
+          <RefreshCw size={13} className={refreshing ? 'animate-spin text-[var(--brand)]' : ''} />
+          <span>{bn ? 'রিফ্রেশ' : 'Refresh'}</span>
+        </button>
       </div>
 
       <StatCards stats={stats} bn={bn} />

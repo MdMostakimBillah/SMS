@@ -48,6 +48,66 @@ export interface FeePayment {
   createdAt: string
   batchId?: string
   forMonth?: string
+  receiptNo?: string
+}
+
+export function formatReceiptNo(num: number): string {
+  return String(num).padStart(6, '0')
+}
+
+export function parseReceiptNumber(receiptNo?: string): number | null {
+  if (!receiptNo) return null
+  const clean = String(receiptNo).trim()
+  if (/^\d+$/.test(clean)) {
+    const n = parseInt(clean, 10)
+    return isNaN(n) ? null : n
+  }
+  const match = clean.match(/(\d+)/)
+  if (match) {
+    const n = parseInt(match[1], 10)
+    return isNaN(n) ? null : n
+  }
+  return null
+}
+
+export function getNextReceiptNo(payments: FeePayment[]): string {
+  let max = 0
+  for (const p of payments) {
+    const n = parseReceiptNumber(p.receiptNo)
+    if (n !== null && n > max) max = n
+  }
+  return formatReceiptNo(max + 1)
+}
+
+export function ensureReceiptNumbers(payments: FeePayment[]): FeePayment[] {
+  let needsUpdate = false
+  for (const p of payments) {
+    if (!p.receiptNo) {
+      needsUpdate = true
+      break
+    }
+  }
+  if (!needsUpdate) return payments
+
+  let max = 0
+  for (const p of payments) {
+    const n = parseReceiptNumber(p.receiptNo)
+    if (n !== null && n > max) max = n
+  }
+
+  const batchMap = new Map<string, string>()
+  return payments.map((p) => {
+    if (p.receiptNo) return p
+    const key = p.batchId || `${p.studentId}__${p.paidAt}__${p.method}`
+    if (!batchMap.has(key)) {
+      max += 1
+      batchMap.set(key, formatReceiptNo(max))
+    }
+    return {
+      ...p,
+      receiptNo: batchMap.get(key)!,
+    }
+  })
 }
 
 export interface FeeWaiver {
@@ -315,7 +375,8 @@ export const useFeeStore = create<FeeState>()(
       },
 
       addPayment: (p) => {
-        set((state) => ({ payments: [...state.payments, p] }))
+        const receiptNo = p.receiptNo || getNextReceiptNo(get().payments)
+        set((state) => ({ payments: [...state.payments, { ...p, receiptNo }] }))
         onStateMutated(get)
       },
 

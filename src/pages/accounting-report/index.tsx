@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { TrendingUp, TrendingDown, DollarSign, MoreVertical, ChevronDown, FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, MoreVertical, ChevronDown, FileSpreadsheet, FileText, ArrowUpRight, ArrowDownRight, RefreshCw } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useFeeStore } from '@/store/feeStore'
@@ -14,6 +14,7 @@ import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { GenericPDFOptionsModal } from '@/components/shared/GenericPDFOptionsModal'
 import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/GenericPDFOptionsModal'
+import { getSlug } from '@/lib/storage'
 
 type View = 'income' | 'expenses' | 'profit-loss'
 type SourceType = 'monthly' | 'onetime' | 'other' | 'store'
@@ -62,11 +63,13 @@ export default function AccountingReportPage() {
   const [activeTab, setActiveTab] = useState<View>('income')
   const today = new Date().toISOString().split('T')[0]
   const monthStart = (() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] })()
-  const [dateFrom, setDateFrom] = useState(today)
+  const yearStart = (() => { const d = new Date(); d.setMonth(0, 1); return d.toISOString().split('T')[0] })()
+  const [dateFrom, setDateFrom] = useState(monthStart)
   const [dateTo, setDateTo] = useState(today)
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [showActionMenu, setShowActionMenu] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const actionMenuRef = useRef<HTMLDivElement>(null)
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
@@ -74,11 +77,25 @@ export default function AccountingReportPage() {
 
   useTabSlider({ activeTab, tabRefs, sliderRef, getContainer: (slider) => slider?.parentElement ?? null })
 
-  useEffect(() => {
-    useExpenseStore.getState().syncFromServer().catch(() => {})
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
+  const syncAllData = useCallback(async () => {
+    setRefreshing(true)
+    const slug = getSlug() || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : undefined) || undefined
+    try {
+      await Promise.allSettled([
+        useExpenseStore.getState().syncFromServer(slug),
+        useFeeStore.getState().syncFromServer(slug),
+        useOthersIncomeStore.getState().syncFromServer(slug),
+        useStoreStore.getState().syncFromServer(slug),
+      ])
+    } finally {
+      setRefreshing(false)
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void syncAllData()
+  }, [syncAllData])
 
   useEffect(() => {
     if (!showActionMenu) return
@@ -106,89 +123,112 @@ export default function AccountingReportPage() {
     const map = new Map<string, IncomeEntry>()
     const studentSets = new Map<string, Set<string>>()
 
-    feePayments.filter((p) => filterByDate(p.paidAt.split('T')[0]) && !p.feeStructureId.startsWith('FEE-OTHER-')).forEach((p) => {
-      const struct = feeStructures.find((s) => s.id === p.feeStructureId)
-      if (!struct) return
-      const key = `fee-${struct.name.trim().toLowerCase()}`
-      const existing = map.get(key)
-      if (existing) {
-        existing.amount += p.amount
-      } else {
-        map.set(key, {
-          name: struct.name,
-          nameBn: struct.nameBn,
-          amount: p.amount,
-          count: 0,
-          sourceType: struct.type === 'monthly' ? 'monthly' : 'onetime',
-          categoryId: struct.categoryId,
-        })
-        studentSets.set(key, new Set())
-      }
-      studentSets.get(key)!.add(p.studentId)
-      map.get(key)!.count = studentSets.get(key)!.size
-    })
+    const structMap = new Map(feeStructures.map((s) => [s.id, s]))
+    const otherAssignMap = new Map(otherAssignments.map((a) => [a.id, a]))
+    const otherCatMap = new Map(otherCategories.map((c) => [c.id, c]))
+    const productMap = new Map(storeProducts.map((p) => [p.id, p]))
 
-    otherAssignments.filter((a) => a.isActive).forEach((a) => {
-      const cat = otherCategories.find((c) => c.id === a.categoryId)
-      if (!cat) return
-      const structId = `FEE-OTHER-${a.id}`
-      const otherPayments = feePayments.filter((p) => p.feeStructureId === structId && filterByDate(p.paidAt.split('T')[0]))
-      const total = otherPayments.reduce((sum, p) => sum + p.amount, 0)
-      if (total <= 0) return
-      const key = `other-${cat.name.trim().toLowerCase()}`
-      const existing = map.get(key)
-      if (existing) {
-        existing.amount += total
-      } else {
-        map.set(key, {
-          name: cat.name,
-          nameBn: cat.nameBn,
-          amount: total,
-          count: 0,
-          sourceType: 'other',
-        })
-        studentSets.set(key, new Set())
-      }
-      otherPayments.forEach((p) => studentSets.get(key)!.add(p.studentId))
-      map.get(key)!.count = studentSets.get(key)!.size
-    })
+    for (let i = 0; i < feePayments.length; i++) {
+      const p = feePayments[i]
+      const paidDate = (p.paidAt || (p as any).createdAt || '').split('T')[0]
+      if (!filterByDate(paidDate)) continue
 
-    storeSales.forEach((sale) => {
-      if (!filterByDate(sale.createdAt.split('T')[0])) return
-      sale.items.forEach((item) => {
-        const product = storeProducts.find((p) => p.id === item.productId)
-        if (!product) return
-        const key = `store-${product.name.trim().toLowerCase()}`
+      if (p.feeStructureId?.startsWith('FEE-OTHER-')) {
+        const assignmentId = p.feeStructureId.slice(10)
+        const assignment = otherAssignMap.get(assignmentId)
+        const cat = assignment ? otherCatMap.get(assignment.categoryId) : null
+
+        const name = cat ? cat.name : (bn ? 'অন্যান্য আয়' : 'Other Income')
+        const nameBn = cat ? cat.nameBn : (bn ? 'অন্যান্য আয়' : 'Other Income')
+        const key = `other-${name.trim().toLowerCase()}`
         const existing = map.get(key)
         if (existing) {
-          existing.amount += item.subtotal
+          existing.amount += p.amount
+        } else {
+          map.set(key, {
+            name,
+            nameBn,
+            amount: p.amount,
+            count: 0,
+            sourceType: 'other',
+            categoryId: cat?.id,
+          })
+          studentSets.set(key, new Set())
+        }
+        if (p.studentId) studentSets.get(key)!.add(p.studentId)
+        map.get(key)!.count = studentSets.get(key)!.size
+      } else {
+        const struct = structMap.get(p.feeStructureId)
+        const name = struct ? struct.name : (p.feeStructureId || (bn ? 'সাধারণ ফি' : 'General Fee'))
+        const nameBn = struct ? struct.nameBn : (p.feeStructureId || (bn ? 'সাধারণ ফি' : 'General Fee'))
+        const key = `fee-${name.trim().toLowerCase()}`
+        const existing = map.get(key)
+        if (existing) {
+          existing.amount += p.amount
+        } else {
+          map.set(key, {
+            name,
+            nameBn,
+            amount: p.amount,
+            count: 0,
+            sourceType: struct?.type === 'monthly' ? 'monthly' : 'onetime',
+            categoryId: struct?.categoryId,
+          })
+          studentSets.set(key, new Set())
+        }
+        if (p.studentId) studentSets.get(key)!.add(p.studentId)
+        map.get(key)!.count = studentSets.get(key)!.size
+      }
+    }
+
+    for (let i = 0; i < storeSales.length; i++) {
+      const sale = storeSales[i]
+      const saleDate = (sale.createdAt || '').split('T')[0]
+      if (!filterByDate(saleDate)) continue
+      const items = sale.items || []
+      for (let j = 0; j < items.length; j++) {
+        const item = items[j]
+        const product = productMap.get(item.productId)
+        const name = product ? product.name : (item.productName || (bn ? 'দোকান সামগ্রী' : 'Store Item'))
+        const nameBn = product ? product.nameBn : (item.productNameBn || (bn ? 'দোকান সামগ্রী' : 'Store Item'))
+        const key = `store-${name.trim().toLowerCase()}`
+        const itemAmount = item.subtotal || (item.unitPrice * item.qty) || 0
+        const existing = map.get(key)
+        if (existing) {
+          existing.amount += itemAmount
           existing.count += item.qty
         } else {
           map.set(key, {
-            name: product.name,
-            nameBn: product.nameBn,
-            amount: item.subtotal,
+            name,
+            nameBn,
+            amount: itemAmount,
             count: item.qty,
             sourceType: 'store',
           })
         }
-      })
-    })
+      }
+    }
 
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount)
-  }, [feePayments, feeStructures, otherAssignments, otherCategories, storeSales, storeProducts, filterByDate])
+  }, [feePayments, feeStructures, otherAssignments, otherCategories, storeSales, storeProducts, bn, filterByDate])
 
   const expensesByCategory = useMemo(() => {
+    const catMap = new Map(expenseCategories.map((c) => [c.id, c]))
     const map = new Map<string, { name: string; nameBn: string; amount: number; count: number; sourceType: SourceType }>()
-    expenses.filter((e) => e.isActive && filterByDate(e.date)).forEach((e) => {
-      const cat = expenseCategories.find((c) => c.id === e.categoryId)
-      const name = cat ? (bn ? cat.nameBn : cat.name) : (bn ? 'অন্যান্য' : 'Others')
-      const nameBn = cat?.nameBn || 'অন্যান্য'
+    for (let i = 0; i < expenses.length; i++) {
+      const e = expenses[i]
+      if (e.isActive === false) continue
+      const date = (e.date || e.createdAt || '').split('T')[0]
+      if (!filterByDate(date)) continue
+
+      const cat = catMap.get(e.categoryId)
+      const name = cat ? cat.name : (bn ? 'অন্যান্য' : 'Others')
+      const nameBn = cat?.nameBn || (cat?.name || (bn ? 'অন্যান্য' : 'Others'))
       const existing = map.get(e.categoryId) || { name, nameBn, amount: 0, count: 0, sourceType: 'other' as SourceType }
       existing.amount += e.amount
       existing.count += 1
       map.set(e.categoryId, existing)
-    })
+    }
     return Array.from(map.values()).sort((a, b) => b.amount - a.amount)
   }, [expenses, expenseCategories, bn, filterByDate])
 
@@ -439,11 +479,32 @@ export default function AccountingReportPage() {
           <label className="text-[11px] font-semibold text-[var(--text-muted)] uppercase">{bn ? 'পর্যন্ত' : 'To'}</label>
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[11px] font-[inherit] outline-none" />
         </div>
-        {(dateFrom !== monthStart || dateTo !== today) && (
-          <button onClick={() => { setDateFrom(monthStart); setDateTo(today) }} className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] text-[11px] font-medium cursor-pointer hover:bg-[var(--border)] transition-colors">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            onClick={() => { setDateFrom(today); setDateTo(today) }}
+            className={`h-8 px-2.5 rounded-lg border text-[11px] font-medium cursor-pointer transition-colors ${dateFrom === today && dateTo === today ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]'}`}
+          >
+            {bn ? 'আজ' : 'Today'}
+          </button>
+          <button
+            onClick={() => { setDateFrom(monthStart); setDateTo(today) }}
+            className={`h-8 px-2.5 rounded-lg border text-[11px] font-medium cursor-pointer transition-colors ${dateFrom === monthStart && dateTo === today ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]'}`}
+          >
             {bn ? 'এই মাস' : 'This Month'}
           </button>
-        )}
+          <button
+            onClick={() => { setDateFrom(yearStart); setDateTo(today) }}
+            className={`h-8 px-2.5 rounded-lg border text-[11px] font-medium cursor-pointer transition-colors ${dateFrom === yearStart && dateTo === today ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]'}`}
+          >
+            {bn ? 'এই বছর' : 'This Year'}
+          </button>
+          <button
+            onClick={() => { setDateFrom(''); setDateTo('') }}
+            className={`h-8 px-2.5 rounded-lg border text-[11px] font-medium cursor-pointer transition-colors ${!dateFrom && !dateTo ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border)]'}`}
+          >
+            {bn ? 'সব' : 'All'}
+          </button>
+        </div>
       </div>
 
       <div className="relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] w-full">
@@ -463,26 +524,37 @@ export default function AccountingReportPage() {
           {activeTab === 'expenses' && (bn ? `মোট: ${toBnNum(expensesByCategory.length)}টি ক্যাটাগরি — ${fmt(totalExpenses)}` : `Total: ${expensesByCategory.length} categories — ${fmt(totalExpenses)}`)}
           {activeTab === 'profit-loss' && (bn ? `মোট: ${toBnNum(profitLossByCategory.length)}টি ক্যাটাগরি` : `Total: ${profitLossByCategory.length} categories`)}
         </span>
-        <div className="relative">
-          <button onClick={() => setShowActionMenu(!showActionMenu)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer">
-            <MoreVertical size={13} />{bn ? 'অ্যাকশন' : 'Action'}<ChevronDown size={12} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => void syncAllData()}
+            disabled={refreshing}
+            title={bn ? 'ডাটাবেস / লোকাল ডাটা রিফ্রেশ করুন' : 'Refresh from Database / Local storage'}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} />
+            <span className="hidden sm:inline">{bn ? 'রিফ্রেশ' : 'Refresh'}</span>
           </button>
-          {showActionMenu && (<>
-            <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
-            <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
-              {canExport(`accounting.${activeTab}`) && (
-                <button onClick={handleExportExcel} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
-                  <FileSpreadsheet size={14} className="text-[var(--green)]" />{bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                </button>
-              )}
-              <div className="h-px bg-[var(--border)] mx-2" />
-              {canExport(`accounting.${activeTab}`) && (
-                <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
-                  <FileText size={14} className="text-[var(--red)]" />{bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                </button>
-              )}
-            </div>
-          </>)}
+          <div className="relative">
+            <button onClick={() => setShowActionMenu(!showActionMenu)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium bg-transparent border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40 hover:text-[var(--brand)] transition-colors cursor-pointer">
+              <MoreVertical size={13} />{bn ? 'অ্যাকশন' : 'Action'}<ChevronDown size={12} />
+            </button>
+            {showActionMenu && (<>
+              <div className="fixed inset-0 z-40" onClick={() => setShowActionMenu(false)} />
+              <div ref={actionMenuRef} className="absolute top-full right-0 mt-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] min-w-[12.5rem] z-50 overflow-hidden">
+                {canExport(`accounting.${activeTab}`) && (
+                  <button onClick={handleExportExcel} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--green-light)] transition-colors">
+                    <FileSpreadsheet size={14} className="text-[var(--green)]" />{bn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                )}
+                <div className="h-px bg-[var(--border)] mx-2" />
+                {canExport(`accounting.${activeTab}`) && (
+                  <button onClick={() => { setShowPdfModal(true); setShowActionMenu(false) }} className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-[var(--text-primary)] cursor-pointer border-0 bg-transparent text-left hover:bg-[var(--red-light)] transition-colors">
+                    <FileText size={14} className="text-[var(--red)]" />{bn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                  </button>
+                )}
+              </div>
+            </>)}
+          </div>
         </div>
       </div>
 
