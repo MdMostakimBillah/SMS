@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip } from 'recharts'
 import {
   X,
   Printer,
@@ -433,11 +433,11 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[600] flex items-center justify-center p-2.5 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[600] flex items-center justify-center p-2.5 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm modal-backdrop-animate"
       onClick={onClose}
     >
       <div
-        className="relative w-[96vw] max-w-5xl xl:max-w-6xl h-auto max-h-[92vh] flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden text-[var(--text-primary)] my-auto ring-1 ring-black/5 dark:ring-white/10"
+        className="relative w-[96vw] max-w-5xl xl:max-w-6xl h-auto max-h-[92vh] flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden text-[var(--text-primary)] my-auto ring-1 ring-black/5 dark:ring-white/10 modal-card-animate"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header Bar */}
@@ -473,7 +473,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               <button
                 type="button"
                 onClick={handlePrintAll}
-                className="glass h-9 px-4 py-2 rounded-xl bg-[var(--brand-light)] hover:bg-[var(--brand)] text-[var(--brand)] hover:text-white hover:border-[var(--brand)] text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                className="glass h-9 px-4 py-2 rounded-xl bg-[var(--brand-light)] hover:bg-[var(--brand)] text-[var(--brand)] hover:text-white hover:border-[var(--brand)] text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95"
                 title={bn ? 'সব রসিদ প্রিন্ট' : 'Print Receipt'}
                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
               >
@@ -484,7 +484,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
             <button
               type="button"
               onClick={onClose}
-              className="glass h-9 w-9 p-2 rounded-xl flex items-center justify-center bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              className="glass h-9 w-9 p-2 rounded-xl flex items-center justify-center bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95"
               aria-label={bn ? 'বন্ধ করুন' : 'Close'}
               title="Esc"
             >
@@ -494,7 +494,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
         </div>
 
         {/* Scrollable Body Container */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 sm:space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 sm:space-y-4 overscroll-contain">
           {/* Top Secondary Overview Strip (Compact & Streamlined) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
             {/* Left 5 cols: Compact Student Card */}
@@ -517,7 +517,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                     <button
                       type="button"
                       onClick={() => copyToClipboard(student.id, 'id')}
-                      className="glass font-mono text-[0.6875rem] font-semibold px-2.5 py-1 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)]/20 inline-flex items-center gap-1.5 transition-all cursor-pointer hover:bg-[var(--brand)] hover:text-white"
+                      className="glass font-mono text-[0.6875rem] font-semibold px-2.5 py-1 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)]/20 inline-flex items-center gap-1.5 transition-all duration-150 active:scale-95 cursor-pointer hover:bg-[var(--brand)] hover:text-white"
                       title={bn ? 'আইডি কপি করুন' : 'Click to copy ID'}
                     >
                       <span className="text-[0.625rem] opacity-75 font-sans">ID:</span>
@@ -592,7 +592,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                   <button
                     type="button"
                     onClick={() => setChartMode('all')}
-                    className={`px-3 py-1 rounded-md font-semibold cursor-pointer transition-all ${
+                    className={`px-3 py-1 rounded-md font-semibold cursor-pointer transition-all duration-150 active:scale-95 ${
                       chartMode === 'all'
                         ? 'bg-[var(--brand)] text-white shadow-xs'
                         : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -603,7 +603,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                   <button
                     type="button"
                     onClick={() => setChartMode('status')}
-                    className={`px-3 py-1 rounded-md font-semibold cursor-pointer transition-all ${
+                    className={`px-3 py-1 rounded-md font-semibold cursor-pointer transition-all duration-150 active:scale-95 ${
                       chartMode === 'status'
                         ? 'bg-[var(--brand)] text-white shadow-xs'
                         : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
@@ -616,39 +616,41 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
 
               {/* Chart & KPI figures side by side in a compact row */}
               <div className="flex items-center gap-3.5 my-1.5">
-                {/* Mini Donut Chart */}
-                <div className="relative w-[76px] h-[76px] shrink-0">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={76} minHeight={76} initialDimension={{ width: 76, height: 76 }}>
-                    <PieChart>
-                      <Pie
-                        data={chartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={23}
-                        outerRadius={35}
-                        dataKey="value"
-                        paddingAngle={chartData.length > 1 ? 3 : 0}
-                        isAnimationActive={true}
-                        animationDuration={500}
-                      >
-                        {chartData.map((e, i) => (
-                          <Cell key={i} fill={e.color} stroke="var(--surface)" strokeWidth={1.5} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(val: any) => [`৳${Number(val || 0).toLocaleString()}`, '']}
-                        contentStyle={{
-                          backgroundColor: 'var(--surface)',
-                          borderColor: 'var(--glass-border)',
-                          borderRadius: '0.5rem',
-                          boxShadow: 'var(--glass-shadow)',
-                          color: 'var(--text-primary)',
-                          fontSize: '0.6875rem',
-                          padding: '4px 8px',
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                {/* Mini Donut Chart - direct SVG rendering for instant 60fps performance */}
+                <div className="relative w-[76px] h-[76px] shrink-0 flex items-center justify-center">
+                  <PieChart width={76} height={76} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={23}
+                      outerRadius={35}
+                      dataKey="value"
+                      paddingAngle={chartData.length > 1 ? 3 : 0}
+                      isAnimationActive={true}
+                      animationDuration={450}
+                      animationEasing="ease-out"
+                    >
+                      {chartData.map((e, i) => (
+                        <Cell key={i} fill={e.color} stroke="var(--surface)" strokeWidth={1.5} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(val: any) => [`৳${Number(val || 0).toLocaleString()}`, '']}
+                      isAnimationActive={true}
+                      animationDuration={150}
+                      animationEasing="ease-out"
+                      contentStyle={{
+                        backgroundColor: 'var(--surface)',
+                        borderColor: 'var(--glass-border)',
+                        borderRadius: '0.5rem',
+                        boxShadow: 'var(--glass-shadow)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.6875rem',
+                        padding: '4px 8px',
+                      }}
+                    />
+                  </PieChart>
 
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
                     <span className="text-[11px] font-black text-[var(--text-primary)] leading-none tabular-nums">
@@ -738,7 +740,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto max-h-[30rem] overflow-y-auto">
+                <div className="overflow-x-auto max-h-[30rem] overflow-y-auto overscroll-contain scroll-smooth">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)] sticky top-0 z-10 backdrop-blur-xs">
@@ -770,7 +772,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                               <button
                                 type="button"
                                 onClick={() => copyToClipboard(rcp, 'receipt')}
-                                className="glass font-mono font-semibold text-xs text-[var(--brand)] px-3 py-1.5 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]/20 inline-flex items-center gap-1.5 cursor-pointer transition-all hover:bg-[var(--brand)] hover:text-white"
+                                className="glass font-mono font-semibold text-xs text-[var(--brand)] px-3 py-1.5 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]/20 inline-flex items-center gap-1.5 cursor-pointer transition-all duration-150 active:scale-95 hover:bg-[var(--brand)] hover:text-white"
                                 title={bn ? 'রসিদ নং কপি করুন' : 'Click to copy Receipt No'}
                               >
                                 <span>{rcp}</span>
@@ -835,7 +837,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                               <button
                                 type="button"
                                 onClick={() => handlePrintSingle(p)}
-                                className="glass w-8 h-8 rounded-lg p-1.5 bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white text-[var(--green)] hover:border-[var(--green)] cursor-pointer flex items-center justify-center mx-auto transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                                className="glass w-8 h-8 rounded-lg p-1.5 bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white text-[var(--green)] hover:border-[var(--green)] cursor-pointer flex items-center justify-center mx-auto transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95"
                                 title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                               >
@@ -929,7 +931,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               <button
                 type="button"
                 onClick={handleCollectDue}
-                className="h-9 px-4.5 py-2 rounded-xl bg-[var(--green)] hover:opacity-90 text-white text-xs font-bold border-0 cursor-pointer flex items-center gap-2 transition-opacity shadow-xs"
+                className="h-9 px-4.5 py-2 rounded-xl bg-[var(--green)] hover:opacity-90 text-white text-xs font-bold border-0 cursor-pointer flex items-center gap-2 transition-all duration-150 active:scale-95 shadow-xs"
               >
                 <CheckCircle2 size={15} />
                 <span>{bn ? 'বকেয়া আদায়' : 'Collect Due'}</span>
@@ -938,7 +940,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
             <button
               type="button"
               onClick={onClose}
-              className="glass h-9 px-5 py-2 rounded-xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              className="glass h-9 px-5 py-2 rounded-xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95"
             >
               {bn ? 'বন্ধ করুন' : 'Close'}
             </button>

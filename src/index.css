@@ -667,6 +667,36 @@ button {
   animation: modalPopIn 0.2s ease-out;
 }
 
+/* Hardware-accelerated smooth modal entrance animations */
+@keyframes modalBackdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSpringIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-backdrop-animate {
+  animation: modalBackdropFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.modal-card-animate {
+  animation: modalSpringIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
 /* ─── Tailwind CSS Variable Utilities ─── */
 @layer utilities {
   .bg-primary {
