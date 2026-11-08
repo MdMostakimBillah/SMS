@@ -19,7 +19,6 @@ import {
   Layers,
   GraduationCap,
   Settings,
-  RefreshCw,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
@@ -69,7 +68,6 @@ export default function SyllabusPage() {
   const subjects = useTeacherStore((s) => s.subjects)
   const {
     syllabi: allSyllabi,
-    syncing,
     syncFromServer,
     addSyllabus,
     addChapter,
@@ -85,9 +83,7 @@ export default function SyllabusPage() {
 
   const [view, setView] = useState<View>('home')
   const [isLoading, setIsLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
   const isMountedRef = useRef(true)
-  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     isMountedRef.current = true
@@ -96,21 +92,8 @@ export default function SyllabusPage() {
     })
     return () => {
       isMountedRef.current = false
-      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
     }
   }, [syncFromServer])
-
-  const handleManualRefresh = useCallback(async () => {
-    if (refreshing) return
-    setRefreshing(true)
-    try {
-      await syncFromServer()
-    } finally {
-      refreshTimerRef.current = setTimeout(() => {
-        if (isMountedRef.current) setRefreshing(false)
-      }, 500)
-    }
-  }, [refreshing, syncFromServer])
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedSection, setSelectedSection] = useState('')
   const [selectedSubject, setSelectedSubject] = useState('')
@@ -541,18 +524,6 @@ export default function SyllabusPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Refresh Button */}
-          <button
-            type="button"
-            onClick={handleManualRefresh}
-            disabled={refreshing || syncing}
-            className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--brand)] transition-all disabled:opacity-50"
-            title={isBn ? 'রিফ্রেশ করুন' : 'Refresh from server'}
-            aria-label={isBn ? 'রিফ্রেশ' : 'Refresh'}
-          >
-            <RefreshCw size={14} className={refreshing || syncing ? 'animate-spin text-[var(--brand)]' : ''} />
-          </button>
-
           {view === 'detail' && selectedSyllabus && canDownload('syllabus') && (
             <button onClick={openPDFModal} className={btnPri}>
               <Download size={14} />

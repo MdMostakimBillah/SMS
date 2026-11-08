@@ -132,7 +132,7 @@ describe('SyllabusPage Integration & LocalPC/Database Parity', () => {
     })
   })
 
-  it('renders header, syllabus statistics cards, and refresh button without Local PC badge', async () => {
+  it('renders header and syllabus statistics cards without Local PC badge or refresh button', async () => {
     render(
       <TestWrapper>
         <SyllabusPage />
@@ -143,7 +143,7 @@ describe('SyllabusPage Integration & LocalPC/Database Parity', () => {
       expect(screen.getByText(/Syllabus Management|পাঠ্যক্রম ব্যবস্থাপনা/i)).toBeInTheDocument()
     })
 
-    expect(screen.getByTitle(/Refresh from server|রিফ্রেশ করুন/i)).toBeInTheDocument()
+    expect(screen.queryByTitle(/Refresh from server|রিফ্রেশ করুন/i)).not.toBeInTheDocument()
     // Local PC indicator text must NOT be present
     expect(screen.queryByText(/Local PC|লোকাল পিসি/i)).not.toBeInTheDocument()
   })
@@ -168,8 +168,7 @@ describe('SyllabusPage Integration & LocalPC/Database Parity', () => {
     syncSpy.mockRestore()
   })
 
-  it('clicking the Refresh button triggers syncFromServer', async () => {
-    const user = userEvent.setup()
+  it('syncs from server on mount', async () => {
     let syncCalled = false
     const origSync = useSyllabusStore.getState().syncFromServer
     useSyllabusStore.setState({
@@ -185,11 +184,8 @@ describe('SyllabusPage Integration & LocalPC/Database Parity', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTitle(/Refresh from server|রিফ্রেশ করুন/i)).toBeInTheDocument()
+      expect(screen.getByText(/Syllabus Management|পাঠ্যক্রম ব্যবস্থাপনা/i)).toBeInTheDocument()
     })
-
-    const refreshBtn = screen.getByTitle(/Refresh from server|রিফ্রেশ করুন/i)
-    await user.click(refreshBtn)
 
     expect(syncCalled).toBe(true)
     useSyllabusStore.setState({ syncFromServer: origSync })
