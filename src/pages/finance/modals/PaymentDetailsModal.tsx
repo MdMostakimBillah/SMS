@@ -329,18 +329,18 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[600] flex items-center justify-center p-3 sm:p-5 md:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-[600] flex items-center justify-center p-2.5 sm:p-4 md:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="relative w-[90vw] max-w-[90vw] h-auto max-h-[90vh] flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-xl overflow-hidden text-[var(--text-primary)] my-auto"
+        className="relative w-[96vw] max-w-5xl xl:max-w-6xl h-auto max-h-[92vh] flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden text-[var(--text-primary)] my-auto ring-1 ring-black/5 dark:ring-white/10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Top Header Bar */}
-        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)] shrink-0">
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)]/90 backdrop-blur-xs shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center shrink-0">
-              <Banknote size={18} />
+            <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center shrink-0 shadow-2xs">
+              <Banknote size={20} />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[0.6875rem] text-[var(--text-muted)] font-medium">
@@ -370,11 +370,11 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                 type="button"
                 onClick={handlePrintAll}
                 style={{ borderColor: 'var(--brand)' }}
-                className="h-8 px-3 rounded-lg border bg-[var(--brand-light)] hover:bg-[var(--brand)] text-[var(--brand)] hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="h-8.5 px-3.5 rounded-xl border bg-[var(--brand-light)] hover:bg-[var(--brand)] text-[var(--brand)] hover:text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
                 title={bn ? 'সব রসিদ প্রিন্ট' : 'Print Receipt'}
                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
               >
-                <Printer size={13} />
+                <Printer size={14} />
                 <span>{bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}</span>
               </button>
             )}
@@ -382,23 +382,23 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               type="button"
               onClick={onClose}
               style={{ borderColor: 'var(--border)' }}
-              className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] border text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors"
+              className="h-8.5 w-8.5 rounded-xl flex items-center justify-center bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] border text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors shadow-2xs"
               aria-label={bn ? 'বন্ধ করুন' : 'Close'}
               title="Esc"
             >
-              <X size={15} />
+              <X size={16} />
             </button>
           </div>
         </div>
 
         {/* Scrollable Body Container */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
           {/* Student Info & Financial Balance Overview */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4">
             {/* Left 6 cols: Student Info Card */}
-            <div className="lg:col-span-6 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4 flex flex-col justify-between">
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] font-bold text-lg shrink-0">
+            <div className="lg:col-span-6 bg-[var(--bg-secondary)]/80 border border-[var(--border)] rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between shadow-2xs">
+              <div className="flex items-start gap-3.5">
+                <div className="w-13 h-13 rounded-2xl overflow-hidden flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] font-bold text-xl shrink-0 shadow-xs border border-[var(--brand)]/20">
                   {student.photo ? (
                     <img src={student.photo} alt={student.nameEn} className="w-full h-full object-cover" />
                   ) : (
@@ -408,52 +408,52 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-base font-bold text-[var(--text-primary)] leading-tight truncate">
+                    <h4 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-tight truncate">
                       {bn ? student.nameBn || student.nameEn : student.nameEn}
                     </h4>
                     <button
                       type="button"
                       onClick={() => copyToClipboard(student.id, 'id')}
                       style={{ borderColor: 'var(--brand)' }}
-                      className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[var(--brand-light)] text-[var(--brand)] border inline-flex items-center gap-1 transition-colors cursor-pointer"
+                      className="font-mono text-xs font-semibold px-2 py-0.5 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border inline-flex items-center gap-1 transition-colors cursor-pointer hover:bg-[var(--brand)] hover:text-white"
                       title={bn ? 'আইডি কপি করুন' : 'Click to copy ID'}
                     >
-                      <span className="text-[0.625rem] text-[var(--text-muted)] font-sans">ID:</span>
+                      <span className="text-[0.625rem] opacity-75 font-sans">ID:</span>
                       <span>{student.id}</span>
                       {copiedId ? (
                         <Check size={11} className="text-[var(--green)]" />
                       ) : (
-                        <Copy size={11} className="opacity-50" />
+                        <Copy size={11} className="opacity-60" />
                       )}
                     </button>
                   </div>
 
                   <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] mt-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
-                      <GraduationCap size={11} className="text-[var(--brand)]" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
+                      <GraduationCap size={12} className="text-[var(--brand)]" />
                       <span className="text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span>
                       <strong className="text-[var(--text-primary)] font-semibold">{student.class}</strong>
                     </span>
 
                     {student.section && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
-                        <Layers size={11} className="text-[var(--brand)]" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
+                        <Layers size={12} className="text-[var(--brand)]" />
                         <span className="text-[var(--text-muted)]">{bn ? 'শাখা:' : 'Sec:'}</span>
                         <strong className="text-[var(--text-primary)] font-semibold">{student.section}</strong>
                       </span>
                     )}
 
                     {student.roll && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
-                        <Hash size={11} className="text-[var(--brand)]" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
+                        <Hash size={12} className="text-[var(--brand)]" />
                         <span className="text-[var(--text-muted)]">{bn ? 'রোল:' : 'Roll:'}</span>
                         <strong className="text-[var(--text-primary)] font-semibold">{student.roll}</strong>
                       </span>
                     )}
 
                     {session && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
-                        <Calendar size={11} className="text-[var(--brand)]" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
+                        <Calendar size={12} className="text-[var(--brand)]" />
                         <span className="text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span>
                         <strong className="text-[var(--text-primary)] font-semibold">{session}</strong>
                       </span>
@@ -463,15 +463,15 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               </div>
 
               {/* Fee Specification Strip */}
-              <div className="mt-3 pt-2.5 border-t border-[var(--border)] flex items-center justify-between text-xs flex-wrap gap-2">
+              <div className="mt-3.5 pt-3 border-t border-[var(--border)] flex items-center justify-between text-xs flex-wrap gap-2">
                 <span className="text-[var(--text-secondary)] font-medium truncate">
                   {bn ? effectiveFee.nameBn || effectiveFee.name : effectiveFee.name}
                 </span>
                 <span
                   style={{ borderColor: 'var(--brand)' }}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.6875rem] font-medium bg-[var(--brand-light)] text-[var(--brand)] border shrink-0"
+                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.6875rem] font-semibold bg-[var(--brand-light)] text-[var(--brand)] border shrink-0"
                 >
-                  <Sparkles size={10} />
+                  <Sparkles size={11} />
                   {effectiveFee.type === 'monthly' ? (bn ? 'মাসিক ফি' : 'Monthly Fee') :
                    effectiveFee.type === 'yearly' ? (bn ? 'বাৎসরিক ফি' : 'Yearly Fee') :
                    (bn ? 'এককালীন ফি' : 'One-time Fee')}
@@ -480,21 +480,21 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
             </div>
 
             {/* Right 6 cols: Financial Overview */}
-            <div className="lg:col-span-6 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4 flex flex-col justify-between">
+            <div className="lg:col-span-6 bg-[var(--bg-secondary)]/80 border border-[var(--border)] rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between shadow-2xs">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">
+                  <span className="text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">
                     {bn ? 'মোট প্রদেয় ফি' : 'Total Payable'}
                   </span>
-                  <div className="text-xl font-bold text-[var(--text-primary)] tabular-nums">
+                  <div className="text-xl sm:text-2xl font-black text-[var(--text-primary)] tabular-nums mt-0.5">
                     {fmt(totalOriginal)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-[0.6875rem] font-medium text-[var(--text-muted)] block">
-                    {paidPercentage}% {bn ? 'পরিশোধ' : 'settled'}
+                  <span className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] block">
+                    {paidPercentage}% {bn ? 'পরিশোধিত' : 'settled'}
                   </span>
-                  <div className="w-28 h-1.5 rounded-full bg-[var(--border)] overflow-hidden mt-1 ml-auto">
+                  <div className="w-32 h-2 rounded-full bg-[var(--border)] overflow-hidden mt-1.5 ml-auto">
                     <div
                       className="h-full bg-[var(--green)] rounded-full transition-all duration-500"
                       style={{ width: `${paidPercentage}%` }}
@@ -503,40 +503,40 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                 </div>
               </div>
 
-              {/* 4 Financial KPI Figures in clean minimal thematic cards */}
-              <div className="grid grid-cols-4 gap-2 mt-3 pt-2.5 border-t border-[var(--border)] text-center">
-                <div className="p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
-                  <span className="text-[0.625rem] uppercase font-semibold text-[var(--text-muted)] block tracking-wider">
+              {/* 4 Financial KPI Figures in clean thematic cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mt-3.5 pt-3 border-t border-[var(--border)] text-center">
+                <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-2xs">
+                  <span className="text-[0.625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
                     {bn ? 'পরিশোধিত' : 'Total Paid'}
                   </span>
-                  <span className="text-sm sm:text-base font-bold text-[var(--green)] tabular-nums">
+                  <span className="text-base sm:text-lg font-bold text-[var(--green)] tabular-nums mt-0.5 block">
                     {fmt(totalPaid)}
                   </span>
                 </div>
 
-                <div className="p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
-                  <span className="text-[0.625rem] uppercase font-semibold text-[var(--text-muted)] block tracking-wider">
+                <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-2xs">
+                  <span className="text-[0.625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
                     {bn ? 'ছাড়' : 'Discount'}
                   </span>
-                  <span className="text-sm sm:text-base font-bold text-[var(--amber)] tabular-nums">
+                  <span className="text-base sm:text-lg font-bold text-[var(--amber)] tabular-nums mt-0.5 block">
                     {fmt(totalDiscount)}
                   </span>
                 </div>
 
-                <div className="p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
-                  <span className="text-[0.625rem] uppercase font-semibold text-[var(--text-muted)] block tracking-wider">
+                <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-2xs">
+                  <span className="text-[0.625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
                     {bn ? 'ওয়েভার' : 'Waived'}
                   </span>
-                  <span className="text-sm sm:text-base font-bold text-[var(--purple)] tabular-nums">
+                  <span className="text-base sm:text-lg font-bold text-[var(--purple)] tabular-nums mt-0.5 block">
                     {fmt(totalWaived)}
                   </span>
                 </div>
 
-                <div className="p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)]">
-                  <span className="text-[0.625rem] uppercase font-semibold text-[var(--text-muted)] block tracking-wider">
+                <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-2xs">
+                  <span className="text-[0.625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
                     {bn ? 'অবশিষ্ট বকেয়া' : 'Total Due'}
                   </span>
-                  <span className={`text-sm sm:text-base font-bold tabular-nums ${effectiveDue > 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+                  <span className={`text-base sm:text-lg font-bold tabular-nums mt-0.5 block ${effectiveDue > 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
                     {effectiveDue > 0 ? fmt(effectiveDue) : (bn ? 'পরিশোধিত' : 'Cleared')}
                   </span>
                 </div>
@@ -569,11 +569,11 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               )}
             </div>
 
-            <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
+            <div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-[var(--bg-primary)] shadow-2xs">
               {payments.length === 0 ? (
-                <div className="text-center py-10 px-4 text-[var(--text-muted)] text-xs">
-                  <div className="w-9 h-9 rounded-xl bg-[var(--amber-light)] text-[var(--amber)] flex items-center justify-center mx-auto mb-2">
-                    <ShieldAlert size={18} />
+                <div className="text-center py-12 px-4 text-[var(--text-muted)] text-xs">
+                  <div className="w-10 h-10 rounded-2xl bg-[var(--amber-light)] text-[var(--amber)] flex items-center justify-center mx-auto mb-2.5 shadow-2xs">
+                    <ShieldAlert size={20} />
                   </div>
                   <h6 className="font-bold text-[var(--text-primary)] text-sm mb-1">
                     {bn ? 'কোনো পেমেন্ট রেকর্ড নেই' : 'No payment records found'}
@@ -583,20 +583,20 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto max-h-[20rem] overflow-y-auto">
+                <div className="overflow-x-auto max-h-[28rem] overflow-y-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)] sticky top-0 z-10">
-                        <th className="text-center w-10 py-2.5 px-2 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">#</th>
-                        <th className="text-left min-w-[8.5rem] py-2.5 px-3 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
-                        <th className="text-center min-w-[6.5rem] py-2.5 px-2 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
-                        <th className="text-left min-w-[9rem] py-2.5 px-3 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">{bn ? 'ফি আইটেম' : 'Fee Item'}</th>
-                        <th className="text-center min-w-[6rem] py-2.5 px-2 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">{bn ? 'সময়কাল' : 'Period'}</th>
-                        <th className="text-right min-w-[6rem] py-2.5 px-3 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                        <th className="text-right min-w-[5rem] py-2.5 px-2.5 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">{bn ? 'ছাড়' : 'Disc.'}</th>
-                        <th className="text-center min-w-[5.5rem] py-2.5 px-2 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                        <th className="text-left min-w-[7.5rem] py-2.5 px-3 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">{bn ? 'সংগ্রাহক' : 'Collected By'}</th>
-                        <th className="text-center w-12 py-2.5 px-2 text-[0.6875rem] uppercase font-semibold text-[var(--text-muted)] tracking-wider">{bn ? 'রসিদ' : 'Print'}</th>
+                      <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)] sticky top-0 z-10 backdrop-blur-xs">
+                        <th className="text-center w-12 py-3 px-2.5 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">#</th>
+                        <th className="text-left min-w-[9rem] py-3 px-3.5 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
+                        <th className="text-center min-w-[7rem] py-3 px-2.5 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
+                        <th className="text-left min-w-[10rem] py-3 px-3.5 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">{bn ? 'ফি আইটেম' : 'Fee Item'}</th>
+                        <th className="text-center min-w-[6.5rem] py-3 px-2.5 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">{bn ? 'সময়কাল' : 'Period'}</th>
+                        <th className="text-right min-w-[6.5rem] py-3 px-3.5 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                        <th className="text-right min-w-[5.5rem] py-3 px-3 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">{bn ? 'ছাড়' : 'Disc.'}</th>
+                        <th className="text-center min-w-[6rem] py-3 px-2.5 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                        <th className="text-left min-w-[8rem] py-3 px-3.5 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">{bn ? 'সংগ্রাহক' : 'Collected By'}</th>
+                        <th className="text-center w-14 py-3 px-2.5 text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">{bn ? 'রসিদ' : 'Print'}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
@@ -607,16 +607,16 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                         const isCopied = copiedReceipt === rcp
 
                         return (
-                          <tr key={p.id} className="hover:bg-[var(--bg-secondary)]/50 transition-colors group">
-                            <td className="text-center py-2 px-2 text-[var(--text-muted)] font-mono text-[0.6875rem]">
+                          <tr key={p.id} className="hover:bg-[var(--bg-secondary)]/60 transition-colors group">
+                            <td className="text-center py-2.5 px-2.5 text-[var(--text-muted)] font-mono text-[0.6875rem]">
                               {idx + 1}
                             </td>
-                            <td className="py-2 px-3">
+                            <td className="py-2.5 px-3.5">
                               <button
                                 type="button"
                                 onClick={() => copyToClipboard(rcp, 'receipt')}
                                 style={{ borderColor: 'var(--brand)' }}
-                                className="font-mono font-medium text-xs text-[var(--brand)] px-2 py-0.5 rounded bg-[var(--brand-light)] border inline-flex items-center gap-1 cursor-pointer transition-colors"
+                                className="font-mono font-semibold text-xs text-[var(--brand)] px-2.5 py-0.5 rounded-lg bg-[var(--brand-light)] border inline-flex items-center gap-1.5 cursor-pointer transition-colors hover:bg-[var(--brand)] hover:text-white"
                                 title={bn ? 'রসিদ নং কপি করুন' : 'Click to copy Receipt No'}
                               >
                                 <span>{rcp}</span>
@@ -627,33 +627,33 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                                 )}
                               </button>
                             </td>
-                            <td className="text-center py-2 px-2 text-[var(--text-secondary)] tabular-nums whitespace-nowrap text-xs">
+                            <td className="text-center py-2.5 px-2.5 text-[var(--text-secondary)] tabular-nums whitespace-nowrap text-xs">
                               {p.paidAt ? p.paidAt.split('T')[0] : '—'}
                             </td>
-                            <td className="py-2 px-3">
-                              <div className="font-semibold text-[var(--text-primary)]">
+                            <td className="py-2.5 px-3.5">
+                              <div className="font-bold text-[var(--text-primary)]">
                                 {bn ? feeInfo.nameBn : feeInfo.name}
                               </div>
                               {p.note && p.note !== feeInfo.name && (
-                                <div className="text-[0.6875rem] text-[var(--text-muted)] truncate max-w-[13rem]">
+                                <div className="text-[0.6875rem] text-[var(--text-muted)] truncate max-w-[14rem] mt-0.5">
                                   {p.note}
                                 </div>
                               )}
                             </td>
-                            <td className="text-center py-2 px-2 text-[var(--text-secondary)] whitespace-nowrap text-xs">
-                              <span className="inline-block px-2 py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.6875rem] font-medium text-[var(--text-secondary)]">
+                            <td className="text-center py-2.5 px-2.5 text-[var(--text-secondary)] whitespace-nowrap text-xs">
+                              <span className="inline-block px-2.5 py-0.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.6875rem] font-semibold text-[var(--text-secondary)]">
                                 {formatPeriod(p.forMonth)}
                               </span>
                             </td>
-                            <td className="text-right py-2 px-3 font-bold text-[var(--green)] tabular-nums text-xs">
+                            <td className="text-right py-2.5 px-3.5 font-black text-[var(--green)] tabular-nums text-xs">
                               ৳{p.amount.toLocaleString()}
                             </td>
-                            <td className="text-right py-2 px-2.5 text-[var(--amber)] tabular-nums font-medium text-xs">
+                            <td className="text-right py-2.5 px-3 text-[var(--amber)] tabular-nums font-bold text-xs">
                               {p.discount ? `৳${p.discount.toLocaleString()}` : '—'}
                             </td>
-                            <td className="text-center py-2 px-2">
+                            <td className="text-center py-2.5 px-2.5">
                               <span
-                                className="inline-flex items-center gap-1 text-[0.6875rem] font-medium px-2 py-0.5 rounded-full"
+                                className="inline-flex items-center gap-1 text-[0.6875rem] font-semibold px-2.5 py-0.5 rounded-full"
                                 style={{
                                   background: badgeStyle.bg,
                                   color: badgeStyle.color,
@@ -666,20 +666,20 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                                 {methodLabel(p.method)}
                               </span>
                             </td>
-                            <td className="py-2 px-3 text-[var(--text-secondary)]">
-                              <div className="flex items-center gap-1.5 text-xs truncate max-w-[9rem]" title={p.collectedBy || '—'}>
-                                <div className="w-4 h-4 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
-                                  <User size={9} className="text-[var(--text-muted)]" />
+                            <td className="py-2.5 px-3.5 text-[var(--text-secondary)]">
+                              <div className="flex items-center gap-1.5 text-xs truncate max-w-[9.5rem]" title={p.collectedBy || '—'}>
+                                <div className="w-4.5 h-4.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center shrink-0">
+                                  <User size={10} className="text-[var(--text-muted)]" />
                                 </div>
-                                <span className="truncate">{p.collectedBy || '—'}</span>
+                                <span className="truncate font-medium">{p.collectedBy || '—'}</span>
                               </div>
                             </td>
-                            <td className="text-center py-2 px-2">
+                            <td className="text-center py-2.5 px-2.5">
                               <button
                                 type="button"
                                 onClick={() => handlePrintSingle(p)}
                                 style={{ borderColor: 'var(--green)' }}
-                                className="w-7 h-7 rounded-lg bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white border text-[var(--green)] cursor-pointer flex items-center justify-center mx-auto transition-colors"
+                                className="w-7.5 h-7.5 rounded-lg bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white border text-[var(--green)] cursor-pointer flex items-center justify-center mx-auto transition-colors shadow-2xs"
                                 title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                               >
@@ -692,14 +692,14 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                     </tbody>
                     {payments.length > 1 && (
                       <tfoot>
-                        <tr className="bg-[var(--bg-secondary)] font-semibold border-t border-[var(--border)] text-xs">
-                          <td colSpan={5} className="py-2 px-3 text-[var(--text-secondary)] text-right">
+                        <tr className="bg-[var(--bg-secondary)] font-bold border-t border-[var(--border)] text-xs">
+                          <td colSpan={5} className="py-2.5 px-3.5 text-[var(--text-secondary)] text-right">
                             {bn ? 'সর্বমোট পরিশোধ:' : 'Total Collected:'}
                           </td>
-                          <td className="py-2 px-3 text-right font-bold text-[var(--green)] tabular-nums">
+                          <td className="py-2.5 px-3.5 text-right font-black text-[var(--green)] tabular-nums">
                             {fmt(totalPaid)}
                           </td>
-                          <td className="py-2 px-2.5 text-right font-semibold text-[var(--amber)] tabular-nums">
+                          <td className="py-2.5 px-3 text-right font-bold text-[var(--amber)] tabular-nums">
                             {totalDiscount > 0 ? fmt(totalDiscount) : '—'}
                           </td>
                           <td colSpan={3} />
@@ -753,27 +753,29 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
         </div>
 
         {/* Modal Bottom Action Bar */}
-        <div className="px-5 py-3 border-t border-[var(--border)] bg-[var(--surface)] flex items-center justify-between flex-wrap gap-2.5 shrink-0">
-          <div className="text-xs text-[var(--text-muted)] flex items-center gap-2 flex-wrap">
-            <Receipt size={13} className="text-[var(--text-muted)]" />
-            <span>
+        <div className="px-5 py-3.5 sm:px-6 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-xs flex items-center justify-between flex-wrap gap-3 shrink-0">
+          <div className="text-xs text-[var(--text-muted)] flex items-center gap-2.5 flex-wrap">
+            <div className="w-5 h-5 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center">
+              <Receipt size={12} className="text-[var(--brand)]" />
+            </div>
+            <span className="font-medium">
               {payments.length} {bn ? 'টি পেমেন্ট লেনদেন' : 'payment transaction(s)'}
             </span>
-            <span className="text-[var(--border)]">|</span>
+            <span className="text-[var(--border)]">•</span>
             <span className="font-medium text-[var(--text-secondary)]">
               {bn ? 'মোট আদায়:' : 'Total Paid:'}{' '}
-              <strong className="text-[var(--green)] font-bold">{fmt(totalPaid)}</strong>
+              <strong className="text-[var(--green)] font-black tabular-nums">{fmt(totalPaid)}</strong>
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {effectiveDue > 0 && canCreate('finance.fees.collect.create') && (
               <button
                 type="button"
                 onClick={handleCollectDue}
-                className="h-8 px-3.5 rounded-lg bg-[var(--green)] hover:opacity-90 text-white text-xs font-semibold border-0 cursor-pointer flex items-center gap-1.5 transition-opacity"
+                className="h-8.5 px-4 rounded-xl bg-[var(--green)] hover:opacity-90 text-white text-xs font-bold border-0 cursor-pointer flex items-center gap-1.5 transition-opacity shadow-xs"
               >
-                <CheckCircle2 size={13} />
+                <CheckCircle2 size={14} />
                 <span>{bn ? 'বকেয়া আদায়' : 'Collect Due'}</span>
               </button>
             )}
@@ -781,7 +783,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               type="button"
               onClick={onClose}
               style={{ borderColor: 'var(--border)' }}
-              className="h-8 px-4 rounded-lg bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium cursor-pointer transition-colors"
+              className="h-8.5 px-4 rounded-xl bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
             >
               {bn ? 'বন্ধ করুন' : 'Close'}
             </button>
