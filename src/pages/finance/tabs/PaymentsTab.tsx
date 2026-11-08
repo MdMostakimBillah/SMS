@@ -767,35 +767,35 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setSelectedBatchForDetails(b)}
-                          className="glass w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer text-[var(--brand)] bg-[var(--brand-light)] hover:bg-[var(--brand)] hover:text-white hover:border-[var(--brand)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                          className="glass w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--brand)] bg-[var(--brand-light)] hover:bg-[var(--brand)] hover:text-white hover:border-[var(--brand)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                           title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
                           aria-label={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
                         >
-                          <Eye size={13} />
+                          <Eye size={14} />
                         </button>
                         <button
                           onClick={() => generateReceipt(b)}
-                          className="glass w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer text-[var(--green)] bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white hover:border-[var(--green)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                          className="glass w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--green)] bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white hover:border-[var(--green)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                           title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                           aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                         >
-                          <Printer size={13} />
+                          <Printer size={14} />
                         </button>
                         {canDelete('finance.fees.payments') ? (
                           <button
                             onClick={() => handleDeleteBatch(b)}
-                            className="glass w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer text-[var(--red)] bg-[var(--red-light)] hover:bg-[var(--red)] hover:text-white hover:border-[var(--red)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                            className="glass w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--red)] bg-[var(--red-light)] hover:bg-[var(--red)] hover:text-white hover:border-[var(--red)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                             title={bn ? 'মুছুন' : 'Delete'}
                             aria-label={bn ? 'মুছুন' : 'Delete'}
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={14} />
                           </button>
                         ) : (
                           <div
-                            className="glass w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-muted)] bg-[var(--bg-secondary)] opacity-40 cursor-not-allowed"
+                            className="glass w-8 h-8 rounded-xl p-1.5 flex items-center justify-center text-[var(--text-muted)] bg-[var(--bg-secondary)] opacity-40 cursor-not-allowed"
                             title={bn ? 'অনুমতি নেই' : 'No delete permission'}
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={14} />
                           </div>
                         )}
                       </div>
