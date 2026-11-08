@@ -837,7 +837,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                               <button
                                 type="button"
                                 onClick={() => handlePrintSingle(p)}
-                                className="glass w-8 h-8 rounded-lg p-1.5 bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white text-[var(--green)] hover:border-[var(--green)] cursor-pointer flex items-center justify-center mx-auto transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95"
+                                className="w-8 h-8 rounded-xl p-1.5 bg-[var(--green-light)] text-[var(--green)] border border-[var(--glass-border)] shadow-xs cursor-pointer flex items-center justify-center mx-auto"
                                 title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                               >

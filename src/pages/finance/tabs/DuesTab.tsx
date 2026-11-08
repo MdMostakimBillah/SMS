@@ -1087,13 +1087,13 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                       </td>
                     )}
                     <td className="text-center px-2 py-3 whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => setDetailsRow(row)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border-0 cursor-pointer hover:bg-[var(--brand)] hover:text-white transition-colors"
+                          className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--glass-border)] shadow-xs cursor-pointer"
                           title={bn ? 'পেমেন্ট বিবরণ' : 'Payment Details'}
                         >
-                          <Eye size={13} />
+                          <Eye size={14} />
                         </button>
                         {row.totalDue > 0 && canCreate('finance.fees.collect.create') && (
                           <button
@@ -1101,10 +1101,10 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                               const due = buildCollectDue(row)
                               if (due) onCollect(due)
                             }}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--amber-light)] text-[var(--amber)] border-0 cursor-pointer hover:bg-[var(--amber)] hover:text-white transition-colors"
+                            className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center bg-[var(--amber-light)] text-[var(--amber)] border border-[var(--glass-border)] shadow-xs cursor-pointer"
                             title={bn ? 'ফি আদায়' : 'Collect Fee'}
                           >
-                            <Banknote size={13} />
+                            <Banknote size={14} />
                           </button>
                         )}
                       </div>
