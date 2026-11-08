@@ -369,7 +369,8 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               <button
                 type="button"
                 onClick={handlePrintAll}
-                className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] hover:border-[var(--brand)] text-[var(--text-secondary)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                style={{ borderColor: 'var(--brand)' }}
+                className="h-8 px-3 rounded-lg border bg-[var(--brand-light)] hover:bg-[var(--brand)] text-[var(--brand)] hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
                 title={bn ? 'সব রসিদ প্রিন্ট' : 'Print Receipt'}
                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
               >
@@ -380,7 +381,8 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors"
+              style={{ borderColor: 'var(--border)' }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--bg-primary)] hover:bg-[var(--bg-secondary)] border text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors"
               aria-label={bn ? 'বন্ধ করুন' : 'Close'}
               title="Esc"
             >
@@ -412,7 +414,8 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                     <button
                       type="button"
                       onClick={() => copyToClipboard(student.id, 'id')}
-                      className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--border)] hover:border-[var(--brand)] inline-flex items-center gap-1 transition-colors cursor-pointer"
+                      style={{ borderColor: 'var(--brand)' }}
+                      className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-[var(--brand-light)] text-[var(--brand)] border inline-flex items-center gap-1 transition-colors cursor-pointer"
                       title={bn ? 'আইডি কপি করুন' : 'Click to copy ID'}
                     >
                       <span className="text-[0.625rem] text-[var(--text-muted)] font-sans">ID:</span>
@@ -464,7 +467,10 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                 <span className="text-[var(--text-secondary)] font-medium truncate">
                   {bn ? effectiveFee.nameBn || effectiveFee.name : effectiveFee.name}
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.6875rem] font-medium bg-[var(--brand-light)] text-[var(--brand)] shrink-0">
+                <span
+                  style={{ borderColor: 'var(--brand)' }}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.6875rem] font-medium bg-[var(--brand-light)] text-[var(--brand)] border shrink-0"
+                >
                   <Sparkles size={10} />
                   {effectiveFee.type === 'monthly' ? (bn ? 'মাসিক ফি' : 'Monthly Fee') :
                    effectiveFee.type === 'yearly' ? (bn ? 'বাৎসরিক ফি' : 'Yearly Fee') :
@@ -609,7 +615,8 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                               <button
                                 type="button"
                                 onClick={() => copyToClipboard(rcp, 'receipt')}
-                                className="font-mono font-medium text-xs text-[var(--brand)] px-2 py-0.5 rounded bg-[var(--brand-light)] border border-[var(--border)] hover:border-[var(--brand)] inline-flex items-center gap-1 cursor-pointer transition-colors"
+                                style={{ borderColor: 'var(--brand)' }}
+                                className="font-mono font-medium text-xs text-[var(--brand)] px-2 py-0.5 rounded bg-[var(--brand-light)] border inline-flex items-center gap-1 cursor-pointer transition-colors"
                                 title={bn ? 'রসিদ নং কপি করুন' : 'Click to copy Receipt No'}
                               >
                                 <span>{rcp}</span>
@@ -671,7 +678,8 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                               <button
                                 type="button"
                                 onClick={() => handlePrintSingle(p)}
-                                className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] hover:bg-[var(--brand-light)] hover:text-[var(--brand)] hover:border-[var(--brand)] border border-[var(--border)] text-[var(--text-secondary)] cursor-pointer flex items-center justify-center mx-auto transition-colors"
+                                style={{ borderColor: 'var(--green)' }}
+                                className="w-7 h-7 rounded-lg bg-[var(--green-light)] hover:bg-[var(--green)] hover:text-white border text-[var(--green)] cursor-pointer flex items-center justify-center mx-auto transition-colors"
                                 title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                               >
@@ -772,7 +780,8 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-8 px-4 rounded-lg bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium cursor-pointer transition-colors"
+              style={{ borderColor: 'var(--border)' }}
+              className="h-8 px-4 rounded-lg bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium cursor-pointer transition-colors"
             >
               {bn ? 'বন্ধ করুন' : 'Close'}
             </button>

@@ -767,7 +767,8 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           onClick={() => setSelectedBatchForDetails(b)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--border)] cursor-pointer hover:bg-[var(--brand)] hover:text-white hover:border-[var(--brand)] transition-all shadow-2xs"
+                          style={{ borderColor: 'var(--brand)' }}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border cursor-pointer hover:bg-[var(--brand)] hover:text-white transition-all shadow-xs"
                           title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
                           aria-label={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
                         >
@@ -775,7 +776,8 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
                         </button>
                         <button
                           onClick={() => generateReceipt(b)}
-                          className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--green-light)] text-[var(--green)] border border-[var(--border)] cursor-pointer hover:bg-[var(--green)] hover:text-white hover:border-[var(--green)] transition-all shadow-2xs"
+                          style={{ borderColor: 'var(--green)' }}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--green-light)] text-[var(--green)] border cursor-pointer hover:bg-[var(--green)] hover:text-white transition-all shadow-xs"
                           title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                           aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                         >
@@ -784,7 +786,8 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
                         {canDelete('finance.fees.payments') ? (
                           <button
                             onClick={() => handleDeleteBatch(b)}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border border-[var(--border)] cursor-pointer hover:bg-[var(--red)] hover:text-white hover:border-[var(--red)] transition-all shadow-2xs"
+                            style={{ borderColor: 'var(--red)' }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--red-light)] text-[var(--red)] border cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all shadow-xs"
                             title={bn ? 'মুছুন' : 'Delete'}
                             aria-label={bn ? 'মুছুন' : 'Delete'}
                           >
@@ -792,7 +795,8 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
                           </button>
                         ) : (
                           <div
-                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] border border-[var(--border)] opacity-40 cursor-not-allowed"
+                            style={{ borderColor: 'var(--border)' }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[var(--bg-secondary)] text-[var(--text-muted)] border opacity-40 cursor-not-allowed"
                             title={bn ? 'অনুমতি নেই' : 'No delete permission'}
                           >
                             <Trash2 size={13} />
