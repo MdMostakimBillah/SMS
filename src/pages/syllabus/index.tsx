@@ -19,7 +19,11 @@ import {
   Layers,
   GraduationCap,
   Settings,
+  RefreshCw,
+  HardDrive,
+  Cloud,
 } from 'lucide-react'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { useBn } from '@/hooks/useBn'
 import { useClassStore, extractClassNumber } from '@/store/classStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -68,6 +72,9 @@ export default function SyllabusPage() {
   const subjects = useTeacherStore((s) => s.subjects)
   const {
     syllabi: allSyllabi,
+    serverSynced,
+    syncing,
+    syncFromServer,
     addSyllabus,
     addChapter,
     updateChapter,
@@ -82,11 +89,33 @@ export default function SyllabusPage() {
 
   const [view, setView] = useState<View>('home')
   const [isLoading, setIsLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const isMountedRef = useRef(true)
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isLocalComputer = isLocalComputerMode()
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
-  }, [])
+    isMountedRef.current = true
+    syncFromServer().finally(() => {
+      if (isMountedRef.current) setIsLoading(false)
+    })
+    return () => {
+      isMountedRef.current = false
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    }
+  }, [syncFromServer])
+
+  const handleManualRefresh = useCallback(async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    try {
+      await syncFromServer()
+    } finally {
+      refreshTimerRef.current = setTimeout(() => {
+        if (isMountedRef.current) setRefreshing(false)
+      }, 500)
+    }
+  }, [refreshing, syncFromServer])
   const [selectedClass, setSelectedClass] = useState('')
   const [selectedSection, setSelectedSection] = useState('')
   const [selectedSubject, setSelectedSubject] = useState('')
@@ -515,26 +544,68 @@ export default function SyllabusPage() {
             </p>
           </div>
         </div>
-        {view === 'detail' && selectedSyllabus && canDownload('syllabus') && (
-          <button onClick={openPDFModal} className={btnPri}>
-            <Download size={14} />
-            {isBn ? 'PDF' : 'PDF'}
+        <div className="flex items-center gap-2">
+          {/* Storage Mode & Sync Status Indicator */}
+          <div
+            className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[0.6875rem] font-semibold border ${
+              isLocalComputer
+                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                : serverSynced
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                : 'bg-[var(--brand)]/10 text-[var(--brand)] border-[var(--brand)]/20'
+            }`}
+            title={
+              isLocalComputer
+                ? isBn ? 'লোকাল পিসিতে সংরক্ষিত (অফলাইন মোড)' : 'Stored on Local PC (Offline Mode)'
+                : isBn ? 'ক্লাউড ডেটাবেসের সাথে সংযুক্ত' : 'Synced with Cloud Database'
+            }
+          >
+            {isLocalComputer ? (
+              <>
+                <HardDrive size={12} className="stroke-[2.2]" />
+                <span>{isBn ? 'লোকাল পিসি' : 'Local PC'}</span>
+              </>
+            ) : (
+              <>
+                <Cloud size={12} className="stroke-[2.2]" />
+                <span>{syncing || refreshing ? (isBn ? 'সিঙ্ক হচ্ছে...' : 'Syncing...') : (isBn ? 'ডাটাবেস কানেক্টেড' : 'Database Synced')}</span>
+              </>
+            )}
+          </div>
+
+          {/* Refresh Button */}
+          <button
+            type="button"
+            onClick={handleManualRefresh}
+            disabled={refreshing || syncing}
+            className="w-8 h-8 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--brand)] transition-all disabled:opacity-50"
+            title={isBn ? 'রিফ্রেশ করুন' : 'Refresh from server'}
+            aria-label={isBn ? 'রিফ্রেশ' : 'Refresh'}
+          >
+            <RefreshCw size={14} className={refreshing || syncing ? 'animate-spin text-[var(--brand)]' : ''} />
           </button>
-        )}
-        {view === 'home' && classNumbers.length === 0 && (
-                  <button
-                    onClick={() => {
-                      pushToChain({ path: nav('/syllabus'), label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
-                      setRedirectTimestamp()
-                      navigate(nav('/classes'))
-                    }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
-                  >
-                    <Settings size={14} />
-                    {isBn ? 'শ্রেণি ব্যবস্থাপনায় যান' : 'Go to Class Management'}
-                    <ArrowRight size={14} />
-                  </button>
-        )}
+
+          {view === 'detail' && selectedSyllabus && canDownload('syllabus') && (
+            <button onClick={openPDFModal} className={btnPri}>
+              <Download size={14} />
+              {isBn ? 'PDF' : 'PDF'}
+            </button>
+          )}
+          {view === 'home' && classNumbers.length === 0 && (
+            <button
+              onClick={() => {
+                pushToChain({ path: nav('/syllabus'), label: isBn ? 'পাঠ্যক্রম' : 'Syllabus' })
+                setRedirectTimestamp()
+                navigate(nav('/classes'))
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all"
+            >
+              <Settings size={14} />
+              {isBn ? 'শ্রেণি ব্যবস্থাপনায় যান' : 'Go to Class Management'}
+              <ArrowRight size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Content */}

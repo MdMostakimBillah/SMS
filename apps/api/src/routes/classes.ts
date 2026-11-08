@@ -17,6 +17,7 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
     try {
       const school = await resolveTargetSchool(prisma, req, jwtSecret, {
         id: true,
+        storageMode: true,
         classesData: true,
         routinesData: true,
         sessions: true,
@@ -26,6 +27,18 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
       })
       if (!school) {
         return res.status(404).json({ error: 'Institution not found' })
+      }
+
+      if (school.storageMode === 'local_computer') {
+        return res.json({
+          storageMode: 'local_computer',
+          classes: [],
+          routines: [],
+          sessions: ['2026-27'],
+          breaks: [],
+          startTime: '',
+          endTime: '',
+        })
       }
 
       let classes = []
@@ -127,9 +140,15 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
 
       const updateData: any = {}
       if (req.body.classes !== undefined) {
+        if (Array.isArray(req.body.classes) && req.body.classes.length > 500) {
+          return res.status(400).json({ error: 'Classes limit exceeded (max 500)' })
+        }
         updateData.classesData = typeof req.body.classes === 'object' ? JSON.stringify(req.body.classes) : String(req.body.classes)
       }
       if (req.body.routines !== undefined) {
+        if (Array.isArray(req.body.routines) && req.body.routines.length > 50000) {
+          return res.status(400).json({ error: 'Routines limit exceeded (max 50,000)' })
+        }
         updateData.routinesData = typeof req.body.routines === 'object' ? JSON.stringify(req.body.routines) : String(req.body.routines)
       }
 

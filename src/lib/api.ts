@@ -933,6 +933,30 @@ export const examsApi = {
   },
 }
 
+export interface SyllabusResponse {
+  syllabi: any[]
+  storageMode?: string
+}
+
+export const syllabusApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<SyllabusResponse>(`/api/syllabus${q}`)
+  },
+  update: (data: { syllabi: any[]; schoolId?: string }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean; count: number } & SyllabusResponse>('/api/syllabus', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

@@ -22,6 +22,20 @@ export function transportRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(404).json({ error: 'Institution not found' })
       }
 
+      const authReq = req as AuthenticatedRequest
+      if (authReq.schoolId && authReq.userRole && authReq.userRole !== 'super_admin' && authReq.schoolId !== school.id) {
+        return res.status(403).json({ error: 'Forbidden: cross-tenant access denied' })
+      }
+
+      if (school.storageMode === 'local_computer') {
+        return res.json({
+          storageMode: 'local_computer',
+          vehicles: [],
+          routes: [],
+          assignments: [],
+        })
+      }
+
       let parsedTransport: any = {}
       try {
         if ((school as any).transportData) {
@@ -95,6 +109,19 @@ export function transportRouter(prisma: PrismaClient, jwtSecret: string) {
           routes: [],
           assignments: [],
         })
+      }
+
+      const vehicles = req.body.vehicles !== undefined ? req.body.vehicles : []
+      const routes = req.body.routes !== undefined ? req.body.routes : []
+      const assignments = req.body.assignments !== undefined ? req.body.assignments : []
+      if (Array.isArray(vehicles) && vehicles.length > 2000) {
+        return res.status(400).json({ error: 'Vehicles limit exceeded (max 2,000)' })
+      }
+      if (Array.isArray(routes) && routes.length > 5000) {
+        return res.status(400).json({ error: 'Routes limit exceeded (max 5,000)' })
+      }
+      if (Array.isArray(assignments) && assignments.length > 50000) {
+        return res.status(400).json({ error: 'Assignments limit exceeded (max 50,000)' })
       }
 
       let existingTransport: any = {}

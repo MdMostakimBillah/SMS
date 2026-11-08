@@ -22,6 +22,23 @@ export function feesRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(404).json({ error: 'Institution not found' })
       }
 
+      const authReq = req as AuthenticatedRequest
+      if (authReq.schoolId && authReq.userRole && authReq.userRole !== 'super_admin' && authReq.schoolId !== school.id) {
+        return res.status(403).json({ error: 'Forbidden: cross-tenant access denied' })
+      }
+
+      if (school.storageMode === 'local_computer') {
+        return res.json({
+          storageMode: 'local_computer',
+          structures: [],
+          payments: [],
+          feeCategories: [],
+          waiverCategories: [],
+          waiverEntries: [],
+          studentWaivers: [],
+        })
+      }
+
       let parsedFees: any = {}
       try {
         if ((school as any).feesData) {
@@ -126,6 +143,13 @@ export function feesRouter(prisma: PrismaClient, jwtSecret: string) {
         studentWaivers: req.body.studentWaivers !== undefined ? req.body.studentWaivers : (existingFees.studentWaivers || []),
       }
 
+      if (Array.isArray(updatedFees.payments) && updatedFees.payments.length > 50000) {
+        return res.status(400).json({ error: 'Payments limit exceeded (max 50,000)' })
+      }
+      if (Array.isArray(updatedFees.structures) && updatedFees.structures.length > 5000) {
+        return res.status(400).json({ error: 'Structures limit exceeded (max 5,000)' })
+      }
+
       await prisma.school.update({
         where: { id: school.id },
         data: {
@@ -156,6 +180,11 @@ export function feesRouter(prisma: PrismaClient, jwtSecret: string) {
       })
       if (!school) {
         return res.status(404).json({ error: 'Institution not found' })
+      }
+
+      const authReq = req as AuthenticatedRequest
+      if (authReq.schoolId && authReq.userRole && authReq.userRole !== 'super_admin' && authReq.schoolId !== school.id) {
+        return res.status(403).json({ error: 'Forbidden: cross-tenant access denied' })
       }
 
       if (school.storageMode === 'local_computer') {

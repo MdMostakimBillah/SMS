@@ -116,6 +116,7 @@ const INSTITUTION_STORE_KEYS = [
   'edutech-classes', 'edutech-teachers', 'edutech-exams', 'edutech-syllabus',
   'edutech-online', 'edutech-assignments', 'edutech-admissions', 'edutech-fees',
   'edutech-hr', 'edutech-todos', 'edutech-store',
+  'edutech-expenses', 'edutech-others-income', 'edutech-hostel', 'edutech-transport',
 ]
 
 export function cleanupOrphanedBaseKeys(): void {

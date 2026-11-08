@@ -13,7 +13,13 @@ const DASH_PREFIX = 'edutech-'
 const UNDERSCORE_PREFIX = 'edutech_'
 
 /** Exact keys that must never enter a vault, even if their shape looks institution-like. */
-const BLOCKED_KEYS = new Set(['edutech_super_admin', 'edutech_superadmin_user'])
+const BLOCKED_KEYS = new Set([
+  'edutech_super_admin',
+  'edutech_superadmin_user',
+  'edutech_offline_session',
+  'edutech_api_login_attempts',
+  'edutech_api_lockout_until',
+])
 
 /** Filenames/folder names: word chars, dots, dashes. Blocks '.', '..' path tricks. */
 const VALID_SEGMENT = /^[\w.-]+$/
@@ -112,6 +118,7 @@ export function vaultPathToKey(
     else if (base === 'expenses' || base === 'expense_categories' || base === 'expense_entries') storeBase = 'expenses'
     else if (base === 'hr' || base === 'hr_increments' || base === 'hr_bonuses' || base === 'hr_promotions' || base === 'hr_funds' || base === 'hr_facilities') storeBase = 'hr'
     else if (base === 'exams' || base === 'exam_configs' || base === 'subject_mark_configs' || base === 'student_marks' || base === 'exam_routines' || base === 'marksheet_configs') storeBase = 'exams'
+    else if (base === 'syllabus' || base === 'syllabi') storeBase = 'syllabus'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -1664,6 +1671,27 @@ export function normalizeVaultJsonForStore(
       syncing: false,
     }
     return JSON.stringify({ state: finalState, version: existingVersion })
+  }
+
+  if (key.includes('syllabus')) {
+    let rawSyllabi: any[] = []
+    if (Array.isArray(parsed)) {
+      rawSyllabi = parsed
+    } else if (parsed && typeof parsed === 'object') {
+      const inner = parsed.state || parsed
+      if (Array.isArray(inner.syllabi)) {
+        rawSyllabi = inner.syllabi
+      } else if (Array.isArray(inner)) {
+        rawSyllabi = inner
+      }
+    }
+
+    const finalState = {
+      ...existingState,
+      syllabi: rawSyllabi.length > 0 ? rawSyllabi : (existingState.syllabi || []),
+      serverSynced: true,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion || 1 })
   }
 
   // Fallback generic handler: ensure state wrapper exists

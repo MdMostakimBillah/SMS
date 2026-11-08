@@ -22,6 +22,19 @@ export function othersIncomeRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(404).json({ error: 'Institution not found' })
       }
 
+      const authReq = req as AuthenticatedRequest
+      if (authReq.schoolId && authReq.userRole && authReq.userRole !== 'super_admin' && authReq.schoolId !== school.id) {
+        return res.status(403).json({ error: 'Forbidden: cross-tenant access denied' })
+      }
+
+      if (school.storageMode === 'local_computer') {
+        return res.json({
+          storageMode: 'local_computer',
+          categories: [],
+          assignments: [],
+        })
+      }
+
       let parsedIncome: any = {}
       try {
         if ((school as any).othersIncomeData) {
@@ -92,6 +105,15 @@ export function othersIncomeRouter(prisma: PrismaClient, jwtSecret: string) {
           categories: [],
           assignments: [],
         })
+      }
+
+      const categories = req.body.categories !== undefined ? req.body.categories : []
+      const assignments = req.body.assignments !== undefined ? req.body.assignments : []
+      if (Array.isArray(categories) && categories.length > 5000) {
+        return res.status(400).json({ error: 'Categories limit exceeded (max 5,000)' })
+      }
+      if (Array.isArray(assignments) && assignments.length > 50000) {
+        return res.status(400).json({ error: 'Assignments limit exceeded (max 50,000)' })
       }
 
       let existingIncome: any = {}

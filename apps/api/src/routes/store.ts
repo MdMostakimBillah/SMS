@@ -22,6 +22,20 @@ export function storeRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(404).json({ error: 'Institution not found' })
       }
 
+      const authReq = req as AuthenticatedRequest
+      if (authReq.schoolId && authReq.userRole && authReq.userRole !== 'super_admin' && authReq.schoolId !== school.id) {
+        return res.status(403).json({ error: 'Forbidden: cross-tenant access denied' })
+      }
+
+      if (school.storageMode === 'local_computer') {
+        return res.json({
+          storageMode: 'local_computer',
+          products: [],
+          categories: [],
+          sales: [],
+        })
+      }
+
       let parsedStore: any = {}
       try {
         if ((school as any).storeData) {
@@ -114,6 +128,13 @@ export function storeRouter(prisma: PrismaClient, jwtSecret: string) {
         sales: req.body.sales !== undefined ? req.body.sales : (existingStore.sales || []),
       }
 
+      if (Array.isArray(updatedStore.products) && updatedStore.products.length > 10000) {
+        return res.status(400).json({ error: 'Products limit exceeded (max 10,000)' })
+      }
+      if (Array.isArray(updatedStore.sales) && updatedStore.sales.length > 50000) {
+        return res.status(400).json({ error: 'Sales limit exceeded (max 50,000)' })
+      }
+
       await prisma.school.update({
         where: { id: school.id },
         data: {
@@ -144,6 +165,11 @@ export function storeRouter(prisma: PrismaClient, jwtSecret: string) {
       })
       if (!school) {
         return res.status(404).json({ error: 'Institution not found' })
+      }
+
+      const authReq = req as AuthenticatedRequest
+      if (authReq.schoolId && authReq.userRole && authReq.userRole !== 'super_admin' && authReq.schoolId !== school.id) {
+        return res.status(403).json({ error: 'Forbidden: cross-tenant access denied' })
       }
 
       if (school.storageMode === 'local_computer') {

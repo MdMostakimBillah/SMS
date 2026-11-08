@@ -129,4 +129,46 @@ describe('syllabusStore', () => {
     expect(s.totalTopics).toBe(1)
     expect(s.completedTopics).toBe(1)
   })
+
+  it('syncFromServer updates syllabi from API in database mode', async () => {
+    const { syllabusApi } = await import('@/lib/api')
+    const originalGet = syllabusApi.get
+    try {
+      syllabusApi.get = async () => ({
+        syllabi: [
+          {
+            id: 'SYL-REMOTE-1',
+            classId: 'Class 9',
+            sectionId: 'A',
+            subjectId: 'SUB-MATH',
+            sessionId: '2026-27',
+            totalChapters: 2,
+            totalTopics: 5,
+            completedTopics: 2,
+            chapters: [],
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      })
+
+      await useSyllabusStore.getState().syncFromServer()
+      const state = useSyllabusStore.getState()
+      expect(state.serverSynced).toBe(true)
+      expect(state.syllabi).toHaveLength(1)
+      expect(state.syllabi[0].id).toBe('SYL-REMOTE-1')
+    } finally {
+      syllabusApi.get = originalGet
+    }
+  })
+
+  it('syncFromServer bypasses network in local_computer mode', async () => {
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    try {
+      await useSyllabusStore.getState().syncFromServer()
+      expect(useSyllabusStore.getState().serverSynced).toBe(true)
+    } finally {
+      sessionStorage.removeItem('edutech_storage_mode')
+    }
+  })
 })

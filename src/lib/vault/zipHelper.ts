@@ -243,6 +243,19 @@ export async function createBackupZip(
         }
       }
 
+      // syllabus store: also extract syllabi.json
+      if (baseName === 'syllabus') {
+        const state = storeData?.state || storeData
+        const syllabi = state?.syllabi || (Array.isArray(state) ? state : [])
+        if (Array.isArray(syllabi) && !zip.file('syllabi.json')) {
+          const sJson = JSON.stringify(syllabi, null, 2)
+          zip.file('syllabi.json', sJson)
+          if (targetSlug && !zip.file(`${targetSlug}/syllabi.json`)) {
+            zip.file(`${targetSlug}/syllabi.json`, sJson)
+          }
+        }
+      }
+
       // teachers store: also extract departments.json, designations.json, subjects.json
       if (baseName === 'teachers') {
         const depts = storeData?.state?.departments || storeData?.departments
@@ -345,6 +358,19 @@ export async function createBackupZip(
           }
         }
       }
+
+      // syllabus store: also extract syllabi.json
+      if (baseName === 'syllabus') {
+        const state = storeData?.state || storeData
+        const syllabi = state?.syllabi || (Array.isArray(state) ? state : [])
+        if (Array.isArray(syllabi) && !zip.file('syllabi.json')) {
+          const sJson = JSON.stringify(syllabi, null, 2)
+          zip.file('syllabi.json', sJson)
+          if (targetSlug && !zip.file(`${targetSlug}/syllabi.json`)) {
+            zip.file(`${targetSlug}/syllabi.json`, sJson)
+          }
+        }
+      }
     }
   }
 
@@ -443,8 +469,9 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
   const admissionsFile = zip.file('admissions.json') || zip.file('students.json') || zip.file(/(^|\/)(admissions|students)\.json$/i)[0]
   const hrFile = zip.file('hr.json') || zip.file(/(^|\/)hr\.json$/i)[0]
   const examsFile = zip.file('exams.json') || zip.file(/(^|\/)exams\.json$/i)[0]
+  const syllabusFile = zip.file('syllabus.json') || zip.file('syllabi.json') || zip.file(/(^|\/)(syllabus|syllabi)\.json$/i)[0]
 
-  if (classesFile || teachersFile || admissionsFile || hrFile || examsFile) {
+  if (classesFile || teachersFile || admissionsFile || hrFile || examsFile || syllabusFile) {
     const stores: Record<string, any> = {}
     let classesCount = 0
     let teachersCount = 0
@@ -591,6 +618,16 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
         } catch {
           /* skip invalid slice json */
         }
+      }
+    }
+
+    if (syllabusFile) {
+      try {
+        const text = await syllabusFile.async('text')
+        const parsed = JSON.parse(text)
+        stores['edutech-syllabus'] = parsed
+      } catch {
+        /* skip invalid json */
       }
     }
 
