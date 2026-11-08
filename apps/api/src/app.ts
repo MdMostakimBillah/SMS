@@ -26,6 +26,7 @@ import { expensesRouter } from './routes/expenses.js'
 import { hrRouter } from './routes/hr.js'
 import { examsRouter } from './routes/exams.js'
 import { syllabusRouter } from './routes/syllabus.js'
+import { assignmentsRouter } from './routes/assignments.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
@@ -103,6 +104,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   app.use('/api/hr', hrRouter(prisma, jwtSecret))
   app.use('/api/exams', examsRouter(prisma, jwtSecret))
   app.use('/api/syllabus', syllabusRouter(prisma, jwtSecret))
+  app.use('/api/assignments', assignmentsRouter(prisma, jwtSecret))
 
   const sRouter = schoolRouter(prisma, jwtSecret, storage)
   app.use('/api/schools', sRouter)

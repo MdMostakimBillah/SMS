@@ -256,6 +256,19 @@ export async function createBackupZip(
         }
       }
 
+      // assignments store: also extract assignments.json
+      if (baseName === 'assignments') {
+        const state = storeData?.state || storeData
+        const assignments = state?.assignments || (Array.isArray(state) ? state : [])
+        if (Array.isArray(assignments) && !zip.file('assignments.json')) {
+          const aJson = JSON.stringify(assignments, null, 2)
+          zip.file('assignments.json', aJson)
+          if (targetSlug && !zip.file(`${targetSlug}/assignments.json`)) {
+            zip.file(`${targetSlug}/assignments.json`, aJson)
+          }
+        }
+      }
+
       // teachers store: also extract departments.json, designations.json, subjects.json
       if (baseName === 'teachers') {
         const depts = storeData?.state?.departments || storeData?.departments
@@ -371,6 +384,19 @@ export async function createBackupZip(
           }
         }
       }
+
+      // assignments store: also extract assignments.json
+      if (baseName === 'assignments') {
+        const state = storeData?.state || storeData
+        const assignments = state?.assignments || (Array.isArray(state) ? state : [])
+        if (Array.isArray(assignments) && !zip.file('assignments.json')) {
+          const aJson = JSON.stringify(assignments, null, 2)
+          zip.file('assignments.json', aJson)
+          if (targetSlug && !zip.file(`${targetSlug}/assignments.json`)) {
+            zip.file(`${targetSlug}/assignments.json`, aJson)
+          }
+        }
+      }
     }
   }
 
@@ -470,8 +496,9 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
   const hrFile = zip.file('hr.json') || zip.file(/(^|\/)hr\.json$/i)[0]
   const examsFile = zip.file('exams.json') || zip.file(/(^|\/)exams\.json$/i)[0]
   const syllabusFile = zip.file('syllabus.json') || zip.file('syllabi.json') || zip.file(/(^|\/)(syllabus|syllabi)\.json$/i)[0]
+  const assignmentFile = zip.file('assignments.json') || zip.file('assignment.json') || zip.file(/(^|\/)(assignments|assignment)\.json$/i)[0]
 
-  if (classesFile || teachersFile || admissionsFile || hrFile || examsFile || syllabusFile) {
+  if (classesFile || teachersFile || admissionsFile || hrFile || examsFile || syllabusFile || assignmentFile) {
     const stores: Record<string, any> = {}
     let classesCount = 0
     let teachersCount = 0
@@ -626,6 +653,16 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
         const text = await syllabusFile.async('text')
         const parsed = JSON.parse(text)
         stores['edutech-syllabus'] = parsed
+      } catch {
+        /* skip invalid json */
+      }
+    }
+
+    if (assignmentFile) {
+      try {
+        const text = await assignmentFile.async('text')
+        const parsed = JSON.parse(text)
+        stores['edutech-assignments'] = parsed
       } catch {
         /* skip invalid json */
       }

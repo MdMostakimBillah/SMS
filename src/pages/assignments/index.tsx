@@ -86,9 +86,11 @@ export default function AssignmentPage() {
   const addAssignment = useAssignmentStore((s) => s.addAssignment)
   const updateAssignment = useAssignmentStore((s) => s.updateAssignment)
   const deleteAssignment = useAssignmentStore((s) => s.deleteAssignment)
+  const syncFromServer = useAssignmentStore((s) => s.syncFromServer)
   const addHomeworkRecord = useHRStore((s) => s.addHomeworkRecord)
 
   const [isLoading, setIsLoading] = useState(true)
+  const isMountedRef = useRef(true)
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth())
   const [calYear, setCalYear] = useState(() => new Date().getFullYear())
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
@@ -125,9 +127,14 @@ export default function AssignmentPage() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
-  }, [])
+    isMountedRef.current = true
+    syncFromServer().finally(() => {
+      if (isMountedRef.current) setIsLoading(false)
+    })
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [syncFromServer])
 
   useEffect(() => {
     if (isLoading || !containerRef.current) return

@@ -957,6 +957,32 @@ export const syllabusApi = {
   },
 }
 
+export interface AssignmentsResponse {
+  assignments?: any[]
+  submissions?: any[]
+  storageMode?: string
+  message?: string
+}
+
+export const assignmentsApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<AssignmentsResponse>(`/api/assignments${q}`)
+  },
+  update: (data: { assignments?: any[]; submissions?: any[]; schoolId?: string }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean; count?: number; submissionsCount?: number } & AssignmentsResponse>('/api/assignments', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string

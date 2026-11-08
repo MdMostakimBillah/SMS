@@ -119,6 +119,7 @@ export function vaultPathToKey(
     else if (base === 'hr' || base === 'hr_increments' || base === 'hr_bonuses' || base === 'hr_promotions' || base === 'hr_funds' || base === 'hr_facilities') storeBase = 'hr'
     else if (base === 'exams' || base === 'exam_configs' || base === 'subject_mark_configs' || base === 'student_marks' || base === 'exam_routines' || base === 'marksheet_configs') storeBase = 'exams'
     else if (base === 'syllabus' || base === 'syllabi') storeBase = 'syllabus'
+    else if (base === 'assignments' || base === 'assignment' || base === 'submissions') storeBase = 'assignments'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -1689,6 +1690,32 @@ export function normalizeVaultJsonForStore(
     const finalState = {
       ...existingState,
       syllabi: rawSyllabi.length > 0 ? rawSyllabi : (existingState.syllabi || []),
+      serverSynced: true,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion || 1 })
+  }
+
+  if (key.includes('assignments')) {
+    let rawAssignments: any[] = []
+    let rawSubmissions: any[] = []
+    if (Array.isArray(parsed)) {
+      rawAssignments = parsed
+    } else if (parsed && typeof parsed === 'object') {
+      const inner = parsed.state || parsed
+      if (Array.isArray(inner.assignments)) {
+        rawAssignments = inner.assignments
+      } else if (Array.isArray(inner)) {
+        rawAssignments = inner
+      }
+      if (Array.isArray(inner.submissions)) {
+        rawSubmissions = inner.submissions
+      }
+    }
+
+    const finalState = {
+      ...existingState,
+      assignments: rawAssignments.length > 0 ? rawAssignments : (existingState.assignments || []),
+      submissions: rawSubmissions.length > 0 ? rawSubmissions : (existingState.submissions || []),
       serverSynced: true,
     }
     return JSON.stringify({ state: finalState, version: existingVersion || 1 })

@@ -1346,6 +1346,20 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       }
     } catch { /* ignore */ }
   }
+
+  if (path === `${slug}/assignments.json`) {
+    await writeVaultFile('assignments.json', prettifyJson(rawJson))
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+      const assignments = state.assignments ?? (Array.isArray(state) ? state : [])
+      if (assignments.length > 0 || isRecentExplicitDelete()) {
+        const asgPretty = JSON.stringify(assignments, null, 2)
+        await writeVaultFile(`${slug}/assignments.json`, asgPretty)
+        await writeVaultFile('assignments.json', asgPretty)
+      }
+    } catch { /* ignore */ }
+  }
 }
 
 async function seedVaultFromStorage(): Promise<number> {

@@ -15,7 +15,7 @@ interface Props {
 
 export function CreateTaskModal({ onClose }: Props) {
   const isBn = useBn()
-  const { canCreate } = usePermission()
+  const { canCreate, canEdit } = usePermission()
   const { user } = useAuth()
   const teachers = useTeacherStore((s) => s.teachers)
   const addTodo = useTodoStore((s) => s.addTodo)
@@ -269,7 +269,7 @@ export function CreateTaskModal({ onClose }: Props) {
           >
             {isBn ? 'বাতিল' : 'Cancel'}
           </button>
-          {canCreate('dashboard.tasks.create') && (
+          {(canCreate('dashboard.tasks.create') || canCreate('dashboard') || canEdit('dashboard') || user?.role === 'admin' || user?.role === 'school_admin' || user?.role === 'super_admin') && (
           <button
             className={btnPrimary}
             onClick={handleSave}

@@ -424,5 +424,19 @@ describe('normalizeVaultJsonForStore', () => {
     expect(parsed.state.classes[0].sections[0].seatQuantity).toBe(50)
     expect(parsed.state.classes[1].sections).toHaveLength(0)
   })
+
+  it('round-trips assignments.json and normalizes assignments store', () => {
+    expect(vaultPathToKey('demo/assignments.json')).toBe('edutech-assignments_demo')
+    expect(keyToVaultPath('edutech-assignments_demo')).toBe('demo/assignments.json')
+
+    const assignmentsRaw = JSON.stringify([
+      { id: 'ASN-1', title: 'Local PC Assignment', maxMarks: 20 },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-assignments_demo', assignmentsRaw, null, 'demo/assignments.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.assignments).toHaveLength(1)
+    expect(parsed.state.assignments[0].title).toBe('Local PC Assignment')
+    expect(parsed.state.serverSynced).toBe(true)
+  })
 })
 
