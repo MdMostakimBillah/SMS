@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import {
   X,
   Printer,
@@ -18,6 +19,7 @@ import {
   ShieldAlert,
   AlertCircle,
   Sparkles,
+  PieChart as PieChartIcon,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
@@ -187,6 +189,108 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
   )
 
   const paidPercentage = totalOriginal > 0 ? Math.min(100, Math.round((totalPaid / totalOriginal) * 100)) : 100
+
+  const CHART_PALETTE = useMemo(
+    () => ['#6366f1', '#22c55e', '#06b6d4', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f97316'],
+    []
+  )
+
+  const allFeePayments = useFeeStore((s) => s.payments)
+  const allStudentPayments = useMemo(() => {
+    const list = allFeePayments.filter((p) => p.studentId === student.id)
+    if (list.length > 0) return list
+    return payments
+  }, [allFeePayments, student.id, payments])
+
+  const allStudentTotal = useMemo(
+    () => allStudentPayments.reduce((s, p) => s + p.amount, 0),
+    [allStudentPayments]
+  )
+
+  const feeBreakdown = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; nameBn: string; value: number; count: number }>()
+    allStudentPayments.forEach((p) => {
+      const struct = p.feeStructureId ? structureMap.get(p.feeStructureId) : null
+      const id = struct?.id || p.feeStructureId || p.note || 'fee'
+      const name = struct?.name || p.note || (bn ? 'অন্যান্য ফি' : 'Other Fee')
+      const nameBn = struct?.nameBn || p.note || (bn ? 'অন্যান্য ফি' : 'Other Fee')
+      const cur = map.get(id) || { id, name, nameBn, value: 0, count: 0 }
+      cur.value += p.amount
+      cur.count += 1
+      map.set(id, cur)
+    })
+    return Array.from(map.values()).sort((a, b) => b.value - a.value)
+  }, [allStudentPayments, structureMap, bn])
+
+  const statusBreakdown = useMemo(() => {
+    const items: { name: string; nameBn: string; value: number; color: string }[] = []
+    if (totalPaid > 0) {
+      items.push({
+        name: bn ? 'পরিশোধিত' : 'Paid',
+        nameBn: 'পরিশোধিত',
+        value: totalPaid,
+        color: '#22c55e',
+      })
+    }
+    if (effectiveDue > 0) {
+      items.push({
+        name: bn ? 'বকেয়া' : 'Due',
+        nameBn: 'বকেয়া',
+        value: effectiveDue,
+        color: '#ef4444',
+      })
+    }
+    if (totalDiscount > 0) {
+      items.push({
+        name: bn ? 'ছাড়' : 'Discount',
+        nameBn: 'ছাড়',
+        value: totalDiscount,
+        color: '#f59e0b',
+      })
+    }
+    if (totalWaived > 0) {
+      items.push({
+        name: bn ? 'ওয়েভার' : 'Waived',
+        nameBn: 'ওয়েভার',
+        value: totalWaived,
+        color: '#a855f7',
+      })
+    }
+    return items
+  }, [totalPaid, effectiveDue, totalDiscount, totalWaived, bn])
+
+  const [chartMode, setChartMode] = useState<'all' | 'status'>('all')
+
+  const chartData = useMemo(() => {
+    if (chartMode === 'all') {
+      if (feeBreakdown.length > 0) {
+        return feeBreakdown.map((item, idx) => ({
+          ...item,
+          color: CHART_PALETTE[idx % CHART_PALETTE.length],
+        }))
+      }
+      return [
+        {
+          id: 'paid',
+          name: effectiveFee.name || (bn ? 'পরিশোধিত ফি' : 'Paid Fee'),
+          nameBn: effectiveFee.nameBn || (bn ? 'পরিশোধিত ফি' : 'Paid Fee'),
+          value: totalPaid || 1,
+          color: '#6366f1',
+          count: 1,
+        },
+      ]
+    } else {
+      if (statusBreakdown.length > 0) return statusBreakdown
+      return [
+        {
+          name: bn ? 'পরিশোধিত' : 'Paid',
+          nameBn: 'পরিশোধিত',
+          value: totalPaid || 1,
+          color: '#22c55e',
+        },
+      ]
+    }
+  }, [chartMode, feeBreakdown, statusBreakdown, effectiveFee, totalPaid, bn, CHART_PALETTE])
 
   const methodLabel = (m: string) =>
     m === 'cash' ? (bn ? 'নগদ' : 'Cash') :
@@ -391,84 +495,82 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
 
         {/* Scrollable Body Container */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
-          {/* Student Info & Financial Balance Overview */}
+          {/* Student Info & Financial Analytics Donut Chart */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4">
-            {/* Left 6 cols: Student Info Card */}
-            <div className="lg:col-span-6 bg-[var(--bg-secondary)]/80 border border-[var(--border)] rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between shadow-2xs">
-              <div className="flex items-start gap-3.5">
-                <div className="w-13 h-13 rounded-2xl overflow-hidden flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] font-bold text-xl shrink-0 shadow-xs border border-[var(--brand)]/20">
-                  {student.photo ? (
-                    <img src={student.photo} alt={student.nameEn} className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{(student.nameEn || '?').charAt(0).toUpperCase()}</span>
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-tight truncate">
-                      {bn ? student.nameBn || student.nameEn : student.nameEn}
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(student.id, 'id')}
-                      style={{ borderColor: 'var(--brand)' }}
-                      className="font-mono text-xs font-semibold px-2 py-0.5 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border inline-flex items-center gap-1 transition-colors cursor-pointer hover:bg-[var(--brand)] hover:text-white"
-                      title={bn ? 'আইডি কপি করুন' : 'Click to copy ID'}
-                    >
-                      <span className="text-[0.625rem] opacity-75 font-sans">ID:</span>
-                      <span>{student.id}</span>
-                      {copiedId ? (
-                        <Check size={11} className="text-[var(--green)]" />
-                      ) : (
-                        <Copy size={11} className="opacity-60" />
-                      )}
-                    </button>
+            {/* Left 5 cols: Student Profile Card */}
+            <div className="lg:col-span-5 glass bg-[var(--bg-secondary)]/50 border border-[var(--glass-border)] rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
+              <div>
+                <div className="flex items-start gap-3.5">
+                  <div className="w-13 h-13 rounded-2xl overflow-hidden flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] font-bold text-xl shrink-0 shadow-xs border border-[var(--brand)]/20">
+                    {student.photo ? (
+                      <img src={student.photo} alt={student.nameEn} className="w-full h-full object-cover" />
+                    ) : (
+                      <span>{(student.nameEn || '?').charAt(0).toUpperCase()}</span>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] mt-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
-                      <GraduationCap size={12} className="text-[var(--brand)]" />
-                      <span className="text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span>
-                      <strong className="text-[var(--text-primary)] font-semibold">{student.class}</strong>
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-tight truncate">
+                        {bn ? student.nameBn || student.nameEn : student.nameEn}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(student.id, 'id')}
+                        className="glass font-mono text-xs font-semibold px-2 py-0.5 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)]/20 inline-flex items-center gap-1 transition-all cursor-pointer hover:bg-[var(--brand)] hover:text-white"
+                        title={bn ? 'আইডি কপি করুন' : 'Click to copy ID'}
+                      >
+                        <span className="text-[0.625rem] opacity-75 font-sans">ID:</span>
+                        <span>{student.id}</span>
+                        {copiedId ? (
+                          <Check size={11} className="text-[var(--green)]" />
+                        ) : (
+                          <Copy size={11} className="opacity-60" />
+                        )}
+                      </button>
+                    </div>
 
-                    {student.section && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
-                        <Layers size={12} className="text-[var(--brand)]" />
-                        <span className="text-[var(--text-muted)]">{bn ? 'শাখা:' : 'Sec:'}</span>
-                        <strong className="text-[var(--text-primary)] font-semibold">{student.section}</strong>
+                    <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] mt-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--glass-border)] text-[0.6875rem]">
+                        <GraduationCap size={12} className="text-[var(--brand)]" />
+                        <span className="text-[var(--text-muted)]">{bn ? 'শ্রেণি:' : 'Class:'}</span>
+                        <strong className="text-[var(--text-primary)] font-semibold">{student.class}</strong>
                       </span>
-                    )}
 
-                    {student.roll && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
-                        <Hash size={12} className="text-[var(--brand)]" />
-                        <span className="text-[var(--text-muted)]">{bn ? 'রোল:' : 'Roll:'}</span>
-                        <strong className="text-[var(--text-primary)] font-semibold">{student.roll}</strong>
-                      </span>
-                    )}
+                      {student.section && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--glass-border)] text-[0.6875rem]">
+                          <Layers size={12} className="text-[var(--brand)]" />
+                          <span className="text-[var(--text-muted)]">{bn ? 'শাখা:' : 'Sec:'}</span>
+                          <strong className="text-[var(--text-primary)] font-semibold">{student.section}</strong>
+                        </span>
+                      )}
 
-                    {session && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] text-[0.6875rem]">
-                        <Calendar size={12} className="text-[var(--brand)]" />
-                        <span className="text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span>
-                        <strong className="text-[var(--text-primary)] font-semibold">{session}</strong>
-                      </span>
-                    )}
+                      {student.roll && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--glass-border)] text-[0.6875rem]">
+                          <Hash size={12} className="text-[var(--brand)]" />
+                          <span className="text-[var(--text-muted)]">{bn ? 'রোল:' : 'Roll:'}</span>
+                          <strong className="text-[var(--text-primary)] font-semibold">{student.roll}</strong>
+                        </span>
+                      )}
+
+                      {session && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--glass-border)] text-[0.6875rem]">
+                          <Calendar size={12} className="text-[var(--brand)]" />
+                          <span className="text-[var(--text-muted)]">{bn ? 'সেশন:' : 'Session:'}</span>
+                          <strong className="text-[var(--text-primary)] font-semibold">{session}</strong>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Fee Specification Strip */}
-              <div className="mt-3.5 pt-3 border-t border-[var(--border)] flex items-center justify-between text-xs flex-wrap gap-2">
-                <span className="text-[var(--text-secondary)] font-medium truncate">
-                  {bn ? effectiveFee.nameBn || effectiveFee.name : effectiveFee.name}
-                </span>
-                <span
-                  style={{ borderColor: 'var(--brand)' }}
-                  className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.6875rem] font-semibold bg-[var(--brand-light)] text-[var(--brand)] border shrink-0"
-                >
+              <div className="mt-3.5 pt-3 border-t border-[var(--glass-border)] flex items-center justify-between text-xs flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 text-[var(--text-muted)] text-[0.6875rem]">
+                  <Receipt size={12} className="text-[var(--brand)]" />
+                  <span>{allStudentPayments.length} {bn ? 'টি মোট পেমেন্ট লেনদেন' : 'total payment records'}</span>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.6875rem] font-semibold bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--brand)]/20 shrink-0">
                   <Sparkles size={11} />
                   {effectiveFee.type === 'monthly' ? (bn ? 'মাসিক ফি' : 'Monthly Fee') :
                    effectiveFee.type === 'yearly' ? (bn ? 'বাৎসরিক ফি' : 'Yearly Fee') :
@@ -477,64 +579,153 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               </div>
             </div>
 
-            {/* Right 6 cols: Financial Overview */}
-            <div className="lg:col-span-6 bg-[var(--bg-secondary)]/80 border border-[var(--border)] rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between shadow-2xs">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[0.6875rem] uppercase font-bold text-[var(--text-muted)] tracking-wider">
-                    {bn ? 'মোট প্রদেয় ফি' : 'Total Payable'}
-                  </span>
-                  <div className="text-xl sm:text-2xl font-black text-[var(--text-primary)] tabular-nums mt-0.5">
-                    {fmt(totalOriginal)}
+            {/* Right 7 cols: Financial Analytics & Animated Donut Chart */}
+            <div className="lg:col-span-7 glass bg-[var(--bg-secondary)]/50 border border-[var(--glass-border)] rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm">
+              {/* Header with Title & Mode Switcher */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center">
+                    <PieChartIcon size={13} />
                   </div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                    {bn ? 'পেমেন্ট অ্যানালিটিক্স' : 'Payment Analytics'}
+                  </span>
                 </div>
-                <div className="text-right">
-                  <span className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] block">
-                    {paidPercentage}% {bn ? 'পরিশোধিত' : 'settled'}
-                  </span>
-                  <div className="w-32 h-2 rounded-full bg-[var(--border)] overflow-hidden mt-1.5 ml-auto">
-                    <div
-                      className="h-full bg-[var(--green)] rounded-full transition-all duration-500"
-                      style={{ width: `${paidPercentage}%` }}
-                    />
-                  </div>
+
+                <div className="inline-flex items-center rounded-lg border border-[var(--glass-border)] bg-[var(--bg-primary)] p-0.5 text-[0.6875rem]">
+                  <button
+                    type="button"
+                    onClick={() => setChartMode('all')}
+                    className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer transition-all ${
+                      chartMode === 'all'
+                        ? 'bg-[var(--brand)] text-white shadow-xs'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {bn ? 'সকল ফি' : 'All Fees'} ({feeBreakdown.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartMode('status')}
+                    className={`px-2.5 py-0.5 rounded-md font-semibold cursor-pointer transition-all ${
+                      chartMode === 'status'
+                        ? 'bg-[var(--brand)] text-white shadow-xs'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {bn ? 'অবস্থা' : 'Status'}
+                  </button>
                 </div>
               </div>
 
-              {/* 4 Financial KPI Figures in clean thematic cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mt-3.5 pt-3 border-t border-[var(--border)] text-center">
-                <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-2xs">
-                  <span className="text-[0.625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
+              {/* Chart + Slices Legend */}
+              <div className="flex items-center gap-4 my-2 flex-col sm:flex-row">
+                {/* Donut Chart */}
+                <div className="relative w-[130px] h-[130px] shrink-0 mx-auto sm:mx-0">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={130} minHeight={130} initialDimension={{ width: 130, height: 130 }}>
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={36}
+                        outerRadius={54}
+                        dataKey="value"
+                        paddingAngle={chartData.length > 1 ? 3 : 0}
+                        isAnimationActive={true}
+                        animationDuration={600}
+                      >
+                        {chartData.map((e, i) => (
+                          <Cell key={i} fill={e.color} stroke="var(--surface)" strokeWidth={2} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(val: any) => [`৳${Number(val || 0).toLocaleString()}`, '']}
+                        contentStyle={{
+                          backgroundColor: 'var(--surface)',
+                          borderColor: 'var(--glass-border)',
+                          borderRadius: '0.75rem',
+                          boxShadow: 'var(--glass-shadow)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.75rem',
+                          padding: '6px 10px',
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  {/* Donut Center Display */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                    <span className="text-xs sm:text-sm font-black text-[var(--text-primary)] leading-tight tabular-nums">
+                      {chartMode === 'all' ? fmt(allStudentTotal) : `${paidPercentage}%`}
+                    </span>
+                    <span className="text-[9px] text-[var(--text-muted)] font-medium leading-none mt-0.5">
+                      {chartMode === 'all' ? (bn ? 'সকল ফি' : 'All Fees') : (bn ? 'পরিশোধিত' : 'Settled')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Slices Legend */}
+                <div className="flex-1 w-full min-w-0 max-h-[130px] overflow-y-auto space-y-1.5 pr-1">
+                  {chartData.map((item, idx) => {
+                    const totalVal = chartMode === 'all' ? allStudentTotal : (totalPaid + effectiveDue + totalDiscount + totalWaived)
+                    const pct = totalVal > 0 ? Math.round((item.value / totalVal) * 100) : 100
+                    return (
+                      <div key={idx} className="flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                          <span className="truncate text-[var(--text-secondary)] font-medium text-[0.6875rem]">
+                            {bn ? item.nameBn || item.name : item.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="font-bold text-[var(--text-primary)] tabular-nums text-[0.6875rem]">
+                            ৳{item.value.toLocaleString()}
+                          </span>
+                          <span className="text-[9px] px-1 rounded font-mono text-[var(--text-muted)] bg-[var(--bg-primary)]">
+                            {pct}%
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* 4 Financial KPI Figures in sleek glass pills */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2.5 border-t border-[var(--glass-border)] text-center">
+                <div className="glass px-2.5 py-1.5 rounded-xl bg-[var(--green-light)]/30 border border-emerald-500/15">
+                  <span className="text-[0.5625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
                     {bn ? 'পরিশোধিত' : 'Total Paid'}
                   </span>
-                  <span className="text-base sm:text-lg font-bold text-[var(--green)] tabular-nums mt-0.5 block">
+                  <span className="text-xs sm:text-sm font-black text-[var(--green)] tabular-nums mt-0.5 block">
                     {fmt(totalPaid)}
                   </span>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-2xs">
-                  <span className="text-[0.625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
+                <div className="glass px-2.5 py-1.5 rounded-xl bg-[var(--amber-light)]/30 border border-amber-500/15">
+                  <span className="text-[0.5625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
                     {bn ? 'ছাড়' : 'Discount'}
                   </span>
-                  <span className="text-base sm:text-lg font-bold text-[var(--amber)] tabular-nums mt-0.5 block">
+                  <span className="text-xs sm:text-sm font-black text-[var(--amber)] tabular-nums mt-0.5 block">
                     {fmt(totalDiscount)}
                   </span>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-2xs">
-                  <span className="text-[0.625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
+                <div className="glass px-2.5 py-1.5 rounded-xl bg-[var(--purple-light)]/30 border border-purple-500/15">
+                  <span className="text-[0.5625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
                     {bn ? 'ওয়েভার' : 'Waived'}
                   </span>
-                  <span className="text-base sm:text-lg font-bold text-[var(--purple)] tabular-nums mt-0.5 block">
+                  <span className="text-xs sm:text-sm font-black text-[var(--purple)] tabular-nums mt-0.5 block">
                     {fmt(totalWaived)}
                   </span>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-[var(--bg-primary)] border border-[var(--border)] shadow-2xs">
-                  <span className="text-[0.625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
+                <div className="glass px-2.5 py-1.5 rounded-xl border border-[var(--glass-border)]">
+                  <span className="text-[0.5625rem] uppercase font-bold text-[var(--text-muted)] block tracking-wider">
                     {bn ? 'অবশিষ্ট বকেয়া' : 'Total Due'}
                   </span>
-                  <span className={`text-base sm:text-lg font-bold tabular-nums mt-0.5 block ${effectiveDue > 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+                  <span className={`text-xs sm:text-sm font-black tabular-nums mt-0.5 block ${effectiveDue > 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
                     {effectiveDue > 0 ? fmt(effectiveDue) : (bn ? 'পরিশোধিত' : 'Cleared')}
                   </span>
                 </div>
@@ -613,8 +804,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                               <button
                                 type="button"
                                 onClick={() => copyToClipboard(rcp, 'receipt')}
-                                style={{ borderColor: 'var(--brand)' }}
-                                className="font-mono font-semibold text-xs text-[var(--brand)] px-2.5 py-0.5 rounded-lg bg-[var(--brand-light)] border inline-flex items-center gap-1.5 cursor-pointer transition-colors hover:bg-[var(--brand)] hover:text-white"
+                                className="glass font-mono font-semibold text-xs text-[var(--brand)] px-2.5 py-0.5 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]/20 inline-flex items-center gap-1.5 cursor-pointer transition-colors hover:bg-[var(--brand)] hover:text-white"
                                 title={bn ? 'রসিদ নং কপি করুন' : 'Click to copy Receipt No'}
                               >
                                 <span>{rcp}</span>
