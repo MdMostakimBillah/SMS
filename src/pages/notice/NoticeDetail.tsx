@@ -3,6 +3,7 @@ import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML, pdfFooterHTML } from '@/lib/pdfBranding'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useClassStore } from '@/store/classStore'
+import { sanitizeHtml } from '@/lib/sanitize'
 import type { Notice } from '@/store/noticeStore'
 
 const PRIORITY_OPTIONS = [
@@ -208,7 +209,7 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
               [&_tr]:hover:bg-[var(--bg-secondary)]/50
               [&_hr]:border-[var(--border)] [&_hr]:my-4
               [&_img]:max-w-full [&_img]:rounded-xl [&_img]:my-2"
-            dangerouslySetInnerHTML={{ __html: bn ? notice.contentBn : notice.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(bn ? notice.contentBn : notice.content) }}
           />
         </div>
 

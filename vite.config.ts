@@ -36,6 +36,7 @@ export default defineConfig({
     },
   },
   build: {
+    sourcemap: false,
     rollupOptions: {
       output: {
         chunkFileNames: 'assets/[name]-[hash].js',

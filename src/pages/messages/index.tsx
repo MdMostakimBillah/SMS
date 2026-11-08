@@ -8,6 +8,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import Placeholder from '@tiptap/extension-placeholder'
 import { validateImageSize } from '@/lib/imageUpload'
 import { MAX_IMAGE_SIZE_KB } from '@/lib/constants'
+import { sanitizeHtml } from '@/lib/sanitize'
 import LinkExt from '@tiptap/extension-link'
 import ImageExt from '@tiptap/extension-image'
 import { useBn } from '@/hooks/useBn'
@@ -360,7 +361,7 @@ function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Me
       </div>
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-        <div className="msg-content text-[0.875rem] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: message.body }} />
+        <div className="msg-content text-[0.875rem] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: sanitizeHtml(message.body) }} />
       </div>
 
       <div className="mt-3 flex items-center gap-2 text-[0.6875rem] text-[var(--text-muted)]">

@@ -31,8 +31,13 @@ apps/api/dist
 apps/api/node_modules
 apps/face-service/models
 apps/face-service/__pycache__
+# Environment files
 .env
-.env.production
+.env.*
+!.env.example
+!.env.selfhost.example
+!apps/api/.env.example
+*.env
 staging.env
 
 # Docker

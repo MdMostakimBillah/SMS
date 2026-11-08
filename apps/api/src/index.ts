@@ -41,7 +41,7 @@ async function ensureSuperAdmin(prisma: PrismaClient) {
         )
         process.exit(1)
       }
-      console.log(`[bootstrap] Creating default encrypted super admin: ${email}`)
+      console.log(`[bootstrap] Creating default encrypted super admin account`)
       const passwordHash = await hash(password, {
         algorithm: 2, // Argon2id
         memoryCost: 64 * 1024,
