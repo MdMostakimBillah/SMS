@@ -27,4 +27,15 @@ describe('PaginationControls', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument()
   })
+
+  it('renders when total <= perPage if alwaysShow is true', () => {
+    const { container } = render(<PaginationControls {...defaultProps} total={5} totalPages={1} alwaysShow={true} />)
+    expect(container.innerHTML).not.toBe('')
+    expect(screen.getByText('1–5 / 5')).toBeInTheDocument()
+  })
+
+  it('formats numbers in Bengali when isBn is true', () => {
+    render(<PaginationControls {...defaultProps} isBn={true} />)
+    expect(screen.getByText('১–১০ / ৫০')).toBeInTheDocument()
+  })
 })

@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown, CircleCheck, FileSpreadsheet, FileText, MoreVertical, Eye, Banknote } from 'lucide-react'
+import { Search, DollarSign, Users, CalendarDays, Ban, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleCheck, FileSpreadsheet, FileText, MoreVertical, Eye, Banknote } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
+import { toBnNum } from '@/lib/i18n'
 import { usePermission } from '@/hooks/usePermission'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
@@ -527,7 +528,8 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
   const studentCount = useMemo(() => new Set(results.map((r) => r.studentId)).size, [results])
 
   const [page, setPage] = useState(1)
-  const [perPage, setPerPage] = useState(25)
+  const [perPage, setPerPage] = useState(50)
+  const tableScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setPage(1)
@@ -539,6 +541,12 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
     if (perPage >= results.length) return results
     return results.slice((activePage - 1) * perPage, activePage * perPage)
   }, [results, activePage, perPage])
+
+  useEffect(() => {
+    if (tableScrollRef.current) {
+      tableScrollRef.current.scrollTop = 0
+    }
+  }, [activePage])
 
   const handleFindDue = useCallback(() => {
     setShowResults(true)
@@ -939,13 +947,38 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
 
       {/* Action Bar — shown when results exist */}
       {showResults && results.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[12px] text-[var(--text-muted)]">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <span className="text-[12px] text-[var(--text-muted)] font-medium">
             {selectedRows.size > 0
               ? `${selectedRows.size} ${bn ? 'নির্বাচিত' : 'selected'}`
               : `${results.length} ${bn ? 'টি ফলাফল' : 'results'}`}
           </span>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-3">
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                <span className="text-[0.6875rem]">
+                  {bn ? `পৃষ্ঠা ${toBnNum(activePage)} / ${toBnNum(totalPages)}` : `Page ${activePage} of ${totalPages}`}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={activePage === 1}
+                    className="w-6 h-6 flex items-center justify-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title={bn ? 'পূর্ববর্তী পৃষ্ঠা' : 'Previous page'}
+                  >
+                    <ChevronLeft size={13} />
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={activePage === totalPages}
+                    className="w-6 h-6 flex items-center justify-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title={bn ? 'পরবর্তী পৃষ্ঠা' : 'Next page'}
+                  >
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
             {selectedRows.size > 0 && (
               <div className="relative">
                 <button
@@ -1007,7 +1040,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
         </div>
       ) : (
         <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
-          <div className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto' }}>
+          <div ref={tableScrollRef} className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto' }}>
           <table className="w-full text-[0.6875rem]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="bg-[var(--bg-secondary)] sticky top-0 z-20 border-b border-[var(--border)]">
@@ -1299,7 +1332,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
             )}
           </table>
           </div>
-          {results.length > perPage && (
+          {results.length > 0 && (
             <div className="px-3 py-1.5 border-t border-[var(--border)] bg-[var(--bg-secondary)]">
               <PaginationControls
                 page={activePage}
@@ -1308,8 +1341,10 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                 setPerPage={setPerPage}
                 total={results.length}
                 totalPages={totalPages}
-                perPageOptions={[10, 25, 50, 100]}
+                perPageOptions={[50, 100, 200]}
                 isBn={bn}
+                alwaysShow={results.length > 50}
+                className="flex justify-between items-center flex-wrap gap-2"
               />
             </div>
           )}

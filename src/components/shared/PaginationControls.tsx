@@ -5,6 +5,7 @@ import {
   ChevronRight,
   ChevronsRight,
 } from 'lucide-react'
+import { toBnNum } from '@/lib/i18n'
 
 interface PaginationControlsProps {
   page: number
@@ -15,6 +16,8 @@ interface PaginationControlsProps {
   totalPages: number
   isBn?: boolean
   perPageOptions?: number[]
+  alwaysShow?: boolean
+  className?: string
 }
 
 export function PaginationControls({
@@ -24,20 +27,26 @@ export function PaginationControls({
   setPerPage,
   total,
   totalPages,
+  isBn,
   perPageOptions,
+  alwaysShow = false,
+  className,
 }: PaginationControlsProps) {
   const options = perPageOptions && perPageOptions.length > 0 ? perPageOptions : [10, 20, 50]
   const range = useMemo(() => {
     if (total === 0) return ''
     const from = (page - 1) * perPage + 1
     const to = Math.min(page * perPage, total)
+    if (isBn) {
+      return `${toBnNum(from)}–${toBnNum(to)} / ${toBnNum(total)}`
+    }
     return `${from}–${to} / ${total}`
-  }, [page, perPage, total])
+  }, [page, perPage, total, isBn])
 
-  if (total <= perPage) return null
+  if (!alwaysShow && total <= perPage) return null
 
   return (
-    <div className="py-[0.625rem] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2">
+    <div className={className || "py-[0.625rem] px-0 flex justify-between items-center border-t border-[var(--border)] mt-2 flex-wrap gap-2"}>
       <span className="text-xs text-[var(--text-muted)]">{range}</span>
       <div className="flex gap-[0.1875rem] items-center">
         <select
@@ -49,7 +58,7 @@ export function PaginationControls({
           className="py-1 px-[0.375rem] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[0.6875rem] font-[inherit] outline-none mr-[0.375rem]"
         >
           {options.map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
+            <option key={opt} value={opt}>{isBn ? toBnNum(opt) : opt}</option>
           ))}
         </select>
         {[
@@ -73,7 +82,7 @@ export function PaginationControls({
               onClick={() => setPage(p)}
               className={`w-7 h-7 rounded-md cursor-pointer text-xs ${p === page ? 'bg-[var(--brand)]' : 'bg-[var(--bg-primary)]'} ${p === page ? 'text-white' : 'text-[var(--text-secondary)]'} ${p === page ? 'font-semibold' : 'font-normal'}`}
             >
-              {p}
+              {isBn ? toBnNum(p) : p}
             </button>
           ))
         })()}

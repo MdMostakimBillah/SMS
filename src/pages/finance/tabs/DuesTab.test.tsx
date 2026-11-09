@@ -215,8 +215,8 @@ describe('DuesTab Filters and Table', () => {
     expect(ths[1]).toHaveClass('text-[0.6875rem]')
   })
 
-  it('paginates results when student count exceeds perPage', () => {
-    const manyStudents = Array.from({ length: 30 }, (_, idx) => ({
+  it('paginates results with 50 items per page and allows viewing next page', () => {
+    const manyStudents = Array.from({ length: 60 }, (_, idx) => ({
       id: `STU-EXTRA-${idx + 1}`,
       nameEn: `Student ${idx + 1}`,
       nameBn: `শিক্ষার্থী ${idx + 1}`,
@@ -233,11 +233,21 @@ describe('DuesTab Filters and Table', () => {
 
     renderWithRouter(<DuesTab onCollect={vi.fn()} />)
 
-    // With 30 students and default perPage 25, Student 1 is on page 1, Student 26 is on page 2
+    // With 60 students and default perPage 50, Student 1 is on page 1, Student 51 is on page 2
     expect(screen.getByText('Student 1')).toBeInTheDocument()
-    expect(screen.queryByText('Student 26')).not.toBeInTheDocument()
+    expect(screen.queryByText('Student 51')).not.toBeInTheDocument()
 
-    // Pagination controls should be visible
-    expect(screen.getByText(/1–25 \/ 30/)).toBeInTheDocument()
+    // Pagination controls should show range 1–50 / 60
+    expect(screen.getByText(/1–50 \/ 60/)).toBeInTheDocument()
+    expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument()
+
+    // Click next page button
+    const nextBtn = screen.getByTitle('Next page')
+    fireEvent.click(nextBtn)
+
+    // Student 51 is now visible on page 2, and Student 1 is not
+    expect(screen.getByText('Student 51')).toBeInTheDocument()
+    expect(screen.queryByText('Student 1')).not.toBeInTheDocument()
+    expect(screen.getByText(/51–60 \/ 60/)).toBeInTheDocument()
   })
 })
