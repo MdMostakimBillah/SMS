@@ -14,6 +14,7 @@ interface PaginationControlsProps {
   total: number
   totalPages: number
   isBn?: boolean
+  perPageOptions?: number[]
 }
 
 export function PaginationControls({
@@ -23,7 +24,9 @@ export function PaginationControls({
   setPerPage,
   total,
   totalPages,
+  perPageOptions,
 }: PaginationControlsProps) {
+  const options = perPageOptions && perPageOptions.length > 0 ? perPageOptions : [10, 20, 50]
   const range = useMemo(() => {
     if (total === 0) return ''
     const from = (page - 1) * perPage + 1
@@ -45,9 +48,9 @@ export function PaginationControls({
           }}
           className="py-1 px-[0.375rem] rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] text-[0.6875rem] font-[inherit] outline-none mr-[0.375rem]"
         >
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-          <option value={50}>50</option>
+          {options.map((opt) => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
         </select>
         {[
           [<ChevronsLeft size={12} />, () => setPage(1), page === 1] as [React.ReactNode, () => void, boolean],

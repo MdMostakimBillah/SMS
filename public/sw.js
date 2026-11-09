@@ -1,4 +1,4 @@
-const CACHE_NAME = 'edutech-pwa-v5'
+const CACHE_NAME = 'edutech-pwa-v6'
 const PRECACHE_ASSETS = ['/', '/index.html', '/favicon.svg']
 
 let brandColor = '#6366f1'
@@ -141,12 +141,16 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
-          if (networkResponse.ok) {
-            const clone = networkResponse.clone()
+          if (networkResponse.ok && event.request.method === 'GET') {
+            const cloneForRequest = networkResponse.clone()
+            const isIndex = url.pathname === '/' || url.pathname === '/index.html'
+            const cloneForIndex = isIndex ? null : networkResponse.clone()
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, clone)
-              cache.put('/index.html', networkResponse.clone())
-            })
+              cache.put(event.request, cloneForRequest).catch(() => {})
+              if (cloneForIndex) {
+                cache.put('/index.html', cloneForIndex).catch(() => {})
+              }
+            }).catch(() => {})
           }
           return networkResponse
         })
@@ -183,10 +187,10 @@ self.addEventListener('fetch', (event) => {
           // In background, fetch and update cache
           fetch(event.request)
             .then((networkResponse) => {
-              if (networkResponse.ok) {
+              if (networkResponse.ok && event.request.method === 'GET') {
                 caches.open(CACHE_NAME).then((cache) => {
-                  cache.put(event.request, networkResponse)
-                })
+                  cache.put(event.request, networkResponse).catch(() => {})
+                }).catch(() => {})
               }
             })
             .catch(() => {})
@@ -196,11 +200,11 @@ self.addEventListener('fetch', (event) => {
         // Not in cache yet: fetch from network and save to cache
         return fetch(event.request)
           .then((networkResponse) => {
-            if (networkResponse.ok) {
+            if (networkResponse.ok && event.request.method === 'GET') {
               const clone = networkResponse.clone()
               caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, clone)
-              })
+                cache.put(event.request, clone).catch(() => {})
+              }).catch(() => {})
             }
             return networkResponse
           })

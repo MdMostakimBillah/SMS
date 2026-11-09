@@ -203,15 +203,41 @@ describe('DuesTab Filters and Table', () => {
     expect(screen.queryByText('Arafat Rahman')).not.toBeInTheDocument()
   })
 
-  it('renders table with font size classes matching collection page (text-[0.8125rem])', () => {
+  it('renders table with compact font size for low-end devices (text-[0.6875rem])', () => {
     const { container } = renderWithRouter(<DuesTab onCollect={vi.fn()} />)
 
     const table = container.querySelector('table')
-    expect(table).toHaveClass('text-[0.8125rem]')
+    expect(table).toHaveClass('text-[0.6875rem]')
 
     // Headers should have uppercase tracking-wider and text-[0.6875rem]
     const ths = container.querySelectorAll('th')
     expect(ths.length).toBeGreaterThan(0)
     expect(ths[1]).toHaveClass('text-[0.6875rem]')
+  })
+
+  it('paginates results when student count exceeds perPage', () => {
+    const manyStudents = Array.from({ length: 30 }, (_, idx) => ({
+      id: `STU-EXTRA-${idx + 1}`,
+      nameEn: `Student ${idx + 1}`,
+      nameBn: `শিক্ষার্থী ${idx + 1}`,
+      class: 'Class 9',
+      section: 'A',
+      roll: String(idx + 1).padStart(2, '0'),
+      photo: '',
+      status: 'approved' as const,
+      active: true,
+      academicYear: '2025-26',
+    }))
+
+    useAdmissionStore.setState({ students: manyStudents as any })
+
+    renderWithRouter(<DuesTab onCollect={vi.fn()} />)
+
+    // With 30 students and default perPage 25, Student 1 is on page 1, Student 26 is on page 2
+    expect(screen.getByText('Student 1')).toBeInTheDocument()
+    expect(screen.queryByText('Student 26')).not.toBeInTheDocument()
+
+    // Pagination controls should be visible
+    expect(screen.getByText(/1–25 \/ 30/)).toBeInTheDocument()
   })
 })
