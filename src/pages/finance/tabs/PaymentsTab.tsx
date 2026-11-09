@@ -723,97 +723,118 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-[0.8125rem]">
               <thead>
                 <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                   <th className="text-center px-2 py-2.5 w-[36px]">
                     <ModernCheckbox checked={batches.length > 0 && selectedRows.size === batches.length} onChange={() => toggleAllRows()} color="brand" size="xs" />
                   </th>
-                  <th className="text-center px-2 py-2.5 w-[36px] text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">#</th>
-                  <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                  <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
+                  <th className="text-center px-2 py-2.5 w-[40px] text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">#</th>
+                  <th className="text-left px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                  <th className="text-left px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
                   <th className="text-center px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
-                  <th className="text-right px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                  <th className="text-right px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ছাড়' : 'Disc.'}</th>
+                  <th className="text-right px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                  <th className="text-right px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ছাড়' : 'Disc.'}</th>
                   <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                  <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'সংগ্রাহক' : 'Receipted By'}</th>
-                  <th className="text-right px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'কাজ' : 'Actions'}</th>
+                  <th className="text-left px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'সংগ্রাহক' : 'Receipted By'}</th>
+                  <th className="text-right px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'কাজ' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody>
-                {batches.map((b, idx) => (
-                  <tr key={b.batchKey} className={`border-t border-[var(--border)] transition-colors ${selectedRows.has(b.batchKey) ? 'bg-[var(--brand-light)]/60' : 'hover:bg-[var(--brand-light)]/30'}`}>
-                    <td className="text-center px-2 py-2">
-                      <ModernCheckbox checked={selectedRows.has(b.batchKey)} onChange={() => toggleRowSelection(b.batchKey)} color="brand" size="xs" />
-                    </td>
-                    <td className="text-center px-2 py-2 text-[var(--text-muted)] text-[11px]">{idx + 1}</td>
-                    <td className="px-3 py-2">
-                      <p className="font-semibold text-[var(--text-primary)] text-[11px]">{bn ? b.studentNameBn || b.studentName : b.studentName}</p>
-                      {b.class && <p className="text-[9px] text-[var(--text-muted)]">{b.class}{b.section ? `-${b.section}` : ''}</p>}
-                    </td>
-                    <td className="px-3 py-2 font-mono text-[10px] text-[var(--brand)]">{b.receiptNo}</td>
-                    <td className="px-3 py-2 text-center text-[var(--text-secondary)]">
-                      <div className="flex items-center justify-center gap-1"><Calendar size={10} />{b.paidAt}</div>
-                    </td>
-                    <td className="px-3 py-2 text-right font-bold text-[var(--green)]">{fmt(b.totalAmount)}</td>
-                    <td className="px-3 py-2 text-right font-medium text-[var(--amber)]">{b.totalDiscount ? fmt(b.totalDiscount) : '-'}</td>
-                    <td className="px-3 py-2">
-                      <span className="text-[0.65rem] font-medium px-2 py-0.5 rounded-full" style={{ background: `${methodColor(b.method)}12`, color: methodColor(b.method) }}>
-                        {methodLabel(b.method)}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-[11px] text-[var(--text-secondary)]">{b.collectedBy || '—'}</td>
-                    <td className="px-3 py-2 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => setSelectedBatchForDetails(b)}
-                          className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--brand)] bg-[var(--brand-light)] border border-[var(--glass-border)] shadow-xs"
-                          title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
-                          aria-label={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
-                        >
-                          <Eye size={14} />
-                        </button>
-                        <button
-                          onClick={() => generateReceipt(b)}
-                          className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--green)] bg-[var(--green-light)] border border-[var(--glass-border)] shadow-xs"
-                          title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
-                          aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
-                        >
-                          <Printer size={14} />
-                        </button>
-                        {canDelete('finance.fees.payments') ? (
-                          <button
-                            onClick={() => handleDeleteBatch(b)}
-                            className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--red)] bg-[var(--red-light)] border border-[var(--glass-border)] shadow-xs"
-                            title={bn ? 'মুছুন' : 'Delete'}
-                            aria-label={bn ? 'মুছুন' : 'Delete'}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        ) : (
-                          <div
-                            className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--glass-border)] opacity-40 cursor-not-allowed"
-                            title={bn ? 'অনুমতি নেই' : 'No delete permission'}
-                          >
-                            <Trash2 size={14} />
+                {batches.map((b, idx) => {
+                  const sInfo = studentMap[b.studentId]
+                  const sName = bn ? b.studentNameBn || b.studentName : b.studentName
+
+                  return (
+                    <tr key={b.batchKey} className={`border-t border-[var(--border)] transition-colors ${selectedRows.has(b.batchKey) ? 'bg-[var(--brand-light)]/60' : 'hover:bg-[var(--brand-light)]/30'}`}>
+                      <td className="text-center px-2 py-2.5">
+                        <ModernCheckbox checked={selectedRows.has(b.batchKey)} onChange={() => toggleRowSelection(b.batchKey)} color="brand" size="xs" />
+                      </td>
+                      <td className="text-center px-2 py-2.5 text-[var(--text-muted)] text-[0.8125rem] font-mono">{idx + 1}</td>
+                      <td className="px-3.5 py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 min-w-[2rem] rounded-full overflow-hidden bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center font-bold text-[0.75rem] shrink-0 border border-[var(--border)] shadow-2xs">
+                            {sInfo?.photo ? (
+                              <img src={sInfo.photo} alt={sName} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{(sName || '?').charAt(0).toUpperCase()}</span>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-[var(--text-primary)] text-[0.8125rem] truncate">{sName}</p>
+                            <p className="text-[0.8125rem] text-[var(--text-muted)] truncate">
+                              {b.class}{b.section ? ` - ${b.section}` : ''}{sInfo?.roll ? ` • Roll: ${sInfo.roll}` : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3.5 py-2.5 font-mono text-[0.8125rem] font-semibold text-[var(--brand)]">{b.receiptNo}</td>
+                      <td className="px-3 py-2.5 text-center text-[var(--text-secondary)]">
+                        <div className="flex items-center justify-center gap-1.5 text-[0.8125rem]">
+                          <Calendar size={13} className="text-[var(--text-muted)] shrink-0" />
+                          <span>{b.paidAt}</span>
+                        </div>
+                      </td>
+                      <td className="px-3.5 py-2.5 text-right font-bold text-[var(--green)] text-[0.8125rem]">{fmt(b.totalAmount)}</td>
+                      <td className="px-3.5 py-2.5 text-right font-semibold text-[var(--amber)] text-[0.8125rem]">{b.totalDiscount ? fmt(b.totalDiscount) : '—'}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="text-[0.8125rem] font-medium px-2.5 py-0.5 rounded-full inline-block" style={{ background: `${methodColor(b.method)}15`, color: methodColor(b.method) }}>
+                          {methodLabel(b.method)}
+                        </span>
+                      </td>
+                      <td className="px-3.5 py-2.5 text-[0.8125rem] text-[var(--text-secondary)]">{b.collectedBy || '—'}</td>
+                      <td className="px-3.5 py-2.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setSelectedBatchForDetails(b)}
+                            className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--brand)] bg-[var(--brand-light)] border border-[var(--glass-border)] shadow-xs transition-transform active:scale-95"
+                            title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
+                            aria-label={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
+                          >
+                            <Eye size={14} />
+                          </button>
+                          <button
+                            onClick={() => generateReceipt(b)}
+                            className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--green)] bg-[var(--green-light)] border border-[var(--glass-border)] shadow-xs transition-transform active:scale-95"
+                            title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
+                            aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
+                          >
+                            <Printer size={14} />
+                          </button>
+                          {canDelete('finance.fees.payments') ? (
+                            <button
+                              onClick={() => handleDeleteBatch(b)}
+                              className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--red)] bg-[var(--red-light)] border border-[var(--glass-border)] shadow-xs transition-transform active:scale-95"
+                              title={bn ? 'মুছুন' : 'Delete'}
+                              aria-label={bn ? 'মুছুন' : 'Delete'}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          ) : (
+                            <div
+                              className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--glass-border)] opacity-40 cursor-not-allowed"
+                              title={bn ? 'অনুমতি নেই' : 'No delete permission'}
+                            >
+                              <Trash2 size={14} />
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold">
-                  <td className="px-2 py-1.5" />
-                  <td className="px-2 py-1.5" />
-                  <td className="px-3 py-1.5 text-[9px] uppercase text-[var(--text-muted)]" colSpan={2}>{bn ? 'মোট' : 'Total'} ({batches.length})</td>
-                  <td className="px-3 py-1.5" />
-                  <td className="px-3 py-1.5 text-right text-[11px] text-[var(--green)]">{fmt(totalCollected)}</td>
-                  <td className="px-3 py-1.5 text-right text-[11px] text-[var(--amber)]">{totalDiscount ? fmt(totalDiscount) : '-'}</td>
-                  <td className="px-3 py-1.5" />
-                  <td className="px-3 py-1.5" />
-                  <td className="px-3 py-1.5" />
+                <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold text-[0.8125rem]">
+                  <td className="px-2 py-2" />
+                  <td className="px-2 py-2" />
+                  <td className="px-3.5 py-2 text-[0.8125rem] uppercase text-[var(--text-muted)] font-bold" colSpan={2}>{bn ? 'মোট' : 'Total'} ({batches.length})</td>
+                  <td className="px-3 py-2" />
+                  <td className="px-3.5 py-2 text-right text-[0.8125rem] font-bold text-[var(--green)]">{fmt(totalCollected)}</td>
+                  <td className="px-3.5 py-2 text-right text-[0.8125rem] font-bold text-[var(--amber)]">{totalDiscount ? fmt(totalDiscount) : '—'}</td>
+                  <td className="px-3 py-2" />
+                  <td className="px-3.5 py-2" />
+                  <td className="px-3.5 py-2" />
                 </tr>
               </tfoot>
             </table>

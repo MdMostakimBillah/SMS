@@ -17,6 +17,7 @@ export interface BackupMetadata {
     exams: number
     departments: number
     subjects: number
+    onlineClasses?: number
   }
 }
 
@@ -30,6 +31,7 @@ export interface BackupSummary {
   teachers: number
   students: number
   exams: number
+  onlineClasses?: number
   totalKeys: number
   exportedAt: string
   slug: string
@@ -42,6 +44,7 @@ const STORE_BASE_KEYS = [
   'edutech-exams',
   'edutech-syllabus',
   'edutech-assignments',
+  'edutech-online',
   'edutech-fees',
   'edutech-hr',
   'edutech-hostel',
@@ -70,6 +73,7 @@ export function collectLocalStores(targetSlug?: string): BackupBundle {
   let examsCount = 0
   let deptsCount = 0
   let subjectsCount = 0
+  let onlineClassesCount = 0
 
   for (const base of STORE_BASE_KEYS) {
     const keyWithSlug = `${base}_${slug}`
@@ -91,6 +95,8 @@ export function collectLocalStores(targetSlug?: string): BackupBundle {
           studentsCount = state.students.length
         } else if (base === 'edutech-exams' && Array.isArray(state.exams)) {
           examsCount = state.exams.length
+        } else if (base === 'edutech-online' && Array.isArray(state.classes)) {
+          onlineClassesCount = state.classes.length
         }
       } catch {
         // Skip unparseable keys
@@ -110,6 +116,7 @@ export function collectLocalStores(targetSlug?: string): BackupBundle {
       exams: examsCount,
       departments: deptsCount,
       subjects: subjectsCount,
+      onlineClasses: onlineClassesCount,
     },
   }
 
@@ -190,6 +197,7 @@ export function parseAndValidateBackup(jsonString: string): {
       teachers: counts.teachers ?? (stores['edutech-teachers']?.state?.teachers?.length || 0),
       students: counts.students ?? (stores['edutech-admissions']?.state?.students?.length || 0),
       exams: counts.exams ?? (stores['edutech-exams']?.state?.exams?.length || 0),
+      onlineClasses: counts.onlineClasses ?? (stores['edutech-online']?.state?.classes?.length || 0),
       totalKeys: Object.keys(stores).length,
       exportedAt: metadata.exportedAt || metadata.timestamp || new Date().toISOString(),
     }
@@ -210,6 +218,7 @@ export function parseAndValidateBackup(jsonString: string): {
             exams: summary.exams,
             departments: counts.departments || 0,
             subjects: counts.subjects || 0,
+            onlineClasses: summary.onlineClasses || 0,
           },
         },
         stores,

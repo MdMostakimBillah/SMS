@@ -1604,27 +1604,27 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                   return <p className="text-xs text-[var(--text-muted)] text-center py-6">{bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}</p>
                 }
                 return (
-                <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+                <table className="w-full text-[0.8125rem]" style={{ tableLayout: 'fixed' }}>
                   <colgroup>
-                    <col style={{ width: '4%' }} />
-                    <col style={{ width: '22%' }} />
+                    <col style={{ width: '5%' }} />
+                    <col style={{ width: '23%' }} />
+                    <col style={{ width: '13%' }} />
                     <col style={{ width: '10%' }} />
-                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '13%' }} />
                     <col style={{ width: '12%' }} />
+                    <col style={{ width: '14%' }} />
                     <col style={{ width: '10%' }} />
-                    <col style={{ width: '18%' }} />
-                    <col style={{ width: '16%' }} />
                   </colgroup>
                   <thead>
                     <tr className="bg-[var(--bg-secondary)] sticky top-0 z-10 border-b border-[var(--border)]">
-                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">#</th>
-                      <th className="text-left px-3 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ফি' : 'Fee'}</th>
-                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
-                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
-                      <th className="text-right px-3 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'মন্তব্য' : 'Comment'}</th>
-                      <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider"></th>
+                      <th className="text-center px-2 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">#</th>
+                      <th className="text-left px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ফি' : 'Fee'}</th>
+                      <th className="text-center px-2 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
+                      <th className="text-center px-2 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                      <th className="text-center px-2 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ইনভয়েস' : 'Invoice'}</th>
+                      <th className="text-right px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                      <th className="text-center px-2 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'মন্তব্য' : 'Comment'}</th>
+                      <th className="text-center px-2 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1666,30 +1666,30 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
                       const paidDate = new Date(batch.paidAt)
                       const monthLabel = paidDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                       return (
-                        <tr key={batch.batchId} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40">
-                          <td className="text-center px-2 py-2 text-[var(--text-muted)] text-[11px]">{idx + 1}</td>
-                          <td className="text-center px-2 py-2">
+                        <tr key={batch.batchId} className="border-t border-[var(--border)] hover:bg-[var(--brand-light)]/40 transition-colors">
+                          <td className="text-center px-2 py-2.5 text-[var(--text-muted)] text-[0.8125rem] font-mono">{idx + 1}</td>
+                          <td className="text-left px-3.5 py-2.5">
                             <div className="space-y-0.5">
-                              {uniqueNames.map((name, i) => <div key={i} className="font-semibold text-[var(--text-primary)] text-[11px]">{name}</div>)}
+                              {uniqueNames.map((name, i) => <div key={i} className="font-semibold text-[var(--text-primary)] text-[0.8125rem]">{name}</div>)}
                             </div>
                           </td>
-                          <td className="text-center px-2 py-2 text-[var(--text-muted)] text-[11px]">{monthLabel}</td>
-                          <td className="text-center px-2 py-2"><span className="inline-block px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-muted)] font-medium text-[11px]">{batch.method}</span></td>
-                          <td className="text-center px-2 py-2"><span className="text-[11px] text-[var(--text-muted)]">{batch.invoiceNo}</span></td>
-                          <td className="text-center px-2 py-2"><span className="font-bold text-[var(--brand)] text-[11px]">{fmt(batch.totalAmount)}</span></td>
-                          <td className="text-center px-2 py-2">
-                            <span className="text-[11px] text-[var(--text-muted)] truncate block" title={batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ')}>
+                          <td className="text-center px-2 py-2.5 text-[var(--text-secondary)] text-[0.8125rem]">{monthLabel}</td>
+                          <td className="text-center px-2 py-2.5"><span className="inline-block px-2.5 py-0.5 rounded-full bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-medium text-[0.8125rem]">{batch.method}</span></td>
+                          <td className="text-center px-2 py-2.5"><span className="text-[0.8125rem] font-mono font-medium text-[var(--brand)]">{batch.invoiceNo}</span></td>
+                          <td className="text-right px-3.5 py-2.5"><span className="font-bold text-[var(--green)] text-[0.8125rem]">{fmt(batch.totalAmount)}</span></td>
+                          <td className="text-center px-2 py-2.5">
+                            <span className="text-[0.8125rem] text-[var(--text-muted)] truncate block" title={batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ')}>
                               {batch.payments.map((p) => p.note ? stripCatPrefix(p.note) : '').filter(Boolean).join(', ') || '—'}
                             </span>
                           </td>
-                          <td className="text-center px-2 py-2">
-                            <div className="flex items-center justify-center gap-1">
-                              <button onClick={() => generateBatchReceipt(batch)} className="w-7 h-7 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border-0 hover:bg-[var(--brand)]/20 transition-colors" title={bn ? 'ডাউনলোড' : 'Download'}>
-                                <Receipt size={13} />
+                          <td className="text-center px-2 py-2.5">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button onClick={() => generateBatchReceipt(batch)} className="w-8 h-8 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center cursor-pointer border border-[var(--brand)]/15 hover:bg-[var(--brand)] hover:text-white transition-all shadow-2xs" title={bn ? 'ডাউনলোড' : 'Download'}>
+                                <Receipt size={14} />
                               </button>
                               {canDelete('finance.fees.collect') && (
-                                <button onClick={() => handleDeletePayment(batch.batchId)} className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-red-50 text-red-400 flex items-center justify-center cursor-pointer border-0 hover:bg-red-100 hover:text-red-600 transition-colors" title={bn ? 'মুছুন' : 'Delete'}>
-                                  <Trash2 size={13} />
+                                <button onClick={() => handleDeletePayment(batch.batchId)} className="w-8 h-8 rounded-xl bg-[var(--red-light)] text-[var(--red)] flex items-center justify-center cursor-pointer border border-[var(--red)]/15 hover:bg-[var(--red)] hover:text-white transition-all shadow-2xs" title={bn ? 'মুছুন' : 'Delete'}>
+                                  <Trash2 size={14} />
                                 </button>
                               )}
                             </div>

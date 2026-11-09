@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { isRecentExplicitDelete, markExplicitUserDelete } from '@/lib/vault/bridge'
+import { onlineClassesApi } from '@/lib/api'
 
 export type Platform = 'youtube' | 'facebook' | 'google-meet' | 'zoom' | 'other'
 export type ClassStatus = 'scheduled' | 'live' | 'ended'
@@ -27,6 +30,14 @@ export interface OnlineClass {
 
 interface OnlineState {
   classes: OnlineClass[]
+  serverSynced: boolean
+  syncing: boolean
+  syncError: string | null
+
+  syncFromServer: (slugOrId?: string) => Promise<void>
+  syncToServer: () => Promise<void>
+  setClasses: (classes: OnlineClass[]) => void
+
   addClass: (c: Omit<OnlineClass, 'id' | 'createdAt' | 'updatedAt'>) => void
   updateClass: (id: string, data: Partial<OnlineClass>) => void
   deleteClass: (id: string) => void
@@ -72,26 +83,116 @@ export const platformLabels: Record<Platform, { en: string; bn: string }> = {
   other: { en: 'Other', bn: 'অন্যান্য' },
 }
 
+let serverSyncTimer: any = null
+function queueServerSync(get: () => OnlineState) {
+  try {
+    if (isLocalComputerMode()) return
+    const state = get()
+    if (!state.serverSynced && state.classes.length === 0) {
+      return
+    }
+    if (serverSyncTimer) clearTimeout(serverSyncTimer)
+    serverSyncTimer = setTimeout(async () => {
+      try {
+        const s = get()
+        if (s.classes.length === 0 && !isRecentExplicitDelete()) {
+          return
+        }
+        await onlineClassesApi.update({
+          classes: s.classes,
+        })
+      } catch (e) {
+        console.warn('[online] Background sync failed:', e)
+      }
+    }, 500)
+  } catch {
+    /* ignore */
+  }
+}
+
 export const useOnlineStore = create<OnlineState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       classes: [],
-      addClass: (c) =>
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
+
+      syncFromServer: async (slugOrId) => {
+        if (isLocalComputerMode()) {
+          set({ serverSynced: true, syncing: false, syncError: null })
+          return
+        }
+        try {
+          set({ syncing: true, syncError: null })
+          const res = await onlineClassesApi.get(slugOrId)
+          if (res?.storageMode === 'local_computer') {
+            set({ serverSynced: true, syncing: false })
+            return
+          }
+          if (res && Array.isArray(res.classes)) {
+            set({
+              classes: res.classes,
+              serverSynced: true,
+              syncing: false,
+              syncError: null,
+            })
+          } else {
+            set({ serverSynced: true, syncing: false })
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to fetch online classes from server'
+          set({ syncing: false, syncError: msg })
+        }
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        try {
+          set({ syncing: true, syncError: null })
+          const s = get()
+          await onlineClassesApi.update({
+            classes: s.classes,
+          })
+          set({ syncing: false, serverSynced: true })
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to save online classes to server'
+          set({ syncing: false, syncError: msg })
+        }
+      },
+
+      setClasses: (classes) => {
+        set({ classes })
+        queueServerSync(get)
+      },
+
+      addClass: (c) => {
         set((s) => ({
           classes: [
             { ...c, id: `OC-${Date.now()}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
             ...s.classes,
           ],
-        })),
-      updateClass: (id, data) =>
+        }))
+        queueServerSync(get)
+      },
+
+      updateClass: (id, data) => {
         set((s) => ({
           classes: s.classes.map((c) => (c.id === id ? { ...c, ...data, updatedAt: new Date().toISOString() } : c)),
-        })),
-      deleteClass: (id) => set((s) => ({ classes: s.classes.filter((c) => c.id !== id) })),
+        }))
+        queueServerSync(get)
+      },
+
+      deleteClass: (id) => {
+        markExplicitUserDelete()
+        set((s) => ({ classes: s.classes.filter((c) => c.id !== id) }))
+        queueServerSync(get)
+      },
     }),
     {
       name: 'edutech-online',
       storage: createNamespacedStorage('edutech-online'),
+      partialize: (s) => ({ classes: s.classes }),
       onRehydrateStorage: () => (state) => {
         if (!state) return
         const fixed = state.classes.map((c) => {
@@ -109,7 +210,7 @@ export const useOnlineStore = create<OnlineState>()(
 )
 
 registerStoreReset(() => {
-  useOnlineStore.setState({ classes: [] })
+  useOnlineStore.setState({ classes: [], serverSynced: false, syncing: false, syncError: null })
 })
 
 registerStoreLoad(() => {
@@ -119,11 +220,11 @@ registerStoreLoad(() => {
     const raw = localStorage.getItem(`edutech-online_${slug}`)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed.state) useOnlineStore.setState(parsed.state)
+      if (parsed.state) useOnlineStore.setState({ ...parsed.state, serverSynced: false, syncing: false, syncError: null })
     } else {
-      useOnlineStore.setState({ classes: [] })
+      useOnlineStore.setState({ classes: [], serverSynced: false, syncing: false, syncError: null })
     }
   } catch {
-    useOnlineStore.setState({ classes: [] })
+    useOnlineStore.setState({ classes: [], serverSynced: false, syncing: false, syncError: null })
   }
 })

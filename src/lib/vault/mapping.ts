@@ -120,6 +120,7 @@ export function vaultPathToKey(
     else if (base === 'exams' || base === 'exam_configs' || base === 'subject_mark_configs' || base === 'student_marks' || base === 'exam_routines' || base === 'marksheet_configs') storeBase = 'exams'
     else if (base === 'syllabus' || base === 'syllabi') storeBase = 'syllabus'
     else if (base === 'assignments' || base === 'assignment' || base === 'submissions') storeBase = 'assignments'
+    else if (base === 'online' || base === 'online_classes' || base === 'online-classes') storeBase = 'online'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -1716,6 +1717,50 @@ export function normalizeVaultJsonForStore(
       ...existingState,
       assignments: rawAssignments.length > 0 ? rawAssignments : (existingState.assignments || []),
       submissions: rawSubmissions.length > 0 ? rawSubmissions : (existingState.submissions || []),
+      serverSynced: true,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion || 1 })
+  }
+
+  if (key.includes('online')) {
+    let rawClasses: any[] = []
+    if (Array.isArray(parsed)) {
+      rawClasses = parsed
+    } else if (parsed && typeof parsed === 'object') {
+      const inner = parsed.state || parsed
+      if (Array.isArray(inner.classes)) {
+        rawClasses = inner.classes
+      } else if (Array.isArray(inner)) {
+        rawClasses = inner
+      } else if (inner.title && (inner.url || inner.platform)) {
+        rawClasses = [inner]
+      }
+    }
+
+    const now = new Date().toISOString()
+    const normalizedClasses = rawClasses.map((c: any, idx: number) => ({
+      id: String(c.id || `OC-${Date.now()}-${idx}`),
+      title: String(c.title || ''),
+      titleBn: String(c.titleBn || ''),
+      description: String(c.description || ''),
+      descriptionBn: String(c.descriptionBn || ''),
+      classId: String(c.classId || ''),
+      sectionId: String(c.sectionId || ''),
+      subjectId: String(c.subjectId || ''),
+      teacherId: String(c.teacherId || ''),
+      url: String(c.url || ''),
+      platform: c.platform || 'other',
+      thumbnailUrl: c.thumbnailUrl || '',
+      scheduledAt: String(c.scheduledAt || ''),
+      status: c.status || 'scheduled',
+      createdBy: String(c.createdBy || ''),
+      createdAt: c.createdAt || now,
+      updatedAt: c.updatedAt || now,
+    }))
+
+    const finalState = {
+      ...existingState,
+      classes: normalizedClasses.length > 0 ? normalizedClasses : (existingState.classes || []),
       serverSynced: true,
     }
     return JSON.stringify({ state: finalState, version: existingVersion || 1 })

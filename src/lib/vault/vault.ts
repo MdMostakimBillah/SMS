@@ -1360,6 +1360,20 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       }
     } catch { /* ignore */ }
   }
+
+  if (path === `${slug}/online.json`) {
+    await writeVaultFile('online.json', prettifyJson(rawJson))
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+      const classes = state.classes ?? (Array.isArray(state) ? state : [])
+      if (classes.length > 0 || isRecentExplicitDelete()) {
+        const oPretty = JSON.stringify(classes, null, 2)
+        await writeVaultFile(`${slug}/online.json`, oPretty)
+        await writeVaultFile('online.json', oPretty)
+      }
+    } catch { /* ignore */ }
+  }
 }
 
 async function seedVaultFromStorage(): Promise<number> {

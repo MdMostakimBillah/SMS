@@ -1,11 +1,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Plus, Radio, PlayCircle, Search } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Plus, Radio, PlayCircle, Search, ArrowLeft, Laptop } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useClassStore } from '@/store/classStore'
 import { useOnlineStore, type OnlineClass } from '@/store/onlineStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
+import { useNavPath } from '@/hooks/useNavPath'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { LiveNowTab } from './tabs/LiveNowTab'
 import { RecordingsTab } from './tabs/RecordingsTab'
 import { CreateClassModal } from './modals/CreateClassModal'
@@ -19,12 +23,21 @@ const selectCls = inputCls + ' cursor-pointer appearance-none pr-7 bg-no-repeat 
 
 export default function OnlineClassesPage() {
   const isBn = useBn()
+  const navigate = useNavigate()
+  const nav = useNavPath()
   const { canRead, canCreate } = usePermission()
   const { isMobile } = useWindowSize()
   const { classes: allClasses } = useClassStore()
   const { subjects } = useTeacherStore()
+
   const allOnlineClasses = useOnlineStore((s) => s.classes)
   const deleteClass = useOnlineStore((s) => s.deleteClass)
+  const syncFromServer = useOnlineStore((s) => s.syncFromServer)
+  const serverSynced = useOnlineStore((s) => s.serverSynced)
+  const syncError = useOnlineStore((s) => s.syncError)
+
+  const { getChain, popFromChain } = useNavChain()
+  useNavChainClearOnMount()
 
   const [activeTab, setActiveTab] = useState<'live' | 'recordings'>('live')
   const [filterClassId, setFilterClassId] = useState('')
@@ -36,11 +49,33 @@ export default function OnlineClassesPage() {
   const [playItem, setPlayItem] = useState<OnlineClass | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const isMountedRef = useRef(true)
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(t)
-  }, [])
+    isMountedRef.current = true
+    syncFromServer().finally(() => {
+      if (isMountedRef.current) setIsLoading(false)
+    })
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [syncFromServer])
+
+  const handleBack = () => {
+    const chain = getChain()
+    if (chain.length > 0) {
+      const target = popFromChain()
+      if (target) {
+        navigate(target.path)
+        return
+      }
+    }
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate(nav('/dashboard'))
+    }
+  }
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
@@ -76,18 +111,61 @@ export default function OnlineClassesPage() {
 
   return (
     <div>
-      {/* Header */}
+      {/* Header with Back button and Navigation Chain */}
       <div className="flex items-center gap-[0.625rem] mb-4 flex-wrap">
+        <button
+          onClick={handleBack}
+          aria-label={isBn ? 'ফিরে যান' : 'Back'}
+          className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-3 rounded-[0.5625rem] bg-[var(--bg-primary)] border border-[var(--border)] cursor-pointer text-[0.8125rem] text-[var(--text-secondary)] font-[inherit] shrink-0 hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <ArrowLeft size={14} />
+          {isBn ? 'ফিরে যান' : 'Back'}
+        </button>
+
         <div className="flex-1">
-          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
-            {isBn ? 'অনলাইন ক্লাস' : 'Online Classes'}
-          </h1>
+          {/* Breadcrumb — only when navigated via redirect chain */}
+          {(() => {
+            const chain = getChain()
+            if (chain.length === 0) return null
+            return (
+              <div className="flex items-center gap-1 text-[0.6875rem] text-[var(--text-muted)] mb-1 flex-wrap">
+                {chain.map((item: { path: string; label: string }, idx: number) => (
+                  <span key={idx} className="flex items-center gap-1">
+                    {idx > 0 && <span className="text-[var(--text-muted)]">›</span>}
+                    <button
+                      onClick={() => navigate(item.path)}
+                      className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] cursor-pointer text-[inherit] font-[inherit] transition-colors"
+                    >
+                      {item.label}
+                    </button>
+                  </span>
+                ))}
+                <span className="text-[var(--text-muted)]">›</span>
+                <span className="py-[0.1875rem] px-[0.5rem] rounded bg-[var(--brand)] text-white font-medium">
+                  {isBn ? 'অনলাইন ক্লাস' : 'Online Classes'}
+                </span>
+              </div>
+            )
+          })()}
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
+              {isBn ? 'অনলাইন ক্লাস' : 'Online Classes'}
+            </h1>
+            {isLocalComputerMode() && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.6875rem] font-medium bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--border)]">
+                <Laptop size={12} />
+                {isBn ? 'লোকাল পিসি স্টোরেজ' : 'Local PC Storage'}
+              </span>
+            )}
+          </div>
           <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
             {liveCount > 0
               ? isBn ? `${liveCount} টি লাইভ ক্লাস চলছে` : `${liveCount} live now`
               : isBn ? 'লাইভ ক্লাস শেয়ার করুন' : 'Share live class links'}
           </p>
         </div>
+
         {canCreate('online.live') && (
           <button onClick={() => { setEditItem(null); setShowCreate(true) }} className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.8125rem] font-medium bg-[var(--brand)] text-white border-none cursor-pointer hover:shadow-md transition-all">
             <Plus size={15} />
@@ -95,6 +173,15 @@ export default function OnlineClassesPage() {
           </button>
         )}
       </div>
+
+      {syncError && !serverSynced && !isLocalComputerMode() && (
+        <div className="mb-3 px-3 py-2 rounded-lg bg-[var(--red-light)] border border-[var(--red)]/20 text-[var(--red)] text-xs flex items-center justify-between">
+          <span>{syncError}</span>
+          <button onClick={() => syncFromServer()} className="underline font-semibold cursor-pointer ml-2">
+            {isBn ? 'পুনরায় চেষ্টা করুন' : 'Retry'}
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="relative mb-4">

@@ -13,6 +13,7 @@ import { useExamStore } from '@/store/examStore'
 import { useHRStore } from '@/store/hrStore'
 import { useSyllabusStore } from '@/store/syllabusStore'
 import { useAssignmentStore } from '@/store/assignmentStore'
+import { useOnlineStore } from '@/store/onlineStore'
 import { useTodoStore } from '@/store/todoStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { getSlug } from '@/lib/storage'
@@ -97,6 +98,7 @@ export default function DashboardPage() {
         useHRStore.getState().syncFromServer(effectiveSlug),
         useSyllabusStore.getState().syncFromServer(effectiveSlug),
         useAssignmentStore.getState().syncFromServer(effectiveSlug),
+        useOnlineStore.getState().syncFromServer(effectiveSlug),
       ])
       setLastSyncAt(Date.now())
     } catch (err) {

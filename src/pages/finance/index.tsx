@@ -416,6 +416,7 @@ export default function FeeManagementPage() {
                 collectedBy: getAuditUser(user),
                 createdAt: today,
                 receiptNo: nextRcp,
+                forMonth: collectPayment.forMonth,
               }
               addPayment(payment)
               setReceiptData({

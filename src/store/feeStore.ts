@@ -181,6 +181,7 @@ export interface FeeDue {
   isActive: boolean
   inactiveAt?: string
   inactiveReason?: string
+  forMonth?: string
 }
 
 interface StudentInfo {

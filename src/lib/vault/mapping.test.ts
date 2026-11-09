@@ -438,5 +438,19 @@ describe('normalizeVaultJsonForStore', () => {
     expect(parsed.state.assignments[0].title).toBe('Local PC Assignment')
     expect(parsed.state.serverSynced).toBe(true)
   })
+
+  it('round-trips online.json and normalizes online store', () => {
+    expect(vaultPathToKey('demo/online.json')).toBe('edutech-online_demo')
+    expect(keyToVaultPath('edutech-online_demo')).toBe('demo/online.json')
+
+    const onlineRaw = JSON.stringify([
+      { id: 'OC-1', title: 'Local PC Online Class', platform: 'youtube', url: 'https://youtube.com/watch?v=abc' },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-online_demo', onlineRaw, null, 'demo/online.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.classes).toHaveLength(1)
+    expect(parsed.state.classes[0].title).toBe('Local PC Online Class')
+    expect(parsed.state.serverSynced).toBe(true)
+  })
 })
 

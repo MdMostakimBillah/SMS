@@ -983,6 +983,56 @@ export const assignmentsApi = {
   },
 }
 
+export interface OnlineClassesResponse {
+  classes?: any[]
+  storageMode?: string
+  message?: string
+}
+
+export const onlineClassesApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<OnlineClassesResponse>(`/api/online${q}`)
+  },
+  update: (data: { classes?: any[]; schoolId?: string }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean; count?: number } & OnlineClassesResponse>('/api/online', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
+export interface OnlineClassResponse {
+  classes?: any[]
+  storageMode?: string
+  message?: string
+}
+
+export const onlineApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<OnlineClassResponse>(`/api/online${q}`)
+  },
+  update: (data: { classes: any[]; schoolId?: string }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean; count?: number; storageMode?: string } & OnlineClassResponse>('/api/online', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
 export interface NoticeData {
   id: string
   schoolId: string
