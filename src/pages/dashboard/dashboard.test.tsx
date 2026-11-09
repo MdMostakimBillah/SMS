@@ -13,8 +13,6 @@ import { useHRStore } from '@/store/hrStore'
 import { useSyllabusStore } from '@/store/syllabusStore'
 import { useAssignmentStore } from '@/store/assignmentStore'
 import { useTodoStore } from '@/store/todoStore'
-import * as backupModule from '@/lib/backup'
-import * as vaultModule from '@/lib/vault/vault'
 import * as storageModeModule from '@/lib/storageMode'
 
 const mockNavigate = vi.fn()
@@ -165,13 +163,13 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     expect(teacherSpy).toHaveBeenCalled()
     expect(feeSpy).toHaveBeenCalled()
 
-    // Verify Local PC & Database Integration hub is rendered
+    // Verify greeting and user name
     await waitFor(() => {
-      expect(screen.getByText(/Local PC & Database Hub|লোকাল পিসি ও ডাটাবেজ/i)).toBeInTheDocument()
+      expect(screen.getByText(/Super Admin/i)).toBeInTheDocument()
     })
 
-    // Verify greeting and user name
-    expect(screen.getByText(/Super Admin/i)).toBeInTheDocument()
+    // Verify Local PC & Database Integration hub is NOT rendered on the dashboard
+    expect(screen.queryByText(/Local PC & Database Hub|লোকাল পিসি ও ডাটাবেজ ইন্টিগ্রেশন/i)).not.toBeInTheDocument()
 
     // Verify Total Students card
     expect(screen.getAllByText(/Total Students|মোট ছাত্র/i).length).toBeGreaterThan(0)
@@ -201,9 +199,8 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     expect(teacherSpy).toHaveBeenCalledTimes(2)
   })
 
-  it('displays Local PC mode when active and supports downloading local backup', async () => {
+  it('displays Local PC mode in header when active and ensures Local PC Hub section is not rendered', async () => {
     vi.spyOn(storageModeModule, 'getActiveStorageMode').mockReturnValue('local_computer')
-    const downloadSpy = vi.spyOn(backupModule, 'downloadLocalBackup').mockResolvedValue()
 
     render(
       <MemoryRouter>
@@ -212,52 +209,10 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Local PC Mode|লোকাল পিসি মোড/i).length).toBeGreaterThan(0)
+      expect(screen.getByText(/Local PC Mode|লোকাল পিসি মোড/i)).toBeInTheDocument()
     })
 
-    // Click download backup in the Local PC card
-    const backupBtn = screen.getByText(/Download Backup|লোকাল ব্যাকআপ/i)
-    await act(async () => {
-      fireEvent.click(backupBtn)
-    })
-
-    expect(downloadSpy).toHaveBeenCalled()
-    await waitFor(() => {
-      expect(screen.getByText(/Local backup.*saved!|লোকাল ব্যাকআপ.*সংরক্ষিত/i)).toBeInTheDocument()
-    })
-  })
-
-  it('triggers local vault sync when clicking sync folder in Local PC card', async () => {
-    vi.spyOn(vaultModule, 'getVaultStatus').mockReturnValue({
-      supported: true,
-      connected: true,
-      needsReconnect: false,
-      folderName: 'School_Data_Folder',
-      busy: false,
-      lastSyncAt: Date.now(),
-      error: null,
-    })
-    const vaultSyncSpy = vi.spyOn(vaultModule, 'vaultSyncNow').mockResolvedValue()
-
-    render(
-      <MemoryRouter>
-        <DashboardPage />
-      </MemoryRouter>
-    )
-
-    await waitFor(() => {
-      expect(screen.getByText(/Sync Folder|ফোল্ডার সিঙ্ক/i)).toBeInTheDocument()
-    })
-
-    const syncFolderBtn = screen.getByText(/Sync Folder|ফোল্ডার সিঙ্ক/i)
-    await act(async () => {
-      fireEvent.click(syncFolderBtn)
-    })
-
-    expect(vaultSyncSpy).toHaveBeenCalled()
-    await waitFor(() => {
-      expect(screen.getByText(/Local PC folder sync complete!|লোকাল পিসি ফোল্ডার সিঙ্ক সম্পন্ন!/i)).toBeInTheDocument()
-    })
+    expect(screen.queryByText(/Local PC & Database Hub|লোকাল পিসি ও ডাটাবেজ ইন্টিগ্রেশন/i)).not.toBeInTheDocument()
   })
 
   it('supports filtering tasks by teacher, completing tasks, and deleting tasks', async () => {

@@ -22,7 +22,6 @@ import { useShallow } from 'zustand/shallow'
 
 import { DashboardSkeleton } from './components/DashboardSkeleton'
 import { DashboardHeader } from './components/DashboardHeader'
-import { LocalPCControlCard } from './components/LocalPCControlCard'
 import { StatsRow } from './components/StatsRow'
 import { FinanceCards } from './components/FinanceCards'
 import { TodoSection } from './components/TodoSection'
@@ -50,12 +49,6 @@ export default function DashboardPage() {
       generateWaivers: s.generateWaivers,
     }))
   )
-  const { classes, routines } = useClassStore(
-    useShallow((s) => ({ classes: s.classes, routines: s.routines }))
-  )
-  const examConfigs = useExamStore((s) => s.examConfigs || [])
-  const assignments = useAssignmentStore((s) => s.assignments || [])
-  const syllabi = useSyllabusStore((s) => s.syllabi || [])
   const { todos, updateTodo, deleteTodo } = useTodoStore(
     useShallow((s) => ({
       todos: s.todos || [],
@@ -155,17 +148,6 @@ export default function DashboardPage() {
     isBn,
   })
 
-  const totalRecordsCount =
-    (students?.length || 0) +
-    (teachers?.length || 0) +
-    (classes?.length || 0) +
-    (routines?.length || 0) +
-    (examConfigs?.length || 0) +
-    (payments?.length || 0) +
-    (assignments?.length || 0) +
-    (syllabi?.length || 0) +
-    (todos?.length || 0)
-
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)'
   const col3 = isMobile ? '1fr' : isTablet ? '1fr 1fr' : 'repeat(3,1fr)'
   const col2 = isMobile ? '1fr' : '1fr 1fr'
@@ -260,18 +242,6 @@ export default function DashboardPage() {
         schoolName={schoolName}
         onRefresh={() => void syncDashboardData()}
         onAddNewTask={() => setShowCreateTask(true)}
-      />
-
-      {/* Local PC & Database Integration Hub */}
-      <LocalPCControlCard
-        isBn={isBn}
-        isMobile={isMobile}
-        storageMode={storageMode}
-        schoolSlug={schoolSlug}
-        schoolName={schoolName}
-        totalRecordsCount={totalRecordsCount}
-        isRefreshing={isRefreshing}
-        onSyncDatabase={() => void syncDashboardData()}
       />
 
       {/* Main KPI Stats */}
