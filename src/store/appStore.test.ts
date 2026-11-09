@@ -19,9 +19,14 @@ describe('appStore', () => {
     expect(useAppStore.getState().theme).toBe('light')
   })
 
-  it('setTheme applies data-theme to document', () => {
+  it('setTheme applies data-theme and dark class to document', () => {
     useAppStore.getState().setTheme('light')
     expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+    expect(document.documentElement.classList.contains('dark')).toBe(false)
+
+    useAppStore.getState().setTheme('dark')
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
   })
 
   it('setLanguage changes language', () => {

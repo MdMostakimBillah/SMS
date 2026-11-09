@@ -1232,7 +1232,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => setDetailsRow(row)}
-                          className="w-7 h-7 rounded-lg p-1 flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--glass-border)] shadow-xs cursor-pointer"
+                          className="w-7 h-7 rounded-lg p-1 flex items-center justify-center bg-[var(--brand-light)] text-[var(--brand)] border border-[var(--border)] dark:border-white/[0.08] shadow-xs cursor-pointer"
                           title={bn ? 'পেমেন্ট বিবরণ' : 'Payment Details'}
                         >
                           <Eye size={13} />
@@ -1243,7 +1243,7 @@ export const DuesTab = React.memo(function DuesTab({ onCollect }: Props) {
                               const due = buildCollectDue(row)
                               if (due) onCollect(due)
                             }}
-                            className="w-7 h-7 rounded-lg p-1 flex items-center justify-center bg-[var(--amber-light)] text-[var(--amber)] border border-[var(--glass-border)] shadow-xs cursor-pointer"
+                            className="w-7 h-7 rounded-lg p-1 flex items-center justify-center bg-[var(--amber-light)] text-[var(--amber)] border border-[var(--border)] dark:border-white/[0.08] shadow-xs cursor-pointer"
                             title={bn ? 'ফি আদায়' : 'Collect Fee'}
                           >
                             <Banknote size={13} />

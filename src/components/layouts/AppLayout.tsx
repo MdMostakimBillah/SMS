@@ -58,12 +58,11 @@ export default function AppLayout() {
   useEffect(() => { setLoadingLogoErr(false) }, [institution.logo])
 
   useEffect(() => {
-    if (theme === 'system') {
-      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
-    } else {
-      document.documentElement.setAttribute('data-theme', theme)
-    }
+    const isDark =
+      theme === 'dark' ||
+      (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light')
+    document.documentElement.classList.toggle('dark', isDark)
   }, [theme])
 
   useEffect(() => {

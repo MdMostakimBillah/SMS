@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  *, ::before, ::after {
+    border-color: var(--border);
+  }
+}
+
 /* Remove focus outline on all input fields */
 input:focus,
 input:focus-visible,
@@ -32,7 +38,8 @@ button:focus-visible {
 }
 
 /* Dark theme glass */
-[data-theme='dark'] {
+[data-theme='dark'],
+.dark {
   --glass-bg: rgba(30, 30, 30, 0.6);
   --glass-bg-hover: rgba(40, 40, 40, 0.75);
   --glass-border: rgba(255, 255, 255, 0.06);
@@ -191,15 +198,16 @@ header.glass:hover {
   --highlight-shadow-hover: 0 14px 36px rgba(26, 29, 46, 0.24);
 }
 
-[data-theme='dark'] {
+[data-theme='dark'],
+.dark {
   /* Minimal Dark Theme */
   --bg-primary: #0f0f0f;
   --bg-secondary: #1a1a1a;
   --bg-tertiary: #0a0a0a;
   --surface: #1a1a1a;
   --surface-2: #242424;
-  --border: #2a2a2a;
-  --border-2: #3a3a3a;
+  --border: #262626;
+  --border-2: #333333;
 
   --text-primary: #f0f0f0;
   --text-secondary: #a0a0a0;

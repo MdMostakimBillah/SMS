@@ -292,12 +292,12 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-2xl overflow-hidden text-[var(--text-primary)] my-auto modal-card-animate"
+        className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-[var(--surface)] border border-[var(--border)] dark:border-white/[0.08] rounded-xl shadow-2xl overflow-hidden text-[var(--text-primary)] my-auto modal-card-animate"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Bar */}
-        <div className="px-4 py-3 sm:px-5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)] shrink-0">
-          <h3 className="text-sm sm:text-base font-bold text-[var(--text-primary)] truncate">
+        <div className="px-3.5 py-2.5 sm:px-4 border-b border-[var(--border)] dark:border-white/[0.07] flex items-center justify-between bg-[var(--bg-secondary)]/50 shrink-0">
+          <h3 className="text-xs sm:text-sm font-semibold text-[var(--text-primary)] truncate">
             {bn ? 'পেমেন্ট বিবরণ' : 'Payment Details'}
           </h3>
 
@@ -306,35 +306,35 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
               <button
                 type="button"
                 onClick={handlePrintAll}
-                className="h-8 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                className="h-7 px-2.5 rounded-md border border-[var(--border)] dark:border-white/[0.08] bg-[var(--surface)] hover:bg-[var(--surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[0.6875rem] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
                 title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
               >
-                <Printer size={13} />
+                <Printer size={12} />
                 <span>{bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}</span>
               </button>
             )}
             <button
               type="button"
               onClick={onClose}
-              className="h-8 w-8 rounded-lg flex items-center justify-center border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors"
+              className="h-7 w-7 rounded-md flex items-center justify-center border border-[var(--border)] dark:border-white/[0.08] bg-[var(--surface)] hover:bg-[var(--surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors"
               aria-label={bn ? 'বন্ধ করুন' : 'Close'}
               title="Esc"
             >
-              <X size={15} />
+              <X size={14} />
             </button>
           </div>
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3.5 overscroll-contain">
-          {/* Top Section: Left Side Student Profile + Right Side Total Payment with Graph */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* Left Column: Student Profile */}
-            <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-3.5 flex flex-col justify-between">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-3.5 space-y-2.5 overscroll-contain">
+          {/* Top Row: Left Side (Student Profile) + Right Side (Total Payment with Graph) - Reduced Compact Size */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            {/* Left Column: Student Profile Only */}
+            <div className="bg-[var(--bg-secondary)]/40 border border-[var(--border)] dark:border-white/[0.07] rounded-xl p-2.5 flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-lg overflow-hidden flex items-center justify-center bg-[var(--surface-2)] text-[var(--text-secondary)] font-bold text-sm shrink-0 border border-[var(--border)]">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-[var(--surface-2)] text-[var(--text-secondary)] font-semibold text-xs shrink-0 border border-[var(--border)] dark:border-white/[0.06]">
                     {student.photo ? (
                       <img src={student.photo} alt={student.nameEn} className="w-full h-full object-cover" />
                     ) : (
@@ -342,137 +342,175 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-sm font-bold text-[var(--text-primary)] truncate">
-                      {bn ? student.nameBn || student.nameEn : student.nameEn}
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(student.id, 'id')}
-                      className="text-[0.6875rem] font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] inline-flex items-center gap-1 cursor-pointer transition-colors mt-0.5"
-                      title={bn ? 'আইডি কপি করুন' : 'Click to copy ID'}
-                    >
-                      <span className="text-[0.625rem] opacity-60">ID:</span>
-                      <span>{student.id}</span>
-                      {copiedId ? (
-                        <Check size={11} className="text-[var(--green)]" />
-                      ) : (
-                        <Copy size={11} className="opacity-50" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-[var(--border)] text-[0.6875rem]">
-                  <div>
-                    <span className="text-[var(--text-muted)] block">{bn ? 'শ্রেণি' : 'Class'}</span>
-                    <span className="font-semibold text-[var(--text-primary)]">{student.class}</span>
-                  </div>
-                  <div>
-                    <span className="text-[var(--text-muted)] block">{bn ? 'শাখা' : 'Section'}</span>
-                    <span className="font-semibold text-[var(--text-primary)]">{student.section || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[var(--text-muted)] block">{bn ? 'রোল' : 'Roll'}</span>
-                    <span className="font-semibold text-[var(--text-primary)]">{student.roll || '—'}</span>
-                  </div>
-                  {session && (
-                    <div>
-                      <span className="text-[var(--text-muted)] block">{bn ? 'সেশন' : 'Session'}</span>
-                      <span className="font-semibold text-[var(--text-primary)]">{session}</span>
+                    <div className="flex items-center justify-between gap-1.5">
+                      <h4 className="text-xs font-semibold text-[var(--text-primary)] truncate">
+                        {bn ? student.nameBn || student.nameEn : student.nameEn}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(student.id, 'id')}
+                        className="text-[0.5625rem] font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)] inline-flex items-center gap-1 cursor-pointer transition-colors px-1.5 py-0.5 rounded bg-[var(--surface-2)]/60 border border-[var(--border)] dark:border-white/[0.05]"
+                        title={bn ? 'আইডি কপি করুন' : 'Click to copy ID'}
+                      >
+                        <span className="opacity-60">ID:</span>
+                        <span>{student.id}</span>
+                        {copiedId ? (
+                          <Check size={9} className="text-[var(--green)]" />
+                        ) : (
+                          <Copy size={9} className="opacity-40" />
+                        )}
+                      </button>
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="mt-3 pt-2.5 border-t border-[var(--border)] flex items-center justify-between text-[0.6875rem] flex-wrap gap-1">
-                <span className="text-[var(--text-muted)] truncate">
-                  {bn ? effectiveFee.nameBn || effectiveFee.name : effectiveFee.name}
-                </span>
-                <span className="text-[var(--text-secondary)] font-medium">
-                  {effectiveFee.type === 'monthly' ? (bn ? 'মাসিক ফি' : 'Monthly Fee') :
-                   effectiveFee.type === 'yearly' ? (bn ? 'বাৎসরিক ফি' : 'Yearly Fee') :
-                   (bn ? 'এককালীন ফি' : 'One-time Fee')}
-                </span>
+                {/* Profile attributes: 4 compact items */}
+                <div className="grid grid-cols-4 gap-1 mt-2 pt-2 border-t border-[var(--border)] dark:border-white/[0.06] text-center">
+                  <div className="bg-[var(--surface-2)]/40 rounded px-1 py-1">
+                    <span className="text-[0.5rem] font-medium uppercase tracking-wider text-[var(--text-muted)] block leading-none">
+                      {bn ? 'শ্রেণি' : 'Class'}
+                    </span>
+                    <span className="font-semibold text-[var(--text-primary)] text-[0.6875rem] leading-tight block mt-0.5 truncate">
+                      {student.class}
+                    </span>
+                  </div>
+                  <div className="bg-[var(--surface-2)]/40 rounded px-1 py-1">
+                    <span className="text-[0.5rem] font-medium uppercase tracking-wider text-[var(--text-muted)] block leading-none">
+                      {bn ? 'শাখা' : 'Section'}
+                    </span>
+                    <span className="font-semibold text-[var(--text-primary)] text-[0.6875rem] leading-tight block mt-0.5 truncate">
+                      {student.section || '—'}
+                    </span>
+                  </div>
+                  <div className="bg-[var(--surface-2)]/40 rounded px-1 py-1">
+                    <span className="text-[0.5rem] font-medium uppercase tracking-wider text-[var(--text-muted)] block leading-none">
+                      {bn ? 'রোল' : 'Roll'}
+                    </span>
+                    <span className="font-semibold text-[var(--text-primary)] text-[0.6875rem] leading-tight block mt-0.5 truncate">
+                      {student.roll || '—'}
+                    </span>
+                  </div>
+                  <div className="bg-[var(--surface-2)]/40 rounded px-1 py-1">
+                    <span className="text-[0.5rem] font-medium uppercase tracking-wider text-[var(--text-muted)] block leading-none">
+                      {bn ? 'সেশন' : 'Session'}
+                    </span>
+                    <span className="font-semibold text-[var(--text-primary)] text-[0.6875rem] leading-tight block mt-0.5 truncate">
+                      {session || '—'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Right Column: Student Total Payment with Graph */}
-            <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-3.5 flex flex-col justify-between space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-[var(--text-primary)]">
-                  {bn ? 'পেমেন্ট সারসংক্ষেপ' : 'Payment Summary'}
-                </span>
-                <span className="text-[0.625rem] text-[var(--text-muted)] font-medium">
+            {/* Right Column: Total Payment with Graph */}
+            <div className="bg-[var(--bg-secondary)]/40 border border-[var(--border)] dark:border-white/[0.07] rounded-xl p-2.5 flex flex-col justify-between">
+              {/* Header: Title, fee type pill, and status */}
+              <div className="flex items-center justify-between gap-1.5 pb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[0.6875rem] font-semibold text-[var(--text-primary)]">
+                    {bn ? 'পেমেন্ট সারসংক্ষেপ' : 'Payment Summary'}
+                  </span>
+                  <span className="text-[0.5625rem] px-1.5 py-0.5 rounded-full bg-[var(--surface-2)] text-[var(--text-secondary)] font-medium border border-[var(--border)] dark:border-white/[0.06]">
+                    {effectiveFee.type === 'monthly' ? (bn ? 'মাসিক ফি' : 'Monthly Fee') :
+                     effectiveFee.type === 'yearly' ? (bn ? 'বাৎসরিক ফি' : 'Yearly Fee') :
+                     (bn ? 'এককালীন ফি' : 'One-time Fee')}
+                  </span>
+                </div>
+                <span className="text-[0.5625rem] text-[var(--text-muted)] font-medium">
                   {effectiveDue > 0
-                    ? (bn ? `${fmt(effectiveDue)} বকেয়া` : `${fmt(effectiveDue)} balance due`)
-                    : (bn ? 'সম্পূর্ণ পরিশোধিত' : '100% completed')}
+                    ? (bn ? `${fmt(effectiveDue)} বকেয়া` : `${fmt(effectiveDue)} due`)
+                    : (bn ? 'সম্পূর্ণ পরিশোধিত' : 'Completed')}
                 </span>
               </div>
 
-              {/* Donut Chart & Total Payment */}
-              <div className="flex items-center gap-4">
-                <div className="relative w-18 h-18 shrink-0">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+              {/* Compact Radial Ring & Total Figure */}
+              <div className="flex items-center gap-2.5 py-0.5">
+                <div className="relative w-11 h-11 shrink-0">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 44 44">
                     <circle
-                      cx="40"
-                      cy="40"
-                      r="32"
+                      cx="22"
+                      cy="22"
+                      r="17"
                       fill="none"
-                      stroke="var(--border)"
-                      strokeWidth="6"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      className="text-[var(--border)] dark:text-white/[0.07]"
                     />
                     <circle
-                      cx="40"
-                      cy="40"
-                      r="32"
+                      cx="22"
+                      cy="22"
+                      r="17"
                       fill="none"
                       stroke="var(--brand)"
-                      strokeWidth="6"
+                      strokeWidth="3.5"
                       strokeLinecap="round"
-                      strokeDasharray={201.06}
-                      strokeDashoffset={201.06 - (paidPercentage / 100) * 201.06}
+                      strokeDasharray={106.8}
+                      strokeDashoffset={106.8 - (paidPercentage / 100) * 106.8}
                       className="transition-all duration-500 ease-out"
                     />
                   </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                    <span className="text-xs font-bold text-[var(--text-primary)] leading-none tabular-nums">
+                  <div className="absolute inset-0 flex items-center justify-center text-center">
+                    <span className="text-[0.5625rem] font-bold text-[var(--text-primary)] tabular-nums">
                       {paidPercentage}%
-                    </span>
-                    <span className="text-[0.5625rem] font-medium text-[var(--text-muted)] uppercase tracking-wider mt-0.5">
-                      {bn ? 'পরিশোধ' : 'Paid'}
                     </span>
                   </div>
                 </div>
 
-                <div className="min-w-0 flex-1">
-                  <span className="text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wider block">
-                    {bn ? 'মোট পরিশোধ' : 'Total Payment'}
-                  </span>
-                  <span className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] leading-tight tabular-nums block">
-                    {fmt(totalPaid)}
-                  </span>
+                <div className="min-w-0 flex-1 flex items-baseline justify-between gap-2">
+                  <div>
+                    <span className="text-[0.5rem] font-medium text-[var(--text-muted)] uppercase tracking-wider block">
+                      {bn ? 'মোট পরিশোধ' : 'Total Payment'}
+                    </span>
+                    <span className="text-sm sm:text-base font-bold text-[var(--text-primary)] leading-none tabular-nums block mt-0.5">
+                      {fmt(totalPaid)}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[0.5rem] font-medium text-[var(--text-muted)] uppercase tracking-wider block">
+                      {bn ? 'মোট ফি' : 'Total Fee'}
+                    </span>
+                    <span className="text-xs font-semibold text-[var(--text-secondary)] leading-none tabular-nums block mt-0.5">
+                      {fmt(totalOriginal)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Minimal 4-metric summary */}
-              <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-[var(--border)] text-center text-[0.6875rem]">
-                <div className="p-1.5 rounded-md bg-[var(--surface-2)]">
-                  <span className="text-[0.625rem] text-[var(--text-muted)] block truncate">{bn ? 'পরিশোধ' : 'Total Paid'}</span>
-                  <span className="font-semibold text-[var(--text-primary)] tabular-nums">{fmt(totalPaid)}</span>
+              {/* Minimal 4-Metric Summary */}
+              <div className="grid grid-cols-4 gap-1 pt-1.5 border-t border-[var(--border)] dark:border-white/[0.06] text-center">
+                <div className="py-1 px-1 rounded bg-[var(--surface-2)]/60 border border-[var(--border)] dark:border-white/[0.06]">
+                  <span className="text-[0.5rem] text-[var(--text-muted)] block truncate font-medium leading-none">
+                    {bn ? 'পরিশোধ' : 'Total Paid'}
+                  </span>
+                  <span className="font-semibold text-[var(--text-primary)] tabular-nums text-[0.625rem] mt-0.5 block truncate leading-tight">
+                    {fmt(totalPaid)}
+                  </span>
                 </div>
-                <div className="p-1.5 rounded-md bg-[var(--surface-2)]">
-                  <span className="text-[0.625rem] text-[var(--text-muted)] block truncate">{bn ? 'ছাড়' : 'Discount'}</span>
-                  <span className="font-semibold text-[var(--text-secondary)] tabular-nums">{totalDiscount > 0 ? fmt(totalDiscount) : '0'}</span>
+                <div className="py-1 px-1 rounded bg-[var(--surface-2)]/60 border border-[var(--border)] dark:border-white/[0.06]">
+                  <span className="text-[0.5rem] text-[var(--text-muted)] block truncate font-medium leading-none">
+                    {bn ? 'ছাড়' : 'Discount'}
+                  </span>
+                  <span className="font-semibold text-[var(--text-secondary)] tabular-nums text-[0.625rem] mt-0.5 block truncate leading-tight">
+                    {totalDiscount > 0 ? fmt(totalDiscount) : '0'}
+                  </span>
                 </div>
-                <div className="p-1.5 rounded-md bg-[var(--surface-2)]">
-                  <span className="text-[0.625rem] text-[var(--text-muted)] block truncate">{bn ? 'ওয়েভার' : 'Waived'}</span>
-                  <span className="font-semibold text-[var(--text-secondary)] tabular-nums">{totalWaived > 0 ? fmt(totalWaived) : '0'}</span>
+                <div className="py-1 px-1 rounded bg-[var(--surface-2)]/60 border border-[var(--border)] dark:border-white/[0.06]">
+                  <span className="text-[0.5rem] text-[var(--text-muted)] block truncate font-medium leading-none">
+                    {bn ? 'ওয়েভার' : 'Waived'}
+                  </span>
+                  <span className="font-semibold text-[var(--text-secondary)] tabular-nums text-[0.625rem] mt-0.5 block truncate leading-tight">
+                    {totalWaived > 0 ? fmt(totalWaived) : '0'}
+                  </span>
                 </div>
-                <div className="p-1.5 rounded-md bg-[var(--surface-2)]">
-                  <span className="text-[0.625rem] text-[var(--text-muted)] block truncate">
+                <div className="py-1 px-1 rounded bg-[var(--surface-2)]/60 border border-[var(--border)] dark:border-white/[0.06]">
+                  <span className="text-[0.5rem] text-[var(--text-muted)] block truncate font-medium leading-none">
                     {bn ? 'বকেয়া' : 'Total Due'}
                   </span>
-                  <span className={`font-semibold tabular-nums ${effectiveDue > 0 ? 'text-[var(--red)]' : 'text-[var(--green)]'}`}>
+                  <span
+                    className={`font-semibold tabular-nums text-[0.625rem] mt-0.5 block truncate leading-tight ${
+                      effectiveDue > 0 ? 'text-[var(--red)]' : 'text-[var(--text-secondary)]'
+                    }`}
+                  >
                     {effectiveDue > 0 ? fmt(effectiveDue) : (bn ? 'পরিশোধিত' : 'Cleared')}
                   </span>
                 </div>
@@ -480,64 +518,64 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
             </div>
           </div>
 
-          {/* Bottom Section: Individual Payment Records Table */}
-          <div className="space-y-2">
+          {/* Bottom Section: Individual Payment Records */}
+          <div className="space-y-1.5 pt-0.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-primary)]">
                 <span>{bn ? 'পেমেন্ট রেকর্ড' : 'Payment Records'}</span>
-                <span className="text-[var(--text-muted)] font-normal">({payments.length})</span>
+                <span className="text-[0.625rem] text-[var(--text-muted)] font-normal font-mono">({payments.length})</span>
               </div>
 
               {effectiveDue > 0 && canCreate('finance.fees.collect.create') && (
                 <button
                   type="button"
                   onClick={handleCollectDue}
-                  className="h-7 px-2.5 rounded-md bg-[var(--brand)] hover:opacity-90 text-white text-[0.6875rem] font-semibold border-0 cursor-pointer flex items-center gap-1 transition-opacity"
+                  className="h-6 px-2 rounded-md bg-[var(--brand)] hover:opacity-90 text-white text-[0.625rem] font-medium border-0 cursor-pointer flex items-center gap-1 transition-opacity"
                 >
-                  <DollarSign size={12} />
+                  <DollarSign size={11} />
                   <span>{bn ? 'বকেয়া আদায়' : 'Collect Due'}</span>
                 </button>
               )}
             </div>
 
-            <div className="border border-[var(--border)] rounded-lg overflow-hidden bg-[var(--surface)]">
+            <div className="border border-[var(--border)] dark:border-white/[0.07] rounded-xl overflow-hidden bg-[var(--surface)]">
               {payments.length === 0 ? (
-                <div className="text-center py-8 px-4 text-[var(--text-muted)] text-[0.75rem]">
+                <div className="text-center py-7 px-4 text-[var(--text-muted)] text-[0.6875rem]">
                   {bn ? 'কোনো পেমেন্ট রেকর্ড নেই' : 'No payment records found'}
                 </div>
               ) : (
                 <div className="overflow-x-auto max-h-56 overflow-y-auto">
                   <table className="w-full text-left border-collapse text-[0.6875rem]">
                     <thead>
-                      <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)] sticky top-0 z-10 text-[0.625rem] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
-                        <th className="text-center w-8 py-2 px-2">#</th>
-                        <th className="py-2 px-2.5">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
-                        <th className="text-center py-2 px-2">{bn ? 'তারিখ' : 'Date'}</th>
-                        <th className="py-2 px-2.5">{bn ? 'ফি আইটেম' : 'Fee Item'}</th>
-                        <th className="text-center py-2 px-2">{bn ? 'সময়কাল' : 'Period'}</th>
-                        <th className="text-right py-2 px-2.5">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                        <th className="text-right py-2 px-2">{bn ? 'ছাড়' : 'Disc.'}</th>
-                        <th className="text-center py-2 px-2">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                        <th className="py-2 px-2.5">{bn ? 'সংগ্রাহক' : 'Collected By'}</th>
-                        <th className="text-center w-10 py-2 px-2">{bn ? 'রসিদ' : 'Print'}</th>
+                      <tr className="bg-[var(--bg-secondary)]/70 border-b border-[var(--border)] dark:border-white/[0.07] sticky top-0 z-10 text-[0.5625rem] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                        <th className="text-center w-7 py-1.5 px-2">#</th>
+                        <th className="py-1.5 px-2">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
+                        <th className="text-center py-1.5 px-2">{bn ? 'তারিখ' : 'Date'}</th>
+                        <th className="py-1.5 px-2">{bn ? 'ফি আইটেম' : 'Fee Item'}</th>
+                        <th className="text-center py-1.5 px-2">{bn ? 'সময়কাল' : 'Period'}</th>
+                        <th className="text-right py-1.5 px-2">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                        <th className="text-right py-1.5 px-2">{bn ? 'ছাড়' : 'Disc.'}</th>
+                        <th className="text-center py-1.5 px-2">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                        <th className="py-1.5 px-2">{bn ? 'সংগ্রাহক' : 'Collected By'}</th>
+                        <th className="text-center w-8 py-1.5 px-2">{bn ? 'রসিদ' : 'Print'}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[var(--border)]">
+                    <tbody className="divide-y divide-[var(--border)] dark:divide-white/[0.05]">
                       {payments.map((p, idx) => {
                         const feeInfo = getFeeInfoForPayment(p)
                         const rcp = p.receiptNo || batchReceiptNo || (p.batchId && parseReceiptNumber(p.batchId) ? formatReceiptNo(parseReceiptNumber(p.batchId)!) : (p.batchId ? `RCP-${p.batchId.slice(-8).toUpperCase()}` : displayReceiptNo))
                         const isCopied = copiedReceipt === rcp
 
                         return (
-                          <tr key={p.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
-                            <td className="text-center py-2 px-2 text-[var(--text-muted)] font-mono">
+                          <tr key={p.id} className="hover:bg-[var(--bg-secondary)]/40 transition-colors">
+                            <td className="text-center py-1.5 px-2 text-[var(--text-muted)] font-mono text-[0.625rem]">
                               {idx + 1}
                             </td>
-                            <td className="py-2 px-2.5">
+                            <td className="py-1.5 px-2 whitespace-nowrap">
                               <button
                                 type="button"
                                 onClick={() => copyToClipboard(rcp, 'receipt')}
-                                className="font-mono text-[var(--brand)] hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors text-[0.6875rem]"
+                                className="font-mono text-[var(--brand)] hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors text-[0.625rem]"
                                 title={bn ? 'রসিদ নং কপি করুন' : 'Click to copy Receipt No'}
                               >
                                 <span>{rcp}</span>
@@ -548,45 +586,45 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                                 )}
                               </button>
                             </td>
-                            <td className="text-center py-2 px-2 text-[var(--text-secondary)] whitespace-nowrap">
+                            <td className="text-center py-1.5 px-2 text-[var(--text-secondary)] whitespace-nowrap text-[0.625rem]">
                               {p.paidAt ? p.paidAt.split('T')[0] : '—'}
                             </td>
-                            <td className="py-2 px-2.5">
-                              <span className="font-medium text-[var(--text-primary)] block">
+                            <td className="py-1.5 px-2">
+                              <span className="font-medium text-[var(--text-primary)] block text-[0.6875rem]">
                                 {bn ? feeInfo.nameBn : feeInfo.name}
                               </span>
                               {p.note && p.note !== feeInfo.name && (
-                                <span className="text-[var(--text-muted)] text-[0.625rem] truncate max-w-[12rem] block">
+                                <span className="text-[var(--text-muted)] text-[0.5625rem] truncate max-w-[10rem] block">
                                   {p.note}
                                 </span>
                               )}
                             </td>
-                            <td className="text-center py-2 px-2 text-[var(--text-secondary)] whitespace-nowrap">
+                            <td className="text-center py-1.5 px-2 text-[var(--text-secondary)] whitespace-nowrap text-[0.625rem]">
                               {formatPeriod(p.forMonth)}
                             </td>
-                            <td className="text-right py-2 px-2.5 font-bold text-[var(--text-primary)] tabular-nums">
+                            <td className="text-right py-1.5 px-2 font-semibold text-[var(--text-primary)] tabular-nums text-[0.6875rem]">
                               ৳{p.amount.toLocaleString()}
                             </td>
-                            <td className="text-right py-2 px-2 text-[var(--text-secondary)] tabular-nums">
+                            <td className="text-right py-1.5 px-2 text-[var(--text-muted)] tabular-nums text-[0.625rem]">
                               {p.discount ? `৳${p.discount.toLocaleString()}` : '—'}
                             </td>
-                            <td className="text-center py-2 px-2">
-                              <span className="px-1.5 py-0.5 rounded text-[0.625rem] font-medium bg-[var(--surface-2)] text-[var(--text-secondary)]">
+                            <td className="text-center py-1.5 px-2">
+                              <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-medium bg-[var(--surface-2)] text-[var(--text-secondary)] border border-[var(--border)] dark:border-white/[0.05]">
                                 {methodLabel(p.method)}
                               </span>
                             </td>
-                            <td className="py-2 px-2.5 text-[var(--text-secondary)] truncate max-w-[8rem]" title={p.collectedBy || '—'}>
+                            <td className="py-1.5 px-2 text-[var(--text-secondary)] truncate max-w-[7.5rem] text-[0.625rem]" title={p.collectedBy || '—'}>
                               {p.collectedBy || '—'}
                             </td>
-                            <td className="text-center py-2 px-2">
+                            <td className="text-center py-1.5 px-2">
                               <button
                                 type="button"
                                 onClick={() => handlePrintSingle(p)}
-                                className="w-6 h-6 rounded flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-colors cursor-pointer mx-auto"
+                                className="w-5 h-5 rounded flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] transition-colors cursor-pointer mx-auto"
                                 title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                                 aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
                               >
-                                <Printer size={13} />
+                                <Printer size={12} />
                               </button>
                             </td>
                           </tr>
@@ -595,14 +633,14 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
                     </tbody>
                     {payments.length > 1 && (
                       <tfoot>
-                        <tr className="bg-[var(--bg-secondary)] font-bold border-t border-[var(--border)] text-[0.6875rem]">
-                          <td colSpan={5} className="py-2 px-2.5 text-right text-[var(--text-secondary)]">
+                        <tr className="bg-[var(--bg-secondary)]/50 border-t border-[var(--border)] dark:border-white/[0.07] text-[0.6875rem] font-semibold">
+                          <td colSpan={5} className="py-1.5 px-2 text-right text-[var(--text-muted)] text-[0.5625rem] uppercase tracking-wider">
                             {bn ? 'সর্বমোট পরিশোধ:' : 'Total Collected:'}
                           </td>
-                          <td className="py-2 px-2.5 text-right font-bold text-[var(--text-primary)] tabular-nums">
+                          <td className="py-1.5 px-2 text-right font-bold text-[var(--text-primary)] tabular-nums">
                             {fmt(totalPaid)}
                           </td>
-                          <td className="py-2 px-2 text-right text-[var(--text-secondary)] tabular-nums">
+                          <td className="py-1.5 px-2 text-right text-[var(--text-secondary)] tabular-nums text-[0.625rem]">
                             {totalDiscount > 0 ? fmt(totalDiscount) : '—'}
                           </td>
                           <td colSpan={3} />
@@ -617,19 +655,19 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
         </div>
 
         {/* Modal Bottom Footer */}
-        <div className="px-4 py-2.5 sm:px-5 border-t border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-between flex-wrap gap-2 shrink-0">
-          <div className="text-[0.6875rem] text-[var(--text-muted)]">
+        <div className="px-3.5 py-2 sm:px-4 border-t border-[var(--border)] dark:border-white/[0.07] bg-[var(--bg-secondary)]/50 flex items-center justify-between flex-wrap gap-2 shrink-0">
+          <div className="text-[0.625rem] text-[var(--text-muted)] font-mono">
             <span>
               {payments.length} {bn ? 'টি পেমেন্ট লেনদেন' : 'payment transaction(s)'}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {effectiveDue > 0 && canCreate('finance.fees.collect.create') && (
               <button
                 type="button"
                 onClick={handleCollectDue}
-                className="h-7 px-3 rounded-lg bg-[var(--brand)] hover:opacity-90 text-white text-xs font-medium cursor-pointer transition-opacity"
+                className="h-6 px-2.5 rounded-md bg-[var(--brand)] hover:opacity-90 text-white text-[0.625rem] font-medium cursor-pointer transition-opacity border-0"
               >
                 {bn ? 'বকেয়া আদায়' : 'Collect Due'}
               </button>
@@ -637,7 +675,7 @@ export const PaymentDetailsModal = React.memo(function PaymentDetailsModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-7 px-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium cursor-pointer transition-colors"
+              className="h-6 px-2.5 rounded-md border border-[var(--border)] dark:border-white/[0.08] bg-[var(--surface)] hover:bg-[var(--surface-2)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[0.625rem] font-medium cursor-pointer transition-colors"
             >
               {bn ? 'বন্ধ করুন' : 'Close'}
             </button>

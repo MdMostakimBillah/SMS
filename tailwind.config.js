@@ -1,12 +1,16 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ["class"],
+  darkMode: ["class", '[data-theme="dark"]'],
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
         sans: ["Inter", "Hind Siliguri", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
+      },
+      borderColor: {
+        DEFAULT: "var(--border)",
+        border: "var(--border)",
       },
       colors: {
         brand:       { DEFAULT: "var(--brand)", light: "var(--brand-light)", 2: "var(--brand-2)" },
