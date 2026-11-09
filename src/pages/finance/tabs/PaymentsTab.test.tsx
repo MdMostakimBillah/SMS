@@ -90,7 +90,7 @@ describe('PaymentsTab Table and Details Integration', () => {
     })
   })
 
-  it('renders payment history table with font size text-[0.8125rem]', () => {
+  it('renders table with compact font size for low-end devices (text-[0.6875rem])', () => {
     const { container } = render(
       <MemoryRouter>
         <PaymentsTab />
@@ -98,13 +98,76 @@ describe('PaymentsTab Table and Details Integration', () => {
     )
 
     const table = container.querySelector('table')
-    expect(table).toHaveClass('text-[0.8125rem]')
+    expect(table).toHaveClass('text-[0.6875rem]')
+
+    const ths = container.querySelectorAll('th')
+    expect(ths.length).toBeGreaterThan(0)
+    expect(ths[1]).toHaveClass('text-[0.6875rem]')
 
     expect(screen.getByText('Rahim Khan')).toBeInTheDocument()
     expect(screen.getByText('RCP-2026-000101')).toBeInTheDocument()
     expect(screen.getAllByText('1,500').length).toBeGreaterThan(0)
     expect(screen.getAllByText('100').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Cash').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('paginates payment history with 50 items per page and allows viewing next page', () => {
+    const manyStudents = Array.from({ length: 60 }, (_, idx) => ({
+      id: `STU-EXTRA-${idx + 1}`,
+      nameEn: `Student ${idx + 1}`,
+      nameBn: `শিক্ষার্থী ${idx + 1}`,
+      class: 'Class 10',
+      section: 'A',
+      roll: String(idx + 1).padStart(2, '0'),
+      photo: '',
+      status: 'approved' as const,
+      active: true,
+      academicYear: '2025-26',
+    }))
+
+    const manyPayments = Array.from({ length: 60 }, (_, idx) => ({
+      id: `PAY-EXTRA-${idx + 1}`,
+      studentId: `STU-EXTRA-${idx + 1}`,
+      feeStructureId: 'STRUCT-01',
+      amount: 1000 + idx,
+      discount: 0,
+      paidAt: '2026-11-09T10:00:00Z',
+      method: 'cash' as const,
+      reference: '',
+      note: 'Tuition Fee',
+      collectedBy: 'Finance Officer',
+      createdAt: '2026-11-09',
+      batchId: `BATCH-${idx + 1}`,
+      forMonth: '2026-11',
+      receiptNo: `RCP-${String(idx + 1).padStart(6, '0')}`,
+    }))
+
+    useAdmissionStore.setState({ students: manyStudents as any })
+    useFeeStore.setState({ payments: manyPayments as any })
+
+    render(
+      <MemoryRouter>
+        <PaymentsTab />
+      </MemoryRouter>
+    )
+
+    // With 60 payments and default perPage 50, Student 1 is on page 1, Student 51 is on page 2
+    expect(screen.getByText('Student 1')).toBeInTheDocument()
+    expect(screen.queryByText('Student 51')).not.toBeInTheDocument()
+
+    // Pagination controls should be visible
+    expect(screen.getByText(/1–50 \/ 60/)).toBeInTheDocument()
+    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument()
+
+    // Click next page button
+    const nextBtn = screen.getByTitle('Next page')
+    fireEvent.click(nextBtn)
+
+    // Student 51 should now be visible on page 2
+    expect(screen.queryByText('Student 1')).not.toBeInTheDocument()
+    expect(screen.getByText('Student 51')).toBeInTheDocument()
+    expect(screen.getByText(/51–60 \/ 60/)).toBeInTheDocument()
+    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument()
   })
 
   it('opens polished payment details popup when clicking View Payment Details button', () => {

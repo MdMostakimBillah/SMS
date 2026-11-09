@@ -1,7 +1,8 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
-import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Printer, ChevronDown, X } from 'lucide-react'
+import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Printer, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
+import { toBnNum } from '@/lib/i18n'
 import { usePermission } from '@/hooks/usePermission'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
@@ -14,6 +15,7 @@ import type { PDFColumnDef, GenericPDFOptionsResult } from '@/components/shared/
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { PaginationControls } from '@/components/shared/PaginationControls'
 import { PaymentDetailsModal } from '../modals/PaymentDetailsModal'
 
 const selectCls = 'h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors'
@@ -181,6 +183,27 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
     })
     return result
   }, [payments, search, fMethod, fCollector, fSession, dateFrom, dateTo, sortBy, studentMap, structureMap, structures])
+
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(50)
+  const tableScrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, fSession, fMethod, fCollector, dateFrom, dateTo, sortBy])
+
+  const totalPages = Math.max(1, Math.ceil(batches.length / perPage))
+  const activePage = Math.min(page, totalPages)
+  const paginatedBatches = useMemo(() => {
+    if (perPage >= batches.length) return batches
+    return batches.slice((activePage - 1) * perPage, activePage * perPage)
+  }, [batches, activePage, perPage])
+
+  useEffect(() => {
+    if (tableScrollRef.current) {
+      tableScrollRef.current.scrollTop = 0
+    }
+  }, [activePage])
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], [])
   const monthStart = useMemo(() => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0] }, [])
@@ -678,10 +701,44 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
             <option value="amount-desc">{bn ? 'পরিমাণ: বেশি → কম' : 'Amount: High to Low'}</option>
             <option value="amount-asc">{bn ? 'পরিমাণ: কম → বেশি' : 'Amount: Low to High'}</option>
           </select>
+        </div>
+      </div>
 
-          {/* Actions Menu */}
-          {batches.length > 0 && (
-            <div className="relative ml-auto">
+      {/* Action Bar — shown when batches exist */}
+      {batches.length > 0 && (
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <span className="text-[12px] text-[var(--text-muted)] font-medium">
+            {selectedRows.size > 0
+              ? `${selectedRows.size} ${bn ? 'নির্বাচিত' : 'selected'}`
+              : `${batches.length} ${bn ? 'টি ফলাফল' : 'results'}`}
+          </span>
+          <div className="ml-auto flex items-center gap-3">
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                <span className="text-[0.6875rem]">
+                  {bn ? `পৃষ্ঠা ${toBnNum(activePage)} / ${toBnNum(totalPages)}` : `Page ${activePage} of ${totalPages}`}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={activePage === 1}
+                    className="w-6 h-6 flex items-center justify-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title={bn ? 'পূর্ববর্তী পৃষ্ঠা' : 'Previous page'}
+                  >
+                    <ChevronLeft size={13} />
+                  </button>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={activePage === totalPages}
+                    className="w-6 h-6 flex items-center justify-center rounded border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title={bn ? 'পরবর্তী পৃষ্ঠা' : 'Next page'}
+                  >
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="relative">
               <button
                 onClick={() => setShowActionMenu(!showActionMenu)}
                 className="h-[2.125rem] px-[0.75rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.75rem] font-semibold hover:border-[var(--brand)] cursor-pointer flex items-center gap-1.5 transition-colors"
@@ -711,9 +768,9 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
                 </>
               )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Table */}
       <div className="border border-[var(--border)] rounded-xl overflow-hidden bg-[var(--bg-primary)]">
@@ -722,123 +779,142 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
             {bn ? 'কোনো পেমেন্ট নেই' : 'No payments found'}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-[0.8125rem]">
-              <thead>
-                <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
-                  <th className="text-center px-2 py-2.5 w-[36px]">
-                    <ModernCheckbox checked={batches.length > 0 && selectedRows.size === batches.length} onChange={() => toggleAllRows()} color="brand" size="xs" />
-                  </th>
-                  <th className="text-center px-2 py-2.5 w-[40px] text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">#</th>
-                  <th className="text-left px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
-                  <th className="text-left px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
-                  <th className="text-center px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
-                  <th className="text-right px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
-                  <th className="text-right px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ছাড়' : 'Disc.'}</th>
-                  <th className="text-left px-3 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
-                  <th className="text-left px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'সংগ্রাহক' : 'Receipted By'}</th>
-                  <th className="text-right px-3.5 py-2.5 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'কাজ' : 'Actions'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {batches.map((b, idx) => {
-                  const sInfo = studentMap[b.studentId]
-                  const sName = bn ? b.studentNameBn || b.studentName : b.studentName
+          <>
+            <div ref={tableScrollRef} className="overflow-x-auto" style={{ maxHeight: 'calc(100vh - 320px)', overflowY: 'auto' }}>
+              <table className="w-full text-[0.6875rem]" style={{ tableLayout: 'auto' }}>
+                <thead>
+                  <tr className="bg-[var(--bg-secondary)] sticky top-0 z-20 border-b border-[var(--border)]">
+                    <th className="text-center px-2 py-2 w-[36px]">
+                      <ModernCheckbox checked={batches.length > 0 && selectedRows.size === batches.length} onChange={() => toggleAllRows()} color="brand" size="xs" />
+                    </th>
+                    <th className="text-center px-2 py-2 w-[40px] text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">#</th>
+                    <th className="text-left px-2.5 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'শিক্ষার্থী' : 'Student'}</th>
+                    <th className="text-left px-2.5 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'রসিদ নং' : 'Receipt No'}</th>
+                    <th className="text-center px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'তারিখ' : 'Date'}</th>
+                    <th className="text-right px-2.5 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পরিমাণ' : 'Amount'}</th>
+                    <th className="text-right px-2.5 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'ছাড়' : 'Disc.'}</th>
+                    <th className="text-left px-2 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'পদ্ধতি' : 'Method'}</th>
+                    <th className="text-left px-2.5 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'সংগ্রাহক' : 'Receipted By'}</th>
+                    <th className="text-right px-2.5 py-2 text-[0.6875rem] uppercase text-[var(--text-secondary)] font-semibold tracking-wider">{bn ? 'কাজ' : 'Actions'}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedBatches.map((b, idx) => {
+                    const sInfo = studentMap[b.studentId]
+                    const sName = bn ? b.studentNameBn || b.studentName : b.studentName
+                    const serialNum = (activePage - 1) * perPage + idx + 1
 
-                  return (
-                    <tr key={b.batchKey} className={`border-t border-[var(--border)] transition-colors ${selectedRows.has(b.batchKey) ? 'bg-[var(--brand-light)]/60' : 'hover:bg-[var(--brand-light)]/30'}`}>
-                      <td className="text-center px-2 py-2.5">
-                        <ModernCheckbox checked={selectedRows.has(b.batchKey)} onChange={() => toggleRowSelection(b.batchKey)} color="brand" size="xs" />
-                      </td>
-                      <td className="text-center px-2 py-2.5 text-[var(--text-muted)] text-[0.8125rem] font-mono">{idx + 1}</td>
-                      <td className="px-3.5 py-2.5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 min-w-[2rem] rounded-full overflow-hidden bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center font-bold text-[0.75rem] shrink-0 border border-[var(--border)] shadow-2xs">
-                            {sInfo?.photo ? (
-                              <img src={sInfo.photo} alt={sName} className="w-full h-full object-cover" />
+                    return (
+                      <tr key={b.batchKey} className={`border-t border-[var(--border)] transition-colors ${selectedRows.has(b.batchKey) ? 'bg-[var(--brand-light)]/60' : 'hover:bg-[var(--brand-light)]/30'}`}>
+                        <td className="text-center px-2 py-1.5">
+                          <ModernCheckbox checked={selectedRows.has(b.batchKey)} onChange={() => toggleRowSelection(b.batchKey)} color="brand" size="xs" />
+                        </td>
+                        <td className="text-center px-2 py-1.5 text-[var(--text-muted)] text-[0.6875rem] font-mono">{bn ? toBnNum(serialNum) : serialNum}</td>
+                        <td className="px-2.5 py-1.5">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 min-w-[1.75rem] rounded-full overflow-hidden bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center font-bold text-[0.6875rem] shrink-0 border border-[var(--border)] shadow-2xs">
+                              {sInfo?.photo ? (
+                                <img src={sInfo.photo} alt={sName} className="w-full h-full object-cover" />
+                              ) : (
+                                <span>{(sName || '?').charAt(0).toUpperCase()}</span>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-[var(--text-primary)] text-[0.6875rem] truncate">{sName}</p>
+                              <p className="text-[0.625rem] text-[var(--text-muted)] truncate">
+                                {b.class}{b.section ? ` - ${b.section}` : ''}{sInfo?.roll ? ` • Roll: ${sInfo.roll}` : ''}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-2.5 py-1.5 font-mono text-[0.6875rem] font-semibold text-[var(--brand)]">{b.receiptNo}</td>
+                        <td className="px-2 py-1.5 text-center text-[var(--text-secondary)]">
+                          <div className="flex items-center justify-center gap-1 text-[0.6875rem]">
+                            <Calendar size={11} className="text-[var(--text-muted)] shrink-0" />
+                            <span>{b.paidAt}</span>
+                          </div>
+                        </td>
+                        <td className="px-2.5 py-1.5 text-right font-bold text-[var(--green)] text-[0.6875rem]">{fmt(b.totalAmount)}</td>
+                        <td className="px-2.5 py-1.5 text-right font-semibold text-[var(--amber)] text-[0.6875rem]">{b.totalDiscount ? fmt(b.totalDiscount) : '—'}</td>
+                        <td className="px-2 py-1.5">
+                          <span className="text-[0.625rem] font-medium px-2 py-0.5 rounded-full inline-block" style={{ background: `${methodColor(b.method)}15`, color: methodColor(b.method) }}>
+                            {methodLabel(b.method)}
+                          </span>
+                        </td>
+                        <td className="px-2.5 py-1.5 text-[0.6875rem] text-[var(--text-secondary)]">{b.collectedBy || '—'}</td>
+                        <td className="px-2.5 py-1.5 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => setSelectedBatchForDetails(b)}
+                              className="w-7 h-7 rounded-lg p-1 flex items-center justify-center cursor-pointer text-[var(--brand)] bg-[var(--brand-light)] border border-[var(--glass-border)] shadow-xs transition-transform active:scale-95"
+                              title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
+                              aria-label={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
+                            >
+                              <Eye size={13} />
+                            </button>
+                            <button
+                              onClick={() => generateReceipt(b)}
+                              className="w-7 h-7 rounded-lg p-1 flex items-center justify-center cursor-pointer text-[var(--green)] bg-[var(--green-light)] border border-[var(--glass-border)] shadow-xs transition-transform active:scale-95"
+                              title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
+                              aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
+                            >
+                              <Printer size={13} />
+                            </button>
+                            {canDelete('finance.fees.payments') ? (
+                              <button
+                                onClick={() => handleDeleteBatch(b)}
+                                className="w-7 h-7 rounded-lg p-1 flex items-center justify-center cursor-pointer text-[var(--red)] bg-[var(--red-light)] border border-[var(--glass-border)] shadow-xs transition-transform active:scale-95"
+                                title={bn ? 'মুছুন' : 'Delete'}
+                                aria-label={bn ? 'মুছুন' : 'Delete'}
+                              >
+                                <Trash2 size={13} />
+                              </button>
                             ) : (
-                              <span>{(sName || '?').charAt(0).toUpperCase()}</span>
+                              <div
+                                className="w-7 h-7 rounded-lg p-1 flex items-center justify-center text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--glass-border)] opacity-40 cursor-not-allowed"
+                                title={bn ? 'অনুমতি নেই' : 'No delete permission'}
+                              >
+                                <Trash2 size={13} />
+                              </div>
                             )}
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-[var(--text-primary)] text-[0.8125rem] truncate">{sName}</p>
-                            <p className="text-[0.8125rem] text-[var(--text-muted)] truncate">
-                              {b.class}{b.section ? ` - ${b.section}` : ''}{sInfo?.roll ? ` • Roll: ${sInfo.roll}` : ''}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-3.5 py-2.5 font-mono text-[0.8125rem] font-semibold text-[var(--brand)]">{b.receiptNo}</td>
-                      <td className="px-3 py-2.5 text-center text-[var(--text-secondary)]">
-                        <div className="flex items-center justify-center gap-1.5 text-[0.8125rem]">
-                          <Calendar size={13} className="text-[var(--text-muted)] shrink-0" />
-                          <span>{b.paidAt}</span>
-                        </div>
-                      </td>
-                      <td className="px-3.5 py-2.5 text-right font-bold text-[var(--green)] text-[0.8125rem]">{fmt(b.totalAmount)}</td>
-                      <td className="px-3.5 py-2.5 text-right font-semibold text-[var(--amber)] text-[0.8125rem]">{b.totalDiscount ? fmt(b.totalDiscount) : '—'}</td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-[0.8125rem] font-medium px-2.5 py-0.5 rounded-full inline-block" style={{ background: `${methodColor(b.method)}15`, color: methodColor(b.method) }}>
-                          {methodLabel(b.method)}
-                        </span>
-                      </td>
-                      <td className="px-3.5 py-2.5 text-[0.8125rem] text-[var(--text-secondary)]">{b.collectedBy || '—'}</td>
-                      <td className="px-3.5 py-2.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => setSelectedBatchForDetails(b)}
-                            className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--brand)] bg-[var(--brand-light)] border border-[var(--glass-border)] shadow-xs transition-transform active:scale-95"
-                            title={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
-                            aria-label={bn ? 'পেমেন্ট বিবরণ দেখুন' : 'View Payment Details'}
-                          >
-                            <Eye size={14} />
-                          </button>
-                          <button
-                            onClick={() => generateReceipt(b)}
-                            className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--green)] bg-[var(--green-light)] border border-[var(--glass-border)] shadow-xs transition-transform active:scale-95"
-                            title={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
-                            aria-label={bn ? 'রসিদ প্রিন্ট' : 'Print Receipt'}
-                          >
-                            <Printer size={14} />
-                          </button>
-                          {canDelete('finance.fees.payments') ? (
-                            <button
-                              onClick={() => handleDeleteBatch(b)}
-                              className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center cursor-pointer text-[var(--red)] bg-[var(--red-light)] border border-[var(--glass-border)] shadow-xs transition-transform active:scale-95"
-                              title={bn ? 'মুছুন' : 'Delete'}
-                              aria-label={bn ? 'মুছুন' : 'Delete'}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          ) : (
-                            <div
-                              className="w-8 h-8 rounded-xl p-1.5 flex items-center justify-center text-[var(--text-muted)] bg-[var(--bg-secondary)] border border-[var(--glass-border)] opacity-40 cursor-not-allowed"
-                              title={bn ? 'অনুমতি নেই' : 'No delete permission'}
-                            >
-                              <Trash2 size={14} />
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold text-[0.8125rem]">
-                  <td className="px-2 py-2" />
-                  <td className="px-2 py-2" />
-                  <td className="px-3.5 py-2 text-[0.8125rem] uppercase text-[var(--text-muted)] font-bold" colSpan={2}>{bn ? 'মোট' : 'Total'} ({batches.length})</td>
-                  <td className="px-3 py-2" />
-                  <td className="px-3.5 py-2 text-right text-[0.8125rem] font-bold text-[var(--green)]">{fmt(totalCollected)}</td>
-                  <td className="px-3.5 py-2 text-right text-[0.8125rem] font-bold text-[var(--amber)]">{totalDiscount ? fmt(totalDiscount) : '—'}</td>
-                  <td className="px-3 py-2" />
-                  <td className="px-3.5 py-2" />
-                  <td className="px-3.5 py-2" />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-[var(--brand)] bg-[var(--bg-secondary)] font-bold sticky bottom-0 z-20 text-[0.6875rem]">
+                    <td className="px-2 py-1.5" />
+                    <td className="px-2 py-1.5" />
+                    <td className="px-2.5 py-1.5 text-[0.6875rem] uppercase text-[var(--text-muted)] font-bold" colSpan={2}>{bn ? 'মোট' : 'Total'} ({batches.length})</td>
+                    <td className="px-2 py-1.5" />
+                    <td className="px-2.5 py-1.5 text-right text-[0.6875rem] font-bold text-[var(--green)]">{fmt(totalCollected)}</td>
+                    <td className="px-2.5 py-1.5 text-right text-[0.6875rem] font-bold text-[var(--amber)]">{totalDiscount ? fmt(totalDiscount) : '—'}</td>
+                    <td className="px-2 py-1.5" />
+                    <td className="px-2.5 py-1.5" />
+                    <td className="px-2.5 py-1.5" />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            {batches.length > 0 && (
+              <div className="px-3 py-1.5 border-t border-[var(--border)] bg-[var(--bg-secondary)]">
+                <PaginationControls
+                  page={activePage}
+                  setPage={setPage}
+                  perPage={perPage}
+                  setPerPage={setPerPage}
+                  total={batches.length}
+                  totalPages={totalPages}
+                  perPageOptions={[50, 100, 200]}
+                  isBn={bn}
+                  alwaysShow={batches.length > 50}
+                  className="flex justify-between items-center flex-wrap gap-2"
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
