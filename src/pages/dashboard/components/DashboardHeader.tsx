@@ -5,7 +5,6 @@ import {
   RefreshCw,
   ChevronDown,
   Cloud,
-  HardDrive,
   Server,
   FileArchive,
   Database,
@@ -135,71 +134,57 @@ export const DashboardHeader: React.FC<Props> = ({
             {`${greeting}, ${userName || (isBn ? 'ব্যবহারকারী' : 'User')}`}
           </h1>
 
-          {/* Storage & Database Mode Pill */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.3125rem',
-              padding: '0.1875rem 0.5rem',
-              borderRadius: '9999px',
-              fontSize: '0.6875rem',
-              fontWeight: 500,
-              background:
-                storageMode === 'local_computer'
-                  ? 'rgba(245, 158, 11, 0.12)'
-                  : storageMode === 'local_server'
+          {/* Storage & Database Mode Pill (Only rendered for external server/cloud, hidden in default Local PC mode) */}
+          {storageMode !== 'local_computer' && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3125rem',
+                padding: '0.1875rem 0.5rem',
+                borderRadius: '9999px',
+                fontSize: '0.6875rem',
+                fontWeight: 500,
+                background:
+                  storageMode === 'local_server'
                     ? 'rgba(99, 102, 241, 0.12)'
                     : 'rgba(34, 197, 94, 0.12)',
-              border: `1px solid ${
-                storageMode === 'local_computer'
-                  ? 'rgba(245, 158, 11, 0.35)'
-                  : storageMode === 'local_server'
+                border: `1px solid ${
+                  storageMode === 'local_server'
                     ? 'rgba(99, 102, 241, 0.35)'
                     : 'rgba(34, 197, 94, 0.35)'
-              }`,
-              color:
-                storageMode === 'local_computer'
-                  ? '#d97706'
-                  : storageMode === 'local_server'
+                }`,
+                color:
+                  storageMode === 'local_server'
                     ? '#6366f1'
                     : '#16a34a',
-            }}
-            title={
-              storageMode === 'local_computer'
-                ? isBn
-                  ? 'লোকাল পিসি মোড সক্রিয় (ফাইল ও লোকাল স্টোরেজ)'
-                  : 'Local PC Mode Active (Files & Local Storage)'
-                : storageMode === 'local_server'
+              }}
+              title={
+                storageMode === 'local_server'
                   ? isBn
                     ? 'কাস্টম সার্ভার সংযুক্ত'
                     : 'Custom Server Connected'
                   : isBn
                     ? 'প্রোভাইডার ক্লাউড ডাটাবেজ সংযুক্ত'
                     : 'Provider Cloud Database Connected'
-            }
-          >
-            {storageMode === 'local_computer' ? (
-              <HardDrive size={11} />
-            ) : storageMode === 'local_server' ? (
-              <Server size={11} />
-            ) : (
-              <Cloud size={11} />
-            )}
-            <span>
-              {storageMode === 'local_computer'
-                ? isBn
-                  ? 'লোকাল পিসি মোড'
-                  : 'Local PC Mode'
-                : storageMode === 'local_server'
+              }
+            >
+              {storageMode === 'local_server' ? (
+                <Server size={11} />
+              ) : (
+                <Cloud size={11} />
+              )}
+              <span>
+                {storageMode === 'local_server'
                   ? isBn
                     ? 'লোকাল সার্ভার'
                     : 'Local Server'
-                : isBn
-                  ? 'ক্লাউড ডাটাবেজ'
-                  : 'Cloud Database'}
-            </span>
-          </div>
+                  : isBn
+                    ? 'ক্লাউড ডাটাবেজ'
+                    : 'Cloud Database'}
+              </span>
+            </div>
+          )}
         </div>
 
         <p

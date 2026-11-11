@@ -34,7 +34,6 @@ import { usePermissionStore } from '@/store/permissionStore'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { getNavBase, getSuperAdminViewNavBase, getLogoutRedirect } from '@/lib/navUtils'
-import { isLocalComputerMode } from '@/lib/storageMode'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 import type { Theme, Language } from '@/types'
@@ -358,14 +357,10 @@ export default React.memo(function Topbar() {
           flexShrink: 0,
         }}
       >
-        {/* Local PC / Offline Indicator */}
-        {(isLocalComputerMode() || !isOnline) && (
+        {/* Offline Indicator (Only shown when internet connection is lost) */}
+        {!isOnline && (
           <div
-            title={
-              !isOnline
-                ? (isBn ? 'অফলাইন মোড সক্রিয় - লোকাল স্টোরেজে সম্পূর্ণ কাজ চলবে' : 'Offline Mode Active - Running from Local PC with full access')
-                : (isBn ? 'লোকাল পিসি মোড সক্রিয় (অনলাইন)' : 'Local PC Mode Active (Online)')
-            }
+            title={isBn ? 'অফলাইন মোড সক্রিয় - লোকাল স্টোরেজে সম্পূর্ণ কাজ চলবে' : 'Offline Mode Active - Running offline with full local access'}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -374,9 +369,9 @@ export default React.memo(function Topbar() {
               borderRadius: '9999px',
               fontSize: '0.6875rem',
               fontWeight: 500,
-              background: !isOnline ? 'rgba(234, 179, 8, 0.12)' : 'rgba(34, 197, 94, 0.12)',
-              border: `1px solid ${!isOnline ? 'rgba(234, 179, 8, 0.35)' : 'rgba(34, 197, 94, 0.35)'}`,
-              color: !isOnline ? '#eab308' : '#22c55e',
+              background: 'rgba(234, 179, 8, 0.12)',
+              border: '1px solid rgba(234, 179, 8, 0.35)',
+              color: '#eab308',
               cursor: 'default',
               userSelect: 'none',
               marginRight: isMobile ? '2px' : '0.25rem',
@@ -387,15 +382,13 @@ export default React.memo(function Topbar() {
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                background: !isOnline ? '#eab308' : '#22c55e',
-                boxShadow: `0 0 6px ${!isOnline ? '#eab308' : '#22c55e'}`,
+                background: '#eab308',
+                boxShadow: '0 0 6px #eab308',
               }}
             />
             {!isMobile && (
               <span>
-                {!isOnline
-                  ? (isBn ? 'লোকাল পিসি (অফলাইন)' : 'Local PC (Offline)')
-                  : (isBn ? 'লোকাল পিসি' : 'Local PC')}
+                {isBn ? 'অফলাইন' : 'Offline'}
               </span>
             )}
           </div>

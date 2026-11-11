@@ -199,7 +199,7 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     expect(teacherSpy).toHaveBeenCalledTimes(2)
   })
 
-  it('displays Local PC mode in header when active and ensures Local PC Hub section is not rendered', async () => {
+  it('ensures Local PC Mode text in header and Local PC Hub section are not rendered', async () => {
     vi.spyOn(storageModeModule, 'getActiveStorageMode').mockReturnValue('local_computer')
 
     render(
@@ -209,7 +209,7 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText(/Local PC Mode|লোকাল পিসি মোড/i)).toBeInTheDocument()
+      expect(screen.queryByText(/Local PC Mode|লোকাল পিসি মোড/i)).not.toBeInTheDocument()
     })
 
     expect(screen.queryByText(/Local PC & Database Hub|লোকাল পিসি ও ডাটাবেজ ইন্টিগ্রেশন/i)).not.toBeInTheDocument()
