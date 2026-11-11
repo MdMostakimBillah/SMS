@@ -307,10 +307,11 @@ export const useSmsStore = create<SMSStoreState>()(
 
       sendSMS: async ({ institutionId, institutionName, phone, message, type }) => {
         const state = get()
+        const isTest = type === 'test' || institutionId.startsWith('super-admin')
         const currentBal = state.getInstitutionBalance(institutionId)
 
-        // Check if institution has SMS credits remaining
-        if (currentBal.remaining <= 0) {
+        // Check if institution has SMS credits remaining (test SMS from Super Admin bypasses tenant allocation)
+        if (!isTest && currentBal.remaining <= 0) {
           const failedResult: SendSMSResult = {
             success: false,
             messageId: `FAIL-${Date.now()}`,
@@ -343,8 +344,18 @@ export const useSmsStore = create<SMSStoreState>()(
         })
 
         if (result.success) {
-          // Deduct 1 unit from institution balance
-          state.deductSMS(institutionId, 1)
+          if (!isTest) {
+            // Deduct 1 unit from institution balance
+            state.deductSMS(institutionId, 1)
+          } else {
+            // Increment master pool usage for super-admin test SMS
+            set((s) => ({
+              masterPool: {
+                ...s.masterPool,
+                totalUsed: s.masterPool.totalUsed + 1,
+              },
+            }))
+          }
         }
 
         const logEntry: SMSDispatchLog = {
