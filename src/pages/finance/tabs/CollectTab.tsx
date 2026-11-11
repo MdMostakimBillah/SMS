@@ -604,6 +604,8 @@ export const CollectTab = React.memo(function CollectTab({ onCollect: _onCollect
           subject: replaceVars(feeTemplate.subject),
           body: replaceVars(feeTemplate.body),
           templateId: feeTemplate.id,
+          institutionId: (institution as any)?.id || institution?.eiin || 'inst-default',
+          institutionName: institution?.name || 'EduTech',
         })
       }
     }

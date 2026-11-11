@@ -9,6 +9,8 @@ import { MarksheetPDFOptionsModal } from './MarksheetPDFOptionsModal'
 import { downloadHTML } from '@/lib/pdf'
 import { useClassStore } from '@/store/classStore'
 import { getGradeLetter, getGradeColor } from '@/lib/grades'
+import { useSmsStore } from '@/store/smsStore'
+import { useMessageStore, messageId } from '@/store/messageStore'
 
 const gradeScale = [
   { letter: 'A+', range: '80–100' },
@@ -95,6 +97,8 @@ export const MarksheetTab = React.memo(function MarksheetTab({
   const { students: allStudents } = useAdmissionStore()
   const brand = getBrandColor()
   const institution = useClassStore((s) => s.institution)
+  const instId = (institution as any)?.id || institution?.eiin || sessionStorage.getItem('edutech_inst_slug') || 'inst-default'
+  const instBalance = useSmsStore((s) => s.getInstitutionBalance(instId))
 
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [showSmsModal, setShowSmsModal] = useState(false)
@@ -245,19 +249,53 @@ export const MarksheetTab = React.memo(function MarksheetTab({
       return
     }
 
-    smsTimersRef.current.forEach(clearTimeout)
-    smsTimersRef.current = []
-    messages.forEach((m, i) => {
-      const t = setTimeout(() => {
-        const encoded = encodeURIComponent(m.message)
-        window.open(`sms:${m.phone}?body=${encoded}`, '_blank')
-      }, i * 500)
-      smsTimersRef.current.push(t)
+    const instId = (institution as any)?.id || institution?.eiin || 'inst-default'
+    const instName = institution?.name || 'EduTech'
+    const smsStore = useSmsStore.getState()
+    const currentBal = smsStore.getInstitutionBalance(instId)
+
+    if (currentBal.remaining < messages.length) {
+      alert(
+        isBn
+          ? `অপর্যাপ্ত SMS ব্যালেন্স! আপনার প্রতিষ্ঠানে অবশিষ্ট আছে ${currentBal.remaining} টি SMS, কিন্তু প্রয়োজন ${messages.length} টি। রিচার্জের জন্য সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।`
+          : `Insufficient SMS balance! You have ${currentBal.remaining} SMS remaining, but need ${messages.length}. Please contact Super Admin to recharge.`
+      )
+      return
+    }
+
+    // Send real SMS through SMS Store & Record in Messages store
+    messages.forEach((m) => {
+      void smsStore.sendSMS({
+        institutionId: instId,
+        institutionName: instName,
+        phone: m.phone,
+        message: m.message,
+        type: 'exam',
+      })
+
+      useMessageStore.getState().addMessage({
+        id: messageId(),
+        senderId: 'me',
+        senderName: 'Exam Controller',
+        senderNameBn: 'পরীক্ষা নিয়ন্ত্রক',
+        senderRole: 'admin',
+        recipientId: m.phone,
+        recipientName: m.name,
+        subject: `${examName} Result Notice`,
+        body: m.message,
+        read: true,
+        status: 'sent',
+        createdAt: new Date().toISOString(),
+        isSMS: true,
+        phoneNumber: m.phone,
+      })
     })
 
-    alert(isBn
-      ? `${messages.length} জন শিক্ষার্থীর কাছে SMS পাঠানো হচ্ছে`
-      : `Sending SMS to ${messages.length} student(s)`)
+    alert(
+      isBn
+        ? `সফলভাবে ${messages.length} জন শিক্ষার্থীর কাছে ফলাফল SMS প্রেরণ করা হয়েছে!`
+        : `Successfully dispatched result SMS to ${messages.length} student(s)!`
+    )
     setShowSmsModal(false)
   }
 
@@ -463,7 +501,12 @@ export const MarksheetTab = React.memo(function MarksheetTab({
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]">
               <div>
-                <h3 className="text-[0.875rem] font-bold text-[var(--text-primary)]">{isBn ? 'ফলাফল SMS পাঠান' : 'Send Result SMS'}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[0.875rem] font-bold text-[var(--text-primary)]">{isBn ? 'ফলাফল SMS পাঠান' : 'Send Result SMS'}</h3>
+                  <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-semibold bg-cyan-500/10 text-cyan-600">
+                    📱 {isBn ? 'এসএমএস ব্যালেন্স:' : 'SMS Balance:'} {useSmsStore.getState().getInstitutionBalance((institution as any)?.id || institution?.eiin || 'inst-default').remaining} SMS
+                  </span>
+                </div>
                 <p className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
                   {smsSelectedIds.length} {isBn ? 'জন শিক্ষার্থী নির্বাচিত' : 'students selected'} · {examName} · {className}-{sectionName}
                 </p>
@@ -541,13 +584,26 @@ export const MarksheetTab = React.memo(function MarksheetTab({
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-3 border-t border-[var(--border)] flex justify-end gap-2">
-              <button onClick={() => setShowSmsModal(false)} className="px-4 py-2 rounded-lg text-[0.75rem] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]">
-                {isBn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button onClick={handleSendSms} disabled={smsSelectedIds.length === 0} className="px-4 py-2 rounded-lg text-[0.75rem] font-medium text-white inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--green)' }}>
-                <Send size={13} />{isBn ? `SMS পাঠান (${smsSelectedIds.length})` : `Send SMS (${smsSelectedIds.length})`}
-              </button>
+            <div className="px-5 py-3 border-t border-[var(--border)] flex items-center justify-between gap-2">
+              <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                {instBalance.remaining < smsSelectedIds.length ? (
+                  <span className="text-red-500 font-medium">
+                    {isBn ? `⚠️ অপর্যাপ্ত ব্যালেন্স (${instBalance.remaining} টি বাকি)` : `⚠️ Insufficient Balance (${instBalance.remaining} left)`}
+                  </span>
+                ) : (
+                  <span>
+                    {isBn ? `ব্যালেন্স থেকে ${smsSelectedIds.length} টি SMS কর্তন হবে` : `${smsSelectedIds.length} SMS will be deducted`}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setShowSmsModal(false)} className="px-4 py-2 rounded-lg text-[0.75rem] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]">
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button onClick={handleSendSms} disabled={smsSelectedIds.length === 0 || instBalance.remaining < smsSelectedIds.length} className="px-4 py-2 rounded-lg text-[0.75rem] font-medium text-white inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'var(--green)' }}>
+                  <Send size={13} />{isBn ? `SMS পাঠান (${smsSelectedIds.length})` : `Send SMS (${smsSelectedIds.length})`}
+                </button>
+              </div>
             </div>
           </div>
         </div>,

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { useSmsStore } from './smsStore'
 
 export type MessageRecipient = 'all' | 'students' | 'teachers' | 'parents' | string
 export type MessageStatus = 'sent' | 'queued' | 'failed' | 'delivered'
@@ -37,7 +38,17 @@ export function sendTemplateSMS(data: {
   subject: string
   body: string
   templateId?: string
+  institutionId?: string
+  institutionName?: string
 }): Message {
+  const instId = data.institutionId || sessionStorage.getItem('edutech_inst_slug') || 'inst-default'
+  const instName = data.institutionName || 'Institution'
+
+  // Check and consume SMS balance from smsStore
+  const smsStore = useSmsStore.getState()
+  const bal = smsStore.getInstitutionBalance(instId)
+  const hasBalance = bal.remaining > 0
+
   const msg: Message = {
     id: messageId(),
     senderId: 'me',
@@ -49,7 +60,7 @@ export function sendTemplateSMS(data: {
     subject: data.subject,
     body: data.body,
     read: true,
-    status: 'sent',
+    status: hasBalance ? 'sent' : 'failed',
     createdAt: new Date().toISOString(),
     isSMS: true,
     phoneNumber: data.phoneNumber,
@@ -57,6 +68,18 @@ export function sendTemplateSMS(data: {
     studentId: data.studentId,
   }
   useMessageStore.getState().addMessage(msg)
+
+  // Dispatch real SMS asynchronously if balance is available
+  if (hasBalance) {
+    void smsStore.sendSMS({
+      institutionId: instId,
+      institutionName: instName,
+      phone: data.phoneNumber,
+      message: `${data.subject}\n${data.body.replace(/<[^>]*>/g, '')}`,
+      type: 'fee',
+    })
+  }
+
   return msg
 }
 

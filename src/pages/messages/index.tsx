@@ -20,6 +20,8 @@ import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { useSessionStudents } from '@/store/admissionStore'
 import { usePermission } from '@/hooks/usePermission'
+import { useSmsStore } from '@/store/smsStore'
+import { useClassStore } from '@/store/classStore'
 import { TemplatesTab } from './tabs/TemplatesTab'
 
 const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
@@ -34,6 +36,9 @@ export default function MessagesPage() {
   const markRead = useMessageStore((s) => s.markRead)
   const deleteMessage = useMessageStore((s) => s.deleteMessage)
   const resendMessage = useMessageStore((s) => s.resendMessage)
+  const institution = useClassStore((s) => s.institution)
+  const instId = (institution as any)?.id || institution?.eiin || 'inst-default'
+  const smsBalance = useSmsStore((s) => s.getInstitutionBalance(instId))
 
   const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'outgoing' | 'templates'>('inbox')
   const [search, setSearch] = useState('')
@@ -145,6 +150,19 @@ export default function MessagesPage() {
             {unreadCount > 0 && ` · ${unreadCount} ${bn ? 'টি নতুন' : 'unread'}`}
           </p>
         </div>
+        {/* SMS Balance Pill */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] shadow-sm">
+          <Smartphone size={16} className="text-cyan-500" />
+          <div className="text-left">
+            <div className="text-[0.625rem] text-[var(--text-muted)] font-medium">
+              {bn ? 'এসএমএস ব্যালেন্স' : 'SMS Balance'}
+            </div>
+            <div className="text-[0.8125rem] font-bold text-[var(--text-primary)]">
+              {smsBalance.remaining.toLocaleString()} <span className="text-[0.625rem] font-normal text-[var(--text-muted)]">SMS</span>
+            </div>
+          </div>
+        </div>
+
         {canCreate('messages') && (
           <button
             onClick={() => setShowCompose(true)}
@@ -156,6 +174,20 @@ export default function MessagesPage() {
           </button>
         )}
       </div>
+
+      {/* Low SMS Balance Warning Banner */}
+      {smsBalance.remaining < 50 && (
+        <div className="mb-4 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-600 text-[0.75rem] flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={15} className="shrink-0" />
+            <span>
+              {bn
+                ? `আপনার প্রতিষ্ঠানের অবশিষ্ট SMS ব্যালেন্স মাত্র ${smsBalance.remaining} টি। নতুন কোটা বরাদ্দ করতে সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।`
+                : `Low SMS balance: only ${smsBalance.remaining} SMS remaining. Contact Super Admin to allocate more credits.`}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="relative mb-4">
