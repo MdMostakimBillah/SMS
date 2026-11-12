@@ -23,6 +23,7 @@ import { setLocalStorageMode, isLocalComputerMode } from '@/lib/storageMode'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { useAppStore } from '@/store/appStore'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { SkeletonCards } from '@/components/ui/Skeleton'
 import ClassesTab from './ClassesTab'
 import InstitutionTab from './tabs/InstitutionTab'
 import RoutineTab from './tabs/RoutineTab'
@@ -35,6 +36,8 @@ export default function ClassesPage() {
     institution,
     classes,
     routines,
+    serverSynced,
+    syncing,
     updateInstitution,
     addClass,
     updateClass,
@@ -306,23 +309,30 @@ export default function ClassesPage() {
 
       {/* Classes Tab */}
       {activeTab === 'classes' && (
-        <ClassesTab
-          institution={institution}
-          classes={classes}
-          teachers={teachers}
-          subjects={subjects}
-          students={students}
-          addClass={addClass}
-          updateClass={updateClass}
-          deleteClass={deleteClass}
-          addSection={addSection}
-          updateSection={updateSection}
-          deleteSection={deleteSection}
-          switchSession={switchSession}
-          importFromSession={importFromSession}
-          isBn={isBn}
-          isMobile={isMobile}
-        />
+        (!serverSynced && !isLocalComputerMode()) || (syncing && classes.length === 0) ? (
+          <div className="space-y-4">
+            <div className="skeleton h-12 w-full rounded-xl" />
+            <SkeletonCards count={6} />
+          </div>
+        ) : (
+          <ClassesTab
+            institution={institution}
+            classes={classes}
+            teachers={teachers}
+            subjects={subjects}
+            students={students}
+            addClass={addClass}
+            updateClass={updateClass}
+            deleteClass={deleteClass}
+            addSection={addSection}
+            updateSection={updateSection}
+            deleteSection={deleteSection}
+            switchSession={switchSession}
+            importFromSession={importFromSession}
+            isBn={isBn}
+            isMobile={isMobile}
+          />
+        )
       )}
 
       {/* Routine Tab */}

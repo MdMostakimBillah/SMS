@@ -15,6 +15,7 @@ import { departmentsApi } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverDepartmentToDepartment, apiErrorMessage } from '@/lib/teacherMappers'
 import type { Department } from '@/pages/teachers/types'
+import { SkeletonTable } from '@/components/ui/Skeleton'
 
 export default function DepartmentsPage() {
   const navigate = useNavigate()
@@ -374,34 +375,25 @@ export default function DepartmentsPage() {
         )}
       </div>
 
-      {!serverSynced ? (
+      {!serverSynced && syncError ? (
         <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-10 flex flex-col items-center gap-3 text-center">
-          {syncError ? (
-            <>
-              <AlertTriangle size={26} className="text-[var(--red)]" />
-              <div>
-                <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
-                  {isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}
-                </div>
-                <div className="text-[0.75rem] text-[var(--text-secondary)] mt-1">{syncError}</div>
-              </div>
-              <button
-                onClick={() => void syncFromServer()}
-                disabled={syncing}
-                className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer disabled:cursor-default disabled:opacity-60"
-              >
-                {syncing ? (isBn ? 'লোড হচ্ছে...' : 'Loading…') : isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="w-6 h-6 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin" />
-              <span className="text-[0.8125rem] text-[var(--text-muted)]">
-                {isBn ? 'বিভাগ লোড হচ্ছে...' : 'Loading departments from server…'}
-              </span>
-            </>
-          )}
+          <AlertTriangle size={26} className="text-[var(--red)]" />
+          <div>
+            <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+              {isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}
+            </div>
+            <div className="text-[0.75rem] text-[var(--text-secondary)] mt-1">{syncError}</div>
+          </div>
+          <button
+            onClick={() => void syncFromServer()}
+            disabled={syncing}
+            className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer disabled:cursor-default disabled:opacity-60"
+          >
+            {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+          </button>
         </div>
+      ) : !serverSynced ? (
+        <SkeletonTable rows={5} columns={4} />
       ) : (
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
         <div className={`overflow-x-auto ${isMobile ? 'max-h-[60vh] overflow-y-auto' : ''}`}>

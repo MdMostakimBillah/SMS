@@ -18,6 +18,8 @@ import { FilterBar } from './components/FilterBar'
 import { ActionMenu } from './components/ActionMenu'
 import { AdmissionTable } from './components/AdmissionTable'
 import { useAdmissionActions } from './hooks/useAdmissionActions'
+import { SkeletonTable } from '@/components/ui/Skeleton'
+import { isLocalComputerMode } from '@/lib/storageMode'
 
 const PER_PAGE = [10, 20, 30, 50, 100, 200, 500, 1000]
 
@@ -25,6 +27,8 @@ export default function AdmissionManage() {
   const { isMobile } = useWindowSize()
   const updateStudent = useAdmissionStore((s) => s.updateStudent)
   const allStudents = useAdmissionStore((s) => s.students)
+  const serverSynced = useAdmissionStore((s) => s.serverSynced)
+  const syncing = useAdmissionStore((s) => s.syncing)
   const { classes, institution } = useClassStore()
   const teachers = useTeacherStore((s) => s.teachers)
   const teacherMap = useMemo(() => new Map(teachers.map((t) => [t.id, t])), [teachers])
@@ -176,10 +180,14 @@ export default function AdmissionManage() {
           exportExcel={() => exportExcel(selected, filtered)} setShowPDFModal={setShowPDFModal} isBn={isBn} />
       </div>
 
-      <AdmissionTable paginated={paginated} sp={sp} page={sp} perPage={perPage} filtered={filtered} selected={selected}
-        allSel={allSel} totalPages={totalPages} toggleAll={toggleAll} toggleOne={toggleOne} setPage={setPage}
-        setViewingStudent={setViewingStudent} setEditingStudent={setEditingStudent}
-        setApprovingStudent={setApprovingStudent} setRejectingStudent={setRejectingStudent} isBn={isBn} />
+      {(!serverSynced && !isLocalComputerMode()) || (syncing && allStudents.length === 0) ? (
+        <SkeletonTable rows={Math.min(perPage, 8)} columns={7} />
+      ) : (
+        <AdmissionTable paginated={paginated} sp={sp} page={sp} perPage={perPage} filtered={filtered} selected={selected}
+          allSel={allSel} totalPages={totalPages} toggleAll={toggleAll} toggleOne={toggleOne} setPage={setPage}
+          setViewingStudent={setViewingStudent} setEditingStudent={setEditingStudent}
+          setApprovingStudent={setApprovingStudent} setRejectingStudent={setRejectingStudent} isBn={isBn} />
+      )}
     </div>
   )
 }

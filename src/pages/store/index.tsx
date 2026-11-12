@@ -281,9 +281,24 @@ export default function StorePage() {
   })
 
   useEffect(() => {
-    useStoreStore.getState().syncFromServer().catch(() => {})
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
+    let active = true
+    setLoading(true)
+    const timeout = setTimeout(() => {
+      if (active) setLoading(false)
+    }, 1500)
+    useStoreStore
+      .getState()
+      .syncFromServer()
+      .finally(() => {
+        if (active) {
+          clearTimeout(timeout)
+          setLoading(false)
+        }
+      })
+    return () => {
+      active = false
+      clearTimeout(timeout)
+    }
   }, [])
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768

@@ -224,18 +224,29 @@ export default function HRPage() {
     }
   }, [slug])
 
-  useEffect(() => {
-    useHRStore.getState().syncFromServer(slug).catch(() => {})
-    useTeacherStore.getState().syncFromServer().catch(() => {})
-  }, [slug])
-
   const [employeeSearch, setEmployeeSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
-  }, [])
+    let active = true
+    setIsLoading(true)
+    const timeout = setTimeout(() => {
+      if (active) setIsLoading(false)
+    }, 1500)
+    Promise.allSettled([
+      useHRStore.getState().syncFromServer(slug),
+      useTeacherStore.getState().syncFromServer(),
+    ]).finally(() => {
+      if (active) {
+        clearTimeout(timeout)
+        setIsLoading(false)
+      }
+    })
+    return () => {
+      active = false
+      clearTimeout(timeout)
+    }
+  }, [slug])
   const [employeeStatusFilter, setEmployeeStatusFilter] = useState<string>('all')
   const [showGenerateRecs, setShowGenerateRecs] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)

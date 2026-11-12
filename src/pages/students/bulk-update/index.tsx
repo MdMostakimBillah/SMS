@@ -30,6 +30,8 @@ import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { compressImageWithinLimit, imageTooLargeMessage } from '@/lib/imageUpload'
 import { isMatchingSession } from '@/lib/classStudentCount'
 import { usePermission } from '@/hooks/usePermission'
+import { SkeletonTable } from '@/components/ui/Skeleton'
+import { isLocalComputerMode } from '@/lib/storageMode'
 
 type Op = 'photo' | 'roll' | 'class' | 'section' | 'bloodGroup' | 'religion' | 'academicYear'
 
@@ -97,6 +99,8 @@ export default function BulkUpdatePage() {
   const { isMobile } = useWindowSize()
   const bulkUpdateStudents = useAdmissionStore((s) => s.bulkUpdateStudents)
   const allStudents = useAdmissionStore((s) => s.students)
+  const serverSynced = useAdmissionStore((s) => s.serverSynced)
+  const syncing = useAdmissionStore((s) => s.syncing)
   const classes = useClassStore((s) => s.classes)
   const institution = useClassStore((s) => s.institution)
   const isBn = useBn()
@@ -445,6 +449,9 @@ export default function BulkUpdatePage() {
       </div>
 
       {/* Table */}
+      {(!serverSynced && !isLocalComputerMode()) || (syncing && allStudents.length === 0) ? (
+        <SkeletonTable rows={8} columns={6} className="mb-3" />
+      ) : (
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden mb-3">
         <div className="px-[0.875rem] py-[0.625rem] border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-secondary)]">
           <div className="flex items-center gap-2">
@@ -621,6 +628,7 @@ export default function BulkUpdatePage() {
           </table>
         </div>
       </div>
+      )}
 
       {/* Apply button */}
       <div className="flex items-center justify-between flex-wrap gap-[0.625rem]">

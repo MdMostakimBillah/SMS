@@ -122,11 +122,16 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
             ? 'bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)]'
             : 'bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)]'
       }`}>
-        {faceApiLoaded
-          ? (isBn ? 'মডেল লোডেড — লাইভনেস চেক সক্রিয়' : 'Model loaded — Liveness check active')
-          : faceApiError
-            ? faceApiError
-            : (isBn ? 'মডেল লোড হচ্ছে...' : 'Loading model...')}
+        {faceApiLoaded ? (
+          isBn ? 'মডেল লোডেড — লাইভনেস চেক সক্রিয়' : 'Model loaded — Liveness check active'
+        ) : faceApiError ? (
+          faceApiError
+        ) : (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[var(--amber)] animate-pulse" />
+            <span>{isBn ? 'মডেল প্রস্তুত হচ্ছে...' : 'Preparing face model...'}</span>
+          </span>
+        )}
       </div>
 
       <div className="flex gap-2 mb-4">

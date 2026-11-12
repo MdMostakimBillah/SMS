@@ -439,6 +439,30 @@ describe('normalizeVaultJsonForStore', () => {
     expect(parsed.state.serverSynced).toBe(true)
   })
 
+  it('normalizes submissions.json without overwriting assignments array', () => {
+    expect(vaultPathToKey('demo/submissions.json')).toBe('edutech-assignments_demo')
+
+    const existingStore = JSON.stringify({
+      state: {
+        assignments: [{ id: 'ASN-1', title: 'Existing ASN', maxMarks: 50 }],
+        submissions: [],
+      },
+    })
+
+    const submissionsRaw = JSON.stringify([
+      { id: 'SUB-1', assignmentId: 'ASN-1', studentId: 'STU-1', studentName: 'Rahim', marks: 45 },
+    ])
+
+    const normalized = normalizeVaultJsonForStore('edutech-assignments_demo', submissionsRaw, existingStore, 'demo/submissions.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.assignments).toHaveLength(1)
+    expect(parsed.state.assignments[0].title).toBe('Existing ASN')
+    expect(parsed.state.submissions).toHaveLength(1)
+    expect(parsed.state.submissions[0].studentName).toBe('Rahim')
+    expect(parsed.state.submissions[0].marks).toBe(45)
+    expect(parsed.state.serverSynced).toBe(true)
+  })
+
   it('round-trips online.json and normalizes online store', () => {
     expect(vaultPathToKey('demo/online.json')).toBe('edutech-online_demo')
     expect(keyToVaultPath('edutech-online_demo')).toBe('demo/online.json')

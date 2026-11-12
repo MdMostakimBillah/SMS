@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Download, Eye, EyeOff } from 'lucide-react'
+import { X, Download, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { SkeletonDoc } from '@/components/ui/Skeleton'
 import { generateSyllabusPDFHTML } from './pdfTemplate'
 import type { SyllabusPDFOptions } from './pdfTemplate'
 
@@ -249,9 +250,7 @@ export const SyllabusPDFOptionsModal = React.memo(function SyllabusPDFOptionsMod
                   style={{ width: '100%', height: '100%', minHeight: '500px', border: 'none', borderRadius: '0.5rem', background: 'white' }}
                 />
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                  {isBn ? 'প্রিভিউ লোড হচ্ছে...' : 'Loading preview...'}
-                </div>
+                <SkeletonDoc />
               )}
             </div>
           )}
@@ -302,8 +301,17 @@ export const SyllabusPDFOptionsModal = React.memo(function SyllabusPDFOptionsMod
               fontFamily: 'inherit',
             }}
           >
-            <Download size={14} />
-            {pdfLoading ? (isBn ? 'লোড হচ্ছে...' : 'Loading...') : (isBn ? 'ডাউনলোড' : 'Download')}
+            {pdfLoading ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>{isBn ? 'প্রস্তুত হচ্ছে...' : 'Generating...'}</span>
+              </>
+            ) : (
+              <>
+                <Download size={14} />
+                <span>{isBn ? 'ডাউনলোড' : 'Download'}</span>
+              </>
+            )}
           </button>
         </div>
       </div>

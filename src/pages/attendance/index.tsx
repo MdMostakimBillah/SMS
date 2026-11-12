@@ -17,7 +17,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useSessionStudents } from '@/store/admissionStore'
+import { useSessionStudents, useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { useTabSlider } from '@/hooks/useTabSlider'
@@ -27,7 +27,7 @@ import type { AttendancePDFOptions } from '@/components/shared/AttendancePDFOpti
 import type { AttendanceStatus, DayAttendance } from '@/store/teacherStore'
 import { genSinglePDF, genStudentSinglePDF } from './pdfTemplates'
 import { printRawHTML } from '@/lib/pdf'
-import { Skeleton, SkeletonCard, SkeletonLine } from '@/components/ui/Skeleton'
+import { Skeleton, SkeletonCard, SkeletonLine, SkeletonTable } from '@/components/ui/Skeleton'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
 const DeviceTab = lazyWithRetry(() => import('./DeviceTab'))
 import { today, twentyDaysAgo, getDaysBetween, isFriday, setGlobalBn } from './helpers'
@@ -106,8 +106,24 @@ export default function AttendancePage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
+    let active = true
+    setIsLoading(true)
+    const timer = setTimeout(() => {
+      if (active) setIsLoading(false)
+    }, 1500)
+    Promise.allSettled([
+      useTeacherStore.getState().syncFromServer(),
+      useAdmissionStore.getState().syncFromServer(),
+    ]).finally(() => {
+      if (active) {
+        clearTimeout(timer)
+        setIsLoading(false)
+      }
+    })
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
   }, [])
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
@@ -840,7 +856,7 @@ export default function AttendancePage() {
 
       {/* ==================== TAB: DEVICE ==================== */}
       {activeTab === 'device' && (
-        <Suspense fallback={<div className="p-4 text-center text-[var(--text-muted)] text-[0.75rem]">{isBn ? 'লোড হচ্ছে...' : 'Loading...'}</div>}>
+        <Suspense fallback={<SkeletonTable rows={5} columns={5} />}>
           <DeviceTab isBn={isBn} date={date} />
         </Suspense>
       )}

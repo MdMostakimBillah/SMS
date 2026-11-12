@@ -58,10 +58,25 @@ export default function TransportPage() {
   })
 
   useEffect(() => {
-    useTransportStore.getState().syncFromServer().catch(() => {})
+    let active = true
+    setLoading(true)
+    const timeout = setTimeout(() => {
+      if (active) setLoading(false)
+    }, 1500)
     pruneExpiredAssignments()
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
+    useTransportStore
+      .getState()
+      .syncFromServer()
+      .finally(() => {
+        if (active) {
+          clearTimeout(timeout)
+          setLoading(false)
+        }
+      })
+    return () => {
+      active = false
+      clearTimeout(timeout)
+    }
   }, [])
 
   const stats = useMemo(() => {

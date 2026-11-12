@@ -2,6 +2,7 @@ import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Download, Eye, EyeOff, CheckSquare, Square, Search } from 'lucide-react'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { SkeletonDoc } from '@/components/ui/Skeleton'
 import { generateMarksheetPDF } from './marksheetPdfTemplate'
 import type { TabulationStudent, MarksheetOptions } from './MarksheetTab'
 
@@ -450,9 +451,7 @@ export const MarksheetPDFOptionsModal = React.memo(function MarksheetPDFOptionsM
                     }}
                   />
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                    {isBn ? 'প্রিভিউ লোড হচ্ছে...' : 'Loading preview...'}
-                  </div>
+                  <SkeletonDoc />
                 )}
               </div>
             </div>

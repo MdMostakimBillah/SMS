@@ -8,6 +8,7 @@ import { useTeacherStore } from '@/store/teacherStore'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import { formatGender, isFemale } from '@/lib/gender'
+import { SkeletonDetail } from '@/components/ui/Skeleton'
 
 export default function TeacherDetailPage() {
   const navigate = useNavigate()
@@ -110,28 +111,22 @@ ${photoHtml}
   if (!teacher) {
     // Distinguish loading/failed sync from a genuinely missing record.
     if (!serverSynced) {
-      return (
-        <div className="p-10 text-center flex flex-col items-center gap-3">
-          {syncError ? (
-            <>
-              <AlertTriangle size={26} className="text-[var(--red)]" />
-              <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}</p>
-              <p className="text-xs text-[var(--text-muted)]">{syncError}</p>
-              <button
-                onClick={() => void syncFromServer()}
-                className="mt-1 py-2 px-4 rounded-lg bg-[var(--brand)] border-none text-white text-[0.8125rem] cursor-pointer"
-              >
-                {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="w-6 h-6 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin" />
-              <p className="text-sm text-[var(--text-muted)]">{isBn ? 'লোড হচ্ছে...' : 'Loading…'}</p>
-            </>
-          )}
-        </div>
-      )
+      if (syncError) {
+        return (
+          <div className="p-10 text-center flex flex-col items-center gap-3">
+            <AlertTriangle size={26} className="text-[var(--red)]" />
+            <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}</p>
+            <p className="text-xs text-[var(--text-muted)]">{syncError}</p>
+            <button
+              onClick={() => void syncFromServer()}
+              className="mt-1 py-2 px-4 rounded-lg bg-[var(--brand)] border-none text-white text-[0.8125rem] cursor-pointer"
+            >
+              {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+            </button>
+          </div>
+        )
+      }
+      return <SkeletonDetail />
     }
     return (
       <div className="p-10 text-center">

@@ -8,7 +8,7 @@ export function BrandLoadingScreen({ label }: { label?: string }) {
   return (
     <div className="fixed inset-0 z-[9998] flex flex-col items-center justify-center gap-3" style={{ background: 'var(--bg-primary)' }}>
       <BrandLogo size={72} />
-      <span className="text-[0.75rem] text-[var(--text-muted)]">{label || 'Loading…'}</span>
+      {label && <span className="text-[0.75rem] text-[var(--text-muted)]">{label}</span>}
     </div>
   )
 }

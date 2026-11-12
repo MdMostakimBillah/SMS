@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react'
-import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw, FolderOpen, Cloud, Bus, Home, ShoppingBag, Coins } from 'lucide-react'
+import { GraduationCap, Users, BookOpen, Layers, Folder, ShieldCheck, RefreshCw, FolderOpen, Cloud, Bus, Home, ShoppingBag, Coins, FileText } from 'lucide-react'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
@@ -7,6 +7,7 @@ import { useStoreStore } from '@/store/storeStore'
 import { useTransportStore } from '@/store/transportStore'
 import { useHostelStore } from '@/store/hostelStore'
 import { useOthersIncomeStore } from '@/store/othersIncomeStore'
+import { useAssignmentStore } from '@/store/assignmentStore'
 import { getActiveVaultHandle } from '@/lib/vault/vault'
 import { listAllVaultFiles } from '@/lib/vault/fsAccess'
 
@@ -152,6 +153,7 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
   const rooms = useHostelStore((s) => s.rooms)
   const otherCategories = useOthersIncomeStore((s) => s.categories)
   const otherAssignments = useOthersIncomeStore((s) => s.assignments)
+  const assignments = useAssignmentStore((s) => s.assignments)
 
   const [storageUsage, setStorageUsage] = useState<DeviceStorageStats>(getInitialStorageStats)
 
@@ -163,7 +165,7 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
     return () => {
       mounted = false
     }
-  }, [students.length, teachers.length, classes.length, routines.length, products.length, sales.length, vehicles.length, routes.length, rooms.length, folderPath])
+  }, [students.length, teachers.length, classes.length, routines.length, products.length, sales.length, vehicles.length, routes.length, rooms.length, assignments.length, folderPath])
 
   const totalSections = useMemo(() => {
     return classes.reduce((sum, c) => sum + (c.sections?.length || 0), 0)
@@ -362,6 +364,10 @@ export const LocalDatabaseControlPanel: React.FC<Props> = ({
         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]">
           <Coins size={12} className="text-[var(--purple)] shrink-0" />
           {isBn ? `অন্যান্য আয়: ${otherCategories.length} ক্যাটাগরি, ${otherAssignments.length} বরাদ্দ` : `Others Income: ${otherCategories.length} categories, ${otherAssignments.length} assigned`}
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)]">
+          <FileText size={12} className="text-[var(--brand)] shrink-0" />
+          {isBn ? `অ্যাসাইনমেন্ট: ${assignments.length} টি` : `Assignments: ${assignments.length} records`}
         </span>
       </div>
 

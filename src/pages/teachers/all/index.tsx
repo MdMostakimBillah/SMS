@@ -40,6 +40,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { openPrintWindow } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
 import { TeacherPDFOptionsModal } from '@/components/shared/TeacherPDFOptionsModal'
+import { SkeletonTable } from '@/components/ui/Skeleton'
 import { generateTeacherListPDF } from '@/pages/teachers/listPdfTemplate'
 import type { TeacherListPDFOptions } from '@/pages/teachers/listPdfTemplate'
 import type { Teacher, TeacherStatus } from '@/pages/teachers/types'
@@ -800,36 +801,29 @@ ${photoHtml}
         </div>
       </div>
 
-      {!serverSynced ? (
+      {!serverSynced && syncError ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mt-1 p-6 text-center">
-          {syncError ? (
-            <>
-              <AlertTriangle size={26} className="text-[var(--red)]" />
-              <div>
-                <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
-                  {isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}
-                </div>
-                <div className="text-[0.75rem] text-[var(--text-secondary)] mt-1">{syncError}</div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] mt-1">
-                  {isBn ? 'লোকাল ডেটা সার্ভার হিসেবে দেখানো হবে না।' : 'Local data is not shown as server data.'}
-                </div>
-              </div>
-              <button
-                onClick={() => void syncFromServer()}
-                disabled={syncing}
-                className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer disabled:cursor-default disabled:opacity-60"
-              >
-                {syncing ? (isBn ? 'লোড হচ্ছে...' : 'Loading…') : isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="w-6 h-6 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin" />
-              <span className="text-[0.8125rem] text-[var(--text-muted)]">
-                {isBn ? 'শিক্ষক ডেটা লোড হচ্ছে...' : 'Loading teachers from server…'}
-              </span>
-            </>
-          )}
+          <AlertTriangle size={26} className="text-[var(--red)]" />
+          <div>
+            <div className="text-[0.875rem] font-semibold text-[var(--text-primary)]">
+              {isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}
+            </div>
+            <div className="text-[0.75rem] text-[var(--text-secondary)] mt-1">{syncError}</div>
+            <div className="text-[0.6875rem] text-[var(--text-muted)] mt-1">
+              {isBn ? 'লোকাল ডেটা সার্ভার হিসেবে দেখানো হবে না।' : 'Local data is not shown as server data.'}
+            </div>
+          </div>
+          <button
+            onClick={() => void syncFromServer()}
+            disabled={syncing}
+            className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] font-medium cursor-pointer disabled:cursor-default disabled:opacity-60"
+          >
+            {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+          </button>
+        </div>
+      ) : !serverSynced ? (
+        <div className="mt-1">
+          <SkeletonTable rows={8} columns={7} />
         </div>
       ) : (
       <div className="flex-1 overflow-hidden flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mt-1">

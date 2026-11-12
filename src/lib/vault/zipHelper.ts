@@ -256,7 +256,7 @@ export async function createBackupZip(
         }
       }
 
-      // assignments store: also extract assignments.json
+      // assignments store: also extract assignments.json and submissions.json
       if (baseName === 'assignments') {
         const state = storeData?.state || storeData
         const assignments = state?.assignments || (Array.isArray(state) ? state : [])
@@ -265,6 +265,14 @@ export async function createBackupZip(
           zip.file('assignments.json', aJson)
           if (targetSlug && !zip.file(`${targetSlug}/assignments.json`)) {
             zip.file(`${targetSlug}/assignments.json`, aJson)
+          }
+        }
+        const submissions = state?.submissions || []
+        if (Array.isArray(submissions) && submissions.length > 0 && !zip.file('submissions.json')) {
+          const subJson = JSON.stringify(submissions, null, 2)
+          zip.file('submissions.json', subJson)
+          if (targetSlug && !zip.file(`${targetSlug}/submissions.json`)) {
+            zip.file(`${targetSlug}/submissions.json`, subJson)
           }
         }
       }
@@ -398,7 +406,7 @@ export async function createBackupZip(
         }
       }
 
-      // assignments store: also extract assignments.json
+      // assignments store: also extract assignments.json and submissions.json
       if (baseName === 'assignments') {
         const state = storeData?.state || storeData
         const assignments = state?.assignments || (Array.isArray(state) ? state : [])
@@ -407,6 +415,14 @@ export async function createBackupZip(
           zip.file('assignments.json', aJson)
           if (targetSlug && !zip.file(`${targetSlug}/assignments.json`)) {
             zip.file(`${targetSlug}/assignments.json`, aJson)
+          }
+        }
+        const submissions = state?.submissions || []
+        if (Array.isArray(submissions) && submissions.length > 0 && !zip.file('submissions.json')) {
+          const subJson = JSON.stringify(submissions, null, 2)
+          zip.file('submissions.json', subJson)
+          if (targetSlug && !zip.file(`${targetSlug}/submissions.json`)) {
+            zip.file(`${targetSlug}/submissions.json`, subJson)
           }
         }
       }
@@ -523,9 +539,10 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
   const examsFile = zip.file('exams.json') || zip.file(/(^|\/)exams\.json$/i)[0]
   const syllabusFile = zip.file('syllabus.json') || zip.file('syllabi.json') || zip.file(/(^|\/)(syllabus|syllabi)\.json$/i)[0]
   const assignmentFile = zip.file('assignments.json') || zip.file('assignment.json') || zip.file(/(^|\/)(assignments|assignment)\.json$/i)[0]
+  const submissionFile = zip.file('submissions.json') || zip.file('submission.json') || zip.file(/(^|\/)(submissions|submission)\.json$/i)[0]
   const onlineFile = zip.file('online.json') || zip.file('online_classes.json') || zip.file(/(^|\/)(online|online_classes)\.json$/i)[0]
 
-  if (classesFile || teachersFile || admissionsFile || hrFile || examsFile || syllabusFile || assignmentFile || onlineFile) {
+  if (classesFile || teachersFile || admissionsFile || hrFile || examsFile || syllabusFile || assignmentFile || submissionFile || onlineFile) {
     const stores: Record<string, any> = {}
     let classesCount = 0
     let teachersCount = 0
@@ -685,11 +702,30 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
       }
     }
 
-    if (assignmentFile) {
+    if (assignmentFile || submissionFile) {
       try {
-        const text = await assignmentFile.async('text')
-        const parsed = JSON.parse(text)
-        stores['edutech-assignments'] = parsed
+        let asgData: any[] = []
+        let subData: any[] = []
+        if (assignmentFile) {
+          const text = await assignmentFile.async('text')
+          const parsed = JSON.parse(text)
+          if (Array.isArray(parsed)) asgData = parsed
+          else if (parsed?.assignments) asgData = parsed.assignments
+          else if (parsed?.state?.assignments) asgData = parsed.state.assignments
+          if (parsed?.submissions) subData = parsed.submissions
+          else if (parsed?.state?.submissions) subData = parsed.state.submissions
+        }
+        if (submissionFile) {
+          const text = await submissionFile.async('text')
+          const parsed = JSON.parse(text)
+          if (Array.isArray(parsed)) subData = parsed
+          else if (parsed?.submissions) subData = parsed.submissions
+          else if (parsed?.state?.submissions) subData = parsed.state.submissions
+        }
+        stores['edutech-assignments'] = {
+          assignments: asgData,
+          submissions: subData,
+        }
       } catch {
         /* skip invalid json */
       }

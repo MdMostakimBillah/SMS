@@ -706,6 +706,7 @@ function getDomainSlot(path: string): string {
   if (baseName === 'admissions.json') return 'students.json'
   if (baseName === 'staff.json') return 'teachers.json'
   if (baseName === 'expense_categories.json' || baseName === 'expense_entries.json') return 'expenses.json'
+  if (baseName === 'submissions.json') return 'assignments.json'
   return baseName
 }
 
@@ -825,7 +826,7 @@ async function hydrateFromVault(): Promise<number> {
   }
 
   // Load primary store files first so individual slice files cleanly overlay on top
-  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json', 'transport.json', 'hostel.json', 'others-income.json', 'expenses.json'])
+  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json', 'transport.json', 'hostel.json', 'others-income.json', 'expenses.json', 'assignments.json'])
   const sortedEntries = Array.from(jsonGroups.entries()).sort(([slotA], [slotB]) => {
     const isPriA = PRIMARY_SLOTS.has(slotA) ? 0 : 1
     const isPriB = PRIMARY_SLOTS.has(slotB) ? 0 : 1
@@ -1358,6 +1359,12 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
         await writeVaultFile(`${slug}/assignments.json`, asgPretty)
         await writeVaultFile('assignments.json', asgPretty)
       }
+      const submissions = state.submissions ?? []
+      if (submissions.length > 0 || isRecentExplicitDelete()) {
+        const subPretty = JSON.stringify(submissions, null, 2)
+        await writeVaultFile(`${slug}/submissions.json`, subPretty)
+        await writeVaultFile('submissions.json', subPretty)
+      }
     } catch { /* ignore */ }
   }
 
@@ -1584,6 +1591,7 @@ export async function watchTick(): Promise<void> {
       const hasFeesOnDisk = currentPathSet.has('fees.json') || currentPathSet.has(`${slug}/fees.json`)
       const hasOthersIncomeOnDisk = currentPathSet.has('others-income.json') || currentPathSet.has(`${slug}/others-income.json`)
       const hasExpensesOnDisk = currentPathSet.has('expenses.json') || currentPathSet.has(`${slug}/expenses.json`)
+      const hasAssignmentsOnDisk = currentPathSet.has('assignments.json') || currentPathSet.has(`${slug}/assignments.json`)
 
       // Check if twin slice path exists on disk
       const twins = getTwinPaths(knownPath, slug)
@@ -1676,6 +1684,10 @@ export async function watchTick(): Promise<void> {
       } else if (knownPath.includes('expense_categories') || knownPath.includes('expense_entries')) {
         if (!hasExpensesOnDisk && !hasTwinSliceOnDisk) {
           // Keep expense slices intact unless expenses.json is also deleted
+        }
+      } else if (knownPath.includes('submissions')) {
+        if (!hasAssignmentsOnDisk && !hasTwinSliceOnDisk) {
+          // Keep submissions slice intact unless assignments.json is also deleted
         }
       } else {
         // Main domain file genuinely deleted by user from file manager

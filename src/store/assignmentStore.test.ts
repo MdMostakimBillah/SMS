@@ -182,10 +182,10 @@ describe('assignmentStore', () => {
     expect(useAssignmentStore.getState().serverSynced).toBe(true)
   })
 
-  it('syncToServer pushes local data to assignmentsApi.update', async () => {
+  it('syncFromServer pushes local data to server if server is empty', async () => {
     useAssignmentStore.getState().addAssignment({
       type: 'assignment',
-      title: 'Local to Server',
+      title: 'Local Item To Push',
       titleBn: '',
       description: '',
       descriptionBn: '',
@@ -193,27 +193,82 @@ describe('assignmentStore', () => {
       classId: 'CLS-1',
       sectionId: 'SEC-A',
       teacherId: 'TCH-1',
-      dueDate: '2026-11-18',
-      maxMarks: 50,
+      dueDate: '2026-11-20',
+      maxMarks: 100,
       status: 'active',
       attachments: [],
     })
 
+    vi.spyOn(assignmentsApi, 'get').mockResolvedValue({
+      assignments: [],
+      submissions: [],
+    })
     const updateSpy = vi.spyOn(assignmentsApi, 'update').mockResolvedValue({
       success: true,
       count: 1,
       submissionsCount: 0,
     })
 
-    await useAssignmentStore.getState().syncToServer()
+    await useAssignmentStore.getState().syncFromServer('test-school')
 
     expect(updateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
+        schoolId: 'test-school',
         assignments: expect.arrayContaining([
-          expect.objectContaining({ title: 'Local to Server' }),
+          expect.objectContaining({ title: 'Local Item To Push' }),
         ]),
       })
     )
     expect(useAssignmentStore.getState().serverSynced).toBe(true)
+  })
+
+  it('deleteAssignment triggers markExplicitUserDelete', async () => {
+    const bridge = await import('@/lib/vault/bridge')
+    const deleteSpy = vi.spyOn(bridge, 'markExplicitUserDelete')
+
+    useAssignmentStore.getState().addAssignment({
+      type: 'assignment',
+      title: 'Explicit Delete Item',
+      titleBn: '',
+      description: '',
+      descriptionBn: '',
+      subjectId: 'SUB-1',
+      classId: 'CLS-1',
+      sectionId: 'SEC-A',
+      teacherId: 'TCH-1',
+      dueDate: '2026-11-20',
+      maxMarks: 50,
+      status: 'active',
+      attachments: [],
+    })
+
+    const id = useAssignmentStore.getState().assignments[0].id
+    useAssignmentStore.getState().deleteAssignment(id)
+
+    expect(deleteSpy).toHaveBeenCalled()
+    expect(bridge.isRecentExplicitDelete()).toBe(true)
+  })
+
+  it('mutations call flushVaultWrites for immediate local PC vault synchronization', async () => {
+    const vault = await import('@/lib/vault/vault')
+    const flushSpy = vi.spyOn(vault, 'flushVaultWrites').mockResolvedValue()
+
+    useAssignmentStore.getState().addAssignment({
+      type: 'assignment',
+      title: 'Vault Sync Test',
+      titleBn: '',
+      description: '',
+      descriptionBn: '',
+      subjectId: 'SUB-1',
+      classId: 'CLS-1',
+      sectionId: 'SEC-A',
+      teacherId: 'TCH-1',
+      dueDate: '2026-11-20',
+      maxMarks: 50,
+      status: 'active',
+      attachments: [],
+    })
+
+    expect(flushSpy).toHaveBeenCalled()
   })
 })

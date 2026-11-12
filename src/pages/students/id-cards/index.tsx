@@ -14,6 +14,8 @@ import { escapeHtml } from '@/lib/sanitize'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { usePermission } from '@/hooks/usePermission'
 import { isMatchingSession } from '@/lib/classStudentCount'
+import { SkeletonCards } from '@/components/ui/Skeleton'
+import { isLocalComputerMode } from '@/lib/storageMode'
 
 const TEMPLATES = [
   { id: 'classic', name: 'Classic', nameBn: 'ক্লাসিক', primary: '#6366f1', secondary: '#eef2ff', accent: '#4f46e5', radius: 12 },
@@ -187,6 +189,8 @@ export default function IDCardsPage() {
   const nav = useNavPath()
   const { isMobile } = useWindowSize()
   const allStudents = useAdmissionStore((s) => s.students)
+  const serverSynced = useAdmissionStore((s) => s.serverSynced)
+  const syncing = useAdmissionStore((s) => s.syncing)
   const { classes, institution } = useClassStore()
   const isBn = useBn()
   const { canPrint } = usePermission()
@@ -505,7 +509,9 @@ export default function IDCardsPage() {
               {isBn ? 'প্রিভিউ' : 'Preview'} ({displayList.length} {isBn ? 'জন' : 'cards'})
             </span>
           </div>
-          {displayList.length === 0 ? (
+          {(!serverSynced && !isLocalComputerMode()) || (syncing && allStudents.length === 0) ? (
+            <SkeletonCards count={6} />
+          ) : displayList.length === 0 ? (
             <div className="text-center p-10 text-[var(--text-muted)]">
               <IdCard size={32} className="block mx-auto mb-2 opacity-30" />
               {isBn ? 'কোনো ছাত্র নির্বাচন করুন' : 'Select students to preview'}

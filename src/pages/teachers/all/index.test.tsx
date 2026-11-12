@@ -160,7 +160,7 @@ describe('TeachersListPage — Phase 7 server flows', () => {
   it('shows loading state before sync (no local rows faked as server data)', async () => {
     seedSyncedStore({ serverSynced: false, syncing: true, syncError: null })
     renderPage()
-    expect(await screen.findByText(/Loading teachers from server/)).toBeInTheDocument()
+    expect(await screen.findByTestId('skeleton-table')).toBeInTheDocument()
     expect(screen.queryByText('Server Teacher A')).not.toBeInTheDocument()
   })
 

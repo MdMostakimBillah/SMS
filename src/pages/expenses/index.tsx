@@ -73,9 +73,24 @@ export default function ExpensesManagementPage() {
   }, [slug])
 
   useEffect(() => {
-    useExpenseStore.getState().syncFromServer(slug).catch(() => {})
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
+    let active = true
+    setLoading(true)
+    const timeout = setTimeout(() => {
+      if (active) setLoading(false)
+    }, 1500)
+    useExpenseStore
+      .getState()
+      .syncFromServer(slug)
+      .finally(() => {
+        if (active) {
+          clearTimeout(timeout)
+          setLoading(false)
+        }
+      })
+    return () => {
+      active = false
+      clearTimeout(timeout)
+    }
   }, [slug])
 
   const stats = useMemo(() => {

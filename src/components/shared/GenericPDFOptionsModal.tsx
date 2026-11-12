@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Plus, Trash2, Download, Eye, EyeOff } from 'lucide-react'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
+import { SkeletonDoc } from '@/components/ui/Skeleton'
 
 export interface PDFColumnDef {
   key: string
@@ -632,9 +633,7 @@ export const GenericPDFOptionsModal = React.memo(function GenericPDFOptionsModal
                     }}
                   />
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                    {isBn ? 'প্রিভিউ লোড হচ্ছে...' : 'Loading preview...'}
-                  </div>
+                  <SkeletonDoc />
                 )}
               </div>
             </div>

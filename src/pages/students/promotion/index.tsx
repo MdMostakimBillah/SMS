@@ -10,6 +10,8 @@ import { isMatchingSession } from '@/lib/classStudentCount'
 import { PromotionClassSelectors } from './components/PromotionClassSelectors'
 import { PromotionHeader } from './components/PromotionHeader'
 import { PromotionTable } from './components/PromotionTable'
+import { SkeletonTable } from '@/components/ui/Skeleton'
+import { isLocalComputerMode } from '@/lib/storageMode'
 
 export default function ClassPromotionPage() {
   const navigate = useNavigate()
@@ -20,6 +22,8 @@ export default function ClassPromotionPage() {
 
   const bulkAddStudents = useAdmissionStore((s) => s.bulkAddStudents)
   const allStudents = useAdmissionStore((s) => s.students)
+  const serverSynced = useAdmissionStore((s) => s.serverSynced)
+  const syncing = useAdmissionStore((s) => s.syncing)
   const { classes, institution, sessionClasses } = useClassStore()
 
   const classOptions = useMemo(() => getClassOptions(classes), [classes])
@@ -266,26 +270,30 @@ export default function ClassPromotionPage() {
           onNewSessionChange={(v) => setNewSession(v)}
         />
 
-        <PromotionTable
-          isBn={isBn}
-          fromClass={fromClass}
-          filtered={filtered}
-          selected={selected}
-          selectedSet={selectedSet}
-          allSel={allSel}
-          onToggleAll={toggleAll}
-          toClass={toClass}
-          toSection={toSection}
-          rollMap={rollMap}
-          onToggleOne={toggleOne}
-          onRollChange={updateRoll}
-          page={page}
-          perPage={perPage}
-          setPage={setPage}
-          setPerPage={setPerPage}
-          totalPages={totalPages}
-          paginatedStudents={paginatedStudents}
-        />
+        {(!serverSynced && !isLocalComputerMode()) || (syncing && allStudents.length === 0) ? (
+          <SkeletonTable rows={8} columns={5} />
+        ) : (
+          <PromotionTable
+            isBn={isBn}
+            fromClass={fromClass}
+            filtered={filtered}
+            selected={selected}
+            selectedSet={selectedSet}
+            allSel={allSel}
+            onToggleAll={toggleAll}
+            toClass={toClass}
+            toSection={toSection}
+            rollMap={rollMap}
+            onToggleOne={toggleOne}
+            onRollChange={updateRoll}
+            page={page}
+            perPage={perPage}
+            setPage={setPage}
+            setPerPage={setPerPage}
+            totalPages={totalPages}
+            paginatedStudents={paginatedStudents}
+          />
+        )}
       </div>
     </div>
   )

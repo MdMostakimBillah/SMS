@@ -13,15 +13,18 @@ import type { Designation } from '@/pages/teachers/types'
 import { designationsApi } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverDesignationToDesignation } from '@/lib/teacherMappers'
+import { SkeletonTable } from '@/components/ui/Skeleton'
 
 export default function DesignationsPage() {
   const navigate = useNavigate()
   const nav = useNavPath()
   const isBn = useBn()
-  const { designations, teachers, addDesignation, updateDesignation, deleteDesignation, upsertServerDesignation, removeServerDesignation, syncFromServer } = useTeacherStore(
+  const { designations, teachers, serverSynced, syncError, addDesignation, updateDesignation, deleteDesignation, upsertServerDesignation, removeServerDesignation, syncFromServer } = useTeacherStore(
     useShallow((s) => ({
       designations: s.designations,
       teachers: s.teachers,
+      serverSynced: s.serverSynced,
+      syncError: s.syncError,
       addDesignation: s.addDesignation,
       updateDesignation: s.updateDesignation,
       deleteDesignation: s.deleteDesignation,
@@ -293,7 +296,22 @@ export default function DesignationsPage() {
         )}
       </div>
 
-      {/* Table */}
+      {/* Table or Skeleton */}
+      {!serverSynced && syncError ? (
+        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] p-8 text-center flex flex-col items-center gap-3">
+          <AlertTriangle size={26} className="text-[var(--red)]" />
+          <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}</p>
+          <p className="text-xs text-[var(--text-muted)]">{syncError}</p>
+          <button
+            onClick={() => void syncFromServer()}
+            className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer"
+          >
+            {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+          </button>
+        </div>
+      ) : !serverSynced ? (
+        <SkeletonTable rows={5} columns={5} />
+      ) : (
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] overflow-hidden">
         <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
           <table className="w-full border-collapse text-xs min-w-[31.25rem]">
@@ -376,6 +394,7 @@ export default function DesignationsPage() {
           </table>
         </div>
       </div>
+      )}
     </div>
   )
 }

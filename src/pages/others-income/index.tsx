@@ -76,11 +76,25 @@ export default function OthersIncomePage() {
   }, [slug])
 
   useEffect(() => {
-    useOthersIncomeStore.getState().syncFromServer(slug).catch(() => {})
-    useAdmissionStore.getState().syncFromServer().catch(() => {})
+    let active = true
+    setLoading(true)
+    const timeout = setTimeout(() => {
+      if (active) setLoading(false)
+    }, 1500)
     pruneExpiredOthersIncomeAssignments()
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
+    Promise.allSettled([
+      useOthersIncomeStore.getState().syncFromServer(slug),
+      useAdmissionStore.getState().syncFromServer(),
+    ]).finally(() => {
+      if (active) {
+        clearTimeout(timeout)
+        setLoading(false)
+      }
+    })
+    return () => {
+      active = false
+      clearTimeout(timeout)
+    }
   }, [slug])
 
   const stats = useMemo(() => {

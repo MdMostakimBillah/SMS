@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { X, File, LayoutTemplate, Download, Eye, EyeOff, Search } from 'lucide-react'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import QRCode from 'qrcode'
+import { SkeletonDoc } from '@/components/ui/Skeleton'
 import { getBrandColor } from '@/lib/pdf'
 import { useExamStore } from '@/store/examStore'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -518,9 +519,7 @@ export const CumulativeMarksheetPDFOptionsModal = React.memo(function Cumulative
                     }}
                   />
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-                    {isBn ? 'প্রিভিউ লোড হচ্ছে...' : 'Loading preview...'}
-                  </div>
+                  <SkeletonDoc />
                 )}
               </div>
             </div>

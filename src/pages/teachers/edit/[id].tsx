@@ -17,6 +17,7 @@ import { BLOOD_GROUPS, TEACHER_CATEGORIES, MAX_IMAGE_SIZE_KB } from '@/lib/const
 import { compressImageWithinLimit, imageTooLargeMessage, validateImageSize } from '@/lib/imageUpload'
 import { usePermission } from '@/hooks/usePermission'
 import { toTeacherFormGender } from '@/lib/gender'
+import { SkeletonForm } from '@/components/ui/Skeleton'
 
 // ─── FormField (outside parent component — fixes input focus loss) ───────────
 interface FieldProps {
@@ -354,28 +355,22 @@ export default function EditTeacherPage() {
   if (!teacher) {
     // Not found ≠ same state while server data is still loading or failed.
     if (!serverSynced) {
-      return (
-        <div className="p-10 text-center flex flex-col items-center gap-3">
-          {syncError ? (
-            <>
-              <AlertTriangle size={26} className="text-[var(--red)]" />
-              <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}</p>
-              <p className="text-xs text-[var(--text-muted)]">{syncError}</p>
-              <button
-                onClick={() => void syncFromServer()}
-                className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer"
-              >
-                {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
-              </button>
-            </>
-          ) : (
-            <>
-              <div className="w-6 h-6 rounded-full border-2 border-[var(--border)] border-t-[var(--brand)] animate-spin" />
-              <p className="text-sm text-[var(--text-muted)]">{isBn ? 'লোড হচ্ছে...' : 'Loading…'}</p>
-            </>
-          )}
-        </div>
-      )
+      if (syncError) {
+        return (
+          <div className="p-10 text-center flex flex-col items-center gap-3">
+            <AlertTriangle size={26} className="text-[var(--red)]" />
+            <p className="text-sm text-[var(--text-secondary)]">{isBn ? 'সার্ভার ডেটা লোড করা যায়নি' : 'Server data could not be loaded'}</p>
+            <p className="text-xs text-[var(--text-muted)]">{syncError}</p>
+            <button
+              onClick={() => void syncFromServer()}
+              className="px-4 py-2 rounded-lg bg-[var(--brand)] border-0 text-white text-[0.8125rem] cursor-pointer"
+            >
+              {isBn ? 'আবার চেষ্টা করুন' : 'Retry'}
+            </button>
+          </div>
+        )
+      }
+      return <SkeletonForm fields={6} />
     }
     return (
       <div className="p-10 text-center">

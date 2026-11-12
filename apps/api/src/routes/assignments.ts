@@ -72,7 +72,7 @@ export function assignmentsRouter(prisma: PrismaClient, jwtSecret: string) {
   router.put(
     '/',
     requireAuth(prisma, jwtSecret),
-    requireRole('school_admin', 'teacher', 'super_admin', 'student'),
+    requireRole('school_admin', 'teacher', 'super_admin', 'student', 'hr_admin'),
     async (req: AuthenticatedRequest, res: Response) => {
       try {
         let targetSchoolId = req.schoolId
@@ -89,7 +89,7 @@ export function assignmentsRouter(prisma: PrismaClient, jwtSecret: string) {
           return res.status(400).json({ error: 'School ID required' })
         }
 
-        const school = await prisma.school.findFirst({
+        let school = await prisma.school.findFirst({
           where: {
             OR: [{ id: targetSchoolId }, { domain: targetSchoolId }],
           },
@@ -99,6 +99,17 @@ export function assignmentsRouter(prisma: PrismaClient, jwtSecret: string) {
             assignmentsData: true,
           },
         })
+
+        if (!school && req.schoolId) {
+          school = await prisma.school.findUnique({
+            where: { id: req.schoolId },
+            select: {
+              id: true,
+              storageMode: true,
+              assignmentsData: true,
+            },
+          })
+        }
 
         if (!school) {
           return res.status(404).json({ error: 'Institution not found' })

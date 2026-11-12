@@ -224,4 +224,125 @@ describe('AssignmentPage Integration & LocalPC/Database Connection', () => {
       expect(useAssignmentStore.getState().assignments).toHaveLength(0)
     })
   })
+
+  it('clicking the Refresh button triggers handleRefresh / syncFromServer', async () => {
+    const user = userEvent.setup()
+    const syncSpy = vi.spyOn(useAssignmentStore.getState(), 'syncFromServer').mockResolvedValue(undefined)
+
+    render(
+      <TestWrapper>
+        <AssignmentPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Algebra Problem Set')).toBeInTheDocument()
+    })
+
+    const refreshBtn = screen.getByRole('button', { name: /Refresh|রিফ্রেশ/i })
+    expect(refreshBtn).toBeInTheDocument()
+    await user.click(refreshBtn)
+
+    await waitFor(() => {
+      expect(syncSpy).toHaveBeenCalled()
+    })
+  })
+
+  it('displays Local PC Storage badge in local_computer mode', async () => {
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+
+    render(
+      <TestWrapper>
+        <AssignmentPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Local PC Storage|লোকাল পিসি স্টোরেজ/i)).toBeInTheDocument()
+    })
+  })
+
+  it('displays sync error banner with retry button in database mode when sync fails', async () => {
+    const user = userEvent.setup()
+    useAssignmentStore.setState({
+      serverSynced: false,
+      syncError: 'Network connection failed',
+    })
+
+    render(
+      <TestWrapper>
+        <AssignmentPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Network connection failed')).toBeInTheDocument()
+    })
+
+    const retryBtn = screen.getByRole('button', { name: /Retry|পুনরায় চেষ্টা করুন/i })
+    expect(retryBtn).toBeInTheDocument()
+
+    const syncSpy = vi.spyOn(useAssignmentStore.getState(), 'syncFromServer').mockResolvedValue(undefined)
+    await user.click(retryBtn)
+
+    await waitFor(() => {
+      expect(syncSpy).toHaveBeenCalled()
+    })
+  })
+
+  it('displays Database Connected badge in default cloud / database mode', async () => {
+    sessionStorage.removeItem('edutech_storage_mode')
+    localStorage.removeItem('edutech_storage_mode')
+
+    render(
+      <TestWrapper>
+        <AssignmentPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Database Connected|ডাটাবেজ কানেক্টেড/i)).toBeInTheDocument()
+    })
+  })
+
+  it('renders submissions in detail modal and allows adding a student submission', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper>
+        <AssignmentPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Algebra Problem Set')).toBeInTheDocument()
+    })
+
+    // Click the Eye button to view details
+    const eyeIcon = document.querySelector('.lucide-eye')
+    const eyeBtn = eyeIcon?.closest('button')
+    expect(eyeBtn).toBeInTheDocument()
+    await user.click(eyeBtn!)
+
+    await waitFor(() => {
+      expect(screen.getByText('Solve page 40 to 45')).toBeInTheDocument()
+    })
+
+    // Click Add Submission button
+    const addSubBtn = screen.getByRole('button', { name: /Add Submission|জমা যোগ করুন/i })
+    await user.click(addSubBtn)
+
+    // Fill in student name
+    const studentInput = screen.getByPlaceholderText(/Enter name|নাম লিখুন/i)
+    await user.type(studentInput, 'Karim Rahman')
+
+    // Submit
+    const saveBtn = screen.getByRole('button', { name: /Save|সংরক্ষণ/i })
+    await user.click(saveBtn)
+
+    await waitFor(() => {
+      expect(screen.getByText('Karim Rahman')).toBeInTheDocument()
+      expect(useAssignmentStore.getState().submissions).toHaveLength(1)
+    })
+  })
 })

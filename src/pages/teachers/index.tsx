@@ -168,9 +168,25 @@ export default function TeachersPage() {
   }, [orderedCardIds, setTeacherCardsOrder])
 
   useEffect(() => {
-    useTeacherStore.getState().syncFromServer().catch(() => {})
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
+    let active = true
+    setIsLoading(true)
+    const timer = setTimeout(() => {
+      if (active) setIsLoading(false)
+    }, 1500)
+    useTeacherStore
+      .getState()
+      .syncFromServer()
+      .catch(() => {})
+      .finally(() => {
+        if (active) {
+          clearTimeout(timer)
+          setIsLoading(false)
+        }
+      })
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
   }, [])
 
   useEffect(() => {

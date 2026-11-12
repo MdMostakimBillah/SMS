@@ -56,10 +56,25 @@ export default function HostelPage() {
   })
 
   useEffect(() => {
-    useHostelStore.getState().syncFromServer().catch(() => {})
+    let active = true
+    setLoading(true)
+    const timeout = setTimeout(() => {
+      if (active) setLoading(false)
+    }, 1500)
     pruneExpiredHostelAssignments()
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
+    useHostelStore
+      .getState()
+      .syncFromServer()
+      .finally(() => {
+        if (active) {
+          clearTimeout(timeout)
+          setLoading(false)
+        }
+      })
+    return () => {
+      active = false
+      clearTimeout(timeout)
+    }
   }, [])
 
   const stats = useMemo(() => {

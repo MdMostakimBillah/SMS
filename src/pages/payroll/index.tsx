@@ -26,6 +26,8 @@ import { SalarySlipPDFOptionsModal } from '@/components/shared/SalarySlipPDFOpti
 import type { SalarySlipEmployee } from '@/pages/payroll/pdfTemplates/salarySlipPdfTemplate'
 import { downloadHTML, printRawHTML } from '@/lib/pdf'
 import { escapeHtml } from '@/lib/sanitize'
+import { SkeletonTable } from '@/components/ui/Skeleton'
+import { isLocalComputerMode } from '@/lib/storageMode'
 
 type SortKey = 'name' | 'salary' | 'department' | 'designation'
 
@@ -33,10 +35,12 @@ export default function PayrollPage() {
   const isBn = useBn()
   const { canPrint, canExport } = usePermission()
   const { isMobile } = useWindowSize()
-  const { teachers, departments } = useTeacherStore(
+  const { teachers, departments, serverSynced, syncing } = useTeacherStore(
     useShallow((s) => ({
       teachers: s.teachers,
       departments: s.departments,
+      serverSynced: s.serverSynced,
+      syncing: s.syncing,
     }))
   )
   const { institution } = useClassStore()
@@ -517,6 +521,9 @@ export default function PayrollPage() {
             </select>
           </div>
 
+          {(!serverSynced && !isLocalComputerMode()) || (syncing && teachers.length === 0) ? (
+            <SkeletonTable rows={8} columns={7} />
+          ) : (
           <div className={`${card} p-0 overflow-hidden`}>
             {selected.length > 0 && (
               <div className="py-[0.625rem] px-3.5 border-b border-[var(--border)] flex items-center justify-between bg-[var(--brand-light)]">
@@ -720,6 +727,7 @@ export default function PayrollPage() {
               </table>
             </div>
           </div>
+          )}
         </>
       )}
 

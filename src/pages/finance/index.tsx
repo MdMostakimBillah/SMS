@@ -295,8 +295,24 @@ export default function FeeManagementPage() {
   }, [orderedCardIds, setFeeCardsOrder])
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600)
-    return () => clearTimeout(timer)
+    let active = true
+    setIsLoading(true)
+    const timer = setTimeout(() => {
+      if (active) setIsLoading(false)
+    }, 1500)
+    Promise.allSettled([
+      useFeeStore.getState().syncFromServer(),
+      useStoreStore.getState().syncFromServer(),
+    ]).finally(() => {
+      if (active) {
+        clearTimeout(timer)
+        setIsLoading(false)
+      }
+    })
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
   }, [])
 
   useEffect(() => {

@@ -1697,29 +1697,102 @@ export function normalizeVaultJsonForStore(
   }
 
   if (key.includes('assignments')) {
-    let rawAssignments: any[] = []
-    let rawSubmissions: any[] = []
-    if (Array.isArray(parsed)) {
-      rawAssignments = parsed
-    } else if (parsed && typeof parsed === 'object') {
-      const inner = parsed.state || parsed
-      if (Array.isArray(inner.assignments)) {
-        rawAssignments = inner.assignments
-      } else if (Array.isArray(inner)) {
-        rawAssignments = inner
+    const exState = Object.keys(existingState).length > 0 ? existingState : (() => {
+      try {
+        const raw = localStorage.getItem(key)
+        const p = raw ? JSON.parse(raw) : {}
+        return p?.state || p || {}
+      } catch {
+        return {}
       }
-      if (Array.isArray(inner.submissions)) {
-        rawSubmissions = inner.submissions
-      }
+    })()
+    const exVersion = existingVersion || 1
+
+    const isSubmissionsOnly =
+      filePath?.includes('submission') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].assignmentId !== undefined && parsed[0].studentId !== undefined)
+
+    if (isSubmissionsOnly) {
+      const rawSubs = Array.isArray(parsed) ? parsed : (parsed.submissions || parsed.state?.submissions || [])
+      const normalizedSubs = rawSubs.map((s: any, idx: number) => ({
+        id: String(s.id || `SUB-${Date.now()}-${idx}`).trim(),
+        createdAt: String(s.createdAt || new Date().toISOString().split('T')[0]),
+        updatedAt: String(s.updatedAt || new Date().toISOString().split('T')[0]),
+        assignmentId: String(s.assignmentId || '').trim(),
+        studentId: String(s.studentId || '').trim(),
+        studentName: String(s.studentName || '').trim(),
+        studentNameBn: String(s.studentNameBn || s.studentName || '').trim(),
+        submittedAt: String(s.submittedAt || new Date().toISOString().split('T')[0]),
+        fileUrl: String(s.fileUrl || ''),
+        marks: s.marks !== null && s.marks !== undefined && s.marks !== '' ? Number(s.marks) : null,
+        feedback: String(s.feedback || ''),
+        feedbackBn: String(s.feedbackBn || s.feedback || ''),
+        status: ['submitted', 'reviewed', 'returned', 'late'].includes(s.status) ? s.status : 'submitted',
+      }))
+      return JSON.stringify({
+        state: {
+          ...exState,
+          assignments: Array.isArray(exState.assignments) ? exState.assignments : [],
+          submissions: normalizedSubs,
+          serverSynced: true,
+          syncing: false,
+          syncError: null,
+        },
+        version: exVersion,
+      })
     }
 
-    const finalState = {
-      ...existingState,
-      assignments: rawAssignments.length > 0 ? rawAssignments : (existingState.assignments || []),
-      submissions: rawSubmissions.length > 0 ? rawSubmissions : (existingState.submissions || []),
-      serverSynced: true,
+    const isAssignmentsOnly =
+      (filePath?.includes('assignment') && !filePath?.includes('submission')) ||
+      (Array.isArray(parsed) && parsed.length > 0 && (parsed[0].dueDate !== undefined || parsed[0].maxMarks !== undefined))
+
+    if (isAssignmentsOnly) {
+      const rawAssignments = Array.isArray(parsed) ? parsed : (parsed.assignments || parsed.state?.assignments || [])
+      const normalizedAssignments = rawAssignments.map((a: any, idx: number) => ({
+        id: String(a.id || `ASN-${Date.now()}-${idx}`).trim(),
+        createdAt: String(a.createdAt || new Date().toISOString().split('T')[0]),
+        updatedAt: String(a.updatedAt || new Date().toISOString().split('T')[0]),
+        type: a.type === 'homework' ? 'homework' : 'assignment',
+        title: String(a.title || '').trim(),
+        titleBn: String(a.titleBn || a.title || '').trim(),
+        description: String(a.description || ''),
+        descriptionBn: String(a.descriptionBn || a.description || ''),
+        subjectId: String(a.subjectId || '').trim(),
+        classId: String(a.classId || '').trim(),
+        sectionId: String(a.sectionId || '').trim(),
+        teacherId: String(a.teacherId || '').trim(),
+        dueDate: String(a.dueDate || ''),
+        maxMarks: Number(a.maxMarks) || 0,
+        status: ['active', 'draft', 'closed', 'archived'].includes(a.status) ? a.status : 'active',
+        attachments: Array.isArray(a.attachments) ? a.attachments : [],
+      }))
+      return JSON.stringify({
+        state: {
+          ...exState,
+          assignments: normalizedAssignments,
+          submissions: Array.isArray(exState.submissions) ? exState.submissions : [],
+          serverSynced: true,
+          syncing: false,
+          syncError: null,
+        },
+        version: exVersion,
+      })
     }
-    return JSON.stringify({ state: finalState, version: existingVersion || 1 })
+
+    const inner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const assignments = Array.isArray(inner.assignments) ? inner.assignments : (exState.assignments || [])
+    const submissions = Array.isArray(inner.submissions) ? inner.submissions : (exState.submissions || [])
+
+    const finalState = {
+      ...exState,
+      ...inner,
+      assignments,
+      submissions,
+      serverSynced: true,
+      syncing: false,
+      syncError: null,
+    }
+    return JSON.stringify({ state: finalState, version: exVersion })
   }
 
   if (key.includes('online')) {

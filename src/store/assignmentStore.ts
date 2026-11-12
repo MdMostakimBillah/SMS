@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug } from '@/lib/storage'
 import { isLocalComputerMode } from '@/lib/storageMode'
-import { isRecentExplicitDelete } from '@/lib/vault/bridge'
+import { isRecentExplicitDelete, markExplicitUserDelete } from '@/lib/vault/bridge'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { assignmentsApi } from '@/lib/api'
 
 export type AssignmentStatus = 'active' | 'draft' | 'closed' | 'archived'
@@ -67,7 +68,10 @@ interface AssignmentState {
 const today = () => new Date().toISOString().split('T')[0]
 
 let serverSyncTimer: any = null
-function queueServerSync(get: () => AssignmentState) {
+function queueServerSync(
+  get: () => AssignmentState,
+  set: (partial: Partial<AssignmentState> | ((state: AssignmentState) => Partial<AssignmentState>)) => void
+) {
   try {
     if (isLocalComputerMode()) return
     const state = get()
@@ -81,14 +85,19 @@ function queueServerSync(get: () => AssignmentState) {
         if (s.assignments.length === 0 && s.submissions.length === 0 && !isRecentExplicitDelete()) {
           return
         }
+        const slug = getSlug() || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : undefined) || undefined
         await assignmentsApi.update({
           assignments: s.assignments,
           submissions: s.submissions,
+          schoolId: slug,
         })
+        set({ serverSynced: true, syncError: null })
       } catch (e) {
         console.warn('[assignments] Background sync failed:', e)
+        const msg = e instanceof Error ? e.message : 'Background sync to database failed'
+        set({ syncError: msg })
       }
-    }, 500)
+    }, 400)
   } catch {
     /* ignore */
   }
@@ -106,25 +115,51 @@ export const useAssignmentStore = create<AssignmentState>()(
       syncFromServer: async (slugOrId) => {
         if (isLocalComputerMode()) {
           set({ serverSynced: true, syncing: false, syncError: null })
+          void flushVaultWrites()
           return
         }
         try {
           set({ syncing: true, syncError: null })
           const res = await assignmentsApi.get(slugOrId)
           if (res?.storageMode === 'local_computer') {
-            set({ serverSynced: true, syncing: false })
+            set({ serverSynced: true, syncing: false, syncError: null })
+            void flushVaultWrites()
             return
           }
           if (res && (Array.isArray(res.assignments) || Array.isArray(res.submissions))) {
-            set({
-              assignments: Array.isArray(res.assignments) ? res.assignments : get().assignments,
-              submissions: Array.isArray(res.submissions) ? res.submissions : get().submissions,
-              serverSynced: true,
-              syncing: false,
-              syncError: null,
-            })
+            const hasAssignments = Array.isArray(res.assignments) && res.assignments.length > 0
+            const hasSubmissions = Array.isArray(res.submissions) && res.submissions.length > 0
+            const state = get()
+
+            if (hasAssignments || hasSubmissions) {
+              set({
+                assignments: Array.isArray(res.assignments) ? res.assignments : get().assignments,
+                submissions: Array.isArray(res.submissions) ? res.submissions : get().submissions,
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+              void flushVaultWrites()
+            } else if (state.assignments.length > 0 || state.submissions.length > 0) {
+              await assignmentsApi.update({
+                assignments: state.assignments,
+                submissions: state.submissions,
+                schoolId: slugOrId,
+              })
+              set({ serverSynced: true, syncing: false, syncError: null })
+              void flushVaultWrites()
+            } else {
+              set({
+                assignments: Array.isArray(res.assignments) ? res.assignments : [],
+                submissions: Array.isArray(res.submissions) ? res.submissions : [],
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+              void flushVaultWrites()
+            }
           } else {
-            set({ serverSynced: true, syncing: false })
+            set({ serverSynced: true, syncing: false, syncError: null })
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : 'Failed to fetch assignments from server'
@@ -133,15 +168,21 @@ export const useAssignmentStore = create<AssignmentState>()(
       },
 
       syncToServer: async () => {
-        if (isLocalComputerMode()) return
+        if (isLocalComputerMode()) {
+          void flushVaultWrites()
+          return
+        }
         try {
           set({ syncing: true, syncError: null })
           const s = get()
+          const slug = getSlug() || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : undefined) || undefined
           await assignmentsApi.update({
             assignments: s.assignments,
             submissions: s.submissions,
+            schoolId: slug,
           })
-          set({ syncing: false, serverSynced: true })
+          set({ syncing: false, serverSynced: true, syncError: null })
+          void flushVaultWrites()
         } catch (err) {
           const msg = err instanceof Error ? err.message : 'Failed to save assignments to server'
           set({ syncing: false, syncError: msg })
@@ -150,12 +191,14 @@ export const useAssignmentStore = create<AssignmentState>()(
 
       setAssignments: (assignments) => {
         set({ assignments })
-        queueServerSync(get)
+        void flushVaultWrites()
+        queueServerSync(get, set)
       },
 
       setSubmissions: (submissions) => {
         set({ submissions })
-        queueServerSync(get)
+        void flushVaultWrites()
+        queueServerSync(get, set)
       },
 
       addAssignment: (a) => {
@@ -172,7 +215,8 @@ export const useAssignmentStore = create<AssignmentState>()(
             assignments: [{ ...a, id, createdAt: now, updatedAt: now }, ...state.assignments],
           }
         })
-        queueServerSync(get)
+        void flushVaultWrites()
+        queueServerSync(get, set)
       },
 
       updateAssignment: (id, data) => {
@@ -181,15 +225,18 @@ export const useAssignmentStore = create<AssignmentState>()(
             a.id === id ? { ...a, ...data, updatedAt: today() } : a
           ),
         }))
-        queueServerSync(get)
+        void flushVaultWrites()
+        queueServerSync(get, set)
       },
 
       deleteAssignment: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           assignments: state.assignments.filter((a) => a.id !== id),
           submissions: state.submissions.filter((s) => s.assignmentId !== id),
         }))
-        queueServerSync(get)
+        void flushVaultWrites()
+        queueServerSync(get, set)
       },
 
       addSubmission: (s) => {
@@ -206,7 +253,8 @@ export const useAssignmentStore = create<AssignmentState>()(
             submissions: [{ ...s, id, createdAt: now, updatedAt: now }, ...state.submissions],
           }
         })
-        queueServerSync(get)
+        void flushVaultWrites()
+        queueServerSync(get, set)
       },
 
       updateSubmission: (id, data) => {
@@ -215,14 +263,17 @@ export const useAssignmentStore = create<AssignmentState>()(
             s.id === id ? { ...s, ...data, updatedAt: today() } : s
           ),
         }))
-        queueServerSync(get)
+        void flushVaultWrites()
+        queueServerSync(get, set)
       },
 
       deleteSubmission: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           submissions: state.submissions.filter((s) => s.id !== id),
         }))
-        queueServerSync(get)
+        void flushVaultWrites()
+        queueServerSync(get, set)
       },
     }),
     { name: 'edutech-assignments', storage: createNamespacedStorage('edutech-assignments'), version: 1 }

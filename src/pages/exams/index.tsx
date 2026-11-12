@@ -87,15 +87,6 @@ export default function ExamDashboard() {
   const isMountedRef = useRef(true)
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    isMountedRef.current = true
-    syncFromServer(effectiveSlug).catch(() => {})
-    return () => {
-      isMountedRef.current = false
-      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
-    }
-  }, [syncFromServer, effectiveSlug])
-
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
     try {
@@ -137,9 +128,25 @@ export default function ExamDashboard() {
   const { quickAccessCardsOrder, setQuickAccessCardsOrder } = useAppStore()
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 700)
-    return () => clearTimeout(timer)
-  }, [])
+    isMountedRef.current = true
+    setIsLoading(true)
+    const timeout = setTimeout(() => {
+      if (isMountedRef.current) setIsLoading(false)
+    }, 1500)
+    syncFromServer(effectiveSlug)
+      .catch(() => {})
+      .finally(() => {
+        if (isMountedRef.current) {
+          clearTimeout(timeout)
+          setIsLoading(false)
+        }
+      })
+    return () => {
+      isMountedRef.current = false
+      clearTimeout(timeout)
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    }
+  }, [syncFromServer, effectiveSlug])
 
   useEffect(() => {
     if (isLoading || !containerRef.current) return

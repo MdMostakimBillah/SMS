@@ -42,6 +42,8 @@ import type { StudentAdmission } from '@/pages/students/admission/types'
 import { BLOOD_GROUPS } from '@/lib/constants'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { usePermission } from '@/hooks/usePermission'
+import { SkeletonTable } from '@/components/ui/Skeleton'
+import { isLocalComputerMode } from '@/lib/storageMode'
 
 const PER_PAGE_OPTS = [10, 20, 30, 50, 100, 200, 500, 1000]
 
@@ -51,6 +53,8 @@ export default function AllStudentsPage() {
   const { isMobile } = useWindowSize()
   const students = useSessionStudents()
   const syncFromServer = useAdmissionStore((s) => s.syncFromServer)
+  const serverSynced = useAdmissionStore((s) => s.serverSynced)
+  const syncing = useAdmissionStore((s) => s.syncing)
   const deactivateStudent = useAdmissionStore((s) => s.deactivateStudent)
   const reactivateStudent = useAdmissionStore((s) => s.reactivateStudent)
 
@@ -719,7 +723,10 @@ export default function AllStudentsPage() {
         </div>
       </div>
 
-      {/* Table - scrollable */}
+      {/* Table - scrollable or Skeleton */}
+      {((!serverSynced && !isLocalComputerMode()) || (syncing && students.length === 0)) ? (
+        <SkeletonTable rows={8} columns={8} className="mt-1" />
+      ) : (
       <div className="flex-1 overflow-hidden flex flex-col bg-[var(--bg-primary)] border border-[var(--border)] rounded-[0.875rem] mt-1">
         <div className={`flex-1 overflow-y-auto ${isMobile ? 'max-h-[50vh]' : ''}`}>
           <table className="w-full border-collapse text-xs">
@@ -915,6 +922,7 @@ export default function AllStudentsPage() {
           </div>
         </div>
       </div>
+      )}
       {/* Inactivation Modal */}
       {inactiveTarget && (
         <InactivationModal
