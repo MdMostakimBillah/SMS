@@ -7,6 +7,7 @@ import { useAppStore } from '@/store/appStore'
 import { getDashboardPath } from '@/lib/navUtils'
 import { getLoginSecret } from '@/lib/loginPath'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
+import { ForgotPasswordModal } from './ForgotPasswordModal'
 
 function getInitialTheme(): 'light' | 'dark' {
   try {
@@ -46,6 +47,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [forgotModalOpen, setForgotModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [isBn] = useState(() => document.documentElement.dataset.lang === 'bn')
   const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme)
@@ -202,6 +204,19 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Forgot password */}
+            <div className="text-right -mt-1">
+              <button
+                type="button"
+                onClick={() => setForgotModalOpen(true)}
+                className={`text-[0.6875rem] cursor-pointer bg-transparent border-none hover:underline transition-colors ${
+                  isDark ? 'text-white/40 hover:text-white/70' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                }`}
+              >
+                {isBn ? 'পাসওয়ার্ড মনে নেই?' : 'Forgot password?'}
+              </button>
+            </div>
+
             {/* Submit */}
             <button type="submit" disabled={!canSubmit}
               className="w-full h-11 rounded-xl text-[0.875rem] font-semibold border-none cursor-pointer flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -231,6 +246,13 @@ export default function LoginPage() {
               <span>{isBn ? 'নিরাপদ অ্যাডমিন অ্যাক্সেস' : 'Protected admin access'}</span>
             </div>
           </div>
+
+          <ForgotPasswordModal
+            isOpen={forgotModalOpen}
+            onClose={() => setForgotModalOpen(false)}
+            isBn={isBn}
+            isDark={isDark}
+          />
 
         </div>
       </div>

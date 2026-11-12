@@ -42,16 +42,16 @@ export default function Page() {
   const isSuperAdmin = user?.role === 'super_admin'
   const isInstAdmin = user?.role === 'admin' || user?.role === 'school_admin'
 
-  if (!isSuperAdmin && !isInstAdmin) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <AlertTriangle size={48} className="text-[var(--amber)] mx-auto mb-4 opacity-50" />
           <div className="text-[1rem] font-semibold text-[var(--text-primary)] mb-2">
-            {isBn ? 'অ্যাক্সেস অস্বীকৃত' : 'Access Denied'}
+            {isBn ? 'লগইন প্রয়োজন' : 'Authentication Required'}
           </div>
           <div className="text-[0.8125rem] text-[var(--text-muted)]">
-            {isBn ? 'শুধুমাত্র অ্যাডমিন সেটিংস অ্যাক্সেস করতে পারেন' : 'Only admin can access settings'}
+            {isBn ? 'সেটিংস দেখতে অনুগ্রহ করে লগইন করুন' : 'Please log in to access settings'}
           </div>
         </div>
       </div>

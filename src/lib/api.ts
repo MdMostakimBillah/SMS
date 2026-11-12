@@ -267,9 +267,26 @@ export const authApi = {
   getSuperAdmin: () =>
     apiRequest<{ email: string; hasCustomPassword: boolean }>('/api/auth/super-admin'),
 
-  updateSuperAdmin: (data: { email?: string; password?: string; currentPassword?: string }) =>
+  updateSuperAdmin: (data: { email?: string; password?: string; currentPassword?: string; emailVerified?: boolean }) =>
     apiRequest<{ success: boolean }>('/api/auth/super-admin', {
       method: 'PUT',
+      body: data,
+    }),
+
+  updateCredentials: (data: {
+    email?: string
+    password?: string
+    currentPassword?: string
+    emailVerified?: boolean
+  }) =>
+    apiRequest<{ success: boolean; user?: SessionUser }>('/api/auth/credentials', {
+      method: 'PUT',
+      body: data,
+    }),
+
+  resetPassword: (data: { email: string; newPassword: string; emailVerified: boolean }) =>
+    apiRequest<{ success: boolean }>('/api/auth/reset-password', {
+      method: 'POST',
       body: data,
     }),
 

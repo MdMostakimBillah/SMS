@@ -15,6 +15,7 @@ import { compressImageWithinLimit } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 import { withSlug } from '@/lib/storage'
 import { authApi, ApiError } from '@/lib/api'
+import { OtpInput } from '@/components/shared/OtpInput'
 
 const btnBounce = `animate-[btnBounce_0.35s_cubic-bezier(0.34,1.56,0.64,1)]`
 
@@ -83,58 +84,6 @@ const SECTION_STEPS: SectionStep[] = [
 ]
 
 const PRESET_COLORS = ['#6366f1', '#3b82f6', '#14b8a6', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#a855f7', '#06b6d4', '#f97316']
-
-function OtpInput({ length, value, onChange, error, disabled }: { length: number; value: string; onChange: (v: string) => void; error?: boolean; disabled?: boolean }) {
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
-
-  const handleChange = (index: number, digit: string) => {
-    if (digit.length > 1) {
-      // Handle paste
-      const pasted = digit.replace(/[^a-zA-Z0-9]/g, '').slice(0, length).toUpperCase()
-      onChange(pasted)
-      const nextIdx = Math.min(pasted.length, length - 1)
-      setTimeout(() => inputRefs.current[nextIdx]?.focus(), 0)
-      return
-    }
-    const newValue = value.split('')
-    newValue[index] = digit.toUpperCase()
-    const result = newValue.join('').replace(/[^a-zA-Z0-9]/g, '').slice(0, length)
-    onChange(result)
-    if (digit && index < length - 1) {
-      setTimeout(() => inputRefs.current[index + 1]?.focus(), 0)
-    }
-  }
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !value[index] && index > 0) {
-      setTimeout(() => inputRefs.current[index - 1]?.focus(), 0)
-    }
-  }
-
-  const borderColor = error ? 'var(--red)' : 'var(--border)'
-  const focusRing = error ? 'focus:ring-[var(--red)]/20' : 'focus:ring-[var(--brand)]/10'
-
-  return (
-    <div className="flex gap-2 justify-center">
-      {Array.from({ length }).map((_, i) => (
-        <input
-          key={i}
-          ref={(el) => { inputRefs.current[i] = el }}
-          type="text"
-          inputMode="text"
-          autoComplete="one-time-code"
-          maxLength={length}
-          value={value[i] || ''}
-          onChange={(e) => handleChange(i, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(i, e)}
-          disabled={disabled}
-          className={`w-11 h-12 rounded-xl border bg-[var(--bg-secondary)] text-center text-lg font-mono font-bold text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-2 ${focusRing} transition-all disabled:opacity-50`}
-          style={{ borderColor }}
-        />
-      ))}
-    </div>
-  )
-}
 
 export default function CreateSchool() {
   const isBn = useBn()

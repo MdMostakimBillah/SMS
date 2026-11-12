@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   GraduationCap, Building2, Globe, Phone, Mail, MapPin,
   Upload, Palette, CreditCard, Shield, Eye, EyeOff,
@@ -14,6 +14,7 @@ import { compressImageWithinLimit } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { authApi, ApiError } from '@/lib/api'
+import { OtpInput } from '@/components/shared/OtpInput'
 
 const BASE_URL = 'smsappbd.vercel.app'
 
@@ -80,38 +81,6 @@ const STEPS = [
   { key: 'package', icon: CreditCard, labelEn: 'Package', labelBn: 'প্যাকেজ' },
   { key: 'admin', icon: Shield, labelEn: 'Admin', labelBn: 'অ্যাডমিন' },
 ]
-
-/* ─── OtpInput ─── */
-function OtpInput({ length, value, onChange, disabled, isDark }: { length: number; value: string; onChange: (v: string) => void; disabled?: boolean; isDark: boolean }) {
-  const refs = useRef<(HTMLInputElement | null)[]>([])
-  const handleChange = (i: number, d: string) => {
-    if (d.length > 1) {
-      const p = d.replace(/[^a-zA-Z0-9]/g, '').slice(0, length).toUpperCase()
-      onChange(p)
-      setTimeout(() => refs.current[Math.min(p.length, length - 1)]?.focus(), 0)
-      return
-    }
-    const arr = value.split('')
-    arr[i] = d.toUpperCase()
-    const r = arr.join('').replace(/[^a-zA-Z0-9]/g, '').slice(0, length)
-    onChange(r)
-    if (d && i < length - 1) setTimeout(() => refs.current[i + 1]?.focus(), 0)
-  }
-  const handleKeyDown = (i: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !value[i] && i > 0) setTimeout(() => refs.current[i - 1]?.focus(), 0)
-  }
-  return (
-    <div className="flex gap-2 justify-center">
-      {Array.from({ length }).map((_, i) => (
-        <input key={i} ref={(el) => { refs.current[i] = el }} type="text" inputMode="text" autoComplete="one-time-code"
-          maxLength={length} value={value[i] || ''} onChange={(e) => handleChange(i, e.target.value)}
-          onKeyDown={(e) => handleKeyDown(i, e)} disabled={disabled}
-          style={{ background: isDark ? 'rgba(255,255,255,0.06)' : undefined, color: isDark ? '#fff' : undefined, borderColor: isDark ? 'rgba(255,255,255,0.12)' : undefined }}
-          className={`w-11 h-12 rounded-xl border text-center text-lg font-mono font-bold outline-none transition-all disabled:opacity-50 ${isDark ? 'focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20' : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'}`} />
-      ))}
-    </div>
-  )
-}
 
 /* ─── Main Component ─── */
 export default function InstitutionRegister() {

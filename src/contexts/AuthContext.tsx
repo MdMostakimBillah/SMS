@@ -25,6 +25,7 @@ interface AuthContextType {
   sessionSource: SessionSource
   /** Re-runs the server session check (used by the connection-error screen). */
   retryRestore: () => void
+  updateCurrentUser: (partial: Partial<User>) => void
   login: (email: string, password: string) => Promise<User | void>
   register: (email: string, password: string, name: string, role?: string) => Promise<void>
   logout: () => void
@@ -488,9 +489,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
+  const updateCurrentUser = useCallback((partial: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return null
+      const updated = { ...prev, ...partial }
+      saveOfflineSession({
+        user: updated,
+        savedAt: Date.now(),
+        slug: resolveUserSlug(updated),
+        role: updated.role,
+      })
+      if (partial.email) {
+        setUserId(partial.email)
+      }
+      return updated
+    })
+  }, [])
+
   const ctxValue = useMemo(() => ({
-    user, loading, restoreFailed, sessionSource, retryRestore, login, register, logout, error, clearError, isLockedOut, lockoutRemaining
-  }), [user, loading, restoreFailed, sessionSource, retryRestore, login, register, logout, error, clearError, isLockedOut, lockoutRemaining])
+    user, loading, restoreFailed, sessionSource, retryRestore, updateCurrentUser, login, register, logout, error, clearError, isLockedOut, lockoutRemaining
+  }), [user, loading, restoreFailed, sessionSource, retryRestore, updateCurrentUser, login, register, logout, error, clearError, isLockedOut, lockoutRemaining])
 
   return (
     <AuthContext.Provider value={ctxValue}>

@@ -15,6 +15,7 @@ import { setLocalStorageMode } from '@/lib/storageMode'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { presets } from '@/components/shared/ColorSettings'
 import { getVaultStatus, vaultReconnect } from '@/lib/vault/vault'
+import { ForgotPasswordModal } from './ForgotPasswordModal'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -221,6 +222,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [forgotModalOpen, setForgotModalOpen] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -662,11 +664,24 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
           <div className="mt-4 text-center">
             <p className={`text-[0.6875rem] ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>
               {isBn ? 'পাসওয়ার্ড মনে নেই?' : 'Forgot password?'}{' '}
-              <button className="hover:underline cursor-pointer bg-transparent border-none text-[0.6875rem]" style={{ color: institution.brandColor }}>
-                {isBn ? 'যোগাযোগ করুন' : 'Contact Admin'}
+              <button
+                type="button"
+                onClick={() => setForgotModalOpen(true)}
+                className="hover:underline cursor-pointer bg-transparent border-none text-[0.6875rem] font-medium"
+                style={{ color: institution.brandColor }}
+              >
+                {isBn ? 'পাসওয়ার্ড রিসেট করুন' : 'Reset Password'}
               </button>
             </p>
           </div>
+
+          <ForgotPasswordModal
+            isOpen={forgotModalOpen}
+            onClose={() => setForgotModalOpen(false)}
+            isBn={isBn}
+            brandColor={institution.brandColor}
+            isDark={isDark}
+          />
 
           {/* Footer */}
           <div className="mt-8 text-center">

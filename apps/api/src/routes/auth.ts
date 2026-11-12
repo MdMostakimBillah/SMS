@@ -73,6 +73,20 @@ const superAdminUpdateSchema = z.object({
   email: z.string().email().max(254).optional(),
   password: z.string().min(8).max(128).optional(),
   currentPassword: z.string().min(1).max(128).optional(),
+  emailVerified: z.boolean().optional(),
+})
+
+const updateCredentialsSchema = z.object({
+  email: z.string().email().max(254).optional(),
+  password: z.string().min(8).max(128).optional(),
+  currentPassword: z.string().min(1).max(128).optional(),
+  emailVerified: z.boolean().optional(),
+})
+
+const resetPasswordSchema = z.object({
+  email: z.string().email().max(254),
+  newPassword: z.string().min(8).max(128),
+  emailVerified: z.boolean(),
 })
 
 const ARGON2_OPTIONS = {
@@ -630,7 +644,7 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
       if (!parsed.success) {
         return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
       }
-      const { email, password, currentPassword } = parsed.data
+      const { email, password, currentPassword, emailVerified } = parsed.data
 
       const superAdmin = await prisma.user.findFirst({ where: { role: 'super_admin' } })
       if (!superAdmin) {
@@ -642,19 +656,22 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
       const wantsPassword = password !== undefined
       const wantsEmail = email !== undefined && email.toLowerCase() !== superAdmin.email
       if (wantsPassword || wantsEmail) {
-        if (!currentPassword) {
-          return res.status(400).json({ error: 'Current password is required' })
-        }
-        const valid = await verify(superAdmin.passwordHash, currentPassword)
-        if (!valid) {
-          audit({
-            action: 'auth.super_admin.update',
-            actorId: req.userId,
-            actorRole: req.userRole,
-            outcome: 'failure',
-            detail: { reason: 'current_password_invalid' },
-          })
-          return res.status(403).json({ error: 'Current password is incorrect' })
+        if (currentPassword) {
+          const valid = await verify(superAdmin.passwordHash, currentPassword)
+          if (!valid) {
+            audit({
+              action: 'auth.super_admin.update',
+              actorId: req.userId,
+              actorRole: req.userRole,
+              outcome: 'failure',
+              detail: { reason: 'current_password_invalid' },
+            })
+            return res.status(403).json({ error: 'Current password is incorrect' })
+          }
+        } else {
+          if (!emailVerified) {
+            return res.status(400).json({ error: 'Current password or email verification is required' })
+          }
         }
       }
 
@@ -729,6 +746,166 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         return res.status(400).json({ error: 'Validation failed', details: err.errors })
       }
       console.error('[auth] super-admin update failed:', err instanceof Error ? err.message : err)
+      res.status(500).json({ error: 'Internal server error' })
+    }
+  })
+
+  // Update authenticated user's credentials (email and/or password)
+  router.put('/credentials', requireAuth(prisma, jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const parsed = updateCredentialsSchema.safeParse(req.body)
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
+      }
+      const { email, password, currentPassword, emailVerified } = parsed.data
+
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId! },
+        include: { school: true },
+      })
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' })
+      }
+
+      const wantsPassword = password !== undefined
+      const wantsEmail = email !== undefined && email.trim().toLowerCase() !== user.email.toLowerCase()
+
+      if (!wantsPassword && !wantsEmail) {
+        return res.json({ success: true, user: toPublicUser(user) })
+      }
+
+      // Password change or email change verification:
+      // If current password provided, verify it against previous password
+      if (currentPassword) {
+        const valid = await verify(user.passwordHash, currentPassword)
+        if (!valid) {
+          audit({
+            action: 'auth.credentials.update',
+            actorId: req.userId,
+            actorRole: req.userRole,
+            outcome: 'failure',
+            detail: { reason: 'current_password_invalid' },
+          })
+          return res.status(403).json({ error: 'Current password is incorrect' })
+        }
+      } else {
+        // If current password is not provided, must have verified via email OTP
+        if (!emailVerified) {
+          return res.status(400).json({ error: 'Current password or email verification is required' })
+        }
+      }
+
+      let targetEmail: string | null = null
+      if (wantsEmail) {
+        targetEmail = email!.trim().toLowerCase()
+        const clash = await prisma.user.findUnique({ where: { email: targetEmail } })
+        if (clash && clash.id !== user.id) {
+          audit({
+            action: 'auth.credentials.update',
+            actorId: req.userId,
+            actorRole: req.userRole,
+            outcome: 'failure',
+            detail: { reason: 'email_in_use' },
+          })
+          return res.status(409).json({ error: 'Email already in use' })
+        }
+      }
+
+      const newHash = wantsPassword ? await hash(password!, ARGON2_OPTIONS) : null
+
+      let updatedUser = user
+      try {
+        await prisma.$transaction(async (tx) => {
+          const updateData: { passwordHash?: string; email?: string } = {}
+          if (newHash) updateData.passwordHash = newHash
+          if (targetEmail !== null) updateData.email = targetEmail
+
+          updatedUser = await tx.user.update({
+            where: { id: user.id },
+            data: updateData,
+            include: { school: true },
+          })
+
+          if (newHash) {
+            // Revoke every other session; the caller stays logged in
+            await tx.session.updateMany({
+              where: { userId: user.id, id: { not: req.sessionId ?? '' } },
+              data: { revokedAt: new Date() },
+            })
+          }
+        })
+      } catch (err) {
+        if (isUniqueViolation(err)) {
+          return res.status(409).json({ error: 'Email already in use' })
+        }
+        throw err
+      }
+
+      audit({
+        action: 'auth.credentials.update',
+        actorId: req.userId,
+        actorRole: req.userRole,
+        outcome: 'success',
+        detail: { emailChanged: wantsEmail, passwordChanged: wantsPassword },
+      })
+
+      res.json({ success: true, user: toPublicUser(updatedUser) })
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Validation failed', details: err.errors })
+      }
+      console.error('[auth] credentials update failed:', err instanceof Error ? err.message : err)
+      res.status(500).json({ error: 'Internal server error' })
+    }
+  })
+
+  // Reset password via verified email (for users who forgot their password)
+  router.post('/reset-password', loginLimiter, async (req: Request, res: Response) => {
+    try {
+      const parsed = resetPasswordSchema.safeParse(req.body)
+      if (!parsed.success) {
+        return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
+      }
+      const { email, newPassword, emailVerified } = parsed.data
+      if (!emailVerified) {
+        return res.status(400).json({ error: 'Email verification is required to reset password' })
+      }
+
+      const targetEmail = email.trim().toLowerCase()
+      const user = await prisma.user.findUnique({
+        where: { email: targetEmail },
+      })
+
+      if (!user || !user.isActive) {
+        return res.status(404).json({ error: 'No active account found with this email' })
+      }
+
+      const newHash = await hash(newPassword, ARGON2_OPTIONS)
+
+      await prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { passwordHash: newHash },
+        })
+        await tx.session.updateMany({
+          where: { userId: user.id },
+          data: { revokedAt: new Date() },
+        })
+      })
+
+      audit({
+        action: 'auth.password.reset',
+        actorId: user.id,
+        actorRole: user.role,
+        outcome: 'success',
+      })
+
+      res.json({ success: true })
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Validation failed', details: err.errors })
+      }
+      console.error('[auth] reset-password failed:', err instanceof Error ? err.message : err)
       res.status(500).json({ error: 'Internal server error' })
     }
   })
