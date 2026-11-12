@@ -202,9 +202,9 @@ describe('Communication pages rendering with logged in admin and elapsed time', 
     }
   })
 
-  it('renders full App with ProtectedRoute on communication pages', async () => {
-    localStorage.setItem('edutech_inst_slug', 'demo')
+  it('navigates from dashboard to communication pages via sidebar click', async () => {
     sessionStorage.setItem('edutech_inst_slug', 'demo')
+    localStorage.setItem('edutech_inst_slug', 'demo')
     localStorage.setItem(
       'edutech_offline_session',
       JSON.stringify({
@@ -215,13 +215,42 @@ describe('Communication pages rendering with logged in admin and elapsed time', 
       })
     )
 
-    for (const page of ['messages', 'notifications', 'notice']) {
-      render(
-        <MemoryRouter initialEntries={[`/i/demo/admin/${page}`]}>
-          <App />
-        </MemoryRouter>
-      )
+    const { container } = render(
+      <MemoryRouter initialEntries={['/i/demo/admin/dashboard']}>
+        <App />
+      </MemoryRouter>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 600))
+    })
+
+    // Find sidebar link for messages
+    const messageLink = container.querySelector('a[href="/i/demo/admin/messages"]')
+    expect(messageLink).toBeTruthy()
+    if (messageLink) {
       await act(async () => {
+        messageLink.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await new Promise((r) => setTimeout(r, 600))
+      })
+    }
+
+    // Find sidebar link for notice
+    const noticeLink = container.querySelector('a[href="/i/demo/admin/notice"]')
+    expect(noticeLink).toBeTruthy()
+    if (noticeLink) {
+      await act(async () => {
+        noticeLink.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await new Promise((r) => setTimeout(r, 600))
+      })
+    }
+
+    // Find sidebar link for notifications
+    const notifLink = container.querySelector('a[href="/i/demo/admin/notifications"]')
+    expect(notifLink).toBeTruthy()
+    if (notifLink) {
+      await act(async () => {
+        notifLink.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         await new Promise((r) => setTimeout(r, 600))
       })
     }
