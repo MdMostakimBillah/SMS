@@ -1322,4 +1322,45 @@ export const attendanceApi = {
   },
 }
 
+export interface LibraryResponse {
+  books?: any[]
+  categories?: any[]
+  copies?: any[]
+  borrowings?: any[]
+  digitalBooks?: any[]
+  readingSessions?: any[]
+  settings?: any
+  storageMode?: string
+  message?: string
+}
+
+export const libraryApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<LibraryResponse>(`/api/library${q}`)
+  },
+  update: (data: {
+    books?: any[]
+    categories?: any[]
+    copies?: any[]
+    borrowings?: any[]
+    digitalBooks?: any[]
+    readingSessions?: any[]
+    settings?: any
+    schoolId?: string
+  }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean; counts?: Record<string, number> } & LibraryResponse>('/api/library', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
+
 

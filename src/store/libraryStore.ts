@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug } from '@/lib/storage'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { isRecentExplicitDelete, markExplicitUserDelete } from '@/lib/vault/bridge'
+import { flushVaultWrites } from '@/lib/vault/vault'
+import { libraryApi } from '@/lib/api'
 
 import type {
   Book, BookCategory, BookCopy, Borrowing,
@@ -42,6 +46,12 @@ interface LibraryState {
   digitalBooks: DigitalBook[]
   readingSessions: ReadingSession[]
   settings: LibrarySettings
+  serverSynced: boolean
+  syncing: boolean
+  syncError: string | null
+
+  syncFromServer: (slugOrId?: string) => Promise<void>
+  syncToServer: () => Promise<void>
 
   addBook: (book: Book) => void
   updateBook: (id: string, data: Partial<Book>) => void
@@ -73,6 +83,42 @@ interface LibraryState {
   updateSettings: (data: Partial<LibrarySettings>) => void
   getNextBookId: () => string
   getNextBorrowingId: () => string
+}
+
+let serverSyncTimer: any = null
+function queueServerSync(get: () => LibraryState) {
+  try {
+    if (isLocalComputerMode()) return
+    const state = get()
+    if (!state.serverSynced && state.books.length === 0 && state.categories.length === 0) {
+      return
+    }
+    if (serverSyncTimer) clearTimeout(serverSyncTimer)
+    serverSyncTimer = setTimeout(async () => {
+      try {
+        const s = get()
+        const totalItems = s.books.length + s.categories.length + s.copies.length + s.borrowings.length + s.digitalBooks.length + s.readingSessions.length
+        if (totalItems === 0 && !isRecentExplicitDelete()) {
+          return
+        }
+        const effectiveSlug = getSlug() || undefined
+        await libraryApi.update({
+          books: s.books,
+          categories: s.categories,
+          copies: s.copies,
+          borrowings: s.borrowings,
+          digitalBooks: s.digitalBooks,
+          readingSessions: s.readingSessions,
+          settings: s.settings,
+          schoolId: effectiveSlug,
+        })
+      } catch (e) {
+        console.warn('[library] Background sync failed:', e)
+      }
+    }, 500)
+  } catch {
+    /* ignore */
+  }
 }
 
 export const useLibraryStore = create<LibraryState>()(
@@ -158,12 +204,119 @@ export const useLibraryStore = create<LibraryState>()(
       ],
 
       settings: { ...DEFAULT_LIBRARY_SETTINGS },
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
 
-      addBook: (book) => set((state) => {
-        const newCopies = generateCopies(book.id, book.totalCopies, state.copies.length + 1)
-        return { books: [...state.books, book], copies: [...state.copies, ...newCopies] }
-      }),
-      updateBook: (id, data) =>
+      syncFromServer: async (slugOrId) => {
+        if (isLocalComputerMode()) {
+          set({ serverSynced: true, syncing: false, syncError: null })
+          void flushVaultWrites()
+          return
+        }
+        const effectiveSlug = slugOrId || getSlug() || undefined
+        try {
+          set({ syncing: true, syncError: null })
+          const res = await libraryApi.get(effectiveSlug)
+          if (res?.storageMode === 'local_computer') {
+            set({ serverSynced: true, syncing: false, syncError: null })
+            void flushVaultWrites()
+            return
+          }
+          if (res) {
+            const hasServerData =
+              (Array.isArray(res.books) && res.books.length > 0) ||
+              (Array.isArray(res.categories) && res.categories.length > 0) ||
+              (Array.isArray(res.copies) && res.copies.length > 0) ||
+              (Array.isArray(res.borrowings) && res.borrowings.length > 0) ||
+              (Array.isArray(res.digitalBooks) && res.digitalBooks.length > 0)
+            const state = get()
+            const hasLocalData = state.books.length > 0 || state.categories.length > 0 || state.copies.length > 0
+
+            if (hasServerData) {
+              set({
+                books: Array.isArray(res.books) ? res.books : [],
+                categories: Array.isArray(res.categories) ? res.categories : [],
+                copies: Array.isArray(res.copies) ? res.copies : [],
+                borrowings: Array.isArray(res.borrowings) ? res.borrowings : [],
+                digitalBooks: Array.isArray(res.digitalBooks) ? res.digitalBooks : [],
+                readingSessions: Array.isArray(res.readingSessions) ? res.readingSessions : [],
+                settings: res.settings && typeof res.settings === 'object' ? { ...DEFAULT_LIBRARY_SETTINGS, ...res.settings } : state.settings,
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+              void flushVaultWrites()
+            } else if (hasLocalData && !isRecentExplicitDelete()) {
+              await libraryApi.update({
+                books: state.books,
+                categories: state.categories,
+                copies: state.copies,
+                borrowings: state.borrowings,
+                digitalBooks: state.digitalBooks,
+                readingSessions: state.readingSessions,
+                settings: state.settings,
+                schoolId: effectiveSlug,
+              })
+              set({ serverSynced: true, syncing: false, syncError: null })
+              void flushVaultWrites()
+            } else {
+              set({
+                books: [],
+                categories: [],
+                copies: [],
+                borrowings: [],
+                digitalBooks: [],
+                readingSessions: [],
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+              void flushVaultWrites()
+            }
+          } else {
+            set({ serverSynced: true, syncing: false })
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to fetch library data from server'
+          set({ syncing: false, syncError: msg })
+        }
+        updateOverdueStatus()
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        try {
+          set({ syncing: true, syncError: null })
+          const s = get()
+          const effectiveSlug = getSlug() || undefined
+          await libraryApi.update({
+            books: s.books,
+            categories: s.categories,
+            copies: s.copies,
+            borrowings: s.borrowings,
+            digitalBooks: s.digitalBooks,
+            readingSessions: s.readingSessions,
+            settings: s.settings,
+            schoolId: effectiveSlug,
+          })
+          set({ syncing: false, serverSynced: true })
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : 'Failed to save library data to server'
+          set({ syncing: false, syncError: msg })
+        }
+      },
+
+      addBook: (book) => {
+        set((state) => {
+          const newCopies = generateCopies(book.id, book.totalCopies, state.copies.length + 1)
+          return { books: [...state.books, book], copies: [...state.copies, ...newCopies] }
+        })
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      updateBook: (id, data) => {
         set((state) => {
           const old = state.books.find((b) => b.id === id)
           const updated = { ...old!, ...data }
@@ -180,39 +333,81 @@ export const useLibraryStore = create<LibraryState>()(
             }
           }
           return { books: state.books.map((b) => (b.id === id ? updated : b)), copies }
-        }),
-      deleteBook: (id) =>
+        })
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      deleteBook: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           books: state.books.filter((b) => b.id !== id),
           copies: state.copies.filter((c) => c.bookId !== id),
           borrowings: state.borrowings.filter((b) => b.bookId !== id),
           digitalBooks: state.digitalBooks.filter((d) => d.bookId !== id),
-        })),
-      toggleBookActive: (id) =>
+        }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      toggleBookActive: (id) => {
         set((state) => ({
           books: state.books.map((b) => (b.id === id ? { ...b, isActive: !b.isActive } : b)),
-        })),
+        }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
 
-      addCategory: (cat) => set((state) => ({ categories: [...state.categories, cat] })),
-      updateCategory: (id, data) =>
+      addCategory: (cat) => {
+        set((state) => ({ categories: [...state.categories, cat] }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      updateCategory: (id, data) => {
         set((state) => ({
           categories: state.categories.map((c) => (c.id === id ? { ...c, ...data } : c)),
-        })),
-      deleteCategory: (id) =>
+        }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      deleteCategory: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           categories: state.categories.filter((c) => c.id !== id),
           books: state.books.map((b) => (b.categoryId === id ? { ...b, categoryId: '' } : b)),
-        })),
-      toggleCategoryActive: (id) =>
+        }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      toggleCategoryActive: (id) => {
         set((state) => ({
           categories: state.categories.map((c) => (c.id === id ? { ...c, isActive: !c.isActive } : c)),
-        })),
+        }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
 
-      addCopy: (copy) => set((state) => ({ copies: [...state.copies, copy] })),
-      updateCopy: (id, data) =>
-        set((state) => ({ copies: state.copies.map((c) => (c.id === id ? { ...c, ...data } : c)) })),
-      deleteCopy: (id) =>
-        set((state) => ({ copies: state.copies.filter((c) => c.id !== id) })),
+      addCopy: (copy) => {
+        set((state) => ({ copies: [...state.copies, copy] }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      updateCopy: (id, data) => {
+        set((state) => ({ copies: state.copies.map((c) => (c.id === id ? { ...c, ...data } : c)) }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      deleteCopy: (id) => {
+        markExplicitUserDelete()
+        set((state) => ({ copies: state.copies.filter((c) => c.id !== id) }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
 
       addBorrowing: (b) => {
         set((state) => {
@@ -223,12 +418,20 @@ export const useLibraryStore = create<LibraryState>()(
             books: book ? state.books.map((bk) => bk.id === b.bookId ? { ...bk, availableCopies: Math.max(0, bk.availableCopies - 1) } : bk) : state.books,
           }
         })
+        void flushVaultWrites()
+        queueServerSync(get)
       },
-      updateBorrowing: (id, data) =>
+
+      updateBorrowing: (id, data) => {
         set((state) => ({
           borrowings: state.borrowings.map((b) => (b.id === id ? { ...b, ...data } : b)),
-        })),
-      deleteBorrowing: (id) =>
+        }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      deleteBorrowing: (id) => {
+        markExplicitUserDelete()
         set((state) => {
           const b = state.borrowings.find((br) => br.id === id)
           if (!b) return state
@@ -238,7 +441,11 @@ export const useLibraryStore = create<LibraryState>()(
             copies: state.copies.map((c) => c.id === b.copyId ? { ...c, status: 'available' as BookCopyStatus, issuedTo: undefined, dueDate: undefined } : c),
             books: book ? state.books.map((bk) => bk.id === b.bookId ? { ...bk, availableCopies: bk.availableCopies + 1 } : bk) : state.books,
           }
-        }),
+        })
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
       returnBook: (borrowingId, condition, fine, fineReason, returnedBy) => {
         set((state) => {
           const b = state.borrowings.find((br) => br.id === borrowingId)
@@ -253,7 +460,10 @@ export const useLibraryStore = create<LibraryState>()(
             books: book ? state.books.map((bk) => bk.id === b.bookId ? { ...bk, availableCopies: bk.availableCopies + 1 } : bk) : state.books,
           }
         })
+        void flushVaultWrites()
+        queueServerSync(get)
       },
+
       renewBorrowing: (id) => {
         set((state) => {
           const b = state.borrowings.find((br) => br.id === id)
@@ -265,26 +475,53 @@ export const useLibraryStore = create<LibraryState>()(
             copies: state.copies.map((c) => c.id === b.copyId ? { ...c, dueDate: newDueDate } : c),
           }
         })
+        void flushVaultWrites()
+        queueServerSync(get)
       },
 
-      addDigitalBook: (db) => set((state) => ({ digitalBooks: [...state.digitalBooks, db] })),
-      updateDigitalBook: (id, data) =>
+      addDigitalBook: (db) => {
+        set((state) => ({ digitalBooks: [...state.digitalBooks, db] }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      updateDigitalBook: (id, data) => {
         set((state) => ({
           digitalBooks: state.digitalBooks.map((d) => (d.id === id ? { ...d, ...data } : d)),
-        })),
-      deleteDigitalBook: (id) =>
+        }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      deleteDigitalBook: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           digitalBooks: state.digitalBooks.filter((d) => d.id !== id),
           readingSessions: state.readingSessions.filter((r) => r.digitalBookId !== id),
-        })),
+        }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
 
-      addReadingSession: (rs) => set((state) => ({ readingSessions: [...state.readingSessions, rs] })),
-      updateReadingSession: (id, data) =>
+      addReadingSession: (rs) => {
+        set((state) => ({ readingSessions: [...state.readingSessions, rs] }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
+
+      updateReadingSession: (id, data) => {
         set((state) => ({
           readingSessions: state.readingSessions.map((r) => (r.id === id ? { ...r, ...data } : r)),
-        })),
+        }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
 
-      updateSettings: (data) => set((state) => ({ settings: { ...state.settings, ...data } })),
+      updateSettings: (data) => {
+        set((state) => ({ settings: { ...state.settings, ...data } }))
+        void flushVaultWrites()
+        queueServerSync(get)
+      },
 
       getNextBookId: () => {
         const year = new Date().getFullYear()
@@ -318,7 +555,18 @@ function updateOverdueStatus() {
 }
 
 registerStoreReset(() => {
-  useLibraryStore.setState({ books: [], categories: [], copies: [], borrowings: [], digitalBooks: [], readingSessions: [], settings: DEFAULT_LIBRARY_SETTINGS })
+  useLibraryStore.setState({
+    books: [],
+    categories: [],
+    copies: [],
+    borrowings: [],
+    digitalBooks: [],
+    readingSessions: [],
+    settings: { ...DEFAULT_LIBRARY_SETTINGS },
+    serverSynced: false,
+    syncing: false,
+    syncError: null,
+  })
 })
 
 registerStoreLoad(() => {
@@ -332,6 +580,9 @@ registerStoreLoad(() => {
     }
   } catch { /* ignore */ }
   updateOverdueStatus()
+  if (!isLocalComputerMode()) {
+    void useLibraryStore.getState().syncFromServer(slug)
+  }
 })
 
 export function calcFine(dueDate: string, finePerDay: number): number {

@@ -3,6 +3,7 @@ import { Library, BookOpen, HandCoins, RotateCcw, Clock, AlertTriangle, Search, 
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useLibraryStore } from '@/store/libraryStore'
+import { getSlug } from '@/lib/storage'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { toBnNum } from '@/lib/i18n'
 import { DashboardTab } from './tabs/DashboardTab'
@@ -64,10 +65,12 @@ export default function LibraryPage() {
 
   useTabSlider({ activeTab, tabRefs, sliderRef, scrollIntoView: true, getContainer: (slider) => slider?.parentElement ?? null })
 
+  const syncFromServer = useLibraryStore((s) => s.syncFromServer)
+
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
-  }, [])
+    const slug = getSlug()
+    syncFromServer(slug || undefined).finally(() => setLoading(false))
+  }, [syncFromServer])
 
   const stats = useMemo(() => {
     const totalBooks = books.reduce((sum, b) => sum + b.totalCopies, 0)
