@@ -5,6 +5,7 @@ import {
   Building2, MapPin, Phone, Clock, Globe, CalendarDays,
   ChevronRight, ChevronLeft, Check, X, Eye, EyeOff, Sparkles,
   Palette, GraduationCap, Shield, Copy, Upload, Users, CreditCard,
+  Cloud, Cpu,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -211,6 +212,13 @@ export default function CreateSchool() {
     const subdomain = form.subdomain.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
     const slug = subdomain || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-')
 
+    const effectiveStorageMode =
+      form.package.hostingType === 'local_pc' || form.package.hostingType === 'system_only'
+        ? 'local_computer'
+        : form.package.hostingType === 'personal_vps'
+          ? 'local_server'
+          : 'cloud'
+
     let serverSchoolId: string | null = null
     let serverLogo: string | null = null
     let serverBanner: string | null = null
@@ -223,6 +231,7 @@ export default function CreateSchool() {
         slug,
         package: form.package.name,
         plan: form.package.name.toLowerCase(),
+        storageMode: effectiveStorageMode,
         status: 'active',
         email: form.email?.trim() || undefined,
         phone: form.phone?.trim() || undefined,
@@ -272,6 +281,7 @@ export default function CreateSchool() {
       slug: slug,
       status: 'active',
       package: form.package,
+      storageMode: effectiveStorageMode,
       createdAt: new Date().toISOString().split('T')[0],
       lastLogin: '-',
       logo: serverLogo || form.logo,
@@ -1049,17 +1059,82 @@ function SubdomainInput({ value, onChange, institutions, isBn, onAvailabilityCha
 }
 
 function PackagePicker({ value, onChange, isBn }: { value: InstitutionPackage; onChange: (v: InstitutionPackage) => void; isBn: boolean }) {
+  const storePackages = useSuperAdminStore((s) => s.packages)
+  const packages = (storePackages && storePackages.length > 0) ? storePackages : PACKAGES
+  const [filterMode, setFilterMode] = useState<'all' | 'cloud' | 'system_only'>('all')
+
+  const filtered = useMemo(() => {
+    return packages.filter((p) => {
+      if (filterMode === 'cloud') {
+        return !p.hostingType || p.hostingType === 'cloud' || p.hostingType === 'all'
+      }
+      if (filterMode === 'system_only') {
+        return p.hostingType === 'system_only' || p.hostingType === 'local_pc' || p.hostingType === 'personal_vps' || p.hostingType === 'all'
+      }
+      return true
+    })
+  }, [packages, filterMode])
+
   return (
     <div className="space-y-3">
-      <div className="space-y-2">
-        {PACKAGES.map((pkg) => {
-          const selected = value.name === pkg.name
+      {/* Category filter */}
+      <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-center">
+        <button
+          type="button"
+          onClick={() => setFilterMode('all')}
+          className={`py-1.5 px-2 rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer border-none ${
+            filterMode === 'all'
+              ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm'
+              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
+          }`}
+        >
+          {isBn ? 'সব প্যাকেজ' : 'All'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilterMode('cloud')}
+          className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer border-none ${
+            filterMode === 'cloud'
+              ? 'bg-[var(--bg-primary)] text-blue-500 shadow-sm ring-1 ring-blue-500/20'
+              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
+          }`}
+        >
+          <Cloud size={11} />
+          <span>{isBn ? 'ক্লাউড' : 'Cloud'}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setFilterMode('system_only')}
+          className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer border-none ${
+            filterMode === 'system_only'
+              ? 'bg-[var(--bg-primary)] text-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
+              : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
+          }`}
+        >
+          <Cpu size={11} />
+          <span>{isBn ? 'সিস্টেম ব্যবহার' : 'System'}</span>
+        </button>
+      </div>
+
+      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+        {filtered.map((pkg) => {
+          const selected = value.name.toLowerCase() === pkg.name.toLowerCase()
           const isUnlimited = pkg.maxStudents >= 9999
+          const isSystem = pkg.hostingType === 'system_only' || pkg.hostingType === 'local_pc' || pkg.hostingType === 'personal_vps'
           return (
-            <button key={pkg.name} onClick={() => onChange(pkg)} className={`w-full p-4 rounded-xl border-2 text-left cursor-pointer transition-all ${selected ? 'border-[var(--brand)] bg-[var(--brand-light)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/40'}`}>
+            <button key={pkg.id || pkg.name} onClick={() => onChange(pkg)} className={`w-full p-4 rounded-xl border-2 text-left cursor-pointer transition-all ${selected ? 'border-[var(--brand)] bg-[var(--brand-light)]' : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/40'}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-[var(--text-primary)]">{isBn ? pkg.nameBn : pkg.name}</span>
+                  {isSystem ? (
+                    <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                      {isBn ? 'সিস্টেম ব্যবহার' : 'SYSTEM USE'}
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                      {isBn ? 'প্রোভাইডার ক্লাউড' : 'CLOUD'}
+                    </span>
+                  )}
                   {isUnlimited && (
                     <span className="px-1.5 py-0.5 rounded text-[0.5rem] font-bold bg-[var(--brand)] text-white">
                       {isBn ? 'আনলিমিটেড' : 'UNLIMITED'}
@@ -1071,7 +1146,9 @@ function PackagePicker({ value, onChange, isBn }: { value: InstitutionPackage; o
 
               <div className="flex items-baseline gap-1 mb-2.5">
                 <span className="text-xl font-bold text-[var(--brand)]">৳{pkg.price.toLocaleString()}</span>
-                <span className="text-[0.625rem] text-[var(--text-muted)]">/{isBn ? 'মাস' : 'month'}</span>
+                <span className="text-[0.625rem] text-[var(--text-muted)]">
+                  {pkg.duration === 0 ? (isBn ? '/এককালীন' : '/lifetime') : `/${isBn ? 'মাস' : 'month'}`}
+                </span>
               </div>
 
               <div className="space-y-1.5">
@@ -1091,7 +1168,7 @@ function PackagePicker({ value, onChange, isBn }: { value: InstitutionPackage; o
                     {isUnlimited ? (isBn ? 'অসীমিত শিক্ষক' : 'Unlimited teachers') : `${pkg.maxTeachers} ${isBn ? 'জন শিক্ষক পর্যন্ত' : 'teachers max'}`}
                   </span>
                 </div>
-                {!isUnlimited && (
+                {!isUnlimited && pkg.pricePerStudent > 0 && (
                   <div className="flex items-center gap-2 mt-1 pt-1.5 border-t border-[var(--border)]">
                     <span className="text-[0.5625rem] text-[var(--text-muted)]">
                       ≈ ৳{pkg.pricePerStudent}/{isBn ? 'জন/মাস' : 'student/mo'}

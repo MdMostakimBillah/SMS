@@ -375,7 +375,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const {
-    institutions, selectedId, searchQuery, statusFilter, packageFilter,
+    institutions, packages, selectedId, searchQuery, statusFilter, packageFilter,
     setSelectedId, setSearchQuery, setStatusFilter, setPackageFilter,
     startViewing,
   } = useSuperAdminStore()
@@ -593,10 +593,11 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
             className="px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[0.75rem] text-[var(--text-primary)] focus:border-[var(--brand)] focus:outline-none"
           >
             <option value="all">{isBn ? 'সব প্যাকেজ' : 'All Packages'}</option>
-            <option value="Free">{isBn ? 'ফ্রি' : 'Free'}</option>
-            <option value="Basic">{isBn ? 'বেসিক' : 'Basic'}</option>
-            <option value="Standard">{isBn ? 'স্ট্যান্ডার্ড' : 'Standard'}</option>
-            <option value="Premium">{isBn ? 'প্রিমিয়াম' : 'Premium'}</option>
+            {(packages && packages.length > 0 ? packages : PACKAGES).map((p) => (
+              <option key={p.id || p.name} value={p.name}>
+                {isBn ? p.nameBn : p.name}
+              </option>
+            ))}
           </select>
         </div>
       )}

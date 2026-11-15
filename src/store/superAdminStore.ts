@@ -3,15 +3,27 @@ import { persist } from 'zustand/middleware'
 
 export type InstitutionStatus = 'active' | 'trial' | 'suspended' | 'inactive'
 
+export type PackageHostingType = 'all' | 'cloud' | 'system_only' | 'local_pc' | 'personal_vps'
+
 export interface InstitutionPackage {
+  id?: string
   name: string
   nameBn: string
+  description?: string
+  descriptionBn?: string
+  hostingType?: PackageHostingType
   maxStudents: number
   maxTeachers: number
   maxClasses: number
   pricePerStudent: number
   price: number
   duration: number
+  features?: string[]
+  featuresBn?: string[]
+  isPopular?: boolean
+  isActive?: boolean
+  isDefaultSystemUse?: boolean
+  isDefaultCloud?: boolean
 }
 
 export interface InstitutionAccessModes {
@@ -65,51 +77,139 @@ export interface Institution {
   theme: 'light' | 'dark'
 }
 
-export const PACKAGES: InstitutionPackage[] = [
+export const DEFAULT_PACKAGES: InstitutionPackage[] = [
+  // ─── Provider Cloud Packages ───
   {
+    id: 'pkg-cloud-basic',
     name: 'Basic',
     nameBn: 'বেসিক',
+    description: 'Cloud hosting with basic limits for small institutions.',
+    descriptionBn: 'ছোট প্রতিষ্ঠানের জন্য প্রোভাইডার ক্লাউড হোস্টিং ও বেসিক সুবিধা।',
+    hostingType: 'cloud',
     maxStudents: 200,
     maxTeachers: 25,
     maxClasses: 999,
     pricePerStudent: 10,
     price: 1500,
     duration: 30,
+    features: ['Provider Cloud Hosting', 'Automated Cloud Backups', 'Basic Support', 'Multi-device Access'],
+    featuresBn: ['প্রোভাইডার ক্লাউড হোস্টিং', 'অটোমেটিক ক্লাউড ব্যাকআপ', 'বেসিক সাপোর্ট', 'মাল্টি-ডিভাইস অ্যাক্সেস'],
+    isActive: true,
+    isDefaultCloud: true,
   },
   {
+    id: 'pkg-cloud-standard',
     name: 'Standard',
     nameBn: 'স্ট্যান্ডার্ড',
+    description: 'Most popular cloud package with SMS and priority support.',
+    descriptionBn: 'জনপ্রিয় ক্লাউড প্যাকেজ — এসএমএস এবং অগ্রাধিকার সহায়তা সহ।',
+    hostingType: 'cloud',
     maxStudents: 400,
     maxTeachers: 50,
     maxClasses: 999,
     pricePerStudent: 8,
     price: 2200,
     duration: 30,
+    isPopular: true,
+    features: ['Provider Cloud Hosting', 'SMS Integration', 'Daily Automated Backups', 'Priority Email Support'],
+    featuresBn: ['প্রোভাইডার ক্লাউড হোস্টিং', 'এসএমএস ইন্টিগ্রেশন', 'দৈনিক অটোমেটিক ব্যাকআপ', 'অগ্রাধিকার সাপোর্ট'],
+    isActive: true,
   },
   {
+    id: 'pkg-cloud-premium',
     name: 'Premium',
     nameBn: 'প্রিমিয়াম',
+    description: 'High capacity cloud package with custom domain support.',
+    descriptionBn: 'উচ্চ ধারণক্ষমতার ক্লাউড প্যাকেজ — কাস্টম ডোমেইন সহায়তা সহ।',
+    hostingType: 'cloud',
     maxStudents: 800,
     maxTeachers: 100,
     maxClasses: 999,
     pricePerStudent: 6,
     price: 3000,
     duration: 30,
+    features: ['High-speed Cloud Cluster', 'Custom Subdomain & Domain', 'Priority 24/7 Support', 'Unlimited Storage'],
+    featuresBn: ['উচ্চগতির ক্লাউড ক্লাস্টার', 'কাস্টম সাবডোমেইন ও ডোমেইন', '২৪/৭ অগ্রাধিকার সহায়তা', 'আনলিমিটেড স্টোরেজ'],
+    isActive: true,
   },
   {
+    id: 'pkg-cloud-enterprise',
     name: 'Enterprise',
     nameBn: 'এন্টারপ্রাইজ',
+    description: 'Unlimited cloud capacity for large schools and colleges.',
+    descriptionBn: 'বড় স্কুল ও কলেজের জন্য অসীম ক্ষমতার ক্লাউড প্যাকেজ।',
+    hostingType: 'cloud',
     maxStudents: 9999,
     maxTeachers: 9999,
     maxClasses: 999,
     pricePerStudent: 4,
     price: 3500,
     duration: 30,
+    features: ['Dedicated Cloud Server', 'Unlimited Students & Staff', 'Dedicated Account Manager', 'Custom API Access'],
+    featuresBn: ['ডেডিকেটেড ক্লাউড সার্ভার', 'অসীম ছাত্র-শিক্ষক কোটা', 'ডেডিকেটেড অ্যাকাউন্ট ম্যানেজার', 'কাস্টম API সুবিধা'],
+    isActive: true,
+  },
+
+  // ─── System Use Only (Local PC & Personal VPS) Packages ───
+  {
+    id: 'pkg-system-local-pc',
+    name: 'Local PC Basic',
+    nameBn: 'লোকাল পিসি - সিস্টেম ব্যবহার',
+    description: 'Offline local computer storage with Vault. Zero provider cloud cost.',
+    descriptionBn: 'লোকাল কম্পিউটার অফলাইন স্টোরেজ (ভল্ট)। কোনো প্রোভাইডার ক্লাউড ফি নেই, শুধুমাত্র সফটওয়্যার ব্যবহার।',
+    hostingType: 'local_pc',
+    maxStudents: 300,
+    maxTeachers: 30,
+    maxClasses: 999,
+    pricePerStudent: 3,
+    price: 600,
+    duration: 30,
+    features: ['100% Offline Local PC Vault', 'Zero Cloud Server Fees', 'Telegram Direct Backup', 'Local Fast Performance'],
+    featuresBn: ['১০০% অফলাইন লোকাল পিসি ভল্ট', 'শূন্য ক্লাউড সার্ভার খরচ', 'টেলিগ্রাম সরাসরি ব্যাকআপ', 'দ্রুত লোকাল পারফরম্যান্স'],
+    isActive: true,
+    isDefaultSystemUse: true,
+  },
+  {
+    id: 'pkg-system-vps-pro',
+    name: 'Personal VPS Pro',
+    nameBn: 'নিজস্ব ভিপিএস - সিস্টেম ব্যবহার',
+    description: 'Host on your personal VPS or on-premise server. Software license only.',
+    descriptionBn: 'আপনার নিজস্ব ভিপিএস বা স্কুল সার্ভারে হোস্ট করুন। শুধুমাত্র সিস্টেম সফটওয়্যার লাইসেন্স।',
+    hostingType: 'personal_vps',
+    maxStudents: 1000,
+    maxTeachers: 100,
+    maxClasses: 999,
+    pricePerStudent: 2,
+    price: 1000,
+    duration: 30,
+    features: ['Self-Hosted API Server', 'Campus LAN / WAN Multi-device', 'Full Independent Data Control', 'Direct Database Access'],
+    featuresBn: ['সেলফ-হোস্টেড API সার্ভার', 'ক্যাম্পাস লোকাল নেটওয়ার্ক অ্যাক্সেস', 'সম্পূর্ণ স্বাধীন ডাটা নিয়ন্ত্রণ', 'সরাসরি ডাটাবেজ অ্যাক্সেস'],
+    isActive: true,
+  },
+  {
+    id: 'pkg-system-lifetime',
+    name: 'System Lifetime License',
+    nameBn: 'সিস্টেম লাইফটাইম লাইসেন্স',
+    description: 'One-time system license for Local PC or Personal VPS with no recurring hosting costs.',
+    descriptionBn: 'লোকাল পিসি বা নিজস্ব ভিপিএস-এর জন্য এককালীন আজীবন সিস্টেম লাইসেন্স। কোনো মাসিক চার্জ নেই।',
+    hostingType: 'system_only',
+    maxStudents: 9999,
+    maxTeachers: 9999,
+    maxClasses: 999,
+    pricePerStudent: 0,
+    price: 15000,
+    duration: 0,
+    features: ['Lifetime System License', 'Local PC or Personal VPS', 'Unlimited Students & Staff', 'Zero Monthly Cloud Fees', 'Free Core Software Updates'],
+    featuresBn: ['আজীবন সিস্টেম লাইসেন্স', 'লোকাল পিসি বা নিজস্ব ভিপিএস', 'অসীম শিক্ষার্থী ও শিক্ষক', 'জিরো মাসিক ক্লাউড ফি', 'ফ্রি কোর সফটওয়্যার আপডেট'],
+    isActive: true,
   },
 ]
 
+export const PACKAGES: InstitutionPackage[] = DEFAULT_PACKAGES
+
 interface SuperAdminState {
   institutions: Institution[]
+  packages: InstitutionPackage[]
   selectedId: string | null
   searchQuery: string
   statusFilter: InstitutionStatus | 'all'
@@ -126,6 +226,11 @@ interface SuperAdminState {
   toggleStatus: (id: string) => void
   startViewing: (id: string) => void
   stopViewing: () => void
+  addPackage: (pkg: InstitutionPackage) => void
+  updatePackage: (idOrName: string, data: Partial<InstitutionPackage>) => void
+  deletePackage: (idOrName: string) => void
+  setDefaultPackage: (idOrName: string, type: 'cloud' | 'system_only') => void
+  resetPackagesToDefault: () => void
 }
 
 /**
@@ -165,6 +270,7 @@ export const useSuperAdminStore = create<SuperAdminState>()(
   persist(
     (set) => ({
       institutions: [],
+      packages: DEFAULT_PACKAGES,
       selectedId: null,
       searchQuery: '',
       statusFilter: 'all',
@@ -203,6 +309,43 @@ export const useSuperAdminStore = create<SuperAdminState>()(
               : i
           ),
         })),
+      addPackage: (pkg) =>
+        set((state) => {
+          const newPkg: InstitutionPackage = {
+            ...pkg,
+            id: pkg.id || `pkg-${Date.now()}`,
+            isActive: pkg.isActive ?? true,
+          }
+          return { packages: [...state.packages, newPkg] }
+        }),
+      updatePackage: (idOrName, data) =>
+        set((state) => ({
+          packages: state.packages.map((p) => {
+            const match = (p.id && p.id === idOrName) || p.name.toLowerCase() === idOrName.toLowerCase()
+            return match ? { ...p, ...data } : p
+          }),
+        })),
+      deletePackage: (idOrName) =>
+        set((state) => ({
+          packages: state.packages.filter(
+            (p) => (p.id !== idOrName && p.name.toLowerCase() !== idOrName.toLowerCase())
+          ),
+        })),
+      setDefaultPackage: (idOrName, type) =>
+        set((state) => ({
+          packages: state.packages.map((p) => {
+            const isMatch = (p.id && p.id === idOrName) || p.name.toLowerCase() === idOrName.toLowerCase()
+            if (type === 'cloud') {
+              return { ...p, isDefaultCloud: isMatch }
+            } else {
+              return { ...p, isDefaultSystemUse: isMatch }
+            }
+          }),
+        })),
+      resetPackagesToDefault: () =>
+        set(() => ({
+          packages: DEFAULT_PACKAGES,
+        })),
     }),
     {
       name: 'edutech_super_admin',
@@ -216,6 +359,7 @@ export const useSuperAdminStore = create<SuperAdminState>()(
         return {
           ...rest,
           institutions: (rest.institutions ?? []).map((i) => ({ ...i, password: undefined })),
+          packages: (rest.packages && rest.packages.length > 0) ? rest.packages : DEFAULT_PACKAGES,
         }
       },
     }

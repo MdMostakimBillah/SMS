@@ -4,6 +4,7 @@ import {
   Upload, Palette, CreditCard, Shield, Eye, EyeOff,
   ChevronRight, ChevronLeft, Check, X,
   Zap, BarChart3, Users, Lock,
+  Cloud, Cpu,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { BrandLogo } from '@/components/ui/BrandLogo'
@@ -88,6 +89,13 @@ export default function InstitutionRegister() {
   const isBn = document.documentElement.dataset.lang === 'bn'
   const addInstitution = useSuperAdminStore((s) => s.addInstitution)
   const institutions = useSuperAdminStore((s) => s.institutions) ?? []
+  const storePackages = useSuperAdminStore((s) => s.packages)
+  const allPackages = useMemo(() => {
+    const list = storePackages && storePackages.length > 0 ? storePackages : PACKAGES
+    return list.filter((p) => p.isActive !== false)
+  }, [storePackages])
+
+  const [packageHostingTab, setPackageHostingTab] = useState<'cloud' | 'system_only'>('cloud')
 
   const [started, setStarted] = useState(false)
   const [showLoginHint, setShowLoginHint] = useState(false)
@@ -282,6 +290,13 @@ export default function InstitutionRegister() {
     let serverSchoolId: string | null = null
     let serverLogo: string | null = null
 
+    const effectiveStorageMode =
+      form.package.hostingType === 'local_pc' || form.package.hostingType === 'system_only'
+        ? 'local_computer'
+        : form.package.hostingType === 'personal_vps'
+          ? 'local_server'
+          : 'cloud'
+
     try {
       const res = await authApi.registerInstitution({
         name: form.name.trim(),
@@ -290,6 +305,7 @@ export default function InstitutionRegister() {
         subdomain: subdomainSlug,
         slug: subdomainSlug,
         package: form.package.name,
+        storageMode: effectiveStorageMode,
         email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
         address: form.address.trim() || undefined,
@@ -331,6 +347,7 @@ export default function InstitutionRegister() {
       slug: subdomainSlug,
       status: 'active',
       package: form.package,
+      storageMode: effectiveStorageMode,
       createdAt: new Date().toISOString().split('T')[0],
       lastLogin: '-',
       logo: serverLogo || form.logo,
@@ -692,24 +709,112 @@ export default function InstitutionRegister() {
               )}
 
               {/* Step 6: Package */}
-              {STEPS[step].key === 'package' && (
-                <div className="space-y-3">
-                  {PACKAGES.map((pkg) => (
-                    <button key={pkg.name} onClick={() => set('package', pkg)}
-                      className={`w-full p-4 rounded-xl border text-left cursor-pointer transition-all ${form.package.name === pkg.name ? 'border-[var(--brand)] bg-[var(--brand)]/5' : isDark ? 'border-white/10 hover:border-[var(--brand)]/50 bg-white/[0.02]' : 'border-[var(--border)] hover:border-[var(--brand)]/50 bg-[var(--bg-secondary)]'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-[0.875rem] font-semibold ${isDark ? 'text-white/80' : 'text-[var(--text-primary)]'}`}>
-                          {isBn ? pkg.nameBn : pkg.name}
-                        </span>
-                        <span className="text-[0.875rem] font-bold text-[var(--brand)]">৳{pkg.price}/mo</span>
-                      </div>
-                      <p className={`text-[0.75rem] ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>
-                        {isBn ? `${pkg.maxStudents} জন ছাত্র পর্যন্ত` : `Up to ${pkg.maxStudents} students`}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {STEPS[step].key === 'package' && (() => {
+                const cloudPkgs = allPackages.filter((p) => !p.hostingType || p.hostingType === 'cloud' || p.hostingType === 'all')
+                const systemPkgs = allPackages.filter((p) => p.hostingType === 'system_only' || p.hostingType === 'local_pc' || p.hostingType === 'personal_vps' || p.hostingType === 'all')
+                const displayPkgs = packageHostingTab === 'cloud' ? cloudPkgs : systemPkgs
+
+                return (
+                  <div className="space-y-3.5">
+                    {/* Hosting Architecture Preference Tabs */}
+                    <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPackageHostingTab('cloud')
+                          const defaultCloud = cloudPkgs.find((p) => p.isDefaultCloud) || cloudPkgs[0]
+                          if (defaultCloud) set('package', defaultCloud)
+                        }}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer border-none ${
+                          packageHostingTab === 'cloud'
+                            ? 'bg-[var(--bg-primary)] text-blue-500 shadow-sm ring-1 ring-blue-500/20'
+                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
+                        }`}
+                      >
+                        <Cloud size={14} />
+                        <span>{isBn ? 'প্রোভাইডার ক্লাউড' : 'Provider Cloud'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPackageHostingTab('system_only')
+                          const defaultSys = systemPkgs.find((p) => p.isDefaultSystemUse) || systemPkgs[0]
+                          if (defaultSys) set('package', defaultSys)
+                        }}
+                        className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer border-none ${
+                          packageHostingTab === 'system_only'
+                            ? 'bg-[var(--bg-primary)] text-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
+                            : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
+                        }`}
+                      >
+                        <Cpu size={14} />
+                        <span>{isBn ? 'লোকাল পিসি / ভিপিএস' : 'Local PC / VPS'}</span>
+                      </button>
+                    </div>
+
+                    <div className="text-[0.6875rem] text-[var(--text-muted)] px-1">
+                      {packageHostingTab === 'cloud'
+                        ? (isBn ? '☁️ ক্লাউড সার্ভার, সার্বক্ষণিক ব্যাকআপ এবং অনলাইন অ্যাক্সেস অন্তর্ভুক্ত।' : '☁️ Managed cloud cluster with automated backups and online accessibility.')
+                        : (isBn ? '💻 জিরো ক্লাউড খরচ। আপনার নিজস্ব লোকাল পিসি (ভল্ট) বা প্রাইভেট ভিপিএস-এ অফলাইনে পরিচালনা করুন।' : '💻 Zero provider cloud fees. Deploy on your local computer or private VPS.')}
+                    </div>
+
+                    {/* Package Cards List */}
+                    <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                      {displayPkgs.map((pkg) => {
+                        const isSelected = form.package.name === pkg.name
+                        const isSystem = pkg.hostingType === 'system_only' || pkg.hostingType === 'local_pc' || pkg.hostingType === 'personal_vps'
+                        return (
+                          <button
+                            key={pkg.id || pkg.name}
+                            type="button"
+                            onClick={() => set('package', pkg)}
+                            className={`w-full p-3.5 rounded-xl border text-left cursor-pointer transition-all ${
+                              isSelected
+                                ? 'border-[var(--brand)] bg-[var(--brand)]/10 ring-1 ring-[var(--brand)]'
+                                : isDark
+                                  ? 'border-white/10 hover:border-[var(--brand)]/50 bg-white/[0.02]'
+                                  : 'border-[var(--border)] hover:border-[var(--brand)]/50 bg-[var(--bg-secondary)]'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[0.875rem] font-bold ${isDark ? 'text-white/90' : 'text-[var(--text-primary)]'}`}>
+                                  {isBn ? pkg.nameBn : pkg.name}
+                                </span>
+                                {isSystem && (
+                                  <span className="px-1.5 py-0.2 rounded text-[0.5625rem] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                                    {isBn ? 'সিস্টেম ব্যবহার' : 'System-Only'}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[0.875rem] font-black text-[var(--brand)]">
+                                ৳{pkg.price.toLocaleString()}{pkg.duration === 0 ? (isBn ? ' (এককালীন)' : ' lifetime') : '/mo'}
+                              </span>
+                            </div>
+
+                            <p className={`text-[0.6875rem] ${isDark ? 'text-white/40' : 'text-[var(--text-muted)]'}`}>
+                              {pkg.maxStudents >= 9999
+                                ? (isBn ? 'অসীমিত শিক্ষার্থী' : 'Unlimited students')
+                                : (isBn ? `${pkg.maxStudents} জন শিক্ষার্থী পর্যন্ত` : `Up to ${pkg.maxStudents} students`)}
+                              {' · '}
+                              {pkg.maxTeachers >= 9999
+                                ? (isBn ? 'অসীমিত শিক্ষক' : 'Unlimited teachers')
+                                : (isBn ? `${pkg.maxTeachers} শিক্ষক` : `${pkg.maxTeachers} teachers`)}
+                            </p>
+
+                            {(pkg.description || pkg.descriptionBn) && (
+                              <p className="text-[0.625rem] text-[var(--text-muted)] mt-1 line-clamp-1">
+                                {isBn ? pkg.descriptionBn || pkg.description : pkg.description}
+                              </p>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* Step 7: Admin */}
               {STEPS[step].key === 'admin' && (

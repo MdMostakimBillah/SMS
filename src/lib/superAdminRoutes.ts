@@ -14,7 +14,7 @@ export const SUPER_ADMIN_ROUTES: SuperAdminRoute[] = [
   { id: 'account', path: '/super-admin/account', label: 'Account', labelBn: 'অ্যাকাউন্ট', icon: 'lock', color: '#6366f1', desc: 'Email & password', descBn: 'ইমেইল ও পাসওয়ার্ড', functional: true },
   { id: 'schools', path: '/super-admin/schools', label: 'Schools', labelBn: 'স্কুল', icon: 'building-2', color: '#14b8a6', desc: 'Registered', descBn: 'নিবন্ধিত', functional: true },
   { id: 'requests', path: '/super-admin/requests', label: 'Requests', labelBn: 'অনুরোধ', icon: 'users', color: '#f59e0b', desc: 'Pending', descBn: 'পেন্ডিং', functional: false },
-  { id: 'subscriptions', path: '/super-admin/subscriptions', label: 'Packages', labelBn: 'প্যাকেজ', icon: 'credit-card', color: '#ec4899', desc: 'Subscriptions', descBn: 'সাবস্ক্রিপশন', functional: false },
+  { id: 'subscriptions', path: '/super-admin/subscriptions', label: 'Packages', labelBn: 'প্যাকেজ', icon: 'credit-card', color: '#ec4899', desc: 'Subscriptions & System Packages', descBn: 'সাবস্ক্রিপশন ও সিস্টেম প্যাকেজ', functional: true },
   { id: 'sms', path: '/super-admin/sms', label: 'SMS', labelBn: 'SMS', icon: 'message-square', color: '#06b6d4', desc: 'SIM Provider & Distribution', descBn: 'প্রোভাইডার ও বিতরণ', functional: true },
   { id: 'database', path: '/super-admin/database', label: 'Database', labelBn: 'ডাটাবেজ', icon: 'database', color: '#22c55e', desc: 'Backup', descBn: 'ব্যাকআপ', functional: false },
   { id: 'add-school', path: '/super-admin/add-school', label: 'Add School', labelBn: 'নতুন স্কুল', icon: 'crown', color: '#3b82f6', desc: 'Register', descBn: 'যোগ', functional: true },

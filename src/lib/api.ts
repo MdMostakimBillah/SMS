@@ -162,6 +162,7 @@ export interface RegisterInstitutionPayload {
   brandColor?: string
   package?: 'Basic' | 'Standard' | 'Premium' | 'Enterprise' | string
   plan?: string
+  storageMode?: string
   status?: string
   adminEmail: string
   adminPassword: string

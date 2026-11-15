@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Calendar, Clock, Shield, Check, HardDrive, RefreshCw } from 'lucide-react'
-import { PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
+import { X, Clock, Shield, HardDrive, RefreshCw, Check, Calendar } from 'lucide-react'
+import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { authApi } from '@/lib/api'
 
 interface LicenseModalProps {
@@ -14,6 +14,9 @@ interface LicenseModalProps {
 
 export function LicenseModal({ isOpen, onClose, inst, isBn, onSaved }: LicenseModalProps) {
   if (!isOpen) return null
+
+  const storePackages = useSuperAdminStore((s) => s.packages)
+  const packages = (storePackages && storePackages.length > 0) ? storePackages : PACKAGES
 
   const [status, setStatus] = useState<InstitutionStatus>(inst.status)
   const [packageName, setPackageName] = useState<string>(inst.package.name)
@@ -47,7 +50,7 @@ export function LicenseModal({ isOpen, onClose, inst, isBn, onSaved }: LicenseMo
     setSaving(true)
     setError(null)
     try {
-      const selectedPkg = PACKAGES.find((p) => p.name.toLowerCase() === packageName.toLowerCase()) || inst.package
+      const selectedPkg = packages.find((p) => p.name.toLowerCase() === packageName.toLowerCase()) || inst.package
       
       const payload = {
         status,
@@ -151,27 +154,57 @@ export function LicenseModal({ isOpen, onClose, inst, isBn, onSaved }: LicenseMo
 
           {/* Package Selection */}
           <div>
-            <label className="block text-[0.75rem] font-semibold text-[var(--text-primary)] mb-2">
-              {isBn ? 'প্যাকেজ / প্ল্যান' : 'Package / Plan'}
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {PACKAGES.map((pkg) => (
-                <button
-                  key={pkg.name}
-                  type="button"
-                  onClick={() => setPackageName(pkg.name)}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer text-left ${
-                    packageName.toLowerCase() === pkg.name.toLowerCase()
-                      ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]'
-                      : 'border-[var(--border)] text-[var(--text-secondary)] bg-[var(--surface)] hover:border-[var(--border-2)]'
-                  }`}
-                >
-                  <div className="font-bold">{isBn ? pkg.nameBn : pkg.name}</div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                    {pkg.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${pkg.price}/mo`}
-                  </div>
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[0.75rem] font-semibold text-[var(--text-primary)]">
+                {isBn ? 'প্যাকেজ / প্ল্যান' : 'Package / Plan'}
+              </label>
+              {(storageMode === 'local_computer' || storageMode === 'local_server') && (
+                <span className="text-[0.625rem] font-medium text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                  {isBn ? 'সিস্টেম ব্যবহারের প্যাকেজ সাজেস্টেড' : 'System-Use Package Suggested'}
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {packages.map((pkg) => {
+                const isSystem = pkg.hostingType === 'system_only' || pkg.hostingType === 'local_pc' || pkg.hostingType === 'personal_vps'
+                const isSelected = packageName.toLowerCase() === pkg.name.toLowerCase()
+                return (
+                  <button
+                    key={pkg.id || pkg.name}
+                    type="button"
+                    onClick={() => setPackageName(pkg.name)}
+                    className={`p-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer text-left ${
+                      isSelected
+                        ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)] ring-1 ring-[var(--brand)]'
+                        : isSystem && (storageMode === 'local_computer' || storageMode === 'local_server')
+                          ? 'border-emerald-500/40 bg-emerald-500/5 hover:border-emerald-500'
+                          : 'border-[var(--border)] text-[var(--text-secondary)] bg-[var(--surface)] hover:border-[var(--border-2)]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="font-bold truncate">{isBn ? pkg.nameBn : pkg.name}</span>
+                      {isSystem ? (
+                        <span className="px-1.5 py-0.2 rounded text-[0.5625rem] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shrink-0">
+                          {isBn ? 'সিস্টেম' : 'System'}
+                        </span>
+                      ) : (
+                        <span className="px-1.5 py-0.2 rounded text-[0.5625rem] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 shrink-0">
+                          {isBn ? 'ক্লাউড' : 'Cloud'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[0.6875rem] font-extrabold text-[var(--text-primary)]">
+                      {pkg.price === 0 ? (isBn ? 'ফ্রি' : 'Free') : `৳${pkg.price.toLocaleString()}`}
+                      <span className="text-[0.5625rem] font-normal text-[var(--text-muted)] ml-0.5">
+                        {pkg.duration === 0 ? (isBn ? '/আজীবন' : '/life') : (isBn ? '/মাস' : '/mo')}
+                      </span>
+                    </div>
+                    <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
+                      {pkg.maxStudents >= 9999 ? (isBn ? 'অসীমিত ছাত্র' : 'Unlimited') : `${pkg.maxStudents} ${isBn ? 'ছাত্র' : 'students'}`}
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
