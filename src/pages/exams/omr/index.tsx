@@ -60,11 +60,35 @@ export default function OMRSheetPage() {
   const duplicateOMRTemplate = useExamStore((s) => s.duplicateOMRTemplate)
   const archiveOMRTemplate = useExamStore((s) => s.archiveOMRTemplate)
   const restoreOMRTemplate = useExamStore((s) => s.restoreOMRTemplate)
+  const syncFromServer = useExamStore((s) => s.syncFromServer)
+  const serverSynced = useExamStore((s) => s.serverSynced)
+
+  useEffect(() => {
+    if (!serverSynced) {
+      void syncFromServer()
+    }
+  }, [serverSynced, syncFromServer])
 
   const [currentStep, setCurrentStep] = useState<WizardStep>(1)
 
   const activeExam = examConfigs.find((e) => e.isActive) || examConfigs[0]
   const [selectedExamId, setSelectedExamId] = useState(activeExam?.id || '')
+
+  useEffect(() => {
+    if (!selectedExamId && examConfigs.length > 0) {
+      const active = examConfigs.find((e) => e.isActive)
+      setSelectedExamId(active ? active.id : examConfigs[0].id)
+    }
+  }, [examConfigs, selectedExamId])
+
+  useEffect(() => {
+    if (!selectedExamId && examConfigs.length > 0) {
+      const active = examConfigs.find((e) => e.isActive) || examConfigs[0]
+      setSelectedExamId(active.id)
+      setExamName(isBn ? active.nameBn : active.name)
+      setExamNameBn(active.nameBn || '')
+    }
+  }, [examConfigs, selectedExamId, isBn])
   const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || '')
   const [selectedSubjectId, setSelectedSubjectId] = useState('')
   const [selectedGroup, setSelectedGroup] = useState('')

@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2, Award, FileText, CheckCircle, Users, GraduationCap, Eye, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -47,9 +47,24 @@ export default function Step5Marksheet() {
   const toggleCumulativePublished = useExamStore((s) => s.toggleCumulativePublished)
   const deleteCumulativeSheet = useExamStore((s) => s.deleteCumulativeSheet)
   const bulkPromote = useExamStore((s) => s.bulkPromote)
+  const syncFromServer = useExamStore((s) => s.syncFromServer)
+  const serverSynced = useExamStore((s) => s.serverSynced)
+
+  useEffect(() => {
+    if (!serverSynced) {
+      void syncFromServer()
+    }
+  }, [serverSynced, syncFromServer])
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('promotion')
   const [selectedExamId, setSelectedExamId] = useState(examConfigs.find((e) => e.isActive)?.id || '')
+
+  useEffect(() => {
+    if (!selectedExamId && examConfigs.length > 0) {
+      const active = examConfigs.find((e) => e.isActive)
+      setSelectedExamId(active ? active.id : examConfigs[0].id)
+    }
+  }, [examConfigs, selectedExamId])
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 

@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug } from '@/lib/storage'
 import { isLocalComputerMode } from '@/lib/storageMode'
-import { isRecentExplicitDelete } from '@/lib/vault/bridge'
+import { isRecentExplicitDelete, markExplicitUserDelete } from '@/lib/vault/bridge'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { syllabusApi } from '@/lib/api'
 
 export interface SyllabusTopic {
@@ -96,8 +97,10 @@ function queueServerSync(get: () => SyllabusState) {
         if (s.syllabi.length === 0 && !isRecentExplicitDelete()) {
           return
         }
+        const effectiveSlug = getSlug() || undefined
         await syllabusApi.update({
           syllabi: s.syllabi,
+          schoolId: effectiveSlug,
         })
       } catch (e) {
         console.warn('[syllabus] Background sync failed:', e)
@@ -119,22 +122,47 @@ export const useSyllabusStore = create<SyllabusState>()(
       syncFromServer: async (slugOrId) => {
         if (isLocalComputerMode()) {
           set({ serverSynced: true, syncing: false, syncError: null })
+          void flushVaultWrites()
           return
         }
+        const effectiveSlug = slugOrId || getSlug() || undefined
         try {
           set({ syncing: true, syncError: null })
-          const res = await syllabusApi.get(slugOrId)
+          const res = await syllabusApi.get(effectiveSlug)
           if (res?.storageMode === 'local_computer') {
-            set({ serverSynced: true, syncing: false })
+            set({ serverSynced: true, syncing: false, syncError: null })
+            void flushVaultWrites()
             return
           }
           if (res && Array.isArray(res.syllabi)) {
-            set({
-              syllabi: res.syllabi,
-              serverSynced: true,
-              syncing: false,
-              syncError: null,
-            })
+            const hasServerData = res.syllabi.length > 0
+            const state = get()
+
+            if (hasServerData) {
+              set({
+                syllabi: res.syllabi,
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+              void flushVaultWrites()
+            } else if (state.syllabi.length > 0 && !isRecentExplicitDelete()) {
+              // Server is empty, but local PC store has existing syllabi -> sync up to backend database
+              await syllabusApi.update({
+                syllabi: state.syllabi,
+                schoolId: effectiveSlug,
+              })
+              set({ serverSynced: true, syncing: false, syncError: null })
+              void flushVaultWrites()
+            } else {
+              set({
+                syllabi: [],
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+              void flushVaultWrites()
+            }
           } else {
             set({ serverSynced: true, syncing: false })
           }
@@ -149,8 +177,10 @@ export const useSyllabusStore = create<SyllabusState>()(
         try {
           set({ syncing: true, syncError: null })
           const s = get()
+          const effectiveSlug = getSlug() || undefined
           await syllabusApi.update({
             syllabi: s.syllabi,
+            schoolId: effectiveSlug,
           })
           set({ syncing: false, serverSynced: true })
         } catch (err) {
@@ -166,6 +196,7 @@ export const useSyllabusStore = create<SyllabusState>()(
         set((state) => ({
           syllabi: [...state.syllabi, { ...entry, id, createdAt: now, updatedAt: now, ...stats }],
         }))
+        void flushVaultWrites()
         queueServerSync(get)
         return id
       },
@@ -183,13 +214,16 @@ export const useSyllabusStore = create<SyllabusState>()(
           })
           return { syllabi }
         })
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
       deleteSyllabus: (id) => {
+        markExplicitUserDelete()
         set((state) => ({
           syllabi: state.syllabi.filter((s) => s.id !== id),
         }))
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
@@ -203,6 +237,7 @@ export const useSyllabusStore = create<SyllabusState>()(
             return { ...s, chapters, ...stats, updatedAt: new Date().toISOString() }
           }),
         }))
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
@@ -215,10 +250,12 @@ export const useSyllabusStore = create<SyllabusState>()(
             return { ...s, chapters, ...stats, updatedAt: new Date().toISOString() }
           }),
         }))
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
       deleteChapter: (syllabusId, chapterId) => {
+        markExplicitUserDelete()
         set((state) => ({
           syllabi: state.syllabi.map((s) => {
             if (s.id !== syllabusId) return s
@@ -227,6 +264,7 @@ export const useSyllabusStore = create<SyllabusState>()(
             return { ...s, chapters, ...stats, updatedAt: new Date().toISOString() }
           }),
         }))
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
@@ -244,6 +282,7 @@ export const useSyllabusStore = create<SyllabusState>()(
             return { ...s, chapters, updatedAt: new Date().toISOString() }
           }),
         }))
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
@@ -260,6 +299,7 @@ export const useSyllabusStore = create<SyllabusState>()(
             return { ...s, chapters, ...stats, updatedAt: new Date().toISOString() }
           }),
         }))
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
@@ -276,10 +316,12 @@ export const useSyllabusStore = create<SyllabusState>()(
             return { ...s, chapters, ...stats, updatedAt: new Date().toISOString() }
           }),
         }))
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
       deleteTopic: (syllabusId, chapterId, topicId) => {
+        markExplicitUserDelete()
         set((state) => ({
           syllabi: state.syllabi.map((s) => {
             if (s.id !== syllabusId) return s
@@ -291,6 +333,7 @@ export const useSyllabusStore = create<SyllabusState>()(
             return { ...s, chapters, ...stats, updatedAt: new Date().toISOString() }
           }),
         }))
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
@@ -307,6 +350,7 @@ export const useSyllabusStore = create<SyllabusState>()(
             return { ...s, chapters, ...stats, updatedAt: new Date().toISOString() }
           }),
         }))
+        void flushVaultWrites()
         queueServerSync(get)
       },
 
@@ -323,7 +367,7 @@ registerStoreReset(() => {
 })
 
 registerStoreLoad(() => {
-  const slug = sessionStorage.getItem('edutech_inst_slug')
+  const slug = getSlug() || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : null)
   if (!slug) return
   try {
     const raw = localStorage.getItem(`edutech-syllabus_${slug}`)

@@ -68,9 +68,24 @@ export default function Step2Schedule() {
   const addInvigilator = useExamStore((s) => s.addInvigilator)
   const removeInvigilator = useExamStore((s) => s.removeInvigilator)
   const addAttendance = useExamStore((s) => s.addAttendance)
+  const syncFromServer = useExamStore((s) => s.syncFromServer)
+  const serverSynced = useExamStore((s) => s.serverSynced)
+
+  useEffect(() => {
+    if (!serverSynced) {
+      void syncFromServer()
+    }
+  }, [serverSynced, syncFromServer])
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('rooms')
   const [selectedExamId, setSelectedExamId] = useState(examConfigs.find((e) => e.isActive)?.id || '')
+
+  useEffect(() => {
+    if (!selectedExamId && examConfigs.length > 0) {
+      const active = examConfigs.find((e) => e.isActive)
+      setSelectedExamId(active ? active.id : examConfigs[0].id)
+    }
+  }, [examConfigs, selectedExamId])
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 

@@ -52,9 +52,24 @@ export default function Step3Evaluation() {
   const lockMarks = useExamStore((s) => s.lockMarks)
   const unlockMarks = useExamStore((s) => s.unlockMarks)
   const toggleClassPublished = useExamStore((s) => s.toggleClassPublished)
+  const syncFromServer = useExamStore((s) => s.syncFromServer)
+  const serverSynced = useExamStore((s) => s.serverSynced)
+
+  useEffect(() => {
+    if (!serverSynced) {
+      void syncFromServer()
+    }
+  }, [serverSynced, syncFromServer])
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('entry')
   const [selectedExamId, setSelectedExamId] = useState(examConfigs.find((e) => e.isActive)?.id || '')
+
+  useEffect(() => {
+    if (!selectedExamId && examConfigs.length > 0) {
+      const active = examConfigs.find((e) => e.isActive)
+      setSelectedExamId(active ? active.id : examConfigs[0].id)
+    }
+  }, [examConfigs, selectedExamId])
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
 

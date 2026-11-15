@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import type { PrismaClient } from '@prisma/client'
-import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js'
+import { requireAuth, optionalAuth, type AuthenticatedRequest } from '../middleware/auth.js'
 import { requireRole } from '../middleware/rbac.js'
 import { resolveTargetSchool } from '../lib/resolveSchool.js'
 
@@ -11,7 +11,7 @@ export function examsRouter(prisma: PrismaClient, jwtSecret: string) {
    * GET /api/exams
    * Fetch examination configurations, schedules, marks, and result configs for the institution.
    */
-  router.get('/', async (req: Request, res: Response) => {
+  router.get('/', optionalAuth(prisma, jwtSecret), async (req: Request, res: Response) => {
     try {
       const school = await resolveTargetSchool(prisma, req, jwtSecret, {
         id: true,

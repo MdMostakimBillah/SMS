@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -75,6 +75,14 @@ export default function Step1Planning() {
   const updateGradeScale = useExamStore((s) => s.updateGradeScale)
   const deleteGradeScale = useExamStore((s) => s.deleteGradeScale)
   const toggleGradeScaleActive = useExamStore((s) => s.toggleGradeScaleActive)
+  const syncFromServer = useExamStore((s) => s.syncFromServer)
+  const serverSynced = useExamStore((s) => s.serverSynced)
+
+  useEffect(() => {
+    if (!serverSynced) {
+      void syncFromServer()
+    }
+  }, [serverSynced, syncFromServer])
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('exams')
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())

@@ -171,4 +171,83 @@ describe('syllabusStore', () => {
       sessionStorage.removeItem('edutech_storage_mode')
     }
   })
+
+  it('syncFromServer pushes local syllabi to backend database when server is empty', async () => {
+    const bridge = await import('@/lib/vault/bridge')
+    const { vi } = await import('vitest')
+    const deleteSpy = vi.spyOn(bridge, 'isRecentExplicitDelete').mockReturnValue(false)
+
+    const { syllabusApi } = await import('@/lib/api')
+    const originalGet = syllabusApi.get
+    const originalUpdate = syllabusApi.update
+
+    let updatePayload: any = null
+    try {
+      syllabusApi.get = async () => ({ syllabi: [] })
+      syllabusApi.update = async (data: any) => {
+        updatePayload = data
+        return { success: true, count: data.syllabi.length }
+      }
+
+      useSyllabusStore.setState({
+        syllabi: [
+          {
+            id: 'SYL-LOCAL-1',
+            classId: 'Class 9',
+            sectionId: 'A',
+            subjectId: 'SUB-MATH',
+            sessionId: '2026-27',
+            totalChapters: 1,
+            totalTopics: 1,
+            completedTopics: 0,
+            chapters: [],
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        serverSynced: false,
+      })
+
+      await useSyllabusStore.getState().syncFromServer('test-school')
+      expect(updatePayload).not.toBeNull()
+      expect(updatePayload.syllabi).toHaveLength(1)
+      expect(updatePayload.syllabi[0].id).toBe('SYL-LOCAL-1')
+      expect(useSyllabusStore.getState().serverSynced).toBe(true)
+      expect(useSyllabusStore.getState().syllabi).toHaveLength(1)
+    } finally {
+      deleteSpy.mockRestore()
+      syllabusApi.get = originalGet
+      syllabusApi.update = originalUpdate
+    }
+  })
+
+  it('deleteSyllabus triggers markExplicitUserDelete', async () => {
+    const bridge = await import('@/lib/vault/bridge')
+    const { vi } = await import('vitest')
+    const deleteSpy = vi.spyOn(bridge, 'markExplicitUserDelete')
+
+    const sid = useSyllabusStore.getState().addSyllabus({
+      classId: '1', sectionId: 'A', subjectId: 'SUB-1', sessionId: '2025-26', chapters: [],
+    } as any)
+    useSyllabusStore.getState().deleteSyllabus(sid)
+
+    expect(deleteSpy).toHaveBeenCalled()
+    deleteSpy.mockRestore()
+  })
+
+  it('mutations trigger flushVaultWrites for Local PC vault synchronization', async () => {
+    const vault = await import('@/lib/vault/vault')
+    const { vi } = await import('vitest')
+    const flushSpy = vi.spyOn(vault, 'flushVaultWrites').mockResolvedValue()
+
+    const sid = useSyllabusStore.getState().addSyllabus({
+      classId: '1', sectionId: 'A', subjectId: 'SUB-1', sessionId: '2025-26', chapters: [],
+    } as any)
+    expect(flushSpy).toHaveBeenCalled()
+
+    useSyllabusStore.getState().updateSyllabus(sid, { classId: '2' })
+    expect(flushSpy).toHaveBeenCalled()
+
+    flushSpy.mockRestore()
+  })
 })

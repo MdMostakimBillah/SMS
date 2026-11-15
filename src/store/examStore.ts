@@ -536,13 +536,29 @@ function queueServerSync(get: () => ExamState) {
     serverSyncTimer = setTimeout(async () => {
       try {
         const s = get()
-        if (
-          s.examConfigs.length === 0 &&
-          s.subjectMarkConfigs.length === 0 &&
-          s.studentMarks.length === 0 &&
-          s.routines.length === 0 &&
-          !isRecentExplicitDelete()
-        ) {
+        const hasAnyData =
+          s.examConfigs.length > 0 ||
+          s.subjectMarkConfigs.length > 0 ||
+          s.studentMarks.length > 0 ||
+          s.routines.length > 0 ||
+          s.rooms.length > 0 ||
+          s.seatPlans.length > 0 ||
+          s.invigilators.length > 0 ||
+          s.attendances.length > 0 ||
+          s.markAdjustments.length > 0 ||
+          s.omrConfigs.length > 0 ||
+          s.omrTemplates.length > 0 ||
+          s.extraMarks.length > 0 ||
+          s.extraMarkTypes.length > 0 ||
+          s.marksheetConfigs.length > 0 ||
+          s.generalAbilities.length > 0 ||
+          s.gradeScales.length > 0 ||
+          s.workingDays.length > 0 ||
+          s.promotions.length > 0 ||
+          s.cumulativeSheets.length > 0 ||
+          s.marksEntryStatuses.length > 0
+
+        if (!hasAnyData && !isRecentExplicitDelete()) {
           return
         }
         await examsApi.update({
@@ -627,6 +643,7 @@ export const useExamStore = create<ExamState>()(
               (Array.isArray(res.seatPlans) && res.seatPlans.length > 0) ||
               (Array.isArray(res.invigilators) && res.invigilators.length > 0) ||
               (Array.isArray(res.attendances) && res.attendances.length > 0) ||
+              (Array.isArray(res.markAdjustments) && res.markAdjustments.length > 0) ||
               (Array.isArray(res.omrConfigs) && res.omrConfigs.length > 0) ||
               (Array.isArray(res.omrTemplates) && res.omrTemplates.length > 0) ||
               (Array.isArray(res.extraMarks) && res.extraMarks.length > 0) ||
@@ -670,7 +687,23 @@ export const useExamStore = create<ExamState>()(
               state.examConfigs.length > 0 ||
               state.subjectMarkConfigs.length > 0 ||
               state.studentMarks.length > 0 ||
-              state.routines.length > 0
+              state.routines.length > 0 ||
+              state.rooms.length > 0 ||
+              state.seatPlans.length > 0 ||
+              state.invigilators.length > 0 ||
+              state.attendances.length > 0 ||
+              state.markAdjustments.length > 0 ||
+              state.omrConfigs.length > 0 ||
+              state.omrTemplates.length > 0 ||
+              state.extraMarks.length > 0 ||
+              state.extraMarkTypes.length > 0 ||
+              state.marksheetConfigs.length > 0 ||
+              state.generalAbilities.length > 0 ||
+              state.gradeScales.length > 0 ||
+              state.workingDays.length > 0 ||
+              state.promotions.length > 0 ||
+              state.cumulativeSheets.length > 0 ||
+              state.marksEntryStatuses.length > 0
             ) {
               await examsApi.update({
                 examConfigs: state.examConfigs,

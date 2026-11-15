@@ -84,6 +84,14 @@ export default function Step4Results() {
   const sessionExtraMarks = useMemo(() => extraMarks.filter((e) => sessionExamIds.has(e.examId)), [extraMarks, sessionExamIds])
   const addExtraMark = useExamStore((s) => s.addExtraMark)
   const bulkAddExtraMarks = useExamStore((s) => s.bulkAddExtraMarks)
+  const syncFromServer = useExamStore((s) => s.syncFromServer)
+  const serverSynced = useExamStore((s) => s.serverSynced)
+
+  useEffect(() => {
+    if (!serverSynced) {
+      void syncFromServer()
+    }
+  }, [serverSynced, syncFromServer])
 
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('tabulation')
   const [selectedExamId, setSelectedExamId] = useState(examConfigs.find((e) => e.isActive)?.id || '')
@@ -128,7 +136,7 @@ export default function Step4Results() {
   useEffect(() => {
     if (!selectedExamId && examConfigs.length > 0) {
       const active = examConfigs.find((e) => e.isActive)
-      if (active) setSelectedExamId(active.id)
+      setSelectedExamId(active ? active.id : examConfigs[0].id)
     }
   }, [examConfigs, selectedExamId])
 
