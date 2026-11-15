@@ -5,7 +5,6 @@ import gsap from 'gsap'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useVault } from '@/hooks/useVault'
 import { useAssignmentStore } from '@/store/assignmentStore'
 import type { Assignment } from '@/store/assignmentStore'
 import { useClassStore } from '@/store/classStore'
@@ -40,7 +39,6 @@ export default function AssignmentPage() {
   const slug = paramSlug || getSlug() || undefined
   const { canCreate, canEdit, canDelete, canExport } = usePermission()
   const { isMobile } = useWindowSize()
-  const vault = useVault()
 
   const classes = useClassStore((s) => s.classes)
   const teachers = useTeacherStore((s) => s.teachers)
@@ -73,10 +71,6 @@ export default function AssignmentPage() {
   const [editItem, setEditItem] = useState<Assignment | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Assignment | null>(null)
   const [detailItem, setDetailItem] = useState<Assignment | null>(null)
-
-  const [filterClassId, setFilterClassId] = useState('')
-  const [filterSectionId, setFilterSectionId] = useState('')
-  const [filterSubjectId, setFilterSubjectId] = useState('')
 
   useScrollLock(showForm || !!detailItem || !!deleteTarget || showTypeSelect || showHwForm)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -160,39 +154,20 @@ export default function AssignmentPage() {
     return days
   }, [calMonth, calYear])
 
-  // Filter cascading
-  const filterSelectedClass = useMemo(() => classes.find((c) => c.id === filterClassId), [classes, filterClassId])
-  const filterAvailableSections = useMemo(() => filterSelectedClass?.sections || [], [filterSelectedClass])
-  const filterSelectedSection = useMemo(() => filterAvailableSections.find((s) => s.id === filterSectionId), [filterAvailableSections, filterSectionId])
-  const filterAvailableSubjects = useMemo(() => {
-    if (filterSelectedSection?.subjectIds?.length) return subjects.filter((s) => filterSelectedSection.subjectIds!.includes(s.id))
-    if (filterSelectedClass?.subjectIds?.length) return subjects.filter((s) => filterSelectedClass.subjectIds!.includes(s.id))
-    return subjects
-  }, [filterSelectedSection, filterSelectedClass, subjects])
-
-  // Filtered assignments
-  const filteredAssignments = useMemo(() => {
-    let result = assignments
-    if (filterClassId) result = result.filter((a) => a.classId === filterClassId)
-    if (filterSectionId) result = result.filter((a) => a.sectionId === filterSectionId)
-    if (filterSubjectId) result = result.filter((a) => a.subjectId === filterSubjectId)
-    return result
-  }, [assignments, filterClassId, filterSectionId, filterSubjectId])
-
   const assignmentsOnDate = useMemo(
-    () => filteredAssignments.filter((a) => a.dueDate === selectedDate),
-    [filteredAssignments, selectedDate]
+    () => assignments.filter((a) => a.dueDate === selectedDate),
+    [assignments, selectedDate]
   )
 
   const assignmentsWithDots = useMemo(() => {
     const map = new Map<string, number>()
-    filteredAssignments.forEach((a) => map.set(a.dueDate, (map.get(a.dueDate) || 0) + 1))
+    assignments.forEach((a) => map.set(a.dueDate, (map.get(a.dueDate) || 0) + 1))
     return map
-  }, [filteredAssignments])
+  }, [assignments])
 
   // Summary counts for selected date
   const homeworkPerClass = useMemo(() => {
-    const hw = filteredAssignments.filter(
+    const hw = assignments.filter(
       (a) => a.type === 'homework' && a.status === 'active' && a.dueDate === selectedDate
     )
     const map = new Map<string, { name: string; nameBn: string; count: number }>()
@@ -205,10 +180,10 @@ export default function AssignmentPage() {
       }
     })
     return Array.from(map.values()).sort((a, b) => b.count - a.count)
-  }, [filteredAssignments, classes, selectedDate])
+  }, [assignments, classes, selectedDate])
 
   const assignmentPerClass = useMemo(() => {
-    const asg = filteredAssignments.filter(
+    const asg = assignments.filter(
       (a) => a.type === 'assignment' && a.status === 'active' && a.dueDate === selectedDate
     )
     const map = new Map<string, { name: string; nameBn: string; count: number }>()
@@ -221,7 +196,7 @@ export default function AssignmentPage() {
       }
     })
     return Array.from(map.values()).sort((a, b) => b.count - a.count)
-  }, [filteredAssignments, classes, selectedDate])
+  }, [assignments, classes, selectedDate])
 
   const showSummary = homeworkPerClass.length > 0 || assignmentPerClass.length > 0
 
@@ -300,31 +275,10 @@ export default function AssignmentPage() {
       <AssignmentHeader
         isBn={isBn}
         isMobile={isMobile}
-        isLocalComputer={isLocalComputerMode()}
-        isVaultConnected={vault.connected}
-        vaultFolderName={vault.folderName}
-        serverSynced={serverSynced}
         syncing={syncing}
         refreshing={refreshing}
         canCreate={canCreate('assignments')}
         canExport={canExport('assignments')}
-        classes={classes}
-        subjects={subjects}
-        filterClassId={filterClassId}
-        filterSectionId={filterSectionId}
-        filterSubjectId={filterSubjectId}
-        availableSections={filterAvailableSections}
-        availableSubjects={filterAvailableSubjects}
-        onFilterClassChange={(id) => {
-          setFilterClassId(id)
-          setFilterSectionId('')
-          setFilterSubjectId('')
-        }}
-        onFilterSectionChange={(id) => {
-          setFilterSectionId(id)
-          setFilterSubjectId('')
-        }}
-        onFilterSubjectChange={setFilterSubjectId}
         onRefresh={handleRefresh}
         onOpenCreate={() => setShowTypeSelect(true)}
         onExportJson={handleExportJson}

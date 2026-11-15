@@ -248,7 +248,7 @@ describe('AssignmentPage Integration & LocalPC/Database Connection', () => {
     })
   })
 
-  it('displays Local PC Storage badge in local_computer mode', async () => {
+  it('renders cleanly in local_computer mode without storage badge', async () => {
     sessionStorage.setItem('edutech_storage_mode', 'local_computer')
 
     render(
@@ -258,7 +258,8 @@ describe('AssignmentPage Integration & LocalPC/Database Connection', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText(/Local PC Storage|লোকাল পিসি স্টোরেজ/i)).toBeInTheDocument()
+      expect(screen.getByText('Assignments')).toBeInTheDocument()
+      expect(screen.queryByText(/Local PC Storage|লোকাল পিসি স্টোরেজ/i)).not.toBeInTheDocument()
     })
   })
 
@@ -290,7 +291,7 @@ describe('AssignmentPage Integration & LocalPC/Database Connection', () => {
     })
   })
 
-  it('displays Database Connected badge in default cloud / database mode', async () => {
+  it('renders cleanly in default cloud / database mode without storage badge', async () => {
     sessionStorage.removeItem('edutech_storage_mode')
     localStorage.removeItem('edutech_storage_mode')
 
@@ -301,7 +302,8 @@ describe('AssignmentPage Integration & LocalPC/Database Connection', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText(/Database Connected|ডাটাবেজ কানেক্টেড/i)).toBeInTheDocument()
+      expect(screen.getByText('Assignments')).toBeInTheDocument()
+      expect(screen.queryByText(/Database Connected|ডাটাবেজ কানেক্টেড/i)).not.toBeInTheDocument()
     })
   })
 
