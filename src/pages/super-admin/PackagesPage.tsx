@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
   CreditCard, Plus, Search, Edit3, Trash2, X,
   Cloud, Laptop, Server, Cpu, CheckCircle2,
-  Users, GraduationCap, Building2, Star, RefreshCcw,
+  Building2, Star, RefreshCcw,
   ShieldCheck, Globe
 } from 'lucide-react'
 import { useSuperAdminStore, type InstitutionPackage, type PackageHostingType } from '@/store/superAdminStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
+import { useTabSlider } from '@/hooks/useTabSlider'
 
 interface Props {
   isBn: boolean
@@ -27,6 +28,10 @@ export default function PackagesPage({ isBn }: Props) {
   const [isCreating, setIsCreating] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const sliderRef = useRef<HTMLDivElement>(null)
+  useTabSlider({ activeTab, tabRefs, sliderRef })
 
   // Calculate enrolled institutions count per package
   const packageUsage = useMemo(() => {
@@ -168,101 +173,151 @@ export default function PackagesPage({ isBn }: Props) {
         </div>
       </div>
 
-      {/* KPI Stats Grid */}
+      {/* Top Stat Cards (Dashboard Cards Design) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="glass rounded-xl p-4 border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="text-[0.6875rem] font-medium text-[var(--text-muted)]">
-            {isBn ? 'মোট প্যাকেজ' : 'Total Packages'}
+        {/* Card 1: Total Packages */}
+        <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(99, 102, 241, 0.12)', color: 'var(--brand)' }}
+          >
+            <CreditCard size={18} />
           </div>
-          <div className="text-[1.375rem] font-bold text-[var(--text-primary)] mt-1">
-            {totalPackages}
-          </div>
-          <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
-            {isBn ? 'সক্রিয় ও কনফিগার করা' : 'Active & configured'}
-          </div>
-        </div>
-
-        <div className="glass rounded-xl p-4 border border-blue-500/20 bg-blue-500/5">
-          <div className="text-[0.6875rem] font-medium text-blue-500 flex items-center gap-1">
-            <Cloud size={13} />
-            {isBn ? 'প্রোভাইডার ক্লাউড প্যাকেজ' : 'Provider Cloud'}
-          </div>
-          <div className="text-[1.375rem] font-bold text-blue-600 dark:text-blue-400 mt-1">
-            {cloudPackages}
-          </div>
-          <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
-            {isBn ? 'সেন্ট্রাল হোস্টিং অন্তর্ভুক্ত' : 'Central hosting included'}
+          <div className="min-w-0">
+            <div className="text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight truncate">
+              {totalPackages}
+            </div>
+            <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap mt-0.5 font-medium">
+              {isBn ? 'মোট প্যাকেজ' : 'Total Packages'}
+            </div>
           </div>
         </div>
 
-        <div className="glass rounded-xl p-4 border border-emerald-500/20 bg-emerald-500/5">
-          <div className="text-[0.6875rem] font-medium text-emerald-500 flex items-center gap-1">
-            <Cpu size={13} />
-            {isBn ? 'সিস্টেম ব্যবহার (পিসি / ভিপিএস)' : 'System Use (PC/VPS)'}
+        {/* Card 2: Provider Cloud */}
+        <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-500/10 text-blue-500"
+          >
+            <Cloud size={18} />
           </div>
-          <div className="text-[1.375rem] font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-            {systemPackages}
-          </div>
-          <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
-            {isBn ? 'জিরো ক্লাউড খরচ, নিজস্ব স্টোরেজ' : 'Zero cloud cost, self-hosted'}
+          <div className="min-w-0">
+            <div className="text-[1.125rem] font-bold text-blue-600 dark:text-blue-400 leading-tight truncate">
+              {cloudPackages}
+            </div>
+            <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap mt-0.5 font-medium">
+              {isBn ? 'প্রোভাইডার ক্লাউড' : 'Provider Cloud'}
+            </div>
           </div>
         </div>
 
-        <div className="glass rounded-xl p-4 border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="text-[0.6875rem] font-medium text-[var(--text-muted)]">
-            {isBn ? 'মোট নিবন্ধিত প্রতিষ্ঠান' : 'Enrolled Institutions'}
+        {/* Card 3: System Use Only */}
+        <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-emerald-500/10 text-emerald-500"
+          >
+            <Cpu size={18} />
           </div>
-          <div className="text-[1.375rem] font-bold text-[var(--text-primary)] mt-1">
-            {institutions.length}
+          <div className="min-w-0">
+            <div className="text-[1.125rem] font-bold text-emerald-600 dark:text-emerald-400 leading-tight truncate">
+              {systemPackages}
+            </div>
+            <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap mt-0.5 font-medium">
+              {isBn ? 'সিস্টেম ব্যবহার (লোকাল/ভিপিএস)' : 'System Use Only'}
+            </div>
           </div>
-          <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
-            {isBn ? 'বিভিন্ন প্যাকেজে যুক্ত' : 'Active subscribers'}
+        </div>
+
+        {/* Card 4: Enrolled Institutions */}
+        <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-xs)] hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-purple-500/10 text-purple-500"
+          >
+            <Building2 size={18} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight truncate">
+              {institutions.length}
+            </div>
+            <div className="text-[0.6875rem] text-[var(--text-secondary)] whitespace-nowrap mt-0.5 font-medium">
+              {isBn ? 'নিবন্ধিত প্রতিষ্ঠান' : 'Enrolled Schools'}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Architecture Mode Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-x-auto">
+        {/* Architecture Mode Tabs with Smooth Slider Animation */}
+        <div className="relative flex items-center p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-x-auto scrollbar-none w-fit max-w-full">
+          {/* Smooth Sliding Pill Indicator */}
+          <div
+            ref={sliderRef}
+            className="absolute top-1 bottom-1 rounded-lg bg-[var(--surface)] shadow-sm [transition:width_250ms_cubic-bezier(0.4,0,0.2,1),transform_250ms_cubic-bezier(0.4,0,0.2,1)] z-0 pointer-events-none border border-[var(--border)]/70"
+          />
+
           <button
             type="button"
+            ref={(el) => {
+              if (el) tabRefs.current.set('all', el)
+              else tabRefs.current.delete('all')
+            }}
             onClick={() => setActiveTab('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${
+            className={`relative z-10 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer border-none shrink-0 ${
               activeTab === 'all'
-                ? 'bg-[var(--bg-primary)] text-[var(--text-primary)] shadow-sm'
+                ? 'text-[var(--text-primary)]'
                 : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
             }`}
           >
-            {isBn ? 'সকল প্যাকেজ' : 'All Packages'} ({totalPackages})
+            <span>{isBn ? 'সকল প্যাকেজ' : 'All Packages'}</span>
+            <span className={`text-[0.625rem] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
+              activeTab === 'all' ? 'bg-[var(--brand)]/15 text-[var(--brand)]' : 'bg-[var(--border)] text-[var(--text-muted)]'
+            }`}>
+              {totalPackages}
+            </span>
           </button>
 
           <button
             type="button"
+            ref={(el) => {
+              if (el) tabRefs.current.set('cloud', el)
+              else tabRefs.current.delete('cloud')
+            }}
             onClick={() => setActiveTab('cloud')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${
+            className={`relative z-10 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer border-none shrink-0 ${
               activeTab === 'cloud'
-                ? 'bg-[var(--bg-primary)] text-blue-500 shadow-sm'
+                ? 'text-blue-500'
                 : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
             }`}
           >
             <Cloud size={13} />
             <span>{isBn ? 'প্রোভাইডার ক্লাউড' : 'Provider Cloud'}</span>
-            <span className="text-[0.625rem] opacity-75">({cloudPackages})</span>
+            <span className={`text-[0.625rem] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
+              activeTab === 'cloud' ? 'bg-blue-500/15 text-blue-500' : 'bg-[var(--border)] text-[var(--text-muted)]'
+            }`}>
+              {cloudPackages}
+            </span>
           </button>
 
           <button
             type="button"
+            ref={(el) => {
+              if (el) tabRefs.current.set('system_only', el)
+              else tabRefs.current.delete('system_only')
+            }}
             onClick={() => setActiveTab('system_only')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none ${
+            className={`relative z-10 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer border-none shrink-0 ${
               activeTab === 'system_only'
-                ? 'bg-[var(--bg-primary)] text-emerald-500 shadow-sm'
+                ? 'text-emerald-500'
                 : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
             }`}
           >
             <Cpu size={13} />
             <span>{isBn ? 'সিস্টেম ব্যবহার (লোকাল পিসি ও ভিপিএস)' : 'System Use (Local PC & VPS)'}</span>
-            <span className="text-[0.625rem] opacity-75">({systemPackages})</span>
+            <span className={`text-[0.625rem] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
+              activeTab === 'system_only' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-[var(--border)] text-[var(--text-muted)]'
+            }`}>
+              {systemPackages}
+            </span>
           </button>
         </div>
 
@@ -274,7 +329,7 @@ export default function PackagesPage({ isBn }: Props) {
             placeholder={isBn ? 'প্যাকেজের নাম বা সুবিধা খুঁজুন...' : 'Search package name or features...'}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl text-xs border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
+            className="w-full pl-9 pr-3 py-2 rounded-xl text-xs border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors shadow-2xs"
           />
         </div>
       </div>
@@ -316,21 +371,22 @@ export default function PackagesPage({ isBn }: Props) {
             const badge = getHostingBadge(pkg.hostingType)
             const isSystemType = pkg.hostingType === 'system_only' || pkg.hostingType === 'local_pc' || pkg.hostingType === 'personal_vps'
             const isLifetime = pkg.duration === 0
+            const isDefault = isSystemType ? pkg.isDefaultSystemUse : pkg.isDefaultCloud
 
             return (
               <div
                 key={pkg.id || pkg.name}
-                className={`group relative rounded-2xl border p-5 flex flex-col justify-between transition-all bg-[var(--bg-primary)] ${
+                className={`group relative rounded-2xl border p-5 flex flex-col justify-between transition-all duration-200 bg-[var(--surface)] ${
                   pkg.isPopular
-                    ? 'border-[var(--brand)] ring-1 ring-[var(--brand)]/30 shadow-md'
-                    : 'border-[var(--border)] hover:border-[var(--brand)]/50'
+                    ? 'border-[var(--brand)] shadow-md shadow-[var(--brand)]/5 ring-1 ring-[var(--brand)]/20'
+                    : 'border-[var(--border)] hover:border-[var(--border-2)] hover:shadow-md'
                 }`}
               >
-                {/* Top Badges */}
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                  {/* Top Badges */}
+                  <div className="flex items-center justify-between gap-2 mb-3">
                     <span
-                      className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.625rem] font-semibold border ${badge.style}`}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold border ${badge.style}`}
                       title={isBn ? badge.descBn : badge.descEn}
                     >
                       {badge.icon}
@@ -339,28 +395,27 @@ export default function PackagesPage({ isBn }: Props) {
 
                     <div className="flex items-center gap-1.5">
                       {pkg.isDefaultCloud && (
-                        <span className="px-2 py-0.5 rounded-md text-[0.625rem] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                        <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
                           {isBn ? 'ডিফল্ট ক্লাউড' : 'Default Cloud'}
                         </span>
                       )}
                       {pkg.isDefaultSystemUse && (
-                        <span className="px-2 py-0.5 rounded-md text-[0.625rem] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                           {isBn ? 'ডিফল্ট সিস্টেম' : 'Default System'}
                         </span>
                       )}
                       {pkg.isPopular && (
-                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.625rem] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.625rem] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                           <Star size={10} className="fill-current" />
                           <span>{isBn ? 'জনপ্রিয়' : 'Popular'}</span>
                         </span>
                       )}
-                      <span className={`w-2 h-2 rounded-full ${pkg.isActive !== false ? 'bg-green-500' : 'bg-gray-400'}`} title={pkg.isActive !== false ? (isBn ? 'সক্রিয়' : 'Active') : (isBn ? 'নিষ্ক্রিয়' : 'Inactive')} />
                     </div>
                   </div>
 
                   {/* Title & Description */}
                   <div className="mb-3">
-                    <div className="flex items-baseline justify-between">
+                    <div className="flex items-baseline justify-between gap-2">
                       <h3 className="text-base font-bold text-[var(--text-primary)]">
                         {isBn ? pkg.nameBn : pkg.name}
                       </h3>
@@ -371,57 +426,54 @@ export default function PackagesPage({ isBn }: Props) {
                       )}
                     </div>
                     {(pkg.description || pkg.descriptionBn) && (
-                      <p className="text-[0.6875rem] text-[var(--text-muted)] mt-1 line-clamp-2">
+                      <p className="text-xs text-[var(--text-muted)] mt-1 line-clamp-2 leading-relaxed min-h-[2rem]">
                         {isBn ? pkg.descriptionBn || pkg.description : pkg.description || pkg.descriptionBn}
                       </p>
                     )}
                   </div>
 
-                  {/* Price Banner */}
-                  <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] mb-4">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[1.375rem] font-black text-[var(--text-primary)]">
+                  {/* Price Row (Clean & Airy, without heavy nested container) */}
+                  <div className="pb-3 mb-3 border-b border-[var(--border)]/60">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-2xl font-black text-[var(--text-primary)] tracking-tight">
                         ৳{pkg.price.toLocaleString()}
                       </span>
-                      <span className="text-[0.6875rem] text-[var(--text-muted)] font-medium">
+                      <span className="text-xs text-[var(--text-muted)] font-medium">
                         {isLifetime
-                          ? (isBn ? '/ এককালীন লাইফটাইম' : '/ Lifetime')
+                          ? (isBn ? '/ এককালীন' : '/ lifetime')
                           : (pkg.duration === 365
                               ? (isBn ? '/ বছর' : '/ year')
                               : (isBn ? '/ মাস' : '/ month'))}
                       </span>
                     </div>
                     {pkg.pricePerStudent > 0 && (
-                      <div className="text-[0.625rem] text-[var(--brand)] font-semibold mt-0.5">
-                        + ৳{pkg.pricePerStudent} {isBn ? 'প্রতি শিক্ষার্থী' : 'per student'}
+                      <div className="text-[0.6875rem] text-[var(--brand)] font-semibold mt-1">
+                        + ৳{pkg.pricePerStudent} {isBn ? 'প্রতি শিক্ষার্থী / মাস' : 'per student / month'}
                       </div>
                     )}
                   </div>
 
-                  {/* Quotas */}
-                  <div className="grid grid-cols-3 gap-2 py-2 border-y border-[var(--border)]/60 text-center mb-4">
+                  {/* Quotas Compact Ribbon */}
+                  <div className="grid grid-cols-3 gap-1 py-2 px-2 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border)]/50 text-center mb-3.5">
                     <div>
-                      <div className="text-[0.625rem] text-[var(--text-muted)] flex items-center justify-center gap-1 mb-0.5">
-                        <GraduationCap size={11} />
-                        <span>{isBn ? 'শিক্ষার্থী' : 'Students'}</span>
+                      <div className="text-[0.625rem] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-0.5">
+                        {isBn ? 'শিক্ষার্থী' : 'Students'}
                       </div>
                       <div className="text-xs font-bold text-[var(--text-primary)]">
                         {pkg.maxStudents >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : pkg.maxStudents.toLocaleString()}
                       </div>
                     </div>
-                    <div>
-                      <div className="text-[0.625rem] text-[var(--text-muted)] flex items-center justify-center gap-1 mb-0.5">
-                        <Users size={11} />
-                        <span>{isBn ? 'শিক্ষক' : 'Teachers'}</span>
+                    <div className="border-x border-[var(--border)]/50">
+                      <div className="text-[0.625rem] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-0.5">
+                        {isBn ? 'শিক্ষক' : 'Teachers'}
                       </div>
                       <div className="text-xs font-bold text-[var(--text-primary)]">
                         {pkg.maxTeachers >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : pkg.maxTeachers.toLocaleString()}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[0.625rem] text-[var(--text-muted)] flex items-center justify-center gap-1 mb-0.5">
-                        <Building2 size={11} />
-                        <span>{isBn ? 'শ্রেণি' : 'Classes'}</span>
+                      <div className="text-[0.625rem] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-0.5">
+                        {isBn ? 'শ্রেণি' : 'Classes'}
                       </div>
                       <div className="text-xs font-bold text-[var(--text-primary)]">
                         {pkg.maxClasses >= 999 ? (isBn ? 'অসীমিত' : 'Unlimited') : pkg.maxClasses}
@@ -429,20 +481,20 @@ export default function PackagesPage({ isBn }: Props) {
                     </div>
                   </div>
 
-                  {/* Features List */}
+                  {/* Clean Features List */}
                   {pkg.features && pkg.features.length > 0 && (
                     <div className="space-y-1.5 mb-4">
                       {pkg.features.slice(0, 4).map((f, idx) => {
                         const label = isBn && pkg.featuresBn && pkg.featuresBn[idx] ? pkg.featuresBn[idx] : f
                         return (
-                          <div key={idx} className="flex items-center gap-2 text-[0.6875rem] text-[var(--text-secondary)]">
-                            <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
+                          <div key={idx} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                            <CheckCircle2 size={13} className="text-emerald-500/90 shrink-0" />
                             <span className="truncate">{label}</span>
                           </div>
                         )
                       })}
                       {pkg.features.length > 4 && (
-                        <div className="text-[0.625rem] text-[var(--text-muted)] font-medium pl-5">
+                        <div className="text-[0.6875rem] text-[var(--text-muted)] font-medium pl-5 pt-0.5">
                           +{pkg.features.length - 4} {isBn ? 'টি আরো সুবিধা' : 'more features'}
                         </div>
                       )}
@@ -450,23 +502,33 @@ export default function PackagesPage({ isBn }: Props) {
                   )}
                 </div>
 
-                {/* Footer & Controls */}
-                <div className="pt-3 border-t border-[var(--border)]/60">
-                  <div className="flex items-center justify-between mb-3 text-[0.6875rem]">
-                    <span className="text-[var(--text-muted)] flex items-center gap-1">
-                      <Building2 size={12} />
+                {/* Card Footer (De-cluttered & streamlined) */}
+                <div className="pt-3 border-t border-[var(--border)]/60 space-y-2.5">
+                  {/* Status & Enrolled schools meta row */}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[var(--text-muted)] flex items-center gap-1.5 text-[0.6875rem] font-medium">
+                      <Building2 size={12} className="text-[var(--text-muted)]" />
                       <span>{isBn ? 'যুক্ত প্রতিষ্ঠান:' : 'Subscribed:'}</span>
+                      <strong className="text-[var(--text-primary)] font-bold">{enrolled} {isBn ? 'টি' : 'schools'}</strong>
                     </span>
-                    <span className="font-bold text-[var(--text-primary)] px-2 py-0.5 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)]">
-                      {enrolled} {isBn ? 'টি' : 'schools'}
-                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => updatePackage(pkg.id || pkg.name, { isActive: pkg.isActive === false ? true : false })}
+                      className="flex items-center gap-1.5 text-[0.6875rem] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-0 transition-colors"
+                      title={pkg.isActive !== false ? (isBn ? 'নিষ্ক্রিয় করতে ক্লিক করুন' : 'Click to deactivate') : (isBn ? 'সক্রিয় করতে ক্লিক করুন' : 'Click to activate')}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+                      <span>{pkg.isActive !== false ? (isBn ? 'সক্রিয়' : 'Active') : (isBn ? 'নিষ্ক্রিয়' : 'Inactive')}</span>
+                    </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  {/* Actions Toolbar */}
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setEditingPackage(pkg)}
-                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors cursor-pointer"
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-[var(--brand)] hover:text-[var(--brand)] hover:bg-[var(--brand)]/5 transition-all cursor-pointer shadow-2xs"
                     >
                       <Edit3 size={13} />
                       <span>{isBn ? 'সম্পাদনা' : 'Edit'}</span>
@@ -478,29 +540,24 @@ export default function PackagesPage({ isBn }: Props) {
                         const targetType = isSystemType ? 'system_only' : 'cloud'
                         setDefaultPackage(pkg.id || pkg.name, targetType)
                       }}
-                      className="flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-[0.6875rem] font-medium border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-transparent"
+                      className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                        isDefault
+                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500 cursor-default'
+                          : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] bg-transparent'
+                      }`}
                       title={isBn ? 'এই ক্যাটাগরির ডিফল্ট হিসেবে সেট করুন' : 'Set as default for this category'}
                     >
-                      <ShieldCheck size={12} />
+                      <ShieldCheck size={13} />
                       <span>{isBn ? 'ডিফল্ট করুন' : 'Make Default'}</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--border)]/40 text-[0.625rem]">
-                    <button
-                      type="button"
-                      onClick={() => updatePackage(pkg.id || pkg.name, { isActive: pkg.isActive === false ? true : false })}
-                      className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-0"
-                    >
-                      {pkg.isActive !== false ? (isBn ? 'নিষ্ক্রিয় করুন' : 'Deactivate') : (isBn ? 'সক্রিয় করুন' : 'Activate')}
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setDeleteTarget(pkg.id || pkg.name)}
-                      className="text-red-500 hover:text-red-600 hover:underline cursor-pointer bg-transparent border-none p-0 flex items-center gap-1"
+                      className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium text-red-500 hover:text-red-600 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all cursor-pointer"
+                      title={isBn ? 'মুছুন' : 'Delete'}
                     >
-                      <Trash2 size={11} />
+                      <Trash2 size={13} />
                       <span>{isBn ? 'মুছুন' : 'Delete'}</span>
                     </button>
                   </div>
