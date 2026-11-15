@@ -29,18 +29,6 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(404).json({ error: 'Institution not found' })
       }
 
-      if (school.storageMode === 'local_computer') {
-        return res.json({
-          storageMode: 'local_computer',
-          classes: [],
-          routines: [],
-          sessions: ['2026-27'],
-          breaks: [],
-          startTime: '',
-          endTime: '',
-        })
-      }
-
       let parsedClassesData: any = null
       let parsedRoutinesData: any = null
       try {
@@ -71,6 +59,21 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         sessions = ['2025-26']
       }
 
+      const currentSession = (parsedClassesData?.currentSession as string) || sessions[0] || '2025-26'
+
+      if (school.storageMode === 'local_computer') {
+        return res.json({
+          storageMode: 'local_computer',
+          classes: [],
+          routines: [],
+          sessions,
+          currentSession,
+          breaks: [],
+          startTime: '',
+          endTime: '',
+        })
+      }
+
       let breaks = []
       try {
         if (school.breaks) {
@@ -81,6 +84,7 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
       }
 
       const requestedSession = (req.query.session as string)?.trim() || undefined
+      const effectiveSession = requestedSession || currentSession
 
       // Extract sessionClasses and sessionRoutines
       let sessionClasses: Record<string, any[]> = {}
@@ -90,7 +94,7 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
 
       if (parsedClassesData && typeof parsedClassesData === 'object' && !Array.isArray(parsedClassesData) && parsedClassesData.sessionClasses) {
         sessionClasses = parsedClassesData.sessionClasses
-        currentSessionClasses = (requestedSession ? sessionClasses[requestedSession] : null) || parsedClassesData.classes || []
+        currentSessionClasses = (requestedSession ? sessionClasses[requestedSession] : sessionClasses[effectiveSession]) || parsedClassesData.classes || []
       } else if (Array.isArray(parsedClassesData)) {
         currentSessionClasses = parsedClassesData
         const defaultSession = sessions[0] || '2025-26'
@@ -99,7 +103,7 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
 
       if (parsedRoutinesData && typeof parsedRoutinesData === 'object' && !Array.isArray(parsedRoutinesData) && parsedRoutinesData.sessionRoutines) {
         sessionRoutines = parsedRoutinesData.sessionRoutines
-        currentSessionRoutines = (requestedSession ? sessionRoutines[requestedSession] : null) || parsedRoutinesData.routines || []
+        currentSessionRoutines = (requestedSession ? sessionRoutines[requestedSession] : sessionRoutines[effectiveSession]) || parsedRoutinesData.routines || []
       } else if (Array.isArray(parsedRoutinesData)) {
         currentSessionRoutines = parsedRoutinesData
         const defaultSession = sessions[0] || '2025-26'
@@ -112,6 +116,7 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         sessionClasses,
         sessionRoutines,
         sessions,
+        currentSession,
         breaks: Array.isArray(breaks) ? breaks : [],
         startTime: school.startTime,
         endTime: school.endTime,
@@ -161,19 +166,28 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
       }
 
       if (school.storageMode === 'local_computer') {
+        if (Array.isArray(req.body.sessions)) {
+          await prisma.school.update({
+            where: { id: school.id },
+            data: { sessions: JSON.stringify(req.body.sessions) },
+          })
+        }
         return res.json({
           success: true,
           message: 'Local computer storage: classes stored locally on PC.',
           classes: [],
           routines: [],
+          sessions: req.body.sessions || ['2025-26'],
+          currentSession: req.body.currentSession,
         })
       }
 
       const updateData: any = {}
-      if (req.body.sessionClasses !== undefined) {
+      if (req.body.sessionClasses !== undefined || req.body.currentSession !== undefined) {
         updateData.classesData = JSON.stringify({
-          sessionClasses: req.body.sessionClasses,
+          sessionClasses: req.body.sessionClasses || {},
           classes: Array.isArray(req.body.classes) ? req.body.classes : [],
+          currentSession: req.body.currentSession || undefined,
         })
       } else if (req.body.classes !== undefined) {
         if (Array.isArray(req.body.classes) && req.body.classes.length > 500) {
@@ -218,12 +232,24 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         if (updated.routinesData) parsedRoutinesData = JSON.parse(updated.routinesData)
       } catch {}
 
+      let parsedSessions = ['2025-26']
+      try {
+        if (updated.sessions) {
+          parsedSessions = typeof updated.sessions === 'string' ? JSON.parse(updated.sessions) : updated.sessions
+        }
+      } catch {}
+      if (!Array.isArray(parsedSessions) || parsedSessions.length === 0) {
+        parsedSessions = ['2025-26']
+      }
+
       res.json({
         success: true,
         classes: Array.isArray(parsedClassesData) ? parsedClassesData : (parsedClassesData?.classes || []),
         routines: Array.isArray(parsedRoutinesData) ? parsedRoutinesData : (parsedRoutinesData?.routines || []),
         sessionClasses: parsedClassesData?.sessionClasses || undefined,
         sessionRoutines: parsedRoutinesData?.sessionRoutines || undefined,
+        sessions: parsedSessions,
+        currentSession: parsedClassesData?.currentSession || req.body.currentSession || undefined,
       })
     } catch (err) {
       console.error('[classes] PUT failed:', err instanceof Error ? err.message : err)

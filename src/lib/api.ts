@@ -652,6 +652,7 @@ export interface ClassesResponse {
   sessionClasses?: Record<string, any[]>
   sessionRoutines?: Record<string, any[]>
   sessions?: string[]
+  currentSession?: string
   breaks?: any[]
   startTime?: string
   endTime?: string
@@ -686,6 +687,8 @@ export const classesApi = {
       routines?: any[]
       sessionClasses?: Record<string, any[]>
       sessionRoutines?: Record<string, any[]>
+      sessions?: string[]
+      currentSession?: string
     }>('/api/classes', {
       method: 'PUT',
       body,

@@ -183,6 +183,7 @@ export default function ClassesPage() {
             : {
                 sessionClasses: useClassStore.getState().sessionClasses,
                 classes: useClassStore.getState().classes,
+                currentSession: instForm.currentSession || useClassStore.getState().institution.currentSession,
               },
           routines: isLocalComp
             ? null

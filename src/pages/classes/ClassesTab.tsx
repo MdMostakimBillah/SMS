@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
-import { CalendarDays, Download } from 'lucide-react'
+import { CalendarDays, Download, Plus } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
-import { type ClassSection, type ClassInfo, type InstitutionSettings } from '@/store/classStore'
+import { type ClassSection, type ClassInfo, type InstitutionSettings, useClassStore } from '@/store/classStore'
 import { flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
 import type { Teacher, Subject } from '@/pages/teachers/types'
@@ -238,17 +238,33 @@ export default function ClassesTab({
   return (
     <>
       {/* Session indicator */}
-      <div className="flex items-center gap-2 mb-3 py-2 px-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)]">
+      <div className="flex items-center gap-2 mb-3 py-2 px-3 rounded-lg bg-[var(--brand-light)] border border-[var(--brand)] flex-wrap">
         <CalendarDays size={14} className="text-[var(--brand)]" />
         <span className="text-[0.75rem] font-semibold text-[var(--brand)]">{institution.currentSession}</span>
         <span className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'বর্তমান সেশন' : 'Current Session'}</span>
         <div className="flex-1" />
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {institution.sessions.filter((s) => s !== institution.currentSession).map((s) => (
             <button key={s} onClick={() => switchSession(s)} className="text-[0.625rem] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] cursor-pointer font-[inherit] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all">
               {isBn ? 'পরিবর্তন' : 'Switch to'} {s}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => {
+              const name = window.prompt(isBn ? 'নতুন সেশনের নাম লিখুন (যেমন 2026-27):' : 'Enter new session name (e.g. 2026-27):')
+              const trimmed = name?.trim()
+              if (trimmed) {
+                useClassStore.getState().addSession(trimmed)
+                switchSession(trimmed)
+              }
+            }}
+            className="flex items-center gap-1 text-[0.625rem] py-1 px-2 rounded border border-dashed border-[var(--brand)] bg-[var(--surface)] text-[var(--brand)] font-medium cursor-pointer font-[inherit] hover:bg-[var(--brand)] hover:text-white transition-all"
+            title={isBn ? 'নতুন সেশন যোগ করুন' : 'Add New Session'}
+          >
+            <Plus size={11} />
+            {isBn ? 'নতুন সেশন' : 'New Session'}
+          </button>
         </div>
       </div>
 

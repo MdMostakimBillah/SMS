@@ -311,4 +311,57 @@ describe('classStore actions', () => {
     expect(useClassStore.getState().classes).toHaveLength(1)
     expect(useClassStore.getState().classes[0].id).toBe('CLS-2025')
   })
+
+  it('in cloud mode, adding and switching session syncs to server and syncFromServer merges sessions', async () => {
+    vi.useFakeTimers()
+    try {
+      sessionStorage.removeItem('edutech_storage_mode')
+      useClassStore.setState({
+        institution: {
+          ...useClassStore.getState().institution,
+          storageMode: 'cloud',
+          currentSession: '2025-26',
+          sessions: ['2025-26'],
+        },
+        serverSynced: true,
+      })
+      vi.mocked(classesApi.update).mockResolvedValue({
+        success: true,
+        sessions: ['2025-26', '2026-27'],
+        currentSession: '2026-27',
+      })
+
+      useClassStore.getState().addSession('2026-27')
+      useClassStore.getState().switchSession('2026-27')
+
+      expect(useClassStore.getState().institution.sessions).toContain('2026-27')
+      expect(useClassStore.getState().institution.currentSession).toBe('2026-27')
+
+      // Advance timers for queueServerSync debounce
+      await vi.advanceTimersByTimeAsync(500)
+      expect(classesApi.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          currentSession: '2026-27',
+          sessions: ['2025-26', '2026-27'],
+        })
+      )
+
+      // syncFromServer should merge sessions without wiping 2026-27
+      vi.mocked(classesApi.get).mockResolvedValue({
+        classes: [],
+        routines: [],
+        sessionClasses: { '2025-26': [] },
+        sessionRoutines: { '2025-26': [] },
+        sessions: ['2024-25', '2025-26'],
+        currentSession: '2025-26',
+      })
+
+      await useClassStore.getState().syncFromServer('test-slug')
+      expect(useClassStore.getState().institution.sessions).toEqual(
+        expect.arrayContaining(['2024-25', '2025-26', '2026-27'])
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

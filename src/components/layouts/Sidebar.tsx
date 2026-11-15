@@ -477,8 +477,8 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               )}
             </button>
 
-            {/* Session Switcher — show for institution admin or when super admin viewing */}
-            {!collapsed && (user?.role === 'admin' || user?.role === 'school_admin' || isViewing) && (
+            {/* Session Switcher — show for admin, school admin, super admin, teacher, or offline/demo */}
+            {!collapsed && (user?.role === 'admin' || user?.role === 'school_admin' || user?.role === 'super_admin' || user?.role === 'teacher' || isViewing || !user?.role) && (
             <div ref={dropdownRef} className="relative mt-2 z-50">
               <div
                 onClick={() => setShowSessionDropdown(!showSessionDropdown)}

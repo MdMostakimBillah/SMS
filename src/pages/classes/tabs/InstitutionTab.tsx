@@ -31,7 +31,7 @@ import { isSuperAdminAccount, canSwitchToCloud } from '@/lib/storageMode'
 import { sendTelegramBackupNow, downloadLocalBackup, readAndValidateBackupFile, restoreLocalStores } from '@/lib/backup'
 import { usePermission } from '@/hooks/usePermission'
 import ColorSettings from '@/components/shared/ColorSettings'
-import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
+import { defaultThemeColors, defaultThemeColorsDark, useClassStore } from '@/store/classStore'
 import { useAppStore } from '@/store/appStore'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { resolveMediaUrl } from '@/lib/api'
@@ -237,6 +237,9 @@ export default React.memo(function InstitutionTab({
   isBn,
 }: InstitutionTabProps) {
   const { canEdit } = usePermission()
+  const switchSession = useClassStore((s) => s.switchSession)
+  const addSession = useClassStore((s) => s.addSession)
+  const removeSession = useClassStore((s) => s.removeSession)
   const [backupLoading, setBackupLoading] = useState(false)
   const [backupNotice, setBackupNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [showCloudPermissionModal, setShowCloudPermissionModal] = useState(false)
@@ -830,7 +833,11 @@ export default React.memo(function InstitutionTab({
                 <div className="flex items-center gap-2">
                   <select
                     value={instForm.currentSession}
-                    onChange={(e) => setInstForm((p: any) => ({ ...p, currentSession: e.target.value }))}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setInstForm((p: any) => ({ ...p, currentSession: val }))
+                      switchSession(val)
+                    }}
                     className="flex-1 py-[0.5625rem] px-[0.6875rem] rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none"
                   >
                     {instForm.sessions.map((s: string) => (
@@ -848,6 +855,8 @@ export default React.memo(function InstitutionTab({
                         if (val && !instForm.sessions.includes(val)) {
                           setInstForm((p: any) => ({ ...p, sessions: [...p.sessions, val].sort(), currentSession: val }))
                           setNewSessionInput('')
+                          addSession(val)
+                          switchSession(val)
                         }
                       }
                     }}
@@ -862,6 +871,8 @@ export default React.memo(function InstitutionTab({
                         if (val && !instForm.sessions.includes(val)) {
                           setInstForm((p: any) => ({ ...p, sessions: [...p.sessions, val].sort(), currentSession: val }))
                           setNewSessionInput('')
+                          addSession(val)
+                          switchSession(val)
                         }
                       }}
                       className="py-[0.5625rem] px-3 rounded-lg bg-[var(--brand)] border-none text-white text-[0.75rem] font-medium cursor-pointer font-[inherit] shrink-0"
@@ -876,7 +887,13 @@ export default React.memo(function InstitutionTab({
                       key={s}
                       className={`inline-flex items-center gap-1 text-[0.6875rem] py-1 px-2.5 rounded-md font-medium transition-all ${instForm.currentSession === s ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]'}`}
                     >
-                      <span className="cursor-pointer" onClick={() => setInstForm((p: any) => ({ ...p, currentSession: s }))}>
+                      <span
+                        className="cursor-pointer"
+                        onClick={() => {
+                          setInstForm((p: any) => ({ ...p, currentSession: s }))
+                          switchSession(s)
+                        }}
+                      >
                         {s}
                       </span>
                       {instForm.sessions.length > 1 && (
@@ -890,6 +907,7 @@ export default React.memo(function InstitutionTab({
                                   : `Delete session "${s}"? All classes and routines for this session will be removed.`
                               )
                             ) {
+                              removeSession(s)
                               setInstForm((p: any) => {
                                 const newSessions = p.sessions.filter((x: string) => x !== s)
                                 const newCurrent = p.currentSession === s ? newSessions[0] || '' : p.currentSession

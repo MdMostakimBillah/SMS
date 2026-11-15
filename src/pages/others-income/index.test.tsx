@@ -57,6 +57,7 @@ describe('OthersIncomePage', () => {
           class: 'HSC',
           section: 'Humanity',
           roll: '77',
+          academicYear: '2025-26',
           isActive: true,
         } as any,
       ],

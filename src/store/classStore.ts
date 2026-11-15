@@ -204,9 +204,11 @@ export function mapSchoolToInstitutionSettings(school: any, current?: Institutio
       ? (typeof school.breaks === 'string' ? JSON.parse(school.breaks) : school.breaks)
       : current?.breaks?.length ? current.breaks : [{ id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' }],
     currentSession: current?.currentSession || '2025-26',
-    sessions: school.sessions
-      ? (typeof school.sessions === 'string' ? JSON.parse(school.sessions) : school.sessions)
-      : current?.sessions?.length ? current.sessions : ['2025-26'],
+    sessions: Array.from(new Set([
+      ...(school.sessions ? (typeof school.sessions === 'string' ? JSON.parse(school.sessions) : school.sessions) : []),
+      ...(current?.sessions || []),
+      '2025-26',
+    ])).filter(Boolean),
     storageMode: effectiveStorageMode,
     serverUrl: school.serverUrl || current?.serverUrl || '',
     folderName: school.folderName || current?.folderName || '',
@@ -357,8 +359,8 @@ function queueServerSync(get: () => ClassState) {
         const s = get()
         const anyClasses = s.classes.length > 0 || Object.values(s.sessionClasses || {}).some((c) => c && c.length > 0)
         const anyRoutines = s.routines.length > 0 || Object.values(s.sessionRoutines || {}).some((r) => r && r.length > 0)
-        // Double check: if classes and routines are empty across all sessions, and not an explicit user delete, abort
-        if (!anyClasses && !anyRoutines && !isRecentExplicitDelete()) {
+        // Double check: if classes and routines are empty across all sessions, and not an explicit user delete, and not yet synced, abort
+        if (!anyClasses && !anyRoutines && !isRecentExplicitDelete() && !s.serverSynced) {
           return
         }
         await classesApi.update({
@@ -434,20 +436,24 @@ export const useClassStore = create<ClassState>()(
         set((state) => {
           const prevSession = state.institution.currentSession
           const targetSession = data.currentSession
+          const mergedSessions = data.sessions
+            ? Array.from(new Set([...(state.institution.sessions || []), ...data.sessions]))
+            : state.institution.sessions
           if (targetSession && targetSession !== prevSession) {
+            const finalSessions = mergedSessions.includes(targetSession) ? mergedSessions : [...mergedSessions, targetSession]
             const newSessionClasses = { ...state.sessionClasses, [prevSession]: state.classes }
             const newSessionRoutines = { ...state.sessionRoutines, [prevSession]: state.routines }
             const targetClasses = newSessionClasses[targetSession] || []
             const targetRoutines = newSessionRoutines[targetSession] || []
             return {
-              institution: { ...state.institution, ...data },
+              institution: { ...state.institution, ...data, sessions: finalSessions, currentSession: targetSession },
               classes: targetClasses,
               routines: targetRoutines,
               sessionClasses: newSessionClasses,
               sessionRoutines: newSessionRoutines,
             }
           }
-          return { institution: { ...state.institution, ...data } }
+          return { institution: { ...state.institution, ...data, ...(data.sessions ? { sessions: mergedSessions } : {}) } }
         })
         flushPendingWrites()
         void flushVaultWrites()
@@ -637,8 +643,11 @@ export const useClassStore = create<ClassState>()(
           const newSessionRoutines = { ...sessionRoutines, [prevSession]: routines }
           const targetClasses = newSessionClasses[session] || []
           const targetRoutines = newSessionRoutines[session] || []
+          const newSessions = institution.sessions.includes(session)
+            ? institution.sessions
+            : [...institution.sessions, session]
           return {
-            institution: { ...institution, currentSession: session },
+            institution: { ...institution, sessions: newSessions, currentSession: session },
             classes: targetClasses,
             routines: targetRoutines,
             sessionClasses: newSessionClasses,
@@ -650,11 +659,13 @@ export const useClassStore = create<ClassState>()(
         queueServerSync(_get)
       },
 
-      addSession: (session) =>
+      addSession: (session) => {
+        let added = false
         set((state) => {
           const { institution, sessionClasses, sessionRoutines } = state
           if (institution.sessions.includes(session)) return state
-          const next = {
+          added = true
+          return {
             institution: {
               ...institution,
               sessions: [...institution.sessions, session],
@@ -668,13 +679,15 @@ export const useClassStore = create<ClassState>()(
               [session]: sessionRoutines[session] || [],
             },
           }
+        })
+        if (added) {
           flushPendingWrites()
           void flushVaultWrites()
           queueServerSync(_get)
-          return next
-        }),
+        }
+      },
 
-      removeSession: (session) =>
+      removeSession: (session) => {
         set((state) => {
           const { institution, sessionClasses, sessionRoutines } = state
           const newSessions = institution.sessions.filter((s) => s !== session)
@@ -685,17 +698,18 @@ export const useClassStore = create<ClassState>()(
           const newCurrent = institution.currentSession === session ? newSessions[0] || '' : institution.currentSession
           const targetClasses = newSessionClasses[newCurrent] || state.classes
           const targetRoutines = newSessionRoutines[newCurrent] || state.routines
-          const next = {
+          return {
             institution: { ...institution, sessions: newSessions, currentSession: newCurrent },
             classes: targetClasses,
             routines: targetRoutines,
             sessionClasses: newSessionClasses,
             sessionRoutines: newSessionRoutines,
           }
-          flushPendingWrites()
-          void flushVaultWrites()
-          return next
-        }),
+        })
+        flushPendingWrites()
+        void flushVaultWrites()
+        queueServerSync(_get)
+      },
 
       importFromSession: (fromSession) => {
         set((state) => {
@@ -750,10 +764,12 @@ export const useClassStore = create<ClassState>()(
             const hasServerRoutines = Array.isArray(res.routines) && res.routines.length > 0
 
             if (hasServerSessionClasses) {
+              const mergedSessions = Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
+              const activeSession = state.institution.currentSession || res.currentSession || currentSession
               const mergedSessionClasses = { ...state.sessionClasses, ...res.sessionClasses }
               const mergedSessionRoutines = { ...state.sessionRoutines, ...(res.sessionRoutines || {}) }
-              const activeClasses = mergedSessionClasses[currentSession] || []
-              const activeRoutines = mergedSessionRoutines[currentSession] || []
+              const activeClasses = mergedSessionClasses[activeSession] || []
+              const activeRoutines = mergedSessionRoutines[activeSession] || []
               set((prev) => ({
                 classes: activeClasses,
                 routines: activeRoutines,
@@ -761,7 +777,8 @@ export const useClassStore = create<ClassState>()(
                 sessionRoutines: mergedSessionRoutines,
                 institution: {
                   ...prev.institution,
-                  ...(res.sessions && res.sessions.length > 0 ? { sessions: res.sessions } : {}),
+                  sessions: mergedSessions,
+                  currentSession: activeSession,
                   ...(res.breaks && res.breaks.length > 0 ? { breaks: res.breaks } : {}),
                   ...(res.startTime ? { startTime: res.startTime } : {}),
                   ...(res.endTime ? { endTime: res.endTime } : {}),
@@ -770,8 +787,10 @@ export const useClassStore = create<ClassState>()(
                 syncing: false,
               }))
             } else if (hasServerClasses || hasServerRoutines) {
-              const defaultSession = res.sessions?.[0] || '2025-26'
-              const isCurrentSameAsServerDefault = currentSession === defaultSession
+              const mergedSessions = Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
+              const defaultSession = res.currentSession || res.sessions?.[0] || '2025-26'
+              const activeSession = state.institution.currentSession || defaultSession
+              const isCurrentSameAsServerDefault = activeSession === defaultSession
               const newSessionClasses = {
                 ...state.sessionClasses,
                 [defaultSession]: res.classes || [],
@@ -780,8 +799,8 @@ export const useClassStore = create<ClassState>()(
                 ...state.sessionRoutines,
                 [defaultSession]: res.routines || [],
               }
-              const activeClasses = isCurrentSameAsServerDefault ? (res.classes || []) : (state.sessionClasses[currentSession] || [])
-              const activeRoutines = isCurrentSameAsServerDefault ? (res.routines || []) : (state.sessionRoutines[currentSession] || [])
+              const activeClasses = isCurrentSameAsServerDefault ? (res.classes || []) : (state.sessionClasses[activeSession] || [])
+              const activeRoutines = isCurrentSameAsServerDefault ? (res.routines || []) : (state.sessionRoutines[activeSession] || [])
               set((prev) => ({
                 classes: activeClasses,
                 routines: activeRoutines,
@@ -789,7 +808,8 @@ export const useClassStore = create<ClassState>()(
                 sessionRoutines: newSessionRoutines,
                 institution: {
                   ...prev.institution,
-                  ...(res.sessions && res.sessions.length > 0 ? { sessions: res.sessions } : {}),
+                  sessions: mergedSessions,
+                  currentSession: activeSession,
                   ...(res.breaks && res.breaks.length > 0 ? { breaks: res.breaks } : {}),
                   ...(res.startTime ? { startTime: res.startTime } : {}),
                   ...(res.endTime ? { endTime: res.endTime } : {}),
@@ -810,7 +830,19 @@ export const useClassStore = create<ClassState>()(
               })
               set({ serverSynced: true, syncing: false })
             } else {
-              set({ serverSynced: true, syncing: false })
+              const mergedSessions = Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
+              set((prev) => ({
+                institution: {
+                  ...prev.institution,
+                  ...(mergedSessions.length > 0 ? { sessions: mergedSessions } : {}),
+                  ...(res.currentSession ? { currentSession: res.currentSession } : {}),
+                  ...(res.breaks && res.breaks.length > 0 ? { breaks: res.breaks } : {}),
+                  ...(res.startTime ? { startTime: res.startTime } : {}),
+                  ...(res.endTime ? { endTime: res.endTime } : {}),
+                },
+                serverSynced: true,
+                syncing: false,
+              }))
             }
           } else {
             set({ serverSynced: true, syncing: false })
