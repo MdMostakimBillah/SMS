@@ -17,6 +17,8 @@ export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> 
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "online_data" TEXT DEFAULT '[]';
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "syllabus_data" TEXT DEFAULT '{}';
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "assignments_data" TEXT DEFAULT '{}';
+        ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "attendance_data" TEXT DEFAULT '{}';
+        ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "devices_data" TEXT DEFAULT '{}';
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "exams_data" TEXT DEFAULT '{}';
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "hr_data" TEXT DEFAULT '{}';
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "expenses_data" TEXT DEFAULT '{}';
