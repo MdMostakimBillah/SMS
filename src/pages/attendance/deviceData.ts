@@ -1,4 +1,4 @@
-import type { DeviceEntry, RfidEntry, FpEntry } from './types'
+import type { DeviceEntry, RfidEntry, FpEntry, FaceEntry } from './types'
 
 export const initialDevices: DeviceEntry[] = [
   {
@@ -79,4 +79,12 @@ export const initialFpEntries: FpEntry[] = [
   { staffId: 'TCH-2026-009', staffName: 'Roksana Begum', fpId: 8, templates: 2, status: 'enrolled' },
   { staffId: 'TCH-2026-010', staffName: 'Kamal Hossain', fpId: 9, templates: 0, status: 'pending' },
   { staffId: 'TCH-2026-011', staffName: 'Shirin Sultana', fpId: 10, templates: 0, status: 'failed' },
+]
+
+export const initialFaceEntries: FaceEntry[] = [
+  { staffId: 'TCH-2026-001', staffName: 'Dr. Rafiqul Islam', faceId: 1, quality: 98, status: 'enrolled' },
+  { staffId: 'TCH-2026-002', staffName: 'Prof. Salma Khatun', faceId: 2, quality: 94, status: 'enrolled' },
+  { staffId: 'TCH-2026-003', staffName: 'Md. Habibur Rahman', faceId: 3, quality: 91, status: 'enrolled' },
+  { staffId: 'TCH-2026-004', staffName: 'Farhana Rahman', faceId: 4, quality: 96, status: 'enrolled' },
+  { staffId: 'TCH-2026-005', staffName: 'Abdul Karim', faceId: 5, quality: 92, status: 'enrolled' },
 ]

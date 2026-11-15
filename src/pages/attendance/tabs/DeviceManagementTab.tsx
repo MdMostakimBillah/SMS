@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { RefreshCw, Settings, Trash2, Wifi, WifiOff, X, Zap } from 'lucide-react'
+import { RefreshCw, Settings, Trash2, Wifi, WifiOff, X, Zap, Fingerprint, Sparkles } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import type { DeviceEntry } from '../types'
@@ -49,21 +49,32 @@ export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch
 
   return (
     <>
-      <div className="flex items-center gap-4 mb-4 text-[0.75rem]">
-        <span className="text-[var(--text-muted)]">
-          {devices.length} {isBn ? 'ডিভাইস' : 'devices'}
-        </span>
-        <span className="flex items-center gap-1 text-[var(--green)]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />
-          {devices.filter((d) => d.status === 'online').length} {isBn ? 'অনলাইন' : 'online'}
-        </span>
-        <span className="flex items-center gap-1 text-[var(--red)]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--red)]" />
-          {devices.filter((d) => d.status === 'offline').length} {isBn ? 'অফলাইন' : 'offline'}
-        </span>
-        <span className="text-[var(--text-muted)]">
-          {devices.reduce((s, d) => s + d.staffCount, 0)} {isBn ? 'স্টাফ' : 'staff'}
-        </span>
+      <div className="flex items-center justify-between gap-4 mb-4 text-[0.75rem] flex-wrap">
+        <div className="flex items-center gap-4">
+          <span className="text-[var(--text-muted)] font-medium">
+            {devices.length} {isBn ? 'ডিভাইস' : 'devices'}
+          </span>
+          <span className="flex items-center gap-1 text-[var(--green)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--green)]" />
+            {devices.filter((d) => d.status === 'online').length} {isBn ? 'অনলাইন' : 'online'}
+          </span>
+          <span className="flex items-center gap-1 text-[var(--red)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--red)]" />
+            {devices.filter((d) => d.status === 'offline').length} {isBn ? 'অফলাইন' : 'offline'}
+          </span>
+          <span className="text-[var(--text-muted)]">
+            {devices.reduce((s, d) => s + (d.staffCount || 0), 0)} {isBn ? 'স্টাফ/শিক্ষার্থী' : 'enrolled'}
+          </span>
+        </div>
+        {devices.length === 0 && (
+          <button
+            onClick={() => useAttendanceStore.getState().loadSampleDevices()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#7C3AED18] border border-[#7C3AED40] text-[#7C3AED] text-[0.6875rem] font-semibold cursor-pointer hover:bg-[#7C3AED25] transition-all"
+          >
+            <Sparkles size={12} />
+            {isBn ? 'ডেমো ডিভাইস সেটআপ করুন' : 'Load Demo Devices'}
+          </button>
+        )}
       </div>
 
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
@@ -87,11 +98,16 @@ export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch
                       <div className={`w-2 h-2 rounded-full shrink-0 ${d.status === 'online' ? 'bg-[var(--green)]' : 'bg-[var(--red)]'}`} />
                       <div>
                         <div className="font-medium text-[var(--text-primary)]">{d.name}</div>
-                        <div className="text-[0.625rem] text-[var(--text-muted)]">{d.model}</div>
+                        <div className="text-[0.625rem] text-[var(--text-muted)] flex items-center gap-2">
+                          <span>{d.model}</span>
+                          {d.location && <span className="opacity-70">· {d.location}</span>}
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td className="p-3 font-mono text-[var(--text-secondary)]">{d.ip}</td>
+                  <td className="p-3 font-mono text-[var(--text-secondary)]">
+                    {d.ip}{d.port ? `:${d.port}` : ''}
+                  </td>
                   <td className="p-3">
                     <span className={`text-[0.625rem] px-2 py-0.5 rounded-full font-medium ${
                       d.type === 'punch'
@@ -162,6 +178,28 @@ export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch
                   </td>
                 </tr>
               ))}
+              {devices.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="p-10 text-center text-[var(--text-muted)]">
+                    <Fingerprint size={36} className="mx-auto mb-2 opacity-30 text-[#7C3AED]" />
+                    <div className="font-semibold text-[0.875rem] text-[var(--text-primary)] mb-1">
+                      {isBn ? 'কোনো ডিভাইস কনফিগার করা নেই' : 'No Biometric Devices Configured'}
+                    </div>
+                    <p className="text-[0.6875rem] text-[var(--text-muted)] mb-3.5 max-w-sm mx-auto">
+                      {isBn
+                        ? 'আপনার কাছে এখনই ফিজিক্যাল বায়োমেট্রিক ডিভাইস না থাকলেও উপরের "ডিভাইস যোগ" দিয়ে ডিভাইস সেটআপ ও টেস্ট করতে পারেন।'
+                        : 'Even without physical biometric hardware right now, you can add devices or load sample devices to test full attendance workflows.'}
+                    </p>
+                    <button
+                      onClick={() => useAttendanceStore.getState().loadSampleDevices()}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#7C3AED] text-white text-[0.75rem] font-semibold cursor-pointer border-0 hover:opacity-90 shadow-sm"
+                    >
+                      <Sparkles size={13} />
+                      {isBn ? 'স্যাম্পল ডিভাইস লোড করুন' : 'Load Demo Devices'}
+                    </button>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

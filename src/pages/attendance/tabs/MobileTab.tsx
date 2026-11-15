@@ -1,8 +1,8 @@
-import { CheckCircle, Smartphone, ScanFace, Wifi, X, XCircle } from 'lucide-react'
-import { usePermission } from '@/hooks/usePermission'
+import { CheckCircle, Smartphone, ScanFace, Wifi, X, XCircle, QrCode } from 'lucide-react'
 import KioskMode from '../KioskMode'
 import { PersonSearchInput } from '../PersonSearchInput'
 import { MobileDevicesList } from './MobileDevicesList'
+import { QrAttendanceScanner } from './QrAttendanceScanner'
 import type { Person, MobileDevice } from '../types'
 
 interface MobileTabProps {
@@ -25,8 +25,8 @@ interface MobileTabProps {
   setMobileAuthMsg: (v: null) => void
   institutionGateway: string
   wifiConnected: boolean | null
-  authMode: 'kiosk' | 'personal'
-  setAuthMode: (v: 'kiosk' | 'personal') => void
+  authMode: 'personal' | 'qr-scan' | 'kiosk'
+  setAuthMode: (v: 'personal' | 'qr-scan' | 'kiosk') => void
   showWifiSettings: boolean
   setShowWifiSettings: (v: boolean) => void
   institutionWifi: string
@@ -46,7 +46,6 @@ export function MobileTab({
   setAuthMode, showWifiSettings, setShowWifiSettings, institutionWifi, setInstitutionWifi,
   institutionGatewayValue, setInstitutionGateway, saveWifiSettings, wifiChecking, runNetworkCheck,
 }: MobileTabProps) {
-  const { canCreate } = usePermission()
   return (
     <>
       {/* Network + Mode combined bar */}
@@ -63,40 +62,65 @@ export function MobileTab({
           )}
         </div>
         <div className="w-px h-4 bg-[var(--border)]" />
-        <span className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'মোড:' : 'Mode:'}</span>
-        <div className="relative flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1">
+        <span className="text-[0.625rem] text-[var(--text-muted)] font-medium">{isBn ? 'মোবাইল মোড:' : 'Mode:'}</span>
+        
+        {/* 3-Way Mode Slider */}
+        <div className="relative flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1 min-w-[18rem]">
           <div
-            className="absolute top-1 bottom-1 rounded-md [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out]"
+            className="absolute top-1 bottom-1 rounded-md [transition:transform_300ms_ease-out,background-color_300ms_ease-out]"
             style={{
-              width: 'calc(50% - 0.25rem)',
-              transform: authMode === 'kiosk' ? 'translateX(calc(100% + 0.25rem))' : 'translateX(0)',
-              background: authMode === 'kiosk' ? 'var(--amber)' : 'var(--teal)',
+              width: 'calc(33.333% - 0.25rem)',
+              transform:
+                authMode === 'qr-scan'
+                  ? 'translateX(calc(100% + 0.25rem))'
+                  : authMode === 'kiosk'
+                  ? 'translateX(calc(200% + 0.5rem))'
+                  : 'translateX(0)',
+              background:
+                authMode === 'qr-scan'
+                  ? 'var(--brand)'
+                  : authMode === 'kiosk'
+                  ? 'var(--green)'
+                  : 'var(--teal)',
               boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
             }}
           />
           <button
+            type="button"
             onClick={() => setAuthMode('personal')}
-            className="relative z-10 px-3 py-1 rounded-md text-[0.625rem] font-medium cursor-pointer transition-colors duration-200 flex items-center gap-1"
-            style={{ color: authMode === 'personal' ? '#fff' : 'var(--text-muted)' }}
+            className="relative z-10 flex-1 px-2.5 py-1 rounded-md text-[0.625rem] font-semibold cursor-pointer transition-colors duration-200 flex items-center justify-center gap-1 border-0"
+            style={{ color: authMode === 'personal' ? '#fff' : 'var(--text-muted)', background: 'transparent' }}
           >
-            <Smartphone size={10} />
+            <Smartphone size={11} />
             {isBn ? 'ব্যক্তিগত' : 'Personal'}
           </button>
           <button
-            onClick={() => setAuthMode('kiosk')}
-            className="relative z-10 px-3 py-1 rounded-md text-[0.625rem] font-medium cursor-pointer transition-colors duration-200 flex items-center gap-1"
-            style={{ color: authMode === 'kiosk' ? '#fff' : 'var(--text-muted)' }}
+            type="button"
+            onClick={() => setAuthMode('qr-scan')}
+            className="relative z-10 flex-1 px-2.5 py-1 rounded-md text-[0.625rem] font-semibold cursor-pointer transition-colors duration-200 flex items-center justify-center gap-1 border-0"
+            style={{ color: authMode === 'qr-scan' ? '#fff' : 'var(--text-muted)', background: 'transparent' }}
           >
-            <ScanFace size={10} />
-            {isBn ? 'কিয়োস্ক' : 'Kiosk'}
+            <QrCode size={11} />
+            {isBn ? 'ID কার্ড QR' : 'ID QR Scan'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMode('kiosk')}
+            className="relative z-10 flex-1 px-2.5 py-1 rounded-md text-[0.625rem] font-semibold cursor-pointer transition-colors duration-200 flex items-center justify-center gap-1 border-0"
+            style={{ color: authMode === 'kiosk' ? '#fff' : 'var(--text-muted)', background: 'transparent' }}
+          >
+            <ScanFace size={11} />
+            {isBn ? 'ফেস কিয়োস্ক' : 'Face Kiosk'}
           </button>
         </div>
+
         <div className="flex-1" />
         <button
+          type="button"
           onClick={() => setShowWifiSettings(!showWifiSettings)}
-          className="text-[0.625rem] text-[var(--teal)] cursor-pointer bg-transparent border-none font-medium"
+          className="text-[0.625rem] text-[var(--teal)] cursor-pointer bg-transparent border-none font-medium hover:underline"
         >
-          {showWifiSettings ? (isBn ? 'বন্ধ' : 'Close') : isBn ? 'সেটিংস' : 'Settings'}
+          {showWifiSettings ? (isBn ? 'বন্ধ' : 'Close') : isBn ? 'ওয়াইফাই সেটিংস' : 'WiFi Settings'}
         </button>
       </div>
 
@@ -112,8 +136,8 @@ export function MobileTab({
               <input value={institutionGatewayValue} onChange={(e) => setInstitutionGateway(e.target.value)} placeholder="192.168.1.1" className="w-full px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] font-mono outline-none" />
             </div>
             <div className="flex items-end gap-1.5">
-              <button onClick={saveWifiSettings} className="px-3 py-1.5 rounded-lg bg-[var(--teal)] text-white text-[0.625rem] font-medium cursor-pointer border-none">{isBn ? 'সংরক্ষণ' : 'Save'}</button>
-              <button onClick={() => runNetworkCheck()} className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.625rem] cursor-pointer">
+              <button type="button" onClick={saveWifiSettings} className="px-3 py-1.5 rounded-lg bg-[var(--teal)] text-white text-[0.625rem] font-medium cursor-pointer border-none">{isBn ? 'সংরক্ষণ' : 'Save'}</button>
+              <button type="button" onClick={() => runNetworkCheck()} className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.625rem] cursor-pointer">
                 {wifiChecking ? '...' : isBn ? 'পরীক্ষা' : 'Test'}
               </button>
             </div>
@@ -124,13 +148,14 @@ export function MobileTab({
         </div>
       )}
 
+      {/* Mode 1: Personal Device WebAuthn */}
       {authMode === 'personal' && (
         <>
           {mobileAuthMsg && (
             <div className={`mb-3 py-2 px-3 rounded-lg text-[0.75rem] font-medium flex items-center gap-2 ${mobileAuthMsg.type === 'success' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--red-light)] text-[var(--red)]'}`}>
               {mobileAuthMsg.type === 'success' ? <CheckCircle size={14} /> : <XCircle size={14} />}
               {mobileAuthMsg.text}
-              <button onClick={() => setMobileAuthMsg(null)} className="ml-auto bg-transparent border-none cursor-pointer text-[inherit]"><X size={14} /></button>
+              <button type="button" onClick={() => setMobileAuthMsg(null)} className="ml-auto bg-transparent border-none cursor-pointer text-[inherit]"><X size={14} /></button>
             </div>
           )}
 
@@ -144,11 +169,9 @@ export function MobileTab({
                 </div>
               </div>
               <PersonSearchInput value={mobileRegStaff} onChange={(id) => setMobileRegStaff(id)} isBn={isBn} people={allPeople.filter((p) => p.type === 'staff' && !mobileDevices.find((d) => d.staffId === p.id))} />
-              {canCreate('attendance.device.create') && (
-              <button onClick={handleRegisterDevice} disabled={!mobileRegStaff || mobileRegPending} className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileRegPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileRegStaff ? 'bg-[var(--teal)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
+              <button type="button" onClick={handleRegisterDevice} disabled={!mobileRegStaff || mobileRegPending} className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileRegPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileRegStaff ? 'bg-[var(--teal)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
                 {mobileRegPending ? (isBn ? 'নিবন্ধন হচ্ছে...' : 'Registering...') : isBn ? 'নিবন্ধন করুন' : 'Register Now'}
               </button>
-              )}
             </div>
             <div className="border border-[var(--border)] rounded-xl p-4 bg-[var(--bg-primary)]">
               <div className="flex items-center gap-2 mb-3">
@@ -159,11 +182,9 @@ export function MobileTab({
                 </div>
               </div>
               <PersonSearchInput value={mobileAuthStaff} onChange={(id) => setMobileAuthStaff(id)} isBn={isBn} people={mobileDevices.map((d) => ({ id: d.staffId, name: d.staffName, type: 'staff' as const, photo: '' }))} />
-              {canCreate('attendance.device.create') && (
-              <button onClick={handleMobileAuth} disabled={!mobileAuthStaff || mobileAuthPending || wifiChecking} className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileAuthPending || wifiChecking ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileAuthStaff ? 'bg-[var(--green)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
+              <button type="button" onClick={handleMobileAuth} disabled={!mobileAuthStaff || mobileAuthPending || wifiChecking} className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileAuthPending || wifiChecking ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileAuthStaff ? 'bg-[var(--green)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
                 {wifiChecking ? (isBn ? 'ওয়াইফাই যাচাই...' : 'Checking WiFi...') : mobileAuthPending ? (isBn ? 'প্রমাণীকরণ...' : 'Authenticating...') : (isBn ? 'বায়োমেট্রিক চেক' : 'Biometric Check')}
               </button>
-              )}
             </div>
           </div>
 
@@ -171,7 +192,15 @@ export function MobileTab({
         </>
       )}
 
-      {authMode === 'kiosk' && <KioskMode isBn={isBn} date={date} />}
+      {/* Mode 2: ID Card QR Code Camera Scanner */}
+      {authMode === 'qr-scan' && (
+        <QrAttendanceScanner isBn={isBn} date={date} allPeople={allPeople} />
+      )}
+
+      {/* Mode 3: Facial Recognition Kiosk */}
+      {authMode === 'kiosk' && (
+        <KioskMode isBn={isBn} date={date} />
+      )}
     </>
   )
 }

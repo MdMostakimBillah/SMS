@@ -70,7 +70,7 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
   const [mobileAuthPending, setMobileAuthPending] = useState(false)
   const [mobileAuthMsg, setMobileAuthMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [mobileSearch, setMobileSearch] = useState('')
-  const [authMode, setAuthMode] = useState<'kiosk' | 'personal'>('personal')
+  const [authMode, setAuthMode] = useState<'personal' | 'qr-scan' | 'kiosk'>('personal')
 
   const wifi = useInstitutionWifi()
 

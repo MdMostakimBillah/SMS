@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CreditCard, CheckCircle, XCircle, Search, Zap } from 'lucide-react'
+import { useAttendanceStore } from '@/store/attendanceStore'
 import type { RfidEntry } from '../types'
 import { StatsRow } from './StatsRow'
 
@@ -165,7 +166,19 @@ export function RfidCardsTab({ isBn, rfidEntries, setRfidEntries, onSimulatePunc
               ).length === 0 && (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
-                    {isBn ? 'কোনো কার্ড পাওয়া যায়নি' : 'No cards found'}
+                    <CreditCard size={28} className="mx-auto mb-2 opacity-30 text-[var(--brand)]" />
+                    <div className="font-semibold text-[0.8125rem] text-[var(--text-primary)] mb-1">
+                      {isBn ? 'কোনো কার্ড পাওয়া যায়নি' : 'No RFID Cards Found'}
+                    </div>
+                    {rfidEntries.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => useAttendanceStore.getState().loadSampleDevices()}
+                        className="mt-2 px-3 py-1.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-semibold cursor-pointer border-0 hover:opacity-90 shadow-sm"
+                      >
+                        {isBn ? 'স্যাম্পল কার্ড লোড করুন' : 'Load Demo Cards'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               )}

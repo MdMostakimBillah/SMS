@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Fingerprint, CheckCircle, Clock, Search, Zap } from 'lucide-react'
+import { useAttendanceStore } from '@/store/attendanceStore'
 import type { FpEntry } from '../types'
 import { StatsRow } from './StatsRow'
 
@@ -162,7 +163,19 @@ export function FingerprintTab({ isBn, fpEntries, setFpEntries, onSimulatePunch 
               {fpEntries.filter((e) => !fpSearch || e.staffName.toLowerCase().includes(fpSearch.toLowerCase())).length === 0 && (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
-                    {isBn ? 'কোনো এনরোলমেন্ট পাওয়া যায়নি' : 'No enrollments found'}
+                    <Fingerprint size={28} className="mx-auto mb-2 opacity-30 text-[var(--amber)]" />
+                    <div className="font-semibold text-[0.8125rem] text-[var(--text-primary)] mb-1">
+                      {isBn ? 'কোনো ফিঙ্গারপ্রিন্ট এনরোলমেন্ট নেই' : 'No Fingerprint Enrollments'}
+                    </div>
+                    {fpEntries.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => useAttendanceStore.getState().loadSampleDevices()}
+                        className="mt-2 px-3 py-1.5 rounded-lg bg-[var(--amber)] text-white text-[0.6875rem] font-semibold cursor-pointer border-0 hover:opacity-90 shadow-sm"
+                      >
+                        {isBn ? 'স্যাম্পল এনরোলমেন্ট লোড করুন' : 'Load Demo Enrollments'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               )}

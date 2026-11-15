@@ -1,6 +1,6 @@
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Fingerprint } from 'lucide-react'
-import { usePermission } from '@/hooks/usePermission'
+import { Fingerprint, CheckCircle2, Loader2 } from 'lucide-react'
 import { PersonSearchInput } from '../PersonSearchInput'
 import type { Person } from '../types'
 
@@ -14,40 +14,105 @@ interface AddFingerprintModalProps {
 }
 
 export function AddFingerprintModal({ isBn, allPeople, newFP, setNewFP, onAdd, onClose }: AddFingerprintModalProps) {
-  const { canCreate } = usePermission()
+  const [scanStep, setScanStep] = useState<0 | 1 | 2>(0) // 0: waiting, 1: scanning 1st, 2: completed
+
+  const handleSimulateScan = () => {
+    if (!newFP.staffId) return
+    setScanStep(1)
+    setTimeout(() => {
+      setScanStep(2)
+      setTimeout(() => {
+        onAdd()
+      }, 700)
+    }, 1200)
+  }
+
+  const isValid = Boolean(newFP.staffId)
+
   return createPortal(
     <div className="modal-overlay">
-      <div className="modal-content modal-box" style={{ maxWidth: '23.75rem' }}>
-        <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4">
+      <div className="modal-content modal-box" style={{ maxWidth: '24rem' }}>
+        <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+          <Fingerprint size={18} className="text-[var(--amber)]" />
           {isBn ? 'ফিঙ্গারপ্রিন্ট এনরোলমেন্ট' : 'Fingerprint Enrollment'}
         </h3>
         <div className="space-y-3">
           <div>
             <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
-              {isBn ? 'ব্যক্তি নির্বাচন করুন' : 'Select Person'}
+              {isBn ? 'শিক্ষক / শিক্ষার্থী নির্বাচন করুন *' : 'Select Staff or Student *'}
             </label>
             <PersonSearchInput
               value={newFP.staffId}
-              onChange={(id) => setNewFP((p) => ({ ...p, staffId: id }))}
+              onChange={(id) => {
+                setNewFP((p) => ({ ...p, staffId: id }))
+                setScanStep(0)
+              }}
               isBn={isBn}
               people={allPeople}
             />
           </div>
-          <div className="bg-[var(--bg-secondary)] rounded-lg p-4 text-center">
-            <Fingerprint size={40} className="mx-auto mb-2 text-[var(--amber)]" />
-            <p className="text-[0.6875rem] text-[var(--text-secondary)]">{isBn ? 'ডিভাইসে আঙুল রাখুন' : 'Place finger on device'}</p>
-            <p className="text-[0.5625rem] text-[var(--text-muted)] mt-1">{isBn ? '২ বার আঙুল রাখুন' : 'Tap finger twice'}</p>
+
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl p-4 text-center">
+            {scanStep === 0 && (
+              <>
+                <Fingerprint size={42} className="mx-auto mb-2 text-[var(--amber)] opacity-85 transition-transform hover:scale-105" />
+                <p className="text-[0.75rem] font-medium text-[var(--text-primary)]">
+                  {isBn ? 'ফিঙ্গারপ্রিন্ট স্ক্যানারে আঙুল রাখুন' : 'Place finger on biometric scanner'}
+                </p>
+                <p className="text-[0.625rem] text-[var(--text-muted)] mt-1">
+                  {isBn ? 'অপটিক্যাল/ক্যাপাসিটিভ সেন্সরে ২ বার স্পর্শ করুন' : 'Tap finger on sensor (500 DPI ZKTeco/SilkID)'}
+                </p>
+              </>
+            )}
+
+            {scanStep === 1 && (
+              <>
+                <Loader2 size={42} className="mx-auto mb-2 text-[var(--amber)] animate-spin" />
+                <p className="text-[0.75rem] font-semibold text-[var(--amber)]">
+                  {isBn ? 'ফিঙ্গারপ্রিন্ট স্ক্যান হচ্ছে... (৯৮% কোয়ালিটি)' : 'Capturing Minutiae... (98% Quality)'}
+                </p>
+                <p className="text-[0.625rem] text-[var(--text-muted)] mt-1">
+                  {isBn ? 'বায়োমেট্রিক টেমপ্লেট প্রক্রিয়াকরণ হচ্ছে' : 'Generating encrypted biometric template'}
+                </p>
+              </>
+            )}
+
+            {scanStep === 2 && (
+              <>
+                <CheckCircle2 size={42} className="mx-auto mb-2 text-[var(--green)] animate-bounce" />
+                <p className="text-[0.75rem] font-semibold text-[var(--green)]">
+                  {isBn ? 'এনরোলমেন্ট সফল হয়েছে!' : 'Enrolled Successfully!'}
+                </p>
+                <p className="text-[0.625rem] text-[var(--text-muted)] mt-1">
+                  {isBn ? 'ডাটাবেস ও ডিভাইসে সংরক্ষিত হয়েছে' : 'Saved to database & device store'}
+                </p>
+              </>
+            )}
           </div>
         </div>
+
         <div className="flex gap-2 justify-end mt-4">
-          <button onClick={onClose} className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer hover:bg-[var(--border)]"
+          >
             {isBn ? 'বাতিল' : 'Cancel'}
           </button>
-          {canCreate('attendance.device') && (
-            <button onClick={onAdd} className="px-3.5 py-2 rounded-lg bg-[var(--amber)] border-0 text-white text-[0.75rem] font-semibold cursor-pointer">
-              {isBn ? 'এনরোল শুরু করুন' : 'Start Enrollment'}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleSimulateScan}
+            disabled={!isValid || scanStep === 1}
+            className={`px-4 py-2 rounded-lg text-white text-[0.75rem] font-semibold cursor-pointer border-0 transition-all ${
+              isValid && scanStep !== 1
+                ? 'bg-[var(--amber)] hover:opacity-90 shadow-sm'
+                : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed opacity-60'
+            }`}
+          >
+            {scanStep === 1
+              ? (isBn ? 'স্ক্যান হচ্ছে...' : 'Scanning...')
+              : (isBn ? 'স্ক্যান ও এনরোল করুন' : 'Scan & Enroll')}
+          </button>
         </div>
       </div>
     </div>,

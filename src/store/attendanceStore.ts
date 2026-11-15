@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug } from '@/lib/storage'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { attendanceApi } from '@/lib/api'
-import { initialDevices, initialRfidEntries, initialFpEntries } from '@/pages/attendance/deviceData'
+import { initialDevices, initialRfidEntries, initialFpEntries, initialFaceEntries } from '@/pages/attendance/deviceData'
 import type { DeviceEntry, RfidEntry, FpEntry, FaceEntry, MobileDevice, DeviceLog } from '@/pages/attendance/types'
 import { useTeacherStore } from './teacherStore'
 
@@ -133,6 +133,8 @@ export interface AttendanceState {
   addMobileDevice: (device: MobileDevice) => void
   removeMobileDevice: (id: string) => void
   updateMobileLastAuth: (id: string, time: string) => void
+
+  loadSampleDevices: () => void
 }
 
 export const useAttendanceStore = create<AttendanceState>()(
@@ -142,7 +144,7 @@ export const useAttendanceStore = create<AttendanceState>()(
       devices: initialDevices,
       rfidEntries: initialRfidEntries,
       fpEntries: initialFpEntries,
-      faceEntries: [],
+      faceEntries: initialFaceEntries,
       mobileDevices: [],
       deviceLogs: [],
 
@@ -150,8 +152,27 @@ export const useAttendanceStore = create<AttendanceState>()(
       syncing: false,
       syncError: null,
 
+      loadSampleDevices: () => {
+        set({
+          devices: initialDevices,
+          rfidEntries: initialRfidEntries,
+          fpEntries: initialFpEntries,
+          faceEntries: initialFaceEntries,
+        })
+        queueServerSync(get)
+      },
+
       syncFromServer: async (slugOrId?: string) => {
         if (isLocalComputerMode()) {
+          const current = get()
+          if (!current.devices || current.devices.length === 0) {
+            set({
+              devices: initialDevices,
+              rfidEntries: initialRfidEntries,
+              fpEntries: initialFpEntries,
+              faceEntries: initialFaceEntries,
+            })
+          }
           set({ serverSynced: true, syncing: false, syncError: null })
           return
         }
@@ -167,10 +188,18 @@ export const useAttendanceStore = create<AttendanceState>()(
             const hasServerAtt = Object.keys(serverAtt).length > 0
             const finalAttendance = hasServerAtt ? pruneAttendance(serverAtt) : current.attendance
 
-            const finalDevices = Array.isArray(res.devices) && res.devices.length > 0 ? res.devices : current.devices
-            const finalRfid = Array.isArray(res.rfidEntries) && res.rfidEntries.length > 0 ? res.rfidEntries : current.rfidEntries
-            const finalFp = Array.isArray(res.fpEntries) && res.fpEntries.length > 0 ? res.fpEntries : current.fpEntries
-            const finalFace = Array.isArray(res.faceEntries) && res.faceEntries.length > 0 ? res.faceEntries : current.faceEntries
+            const finalDevices = Array.isArray(res.devices) && res.devices.length > 0
+              ? res.devices
+              : (current.devices && current.devices.length > 0 ? current.devices : initialDevices)
+            const finalRfid = Array.isArray(res.rfidEntries) && res.rfidEntries.length > 0
+              ? res.rfidEntries
+              : (current.rfidEntries && current.rfidEntries.length > 0 ? current.rfidEntries : initialRfidEntries)
+            const finalFp = Array.isArray(res.fpEntries) && res.fpEntries.length > 0
+              ? res.fpEntries
+              : (current.fpEntries && current.fpEntries.length > 0 ? current.fpEntries : initialFpEntries)
+            const finalFace = Array.isArray(res.faceEntries) && res.faceEntries.length > 0
+              ? res.faceEntries
+              : (current.faceEntries && current.faceEntries.length > 0 ? current.faceEntries : initialFaceEntries)
             const finalMobile = Array.isArray(res.mobileDevices) && res.mobileDevices.length > 0 ? res.mobileDevices : current.mobileDevices
             const finalLogs = Array.isArray(res.deviceLogs) && res.deviceLogs.length > 0 ? res.deviceLogs : current.deviceLogs
 

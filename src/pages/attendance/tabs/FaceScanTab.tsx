@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { ScanFace, CheckCircle, Fingerprint, Search, Zap } from 'lucide-react'
+import { useAttendanceStore } from '@/store/attendanceStore'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import type { FaceEntry } from '../types'
 import { StatsRow } from './StatsRow'
@@ -182,7 +183,19 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch
               {filteredEntries.length === 0 && (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
-                    {isBn ? 'কোনো ফেস ডেটা পাওয়া যায়নি' : 'No face data found'}
+                    <ScanFace size={28} className="mx-auto mb-2 opacity-30 text-[var(--green)]" />
+                    <div className="font-semibold text-[0.8125rem] text-[var(--text-primary)] mb-1">
+                      {isBn ? 'কোনো ফেস ডেটা পাওয়া যায়নি' : 'No Face Data Found'}
+                    </div>
+                    {faceEntries.length === 0 && (
+                      <button
+                        type="button"
+                        onClick={() => useAttendanceStore.getState().loadSampleDevices()}
+                        className="mt-2 px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[0.6875rem] font-semibold cursor-pointer border-0 hover:opacity-90 shadow-sm"
+                      >
+                        {isBn ? 'স্যাম্পল ফেস ডেটা লোড করুন' : 'Load Demo Face Data'}
+                      </button>
+                    )}
                   </td>
                 </tr>
               )}

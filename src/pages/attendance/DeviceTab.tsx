@@ -1,6 +1,7 @@
-import { useRef, useEffect } from 'react'
+import { useRef } from 'react'
 import { Fingerprint, CreditCard, ScanFace, Wifi, Plus, CheckCircle, XCircle, X } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import type { DeviceSubTab } from './types'
 import { useDeviceTab } from './useDeviceTab'
 import { DeviceManagementTab } from './tabs/DeviceManagementTab'
@@ -17,25 +18,22 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
   const tab = useDeviceTab({ isBn, date })
   useScrollLock(tab.showAddDevice || tab.showAddRFID || tab.showAddFP || tab.showAddFace)
 
-  const sectionTabsRef = useRef<HTMLDivElement>(null)
-  const sectionTabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
-  const tabColors: Record<string, string> = { devices: '#7C3AED', rfid: 'var(--brand)', fingerprint: 'var(--amber)', face: 'var(--green)', mobile: 'var(--teal)' }
-  const sliderStyle = useRef({ left: '0px', width: '0px', background: '#7C3AED' })
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const sliderRef = useRef<HTMLDivElement>(null)
+  const tabColors: Record<string, string> = {
+    devices: '#7C3AED',
+    rfid: 'var(--brand)',
+    fingerprint: 'var(--amber)',
+    face: 'var(--green)',
+    mobile: 'var(--teal)',
+  }
 
-  useEffect(() => {
-    const el = sectionTabRefs.current[tab.deviceTab]
-    const container = sectionTabsRef.current
-    if (el && container) {
-      const cRect = container.getBoundingClientRect()
-      const eRect = el.getBoundingClientRect()
-      const scrollLeft = container.scrollLeft || 0
-      sliderStyle.current = {
-        left: `${eRect.left - cRect.left + scrollLeft}px`,
-        width: `${eRect.width}px`,
-        background: tabColors[tab.deviceTab] || '#7C3AED',
-      }
-    }
-  }, [tab.deviceTab])
+  useTabSlider({
+    activeTab: tab.deviceTab,
+    tabRefs,
+    sliderRef,
+    scrollIntoView: true,
+  })
 
   const tabs = [
     { key: 'devices' as const, lBn: 'ডিভাইস', lEn: 'Devices', Icon: Fingerprint, color: '#7C3AED' },
@@ -58,33 +56,41 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
     <>
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl px-3.5 py-[0.625rem] mb-3.5 flex items-center gap-2 overflow-x-auto scrollbar-hide">
         <span className="text-[0.6875rem] font-medium text-[var(--text-muted)] shrink-0">{isBn ? 'সেকশন:' : 'Section:'}</span>
-        <div ref={sectionTabsRef} className="relative flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1 shrink-0">
+        <div className="relative flex gap-1 bg-[var(--bg-secondary)] rounded-lg p-1 shrink-0">
+          <div
+            ref={sliderRef}
+            className="absolute top-1 bottom-1 rounded-md [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out] z-0"
+            style={{
+              background: tabColors[tab.deviceTab] || '#7C3AED',
+              boxShadow: `0 2px 8px ${tabColors[tab.deviceTab] || '#7C3AED'}40`,
+            }}
+          />
           {tabs.map((t) => (
             <button
               key={t.key}
-              ref={(el) => { sectionTabRefs.current[t.key] = el }}
-              onClick={() => {
-                tab.setDeviceTab(t.key)
-                const btn = sectionTabRefs.current[t.key]
-                const c = sectionTabsRef.current
-                if (btn && c) {
-                  const cr = c.getBoundingClientRect()
-                  const br = btn.getBoundingClientRect()
-                  if (br.left < cr.left || br.right > cr.right) btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-                }
+              ref={(el) => {
+                if (el) tabRefs.current.set(t.key, el)
               }}
-              className="relative z-10 px-3 py-1 rounded-md text-[0.625rem] font-medium cursor-pointer transition-colors duration-200 flex items-center gap-1"
-              style={{ color: tab.deviceTab === t.key ? '#fff' : 'var(--text-muted)' }}
+              onClick={() => tab.setDeviceTab(t.key)}
+              className={`relative z-10 px-3 py-1.5 rounded-md text-[0.6875rem] font-medium cursor-pointer transition-colors duration-200 flex items-center gap-1.5 border-none outline-none ${
+                tab.deviceTab === t.key
+                  ? 'text-white'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+              style={{ background: 'transparent' }}
             >
-              <t.Icon size={11} />
+              <t.Icon size={12} />
               {isBn ? t.lBn : t.lEn}
             </button>
           ))}
-          <div className="absolute top-1 bottom-1 rounded-md [transition:left_300ms_ease-out,width_300ms_ease-out,background-color_300ms_ease-out]" style={{ left: sliderStyle.current.left, width: sliderStyle.current.width, background: sliderStyle.current.background, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
         </div>
         <div className="flex-1" />
         {action && (
-          <button onClick={action.onClick} className="flex items-center gap-[0.3125rem] px-3 py-[0.375rem] rounded-lg text-white text-[0.6875rem] cursor-pointer font-medium" style={{ background: action.color }}>
+          <button
+            onClick={action.onClick}
+            className="flex items-center gap-[0.3125rem] px-3.5 py-[0.4375rem] rounded-lg text-white text-[0.6875rem] cursor-pointer font-medium border-0 transition-transform active:scale-95 shadow-sm"
+            style={{ background: action.color }}
+          >
             {action.icon}
             {action.label}
           </button>
@@ -145,24 +151,79 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
         />
       )}
       {tab.deviceTab === 'mobile' && (
-        <MobileTab isBn={isBn} date={date} allPeople={tab.allPeople} mobileDevices={tab.mobileDevices}
-          mobileRegStaff={tab.mobileRegStaff} setMobileRegStaff={tab.setMobileRegStaff} mobileRegPending={tab.mobileRegPending} handleRegisterDevice={tab.handleRegisterDevice}
-          mobileAuthStaff={tab.mobileAuthStaff} setMobileAuthStaff={tab.setMobileAuthStaff} mobileAuthPending={tab.mobileAuthPending} handleMobileAuth={tab.handleMobileAuth}
-          removeMobileDevice={tab.removeMobileDevice} mobileSearch={tab.mobileSearch} setMobileSearch={tab.setMobileSearch}
-          mobileAuthMsg={tab.mobileAuthMsg} setMobileAuthMsg={() => tab.setMobileAuthMsg(null)}
-          institutionGateway={tab.wifi.institutionGateway} wifiConnected={tab.wifi.wifiConnected}
-          authMode={tab.authMode} setAuthMode={tab.setAuthMode}
-          showWifiSettings={tab.wifi.showWifiSettings} setShowWifiSettings={tab.wifi.setShowWifiSettings}
-          institutionWifi={tab.wifi.institutionWifi} setInstitutionWifi={tab.wifi.setInstitutionWifi}
-          institutionGatewayValue={tab.wifi.institutionGateway} setInstitutionGateway={tab.wifi.setInstitutionGateway}
-          saveWifiSettings={tab.wifi.saveWifiSettings} wifiChecking={tab.wifi.wifiChecking} runNetworkCheck={tab.wifi.runNetworkCheck}
+        <MobileTab
+          isBn={isBn}
+          date={date}
+          allPeople={tab.allPeople}
+          mobileDevices={tab.mobileDevices}
+          mobileRegStaff={tab.mobileRegStaff}
+          setMobileRegStaff={tab.setMobileRegStaff}
+          mobileRegPending={tab.mobileRegPending}
+          handleRegisterDevice={tab.handleRegisterDevice}
+          mobileAuthStaff={tab.mobileAuthStaff}
+          setMobileAuthStaff={tab.setMobileAuthStaff}
+          mobileAuthPending={tab.mobileAuthPending}
+          handleMobileAuth={tab.handleMobileAuth}
+          removeMobileDevice={tab.removeMobileDevice}
+          mobileSearch={tab.mobileSearch}
+          setMobileSearch={tab.setMobileSearch}
+          mobileAuthMsg={tab.mobileAuthMsg}
+          setMobileAuthMsg={() => tab.setMobileAuthMsg(null)}
+          institutionGateway={tab.wifi.institutionGateway}
+          wifiConnected={tab.wifi.wifiConnected}
+          authMode={tab.authMode}
+          setAuthMode={tab.setAuthMode}
+          showWifiSettings={tab.wifi.showWifiSettings}
+          setShowWifiSettings={tab.wifi.setShowWifiSettings}
+          institutionWifi={tab.wifi.institutionWifi}
+          setInstitutionWifi={tab.wifi.setInstitutionWifi}
+          institutionGatewayValue={tab.wifi.institutionGateway}
+          setInstitutionGateway={tab.wifi.setInstitutionGateway}
+          saveWifiSettings={tab.wifi.saveWifiSettings}
+          wifiChecking={tab.wifi.wifiChecking}
+          runNetworkCheck={tab.wifi.runNetworkCheck}
         />
       )}
 
-      {tab.showAddDevice && <AddDeviceModal isBn={isBn} newDevice={tab.newDevice} setNewDevice={tab.setNewDevice} onAdd={tab.handleAddDevice} onClose={() => tab.setShowAddDevice(false)} />}
-      {tab.showAddRFID && <AddRfidModal isBn={isBn} allPeople={tab.allPeople} newRFID={tab.newRFID} setNewRFID={tab.setNewRFID} onAdd={tab.handleAddRfid} onClose={() => tab.setShowAddRFID(false)} />}
-      {tab.showAddFP && <AddFingerprintModal isBn={isBn} allPeople={tab.allPeople} newFP={tab.newFP} setNewFP={tab.setNewFP} onAdd={tab.handleAddFp} onClose={() => tab.setShowAddFP(false)} />}
-      {tab.showAddFace && <AddFaceScanModal isBn={isBn} allPeople={tab.allPeople} newFace={tab.newFace} setNewFace={tab.setNewFace} onAdd={tab.handleAddFace} onClose={() => tab.setShowAddFace(false)} />}
+      {tab.showAddDevice && (
+        <AddDeviceModal
+          isBn={isBn}
+          newDevice={tab.newDevice}
+          setNewDevice={tab.setNewDevice}
+          onAdd={tab.handleAddDevice}
+          onClose={() => tab.setShowAddDevice(false)}
+        />
+      )}
+      {tab.showAddRFID && (
+        <AddRfidModal
+          isBn={isBn}
+          allPeople={tab.allPeople}
+          newRFID={tab.newRFID}
+          setNewRFID={tab.setNewRFID}
+          onAdd={tab.handleAddRfid}
+          onClose={() => tab.setShowAddRFID(false)}
+        />
+      )}
+      {tab.showAddFP && (
+        <AddFingerprintModal
+          isBn={isBn}
+          allPeople={tab.allPeople}
+          newFP={tab.newFP}
+          setNewFP={tab.setNewFP}
+          onAdd={tab.handleAddFp}
+          onClose={() => tab.setShowAddFP(false)}
+        />
+      )}
+      {tab.showAddFace && (
+        <AddFaceScanModal
+          isBn={isBn}
+          allPeople={tab.allPeople}
+          newFace={tab.newFace}
+          setNewFace={tab.setNewFace}
+          onAdd={tab.handleAddFace}
+          onClose={() => tab.setShowAddFace(false)}
+        />
+      )}
     </>
   )
 }
