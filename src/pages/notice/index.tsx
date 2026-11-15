@@ -57,24 +57,27 @@ export default function NoticeBoardPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [newCategory, setNewCategory] = useState('')
 
-  const tabRefs = useRef<Map<string, HTMLButtonElement>>(null)
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
   useTabSlider({ activeTab, tabRefs, sliderRef })
 
   const isExpired = (n: Notice) => n.expiresAt && new Date(n.expiresAt) < new Date()
 
   const filtered = useMemo(() => {
-    let list = notices.filter((n) => n.isActive)
+    let list = notices.filter((n) => n && n.isActive)
     if (activeTab === 'pinned') list = list.filter((n) => n.pinned)
     if (activeTab === 'expired') list = list.filter((n) => isExpired(n))
     if (filterCategory) list = list.filter((n) => n.category === filterCategory)
     if (search) {
       const q = search.toLowerCase()
       list = list.filter((n) =>
-        n.title.toLowerCase().includes(q) || n.titleBn.includes(search) ||
-        n.content.toLowerCase().includes(q) || n.contentBn.includes(search) ||
-        n.author.toLowerCase().includes(q) || n.authorBn.includes(search) ||
-        n.category.toLowerCase().includes(q)
+        (n.title || '').toLowerCase().includes(q) ||
+        (n.titleBn || '').includes(search) ||
+        (n.content || '').toLowerCase().includes(q) ||
+        (n.contentBn || '').includes(search) ||
+        (n.author || '').toLowerCase().includes(q) ||
+        (n.authorBn || '').includes(search) ||
+        (n.category || '').toLowerCase().includes(q)
       )
     }
     return list.sort((a, b) => {
@@ -265,7 +268,7 @@ export default function NoticeBoardPage() {
           {tabs.map((tab) => (
             <button
               key={tab.key}
-              ref={(el) => { if (!tabRefs.current) tabRefs.current = new Map(); if (el) tabRefs.current.set(tab.key, el) }}
+              ref={(el) => { if (el) tabRefs.current.set(tab.key, el) }}
               onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-[0.8125rem] font-medium transition-colors relative ${activeTab === tab.key ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
             >
@@ -318,7 +321,10 @@ export default function NoticeBoardPage() {
           {filtered.map((notice) => {
             const priority = PRIORITY_OPTIONS.find((p) => p.value === notice.priority) || PRIORITY_OPTIONS[0]
             const target = TARGET_OPTIONS.find((t) => t.value === notice.target)
-            const plainContent = (bn ? notice.contentBn : notice.content).replace(/<[^>]*>/g, '')
+            const contentText = (bn ? notice.contentBn || notice.content : notice.content || notice.contentBn) || ''
+            const plainContent = contentText.replace(/<[^>]*>/g, '')
+            const displayTitle = (bn ? notice.titleBn || notice.title : notice.title || notice.titleBn) || ''
+            const displayAuthor = (bn ? notice.authorBn || notice.author : notice.author || notice.authorBn) || ''
             return (
               <div
                 key={notice.id}
@@ -346,7 +352,7 @@ export default function NoticeBoardPage() {
                       {notice.pinned && <Pin size={12} className="text-[var(--brand)] shrink-0" />}
                     </div>
                     <div className="flex items-center gap-1.5 text-[0.6875rem] text-[var(--text-muted)]">
-                      <span>{bn ? notice.authorBn : notice.author}</span>
+                      <span>{displayAuthor}</span>
                       <span>·</span>
                       <Calendar size={11} />
                       {new Date(notice.publishedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -394,7 +400,7 @@ export default function NoticeBoardPage() {
                 {/* Title + Content preview */}
                 <div className="px-4 pb-3">
                   <h3 className="text-[0.9375rem] font-bold text-[var(--text-primary)] leading-snug mb-1">
-                    {bn ? notice.titleBn : notice.title}
+                    {displayTitle}
                   </h3>
                   <p className="text-[0.8125rem] text-[var(--text-muted)] leading-relaxed line-clamp-3">
                     {plainContent}

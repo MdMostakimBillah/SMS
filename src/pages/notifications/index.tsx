@@ -4,11 +4,15 @@ import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNotificationStore, type Notification, type NotificationType } from '@/store/notificationStore'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
+import { useSubdomain } from '@/hooks/useSubdomain'
+import { useSuperAdminStore } from '@/store/superAdminStore'
+import { getNavBase, getSuperAdminViewNavBase } from '@/lib/navUtils'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 
 const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; bg: string; border: string }> = {
-  info: { icon: Info, color: 'var(--brand)', bg: 'var(--brand)', border: 'var(--brand)' },
+  info: { icon: Info, color: 'var(--brand)', bg: 'color-mix(in srgb, var(--brand) 12%, transparent)', border: 'var(--brand)' },
   success: { icon: CheckCircle, color: 'var(--green)', bg: 'var(--green-light)', border: 'var(--green)' },
   warning: { icon: AlertTriangle, color: 'var(--orange)', bg: 'var(--orange-light)', border: 'var(--orange)' },
   error: { icon: XCircle, color: 'var(--red)', bg: 'var(--red-light)', border: 'var(--red)' },
@@ -19,6 +23,20 @@ export default function NotificationsPage() {
   const { canDelete, canEdit } = usePermission()
   const { isMobile } = useWindowSize()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { user } = useAuth()
+  const { resolved } = useSubdomain()
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
+
+  const isSuperAdmin = user?.role === 'super_admin'
+  const isViewing = isSuperAdmin && !!viewingInstitutionId
+  const viewingRole = isViewing ? (location.pathname.split('/')[3] || 'admin') : undefined
+  const navBase = isViewing
+    ? getSuperAdminViewNavBase(user, viewingRole)
+    : isSuperAdmin
+      ? '/super-admin/admin'
+      : getNavBase(user, resolved)
+
   const notifications = useNotificationStore((s) => s.notifications)
   const markRead = useNotificationStore((s) => s.markRead)
   const markAllRead = useNotificationStore((s) => s.markAllRead)
@@ -48,7 +66,17 @@ export default function NotificationsPage() {
 
   const handleClick = (n: Notification) => {
     if (!n.read) markRead(n.id)
-    if (n.link) navigate(n.link)
+    if (n.link) {
+      if (n.link.startsWith('/')) {
+        if (navBase && !n.link.startsWith(navBase) && !n.link.startsWith('/i/') && !n.link.startsWith('/super-admin/')) {
+          navigate(`${navBase}${n.link}`)
+        } else {
+          navigate(n.link)
+        }
+      } else {
+        navigate(n.link)
+      }
+    }
   }
 
   if (isLoading) {
@@ -125,35 +153,40 @@ export default function NotificationsPage() {
             const Icon = config.icon
             const timeAgo = getTimeAgo(n.createdAt, bn)
             const isUnread = !n.read
+            const displayTitle = (bn ? n.titleBn || n.title : n.title || n.titleBn) || ''
+            const displayMessage = (bn ? n.messageBn || n.message : n.message || n.messageBn) || ''
             return (
               <div
                 key={n.id}
                 onClick={() => handleClick(n)}
-                className={isUnread
-                  ? 'group rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] transition-all cursor-pointer hover:border-[var(--brand)] border-[var(--brand)]/30'
-                  : 'group rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] transition-all cursor-pointer hover:border-[var(--brand)]'}
+                className={`group relative flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer bg-[var(--bg-primary)] ${
+                  isUnread
+                    ? 'border-[var(--brand)]/40 shadow-sm'
+                    : 'border-[var(--border)] hover:border-[var(--brand)]'
+                }`}
               >
                 <div className="mt-0.5 p-2 rounded-lg shrink-0" style={{ background: config.bg, color: config.color }}>
                   <Icon size={18} />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pr-6">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-[0.8125rem] font-medium text-[var(--text-primary)] {isUnread && 'font-semibold'}">
-                      {bn ? n.titleBn : n.title}
+                    <h3 className={`text-[0.8125rem] font-medium text-[var(--text-primary)] ${isUnread ? 'font-semibold' : ''}`}>
+                      {displayTitle}
                     </h3>
                     {!n.read && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--brand)' }} />}
                   </div>
                   <p className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5 line-clamp-2">
-                    {bn ? n.messageBn : n.message}
+                    {displayMessage}
                   </p>
                   <span className="text-[0.625rem] text-[var(--text-muted)] mt-1 block">{timeAgo}</span>
                 </div>
                 {canDelete('notifications') && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteTarget(n.id) }}
-                    className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] shrink-0 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="p-1.5 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] shrink-0 absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title={bn ? 'মুছুন' : 'Delete'}
                   >
-                    <Trash2 size={12} />
+                    <Trash2 size={13} />
                   </button>
                 )}
               </div>
@@ -186,8 +219,10 @@ export default function NotificationsPage() {
 }
 
 function getTimeAgo(dateStr: string, bn: boolean): string {
+  if (!dateStr) return bn ? 'এইমাত্র' : 'Just now'
   const now = Date.now()
   const then = new Date(dateStr).getTime()
+  if (isNaN(then)) return bn ? 'এইমাত্র' : 'Just now'
   const diff = Math.floor((now - then) / 1000)
   if (diff < 60) return bn ? 'এইমাত্র' : 'Just now'
   if (diff < 3600) return bn ? `${Math.floor(diff / 60)} মিনিট আগে` : `${Math.floor(diff / 60)}m ago`

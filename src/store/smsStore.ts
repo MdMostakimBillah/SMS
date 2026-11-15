@@ -46,6 +46,12 @@ export interface InstitutionSMSBalance {
   remaining: number
 }
 
+export const DEFAULT_INSTITUTION_BALANCE: InstitutionSMSBalance = Object.freeze({
+  allocated: 0,
+  used: 0,
+  remaining: 0,
+})
+
 export interface SMSStoreState {
   masterPool: {
     totalPurchased: number
@@ -217,7 +223,7 @@ export const useSmsStore = create<SMSStoreState>()(
           }
         }
 
-        const currentBal = state.institutionBalances[institutionId] || { allocated: 0, used: 0, remaining: 0 }
+        const currentBal = state.institutionBalances[institutionId] || DEFAULT_INSTITUTION_BALANCE
         let newAllocated = currentBal.allocated
         let newRemaining = currentBal.remaining
 
@@ -264,7 +270,7 @@ export const useSmsStore = create<SMSStoreState>()(
 
       deductSMS: (institutionId, count = 1) => {
         const state = get()
-        const currentBal = state.institutionBalances[institutionId] || { allocated: 0, used: 0, remaining: 0 }
+        const currentBal = state.institutionBalances[institutionId] || DEFAULT_INSTITUTION_BALANCE
 
         if (currentBal.remaining < count) {
           return false
@@ -290,13 +296,7 @@ export const useSmsStore = create<SMSStoreState>()(
 
       getInstitutionBalance: (institutionId) => {
         const state = get()
-        return (
-          state.institutionBalances[institutionId] || {
-            allocated: 0,
-            used: 0,
-            remaining: 0,
-          }
-        )
+        return (institutionId ? state.institutionBalances[institutionId] : undefined) || DEFAULT_INSTITUTION_BALANCE
       },
 
       updateGatewayConfig: (config) => {

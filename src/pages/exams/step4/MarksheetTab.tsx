@@ -9,7 +9,7 @@ import { MarksheetPDFOptionsModal } from './MarksheetPDFOptionsModal'
 import { downloadHTML } from '@/lib/pdf'
 import { useClassStore } from '@/store/classStore'
 import { getGradeLetter, getGradeColor } from '@/lib/grades'
-import { useSmsStore } from '@/store/smsStore'
+import { useSmsStore, DEFAULT_INSTITUTION_BALANCE } from '@/store/smsStore'
 import { useMessageStore, messageId } from '@/store/messageStore'
 
 const gradeScale = [
@@ -98,7 +98,7 @@ export const MarksheetTab = React.memo(function MarksheetTab({
   const brand = getBrandColor()
   const institution = useClassStore((s) => s.institution)
   const instId = (institution as any)?.id || institution?.eiin || sessionStorage.getItem('edutech_inst_slug') || 'inst-default'
-  const instBalance = useSmsStore((s) => s.getInstitutionBalance(instId))
+  const instBalance = useSmsStore((s) => (instId ? s.institutionBalances[instId] : undefined) ?? DEFAULT_INSTITUTION_BALANCE)
 
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [showSmsModal, setShowSmsModal] = useState(false)

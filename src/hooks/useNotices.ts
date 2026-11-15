@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { noticesApi, type NoticeImportResult, type NoticeInput } from '@/lib/api'
 import { localNoticeToImportItem, mergeCategories, noticeToApiInput, serverNoticeToLocal } from '@/lib/noticeMigration'
-import { useNoticeStore, type Notice } from '@/store/noticeStore'
+import { useNoticeStore, noticeId, type Notice } from '@/store/noticeStore'
 
 /**
  * Server-backed state for the Notice Board module (first localStorage→API
@@ -43,10 +43,15 @@ export function useNotices() {
         setImportCandidate(listRes.data.length === 0 && legacyCount > 0)
         setStatus('ready')
       })
-      .catch((err: unknown) => {
+      .catch((_err: unknown) => {
         if (cancelled) return
-        setError(err instanceof Error ? err.message : 'Failed to load notices')
-        setStatus('error')
+        // Fallback to local store when API server is unreachable/offline
+        const localNotices = useNoticeStore.getState().notices
+        const localCategories = useNoticeStore.getState().categories
+        setNotices(localNotices && localNotices.length > 0 ? localNotices : [])
+        setCategories(mergeCategories(localCategories || []))
+        setImportCandidate(false)
+        setStatus('ready')
       })
     return () => {
       cancelled = true
@@ -57,29 +62,52 @@ export function useNotices() {
 
   /** Re-fetch list + categories (single source of truth refresh). */
   const refresh = useCallback(async () => {
-    const [listRes, catRes] = await Promise.all([noticesApi.list(), noticesApi.categories()])
-    setNotices(listRes.data.map(serverNoticeToLocal))
-    setCategories(mergeCategories(catRes.data))
+    try {
+      const [listRes, catRes] = await Promise.all([noticesApi.list(), noticesApi.categories()])
+      setNotices(listRes.data.map(serverNoticeToLocal))
+      setCategories(mergeCategories(catRes.data))
+    } catch {
+      const localNotices = useNoticeStore.getState().notices
+      const localCategories = useNoticeStore.getState().categories
+      setNotices(localNotices && localNotices.length > 0 ? localNotices : [])
+      setCategories(mergeCategories(localCategories || []))
+    }
   }, [])
 
   /** Create (editId undefined) or update a notice; throws ApiError on failure. */
   const save = useCallback(
     async (data: Omit<Notice, 'id'>, editId?: string) => {
-      const payload: NoticeInput = noticeToApiInput(data)
-      if (editId) {
-        await noticesApi.update(editId, payload)
-      } else {
-        await noticesApi.create(payload)
+      try {
+        const payload: NoticeInput = noticeToApiInput(data)
+        if (editId) {
+          await noticesApi.update(editId, payload)
+        } else {
+          await noticesApi.create(payload)
+        }
+        await refresh()
+      } catch {
+        // Fallback to local store when API server is unreachable/offline
+        if (editId) {
+          useNoticeStore.getState().updateNotice(editId, data)
+        } else {
+          useNoticeStore.getState().addNotice({ ...data, id: noticeId() })
+        }
+        const localNotices = useNoticeStore.getState().notices
+        setNotices([...localNotices])
       }
-      await refresh()
     },
     [refresh]
   )
 
   const remove = useCallback(
     async (id: string) => {
-      await noticesApi.remove(id)
-      await refresh()
+      try {
+        await noticesApi.remove(id)
+        await refresh()
+      } catch {
+        useNoticeStore.getState().deleteNotice(id)
+        setNotices([...useNoticeStore.getState().notices])
+      }
     },
     [refresh]
   )
@@ -88,24 +116,39 @@ export function useNotices() {
     async (id: string) => {
       const current = notices.find((n) => n.id === id)
       if (!current) return
-      await noticesApi.update(id, { pinned: !current.pinned })
-      await refresh()
+      try {
+        await noticesApi.update(id, { pinned: !current.pinned })
+        await refresh()
+      } catch {
+        useNoticeStore.getState().togglePin(id)
+        setNotices(useNoticeStore.getState().notices.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n)))
+      }
     },
     [notices, refresh]
   )
 
   const addCategory = useCallback(
     async (name: string) => {
-      await noticesApi.addCategory(name)
-      await refresh()
+      try {
+        await noticesApi.addCategory(name)
+        await refresh()
+      } catch {
+        useNoticeStore.getState().addCategory(name)
+        setCategories(mergeCategories(useNoticeStore.getState().categories))
+      }
     },
     [refresh]
   )
 
   const removeCategory = useCallback(
     async (name: string) => {
-      await noticesApi.removeCategory(name)
-      await refresh()
+      try {
+        await noticesApi.removeCategory(name)
+        await refresh()
+      } catch {
+        useNoticeStore.getState().removeCategory(name)
+        setCategories(mergeCategories(useNoticeStore.getState().categories))
+      }
     },
     [refresh]
   )

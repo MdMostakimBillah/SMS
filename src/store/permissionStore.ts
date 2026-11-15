@@ -81,11 +81,13 @@ function buildRolePermissions(templateKey: string): PermissionEntry[] {
       const isViewOnly = template.permissions.includes(fullKey)
       const isFullAccess = template.fullAccess?.includes(fullKey)
       const isParentOfFull = template.fullAccess?.some((fa) => fa.startsWith(fullKey + '.'))
+      const isChildOfFull = template.fullAccess?.some((fa) => fullKey.startsWith(fa + '.'))
+      const isChildOfView = template.permissions.some((p) => fullKey.startsWith(p + '.'))
 
-      if (isFullAccess || isParentOfFull) {
+      if (isFullAccess || isParentOfFull || isChildOfFull) {
         const enabledActions: PermissionAction[] = node.actions
         entries.push({ key: fullKey, actions: createActionSet(enabledActions) })
-      } else if (isViewOnly) {
+      } else if (isViewOnly || isChildOfView) {
         entries.push({ key: fullKey, actions: createActionSet(['view']) })
       } else {
         entries.push({ key: fullKey, actions: createActionSet() })

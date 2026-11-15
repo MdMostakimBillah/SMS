@@ -101,7 +101,7 @@ interface NotificationState {
 export const useNotificationStore = create<NotificationState>()(
   persist(
     (set) => ({
-      notifications: [],
+      notifications: SEED_NOTIFICATIONS,
 
       addNotification: (n) => set((state) => ({ notifications: [n, ...state.notifications] })),
       markRead: (id) =>
@@ -116,11 +116,6 @@ export const useNotificationStore = create<NotificationState>()(
       name: 'edutech-notifications',
       storage: createNamespacedStorage('edutech-notifications'),
       version: 1,
-      onRehydrateStorage: () => (state) => {
-        if (state && state.notifications.length === 0) {
-          state.notifications = SEED_NOTIFICATIONS
-        }
-      },
     }
   )
 )

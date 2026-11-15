@@ -364,7 +364,7 @@ interface NoticeState {
 export const useNoticeStore = create<NoticeState>()(
   persist(
     (set) => ({
-      notices: [],
+      notices: SEED_NOTICES,
       categories: DEFAULT_CATEGORIES,
 
       addNotice: (n) => set((state) => ({ notices: [n, ...state.notices] })),
@@ -400,11 +400,6 @@ export const useNoticeStore = create<NoticeState>()(
           return { ...state, notices: updated, categories: state.categories || DEFAULT_CATEGORIES }
         }
         return state
-      },
-      onRehydrateStorage: () => (state) => {
-        if (state && state.notices.length === 0) {
-          state.notices = SEED_NOTICES
-        }
       },
     }
   )

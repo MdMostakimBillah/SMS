@@ -48,7 +48,8 @@ export function useTabSlider({
   // Every render: position slider if it has zero width (handles skeleton → real content)
   useEffect(() => {
     const slider = sliderRef.current
-    if (slider && slider.getBoundingClientRect().width === 0) {
+    const activeEl = tabRefs.current?.get(activeTab)
+    if (slider && activeEl && slider.getBoundingClientRect().width === 0 && activeEl.getBoundingClientRect().width > 0) {
       updateTabSlider()
     }
   })

@@ -20,7 +20,7 @@ import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { useSessionStudents } from '@/store/admissionStore'
 import { usePermission } from '@/hooks/usePermission'
-import { useSmsStore } from '@/store/smsStore'
+import { useSmsStore, DEFAULT_INSTITUTION_BALANCE } from '@/store/smsStore'
 import { useClassStore } from '@/store/classStore'
 import { TemplatesTab } from './tabs/TemplatesTab'
 
@@ -38,7 +38,7 @@ export default function MessagesPage() {
   const resendMessage = useMessageStore((s) => s.resendMessage)
   const institution = useClassStore((s) => s.institution)
   const instId = (institution as any)?.id || institution?.eiin || 'inst-default'
-  const smsBalance = useSmsStore((s) => s.getInstitutionBalance(instId))
+  const smsBalance = useSmsStore((s) => (instId ? s.institutionBalances[instId] : undefined) ?? DEFAULT_INSTITUTION_BALANCE)
 
   const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'outgoing' | 'templates'>('inbox')
   const [search, setSearch] = useState('')
@@ -59,33 +59,45 @@ export default function MessagesPage() {
   }, [])
 
   const inboxMessages = useMemo(() => {
-    let list = messages.filter((m) => m.senderId !== 'me')
+    let list = messages.filter((m) => m && m.senderId !== 'me')
     if (search) {
       const q = search.toLowerCase()
-      list = list.filter((m) => m.subject.toLowerCase().includes(q) || m.senderName.toLowerCase().includes(q) || m.body.toLowerCase().includes(q))
+      list = list.filter((m) =>
+        (m.subject || '').toLowerCase().includes(q) ||
+        (m.senderName || '').toLowerCase().includes(q) ||
+        (m.body || '').toLowerCase().includes(q)
+      )
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [messages, search])
 
   const sentMessages = useMemo(() => {
-    let list = messages.filter((m) => m.senderId === 'me')
+    let list = messages.filter((m) => m && m.senderId === 'me')
     if (search) {
       const q = search.toLowerCase()
-      list = list.filter((m) => m.subject.toLowerCase().includes(q) || m.recipientName.toLowerCase().includes(q) || m.body.toLowerCase().includes(q))
+      list = list.filter((m) =>
+        (m.subject || '').toLowerCase().includes(q) ||
+        (m.recipientName || '').toLowerCase().includes(q) ||
+        (m.body || '').toLowerCase().includes(q)
+      )
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [messages, search])
 
   const outgoingMessages = useMemo(() => {
-    let list = messages.filter((m) => m.senderId === 'me' && m.status !== 'delivered')
+    let list = messages.filter((m) => m && m.senderId === 'me' && m.status !== 'delivered')
     if (search) {
       const q = search.toLowerCase()
-      list = list.filter((m) => m.subject.toLowerCase().includes(q) || m.recipientName.toLowerCase().includes(q) || m.body.toLowerCase().includes(q))
+      list = list.filter((m) =>
+        (m.subject || '').toLowerCase().includes(q) ||
+        (m.recipientName || '').toLowerCase().includes(q) ||
+        (m.body || '').toLowerCase().includes(q)
+      )
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [messages, search])
 
-  const unreadCount = useMemo(() => messages.filter((m) => m.senderId !== 'me' && !m.read).length, [messages])
+  const unreadCount = useMemo(() => messages.filter((m) => m && m.senderId !== 'me' && !m.read).length, [messages])
 
   const currentList = activeTab === 'inbox' ? inboxMessages : activeTab === 'sent' ? sentMessages : outgoingMessages
   const allTabs = [
@@ -94,7 +106,8 @@ export default function MessagesPage() {
     { key: 'outgoing', label: bn ? 'বহিঃগামী' : 'Outgoing', icon: Clock, count: outgoingMessages.length },
     { key: 'templates', label: bn ? 'টেমপ্লেট' : 'Templates', icon: FileText, count: 0 },
   ]
-  const tabs = allTabs.filter((t) => canRead('messages', t.key))
+  const accessibleTabs = allTabs.filter((t) => canRead('messages', t.key))
+  const tabs = accessibleTabs.length > 0 ? accessibleTabs : (canRead('messages') ? allTabs : [])
 
   const handleSend = (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => {
     const msg: Message = {
@@ -257,12 +270,12 @@ export default function MessagesPage() {
               }`}
             >
               <div className="w-9 h-9 rounded-full flex items-center justify-center text-[0.75rem] font-bold text-white shrink-0" style={{ background: 'var(--brand)' }}>
-                {(activeTab === 'inbox' ? msg.senderName : msg.recipientName).charAt(0).toUpperCase()}
+                {((activeTab === 'inbox' ? msg.senderName : msg.recipientName) || 'U').charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className={`text-[0.8125rem] ${!msg.read ? 'font-semibold' : 'font-medium'} text-[var(--text-primary)] truncate`}>
-                    {activeTab === 'inbox' ? msg.senderName : msg.recipientName}
+                    {(activeTab === 'inbox' ? msg.senderName : msg.recipientName) || ''}
                   </span>
                   {!msg.read && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--brand)' }} />}
                   {msg.isSMS && (
@@ -278,8 +291,8 @@ export default function MessagesPage() {
                     {new Date(msg.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                   </span>
                 </div>
-                <p className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">{msg.subject}</p>
-                <p className="text-[0.75rem] text-[var(--text-muted)] truncate mt-0.5">{msg.body.replace(/<[^>]*>/g, '')}</p>
+                <p className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">{msg.subject || ''}</p>
+                <p className="text-[0.75rem] text-[var(--text-muted)] truncate mt-0.5">{(msg.body || '').replace(/<[^>]*>/g, '')}</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 {activeTab === 'outgoing' && (
@@ -356,6 +369,8 @@ function StatusBadge({ status, bn }: { status: MessageStatus; bn: boolean }) {
 }
 
 function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Message; onBack: () => void; onReply: (m: Message) => void; onDelete: (id: string) => void; bn: boolean }) {
+  const senderDisplayName = message.senderName || 'Admin'
+  const recipientDisplayName = message.recipientName || ''
   return (
     <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-3 mb-4">
@@ -363,13 +378,13 @@ function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Me
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1">
-          <h1 className="font-semibold text-[1rem] text-[var(--text-primary)]">{message.subject}</h1>
+          <h1 className="font-semibold text-[1rem] text-[var(--text-primary)]">{message.subject || ''}</h1>
           <div className="flex items-center gap-2 mt-1">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-[0.625rem] font-bold text-white" style={{ background: 'var(--brand)' }}>
-              {message.senderName.charAt(0).toUpperCase()}
+              {senderDisplayName.charAt(0).toUpperCase()}
             </div>
             <div>
-              <span className="text-[0.75rem] font-medium text-[var(--text-primary)]">{message.senderName}</span>
+              <span className="text-[0.75rem] font-medium text-[var(--text-primary)]">{senderDisplayName}</span>
               <span className="text-[0.625rem] text-[var(--text-muted)] ml-2">
                 {new Date(message.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </span>
@@ -393,11 +408,11 @@ function MessageDetail({ message, onBack, onReply, onDelete, bn }: { message: Me
       </div>
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] p-4">
-        <div className="msg-content text-[0.875rem] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: sanitizeHtml(message.body) }} />
+        <div className="msg-content text-[0.875rem] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: sanitizeHtml(message.body || '') }} />
       </div>
 
       <div className="mt-3 flex items-center gap-2 text-[0.6875rem] text-[var(--text-muted)]">
-        <span>{bn ? 'প্রাপক' : 'To'}: {message.recipientName}</span>
+        <span>{bn ? 'প্রাপক' : 'To'}: {recipientDisplayName}</span>
       </div>
     </div>
   )
@@ -436,10 +451,10 @@ function RecipientField({ recipientId, recipientName, recipientSearch, showDrop,
               <>
                 <div className="px-3 py-1 text-[0.625rem] font-medium text-[var(--text-muted)] uppercase tracking-wider">{bn ? 'শিক্ষার্থী' : 'Students'}</div>
                 {filteredStudents.slice(0, 50).map((s) => (
-                  <button key={s.id} type="button" onClick={() => onSelect(s.id, bn ? s.nameBn : s.nameEn)}
+                  <button key={s.id} type="button" onClick={() => onSelect(s.id, bn ? s.nameBn || s.nameEn : s.nameEn || s.nameBn)}
                     className={`w-full text-left px-3 py-2 text-[0.75rem] hover:bg-[var(--bg-secondary)] transition-colors ${recipientId === s.id ? 'text-[var(--brand)] bg-[var(--brand)]/5' : 'text-[var(--text-primary)]'}`}>
-                    <span className="font-medium">{bn ? s.nameBn : s.nameEn}</span>
-                    <span className="text-[var(--text-muted)] ml-1.5">{s.class} • {s.roll}</span>
+                    <span className="font-medium">{(bn ? s.nameBn || s.nameEn : s.nameEn || s.nameBn) || s.id}</span>
+                    <span className="text-[var(--text-muted)] ml-1.5">{s.class || ''} • {s.roll ?? ''}</span>
                     <span className="text-[var(--text-muted)] ml-1 text-[0.625rem]">({s.id})</span>
                   </button>
                 ))}
@@ -482,9 +497,18 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   ]
 
   const filteredStudents = useMemo(() => {
-    if (!recipientSearch) return students.filter((s) => s.active !== false)
+    if (!recipientSearch) return students.filter((s) => s && s.active !== false)
     const q = recipientSearch.toLowerCase()
-    return students.filter((s) => s.active !== false && (s.id.toLowerCase().includes(q) || s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(q) || s.class.toLowerCase().includes(q) || s.roll.includes(q)))
+    return students.filter((s) => {
+      if (!s || s.active === false) return false
+      return (
+        (s.id || '').toLowerCase().includes(q) ||
+        (s.nameEn || '').toLowerCase().includes(q) ||
+        (s.nameBn || '').includes(recipientSearch) ||
+        (s.class || '').toLowerCase().includes(q) ||
+        String(s.roll ?? '').includes(q)
+      )
+    })
   }, [students, recipientSearch])
 
   const selectRecipient = (id: string, name: string) => {

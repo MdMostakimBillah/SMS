@@ -266,7 +266,7 @@ interface MessageState {
 export const useMessageStore = create<MessageState>()(
   persist(
     (set) => ({
-      messages: [],
+      messages: SEED_MESSAGES,
 
       addMessage: (m) => set((state) => ({ messages: [m, ...state.messages] })),
       markRead: (id) =>
@@ -293,11 +293,6 @@ export const useMessageStore = create<MessageState>()(
       name: 'edutech-messages',
       storage: createNamespacedStorage('edutech-messages'),
       version: 1,
-      onRehydrateStorage: () => (state) => {
-        if (state && state.messages.length === 0) {
-          state.messages = SEED_MESSAGES
-        }
-      },
     }
   )
 )

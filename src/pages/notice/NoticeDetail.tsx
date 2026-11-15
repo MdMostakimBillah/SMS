@@ -37,6 +37,10 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
   const logo = institution.logo
   const schoolName = institution.name || 'EduTech'
 
+  const displayTitle = (bn ? notice.titleBn || notice.title : notice.title || notice.titleBn) || ''
+  const displayAuthor = (bn ? notice.authorBn || notice.author : notice.author || notice.authorBn) || ''
+  const displayContent = (bn ? notice.contentBn || notice.content : notice.content || notice.contentBn) || ''
+
   const handleDownloadPDF = () => {
     const brand = getPDFBranding()
     const logoHTML = pdfLogoHTML(brand, 36)
@@ -88,23 +92,23 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
         </div>
       </div>
 
-      <div class="ttl">${bn ? notice.titleBn : notice.title}</div>
+      <div class="ttl">${displayTitle}</div>
       ${notice.titleBn && notice.titleBn !== notice.title && bn ? `<div style="text-align:center;font-size:13px;color:#555;margin-bottom:10px">${notice.titleBn}</div>` : ''}
 
       <div class="meta-row">
         <div class="meta-item"><strong>${bn ? 'প্রকাশকাল:' : 'Published:'}</strong> ${new Date(notice.publishedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-        <div class="meta-item"><strong>${bn ? 'লেখক:' : 'Author:'}</strong> ${bn ? notice.authorBn : notice.author}</div>
+        <div class="meta-item"><strong>${bn ? 'লেখক:' : 'Author:'}</strong> ${displayAuthor}</div>
         <div class="meta-item"><strong>${bn ? 'মূল্যায়ন:' : 'Target:'}</strong> ${bn ? target?.labelBn : target?.label}</div>
         ${notice.category ? `<div class="meta-item"><strong>${bn ? 'ক্যাটাগরি:' : 'Category:'}</strong> <span class="badge" style="background:${brand.brandColor}18;color:${brand.brandColor}">${notice.category}</span></div>` : ''}
         <div class="meta-item"><strong>${bn ? 'অগ্রাধিকার:' : 'Priority:'}</strong> <span class="badge" style="background:${priority.color}18;color:${priority.color}">${bn ? priority.labelBn : priority.label}</span></div>
         ${notice.expiresAt ? `<div class="meta-item"><strong>${bn ? 'মেয়াদ:' : 'Expires:'}</strong> ${notice.expiresAt}</div>` : ''}
       </div>
 
-      <div class="content">${bn ? notice.contentBn : notice.content}</div>
+      <div class="content">${displayContent}</div>
 
       ${pdfFooterHTML(bn)}
     `
-    openPrintWindow(bn ? notice.titleBn : notice.title, bodyHTML, { css })
+    openPrintWindow(displayTitle, bodyHTML, { css })
   }
 
   return (
@@ -116,7 +120,7 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
         </button>
         <div className="flex-1">
           <h1 className={`font-semibold text-[var(--text-primary)] ${bn ? 'text-[1rem]' : 'text-[1.0625rem]'}`}>
-            {bn ? notice.titleBn : notice.title}
+            {displayTitle}
           </h1>
         </div>
       </div>
@@ -151,7 +155,7 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
               )}
             </div>
             <div className="flex items-center gap-2 mt-0.5 text-[0.6875rem] text-[var(--text-muted)]">
-              <span>{bn ? notice.authorBn : notice.author}</span>
+              <span>{displayAuthor}</span>
               <span>·</span>
               <Calendar size={11} />
               {new Date(notice.publishedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
@@ -182,7 +186,7 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
         {/* Title */}
         <div className="relative px-4 pb-3">
           <h2 className="text-[1.125rem] font-bold text-[var(--text-primary)] leading-snug">
-            {bn ? notice.titleBn : notice.title}
+            {displayTitle}
           </h2>
           {notice.titleBn && notice.title !== notice.titleBn && !bn && (
             <p className="text-[0.8125rem] text-[var(--text-muted)] mt-0.5">{notice.titleBn}</p>
@@ -209,7 +213,7 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
               [&_tr]:hover:bg-[var(--bg-secondary)]/50
               [&_hr]:border-[var(--border)] [&_hr]:my-4
               [&_img]:max-w-full [&_img]:rounded-xl [&_img]:my-2"
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(bn ? notice.contentBn : notice.content) }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(displayContent) }}
           />
         </div>
 
