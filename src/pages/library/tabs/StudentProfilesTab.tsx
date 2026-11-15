@@ -26,8 +26,7 @@ export function StudentProfilesTab({ searchQuery }: Props) {
   const sessionStudents = useMemo(() => {
     const approved = students.filter((s) => (!s.status || s.status === 'approved') && s.active !== false)
     if (!currentSession || approved.length === 0) return approved
-    const matched = approved.filter((s) => isMatchingSession(s.academicYear, currentSession))
-    return matched.length > 0 ? matched : approved
+    return approved.filter((s) => isMatchingSession(s.academicYear, currentSession))
   }, [students, currentSession])
 
   const profiles = useMemo(() => {

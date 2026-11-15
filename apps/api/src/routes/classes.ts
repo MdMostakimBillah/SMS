@@ -41,30 +41,33 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         })
       }
 
-      let classes = []
-      let routines = []
+      let parsedClassesData: any = null
+      let parsedRoutinesData: any = null
       try {
         if (school.classesData) {
-          classes = typeof school.classesData === 'string' ? JSON.parse(school.classesData) : school.classesData
+          parsedClassesData = typeof school.classesData === 'string' ? JSON.parse(school.classesData) : school.classesData
         }
       } catch {
-        classes = []
+        parsedClassesData = null
       }
 
       try {
         if (school.routinesData) {
-          routines = typeof school.routinesData === 'string' ? JSON.parse(school.routinesData) : school.routinesData
+          parsedRoutinesData = typeof school.routinesData === 'string' ? JSON.parse(school.routinesData) : school.routinesData
         }
       } catch {
-        routines = []
+        parsedRoutinesData = null
       }
 
-      let sessions = ['2025-26']
+      let sessions: string[] = ['2025-26']
       try {
         if (school.sessions) {
           sessions = typeof school.sessions === 'string' ? JSON.parse(school.sessions) : school.sessions
         }
       } catch {
+        sessions = ['2025-26']
+      }
+      if (!Array.isArray(sessions) || sessions.length === 0) {
         sessions = ['2025-26']
       }
 
@@ -77,10 +80,38 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         breaks = []
       }
 
+      const requestedSession = (req.query.session as string)?.trim() || undefined
+
+      // Extract sessionClasses and sessionRoutines
+      let sessionClasses: Record<string, any[]> = {}
+      let sessionRoutines: Record<string, any[]> = {}
+      let currentSessionClasses: any[] = []
+      let currentSessionRoutines: any[] = []
+
+      if (parsedClassesData && typeof parsedClassesData === 'object' && !Array.isArray(parsedClassesData) && parsedClassesData.sessionClasses) {
+        sessionClasses = parsedClassesData.sessionClasses
+        currentSessionClasses = (requestedSession ? sessionClasses[requestedSession] : null) || parsedClassesData.classes || []
+      } else if (Array.isArray(parsedClassesData)) {
+        currentSessionClasses = parsedClassesData
+        const defaultSession = sessions[0] || '2025-26'
+        sessionClasses = { [defaultSession]: parsedClassesData }
+      }
+
+      if (parsedRoutinesData && typeof parsedRoutinesData === 'object' && !Array.isArray(parsedRoutinesData) && parsedRoutinesData.sessionRoutines) {
+        sessionRoutines = parsedRoutinesData.sessionRoutines
+        currentSessionRoutines = (requestedSession ? sessionRoutines[requestedSession] : null) || parsedRoutinesData.routines || []
+      } else if (Array.isArray(parsedRoutinesData)) {
+        currentSessionRoutines = parsedRoutinesData
+        const defaultSession = sessions[0] || '2025-26'
+        sessionRoutines = { [defaultSession]: parsedRoutinesData }
+      }
+
       res.json({
-        classes: Array.isArray(classes) ? classes : [],
-        routines: Array.isArray(routines) ? routines : [],
-        sessions: Array.isArray(sessions) ? sessions : ['2025-26'],
+        classes: currentSessionClasses,
+        routines: currentSessionRoutines,
+        sessionClasses,
+        sessionRoutines,
+        sessions,
         breaks: Array.isArray(breaks) ? breaks : [],
         startTime: school.startTime,
         endTime: school.endTime,
@@ -139,17 +170,32 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
       }
 
       const updateData: any = {}
-      if (req.body.classes !== undefined) {
+      if (req.body.sessionClasses !== undefined) {
+        updateData.classesData = JSON.stringify({
+          sessionClasses: req.body.sessionClasses,
+          classes: Array.isArray(req.body.classes) ? req.body.classes : [],
+        })
+      } else if (req.body.classes !== undefined) {
         if (Array.isArray(req.body.classes) && req.body.classes.length > 500) {
           return res.status(400).json({ error: 'Classes limit exceeded (max 500)' })
         }
         updateData.classesData = typeof req.body.classes === 'object' ? JSON.stringify(req.body.classes) : String(req.body.classes)
       }
-      if (req.body.routines !== undefined) {
+
+      if (req.body.sessionRoutines !== undefined) {
+        updateData.routinesData = JSON.stringify({
+          sessionRoutines: req.body.sessionRoutines,
+          routines: Array.isArray(req.body.routines) ? req.body.routines : [],
+        })
+      } else if (req.body.routines !== undefined) {
         if (Array.isArray(req.body.routines) && req.body.routines.length > 50000) {
           return res.status(400).json({ error: 'Routines limit exceeded (max 50,000)' })
         }
         updateData.routinesData = typeof req.body.routines === 'object' ? JSON.stringify(req.body.routines) : String(req.body.routines)
+      }
+
+      if (Array.isArray(req.body.sessions)) {
+        updateData.sessions = JSON.stringify(req.body.sessions)
       }
 
       const updated = await prisma.school.update({
@@ -159,22 +205,25 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
           id: true,
           classesData: true,
           routinesData: true,
+          sessions: true,
         },
       })
 
-      let parsedClasses = []
-      let parsedRoutines = []
+      let parsedClassesData: any = null
+      let parsedRoutinesData: any = null
       try {
-        if (updated.classesData) parsedClasses = JSON.parse(updated.classesData)
+        if (updated.classesData) parsedClassesData = JSON.parse(updated.classesData)
       } catch {}
       try {
-        if (updated.routinesData) parsedRoutines = JSON.parse(updated.routinesData)
+        if (updated.routinesData) parsedRoutinesData = JSON.parse(updated.routinesData)
       } catch {}
 
       res.json({
         success: true,
-        classes: parsedClasses,
-        routines: parsedRoutines,
+        classes: Array.isArray(parsedClassesData) ? parsedClassesData : (parsedClassesData?.classes || []),
+        routines: Array.isArray(parsedRoutinesData) ? parsedRoutinesData : (parsedRoutinesData?.routines || []),
+        sessionClasses: parsedClassesData?.sessionClasses || undefined,
+        sessionRoutines: parsedRoutinesData?.sessionRoutines || undefined,
       })
     } catch (err) {
       console.error('[classes] PUT failed:', err instanceof Error ? err.message : err)

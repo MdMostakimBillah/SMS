@@ -99,11 +99,16 @@ export const useAdmissionStore = create<AdmissionState>()(
       },
 
       addStudent: (student) => {
-        set((state) => ({ students: [student, ...state.students] }))
+        const curSession = useClassStore.getState().institution.currentSession || '2025-26'
+        const withSession = {
+          ...student,
+          academicYear: student.academicYear || curSession,
+        }
+        set((state) => ({ students: [withSession, ...state.students] }))
         flushPendingWrites()
         void flushVaultWrites()
         if (!isLocalComputerMode()) {
-          studentsApi.create(studentToPayload(student)).catch((err) => {
+          studentsApi.create(studentToPayload(withSession)).catch((err) => {
             console.error('[admissionStore] background create failed:', err)
           })
         }
@@ -111,15 +116,20 @@ export const useAdmissionStore = create<AdmissionState>()(
 
       bulkAddStudents: (newStudents) => {
         if (!newStudents || newStudents.length === 0) return
+        const curSession = useClassStore.getState().institution.currentSession || '2025-26'
+        const withSession = newStudents.map((s) => ({
+          ...s,
+          academicYear: s.academicYear || curSession,
+        }))
         set((state) => {
-          const newMap = new Map(newStudents.map((s) => [s.id, s]))
+          const newMap = new Map(withSession.map((s) => [s.id, s]))
           const untouched = state.students.filter((s) => !newMap.has(s.id))
-          return { students: [...newStudents, ...untouched] }
+          return { students: [...withSession, ...untouched] }
         })
         flushPendingWrites()
         void flushVaultWrites()
         if (!isLocalComputerMode()) {
-          studentsApi.bulkSave(newStudents.map(studentToPayload)).catch((err) => {
+          studentsApi.bulkSave(withSession.map(studentToPayload)).catch((err) => {
             console.error('[admissionStore] background bulkSave failed:', err)
           })
         }
@@ -322,12 +332,8 @@ export function useSessionStudents() {
     if (!students || students.length === 0) return []
     if (!currentSession) return students
 
-    const sessionMatched = students.filter((s) => isMatchingSession(s.academicYear, currentSession))
-    if (sessionMatched.length > 0) return sessionMatched
-
-    // Fallback: If no students matched the current session, return all students
-    // so student data is never zeroed out or hidden.
-    return students
+    // Strictly return only students belonging to the current session
+    return students.filter((s) => isMatchingSession(s.academicYear, currentSession))
   }, [students, currentSession])
 }
 
@@ -345,32 +351,6 @@ registerStoreLoad(() => {
       const st = parsed?.state || parsed
       if (st?.students) {
         useAdmissionStore.setState(st)
-
-        // If the current session has 0 students, but students exist under another session,
-        // automatically align the institution's currentSession to the students' session.
-        const currentSession = useClassStore.getState().institution.currentSession
-        const studentsList: StudentAdmission[] = st.students || []
-        if (studentsList.length > 0) {
-          const hasCurrent = studentsList.some((s) => isMatchingSession(s.academicYear, currentSession))
-          if (!hasCurrent) {
-            const counts: Record<string, number> = {}
-            for (const s of studentsList) {
-              if (s.academicYear) counts[s.academicYear] = (counts[s.academicYear] || 0) + 1
-            }
-            const dominant = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
-            if (dominant) {
-              const inst = useClassStore.getState().institution
-              const sessions = inst.sessions.includes(dominant) ? inst.sessions : [...inst.sessions, dominant]
-              useClassStore.setState({
-                institution: {
-                  ...inst,
-                  sessions,
-                  currentSession: dominant,
-                },
-              })
-            }
-          }
-        }
       }
     }
   } catch {

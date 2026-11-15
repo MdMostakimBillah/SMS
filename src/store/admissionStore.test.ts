@@ -135,4 +135,10 @@ describe('admissionStore', () => {
     expect(updated[0].section).toBe('C')
     expect(updated[1199].section).toBe('C')
   })
+
+  it('addStudent defaults academicYear to institution currentSession', () => {
+    useAdmissionStore.getState().addStudent({ id: 'STU-SESS', name: 'Sess Student' } as any)
+    const student = useAdmissionStore.getState().students[0]
+    expect(student.academicYear).toBeDefined()
+  })
 })

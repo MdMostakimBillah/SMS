@@ -74,8 +74,7 @@ export default function ClassPromotionPage() {
     if (!allStudents || allStudents.length === 0) return []
     let list = allStudents
     if (fSession) {
-      const matched = allStudents.filter((s) => isMatchingSession(s.academicYear, fSession))
-      list = matched.length > 0 ? matched : allStudents
+      list = allStudents.filter((s) => isMatchingSession(s.academicYear, fSession))
     }
     return list.filter((s) => s.status === 'approved' && s.active !== false)
   }, [allStudents, fSession])

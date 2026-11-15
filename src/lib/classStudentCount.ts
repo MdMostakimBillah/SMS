@@ -15,7 +15,8 @@ export function toEnNum(str: string): string {
  * Handles "2025-26", "2025-2026", empty/undefined, etc.
  */
 export function isMatchingSession(studentYear?: string | null, currentSession?: string | null): boolean {
-  if (!studentYear || !currentSession) return true
+  if (!currentSession) return true
+  if (!studentYear) return false
   const sy = studentYear.trim()
   const cs = currentSession.trim()
   if (sy === cs) return true
@@ -130,7 +131,7 @@ export function getSectionStudentCount(
   if (inSection.length === 0 || !currentSession) return inSection.length
 
   const sessionMatched = inSection.filter((s) => isMatchingSession(s.academicYear, currentSession))
-  return sessionMatched.length > 0 ? sessionMatched.length : inSection.length
+  return sessionMatched.length
 }
 
 /**
@@ -148,5 +149,5 @@ export function getClassStudentCount(
   if (inClass.length === 0 || !currentSession) return inClass.length
 
   const sessionMatched = inClass.filter((s) => isMatchingSession(s.academicYear, currentSession))
-  return sessionMatched.length > 0 ? sessionMatched.length : inClass.length
+  return sessionMatched.length
 }

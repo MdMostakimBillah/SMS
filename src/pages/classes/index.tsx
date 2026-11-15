@@ -178,8 +178,18 @@ export default function ClassesPage() {
           storageMode: instForm.storageMode || 'cloud',
           serverUrl: instForm.serverUrl || '',
           folderName: instForm.folderName || '',
-          classes: isLocalComp ? null : useClassStore.getState().classes,
-          routines: isLocalComp ? null : useClassStore.getState().routines,
+          classes: isLocalComp
+            ? null
+            : {
+                sessionClasses: useClassStore.getState().sessionClasses,
+                classes: useClassStore.getState().classes,
+              },
+          routines: isLocalComp
+            ? null
+            : {
+                sessionRoutines: useClassStore.getState().sessionRoutines,
+                routines: useClassStore.getState().routines,
+              },
         })
 
         if (res?.school) {

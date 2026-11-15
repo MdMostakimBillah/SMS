@@ -70,6 +70,11 @@ describe('classStore actions', () => {
       routines: [],
       sessionClasses: {},
       sessionRoutines: {},
+      institution: {
+        ...useClassStore.getState().institution,
+        currentSession: '2025-26',
+        sessions: ['2024-25', '2025-26'],
+      },
     })
   })
 
@@ -141,13 +146,45 @@ describe('classStore actions', () => {
     expect(useClassStore.getState().institution.sessions).not.toContain('2024-25')
   })
 
-  it('switchSession swaps classes and routines', () => {
-    useClassStore.getState().addSession('2024-25')
-    useClassStore.getState().addClass({ id: 'CLS-OLD', name: 'Old Class', sections: [] } as any)
-    useClassStore.getState().switchSession('2024-25')
-    expect(useClassStore.getState().institution.currentSession).toBe('2024-25')
-    // Classes should now be from the saved session (empty for new session)
-    expect(useClassStore.getState().classes.find(c => c.id === 'CLS-OLD')).toBeUndefined()
+  it('switchSession swaps classes and routines and preserves independence', () => {
+    useClassStore.getState().addSession('2026-27')
+    useClassStore.getState().addClass({ id: 'CLS-2025', name: 'Class 2025', sections: [] } as any)
+    
+    // Switch to new session
+    useClassStore.getState().switchSession('2026-27')
+    expect(useClassStore.getState().institution.currentSession).toBe('2026-27')
+    expect(useClassStore.getState().classes.find(c => c.id === 'CLS-2025')).toBeUndefined()
+    expect(useClassStore.getState().classes).toHaveLength(0)
+
+    // Add a class to the new session
+    useClassStore.getState().addClass({ id: 'CLS-2026', name: 'Class 2026', sections: [] } as any)
+    expect(useClassStore.getState().classes).toHaveLength(1)
+    expect(useClassStore.getState().classes[0].id).toBe('CLS-2026')
+
+    // Switch back to 2025-26
+    useClassStore.getState().switchSession('2025-26')
+    expect(useClassStore.getState().institution.currentSession).toBe('2025-26')
+    expect(useClassStore.getState().classes.find(c => c.id === 'CLS-2025')).toBeDefined()
+    expect(useClassStore.getState().classes.find(c => c.id === 'CLS-2026')).toBeUndefined()
+
+    // Switch back to 2026-27
+    useClassStore.getState().switchSession('2026-27')
+    expect(useClassStore.getState().institution.currentSession).toBe('2026-27')
+    expect(useClassStore.getState().classes.find(c => c.id === 'CLS-2026')).toBeDefined()
+    expect(useClassStore.getState().classes.find(c => c.id === 'CLS-2025')).toBeUndefined()
+  })
+
+  it('updateInstitution with different currentSession performs session switch', () => {
+    useClassStore.getState().addSession('2026-27')
+    useClassStore.getState().addClass({ id: 'CLS-2025-A', name: 'Class A', sections: [] } as any)
+
+    useClassStore.getState().updateInstitution({ currentSession: '2026-27' })
+    expect(useClassStore.getState().institution.currentSession).toBe('2026-27')
+    expect(useClassStore.getState().classes).toHaveLength(0)
+
+    useClassStore.getState().updateInstitution({ currentSession: '2025-26' })
+    expect(useClassStore.getState().institution.currentSession).toBe('2025-26')
+    expect(useClassStore.getState().classes.find(c => c.id === 'CLS-2025-A')).toBeDefined()
   })
 
   it('updateInstitution merges data', () => {

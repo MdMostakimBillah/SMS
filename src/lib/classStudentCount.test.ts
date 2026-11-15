@@ -104,10 +104,11 @@ describe('classStudentCount utilities', () => {
       expect(isMatchingSession('2025-26', '2025-2026')).toBe(true)
     })
 
-    it('matches when either is empty or undefined', () => {
-      expect(isMatchingSession(undefined, '2025-26')).toBe(true)
-      expect(isMatchingSession('', '2025-26')).toBe(true)
+    it('matches when currentSession is empty or undefined, but rejects empty studentYear when session is specified', () => {
+      expect(isMatchingSession(undefined, '2025-26')).toBe(false)
+      expect(isMatchingSession('', '2025-26')).toBe(false)
       expect(isMatchingSession('2025-26', undefined)).toBe(true)
+      expect(isMatchingSession('2025-26', '')).toBe(true)
     })
 
     it('does not match different school years', () => {

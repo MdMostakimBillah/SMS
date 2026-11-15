@@ -35,8 +35,7 @@ export default function AdmissionManage() {
   const currentSession = institution.currentSession
   const students = useMemo(() => {
     if (!allStudents || allStudents.length === 0) return []
-    const matched = allStudents.filter((s) => isMatchingSession(s.academicYear, currentSession))
-    return matched.length > 0 ? matched : allStudents
+    return allStudents.filter((s) => isMatchingSession(s.academicYear, currentSession))
   }, [allStudents, currentSession])
   const isBn = useBn()
   const { handleApprove, handleReject, exportExcel, handleListPDF } = useAdmissionActions()

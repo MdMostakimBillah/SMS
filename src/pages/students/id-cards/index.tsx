@@ -203,8 +203,7 @@ export default function IDCardsPage() {
   const students = useMemo(() => {
     if (!allStudents || allStudents.length === 0) return []
     if (!fSession) return allStudents
-    const matched = allStudents.filter((s) => isMatchingSession(s.academicYear, fSession))
-    return matched.length > 0 ? matched : allStudents
+    return allStudents.filter((s) => isMatchingSession(s.academicYear, fSession))
   }, [allStudents, fSession])
 
   const approved = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
