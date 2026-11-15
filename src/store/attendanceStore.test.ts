@@ -146,4 +146,61 @@ describe('useAttendanceStore', () => {
     const teacherStoreAtt = useTeacherStore.getState().attendance['2026-11-15']?.['TCH-001']
     expect(teacherStoreAtt?.status).toBe('on-leave')
   })
+
+  it('records student attendance via face scan, RFID/QR card, and mobile device', async () => {
+    const store = useAttendanceStore.getState()
+
+    // 1. Student Face scan punch
+    const faceRes = await store.recordPunch({
+      personId: 'STU-2026-001',
+      date: '2026-11-15',
+      time: '08:15',
+      type: 'in',
+      method: 'face',
+      deviceId: 'DEV-004',
+    })
+    expect(faceRes.success).toBe(true)
+    expect(faceRes.status).toBe('present')
+    expect(faceRes.punch.method).toBe('face')
+
+    // Verify in attendance store
+    const stuDay = useAttendanceStore.getState().attendance['2026-11-15']?.['STU-2026-001']
+    expect(stuDay?.status).toBe('present')
+    expect(stuDay?.punches).toHaveLength(1)
+    expect(stuDay?.punches[0].time).toBe('08:15')
+
+    // 2. Student RFID / QR card punch out
+    const rfidRes = await store.recordPunch({
+      personId: 'STU-2026-001',
+      date: '2026-11-15',
+      time: '14:30',
+      type: 'out',
+      method: 'rfid',
+      deviceId: 'MOBILE-QR-CAM',
+    })
+    expect(rfidRes.success).toBe(true)
+    expect(rfidRes.punch.type).toBe('out')
+    expect(useAttendanceStore.getState().attendance['2026-11-15']?.['STU-2026-001']?.punches).toHaveLength(2)
+
+    // 3. Another student punches via mobile device
+    const mobRes = await store.recordPunch({
+      personId: 'STU-2026-002',
+      date: '2026-11-15',
+      time: '08:20',
+      method: 'mobile',
+      deviceId: 'MOB-01',
+    })
+    expect(mobRes.success).toBe(true)
+    expect(useAttendanceStore.getState().attendance['2026-11-15']?.['STU-2026-002']?.status).toBe('present')
+  })
+
+  it('populates student demo entries when loading sample devices', () => {
+    const store = useAttendanceStore.getState()
+    store.loadSampleDevices()
+
+    const { rfidEntries, fpEntries, faceEntries } = useAttendanceStore.getState()
+    expect(rfidEntries.some((r) => r.type === 'Student' || r.staffId.startsWith('STU'))).toBe(true)
+    expect(fpEntries.some((f) => f.staffId.startsWith('STU'))).toBe(true)
+    expect(faceEntries.some((f) => f.staffId.startsWith('STU'))).toBe(true)
+  })
 })

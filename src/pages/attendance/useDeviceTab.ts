@@ -16,6 +16,17 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
   const students = useAdmissionStore((s) => s.students)
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
 
+  const defaultDemoStudents = useMemo<Person[]>(
+    () => [
+      { id: 'STU-2026-001', name: isBn ? 'আরাফাত রহমান' : 'Arafat Rahman', type: 'student', photo: '', dept: 'Class 10', section: 'A' },
+      { id: 'STU-2026-002', name: isBn ? 'সুমাইয়া আক্তার' : 'Sumaiya Akter', type: 'student', photo: '', dept: 'Class 10', section: 'A' },
+      { id: 'STU-2026-003', name: isBn ? 'তানভীর হাসান' : 'Tanvir Hasan', type: 'student', photo: '', dept: 'Class 9', section: 'B' },
+      { id: 'STU-2026-004', name: isBn ? 'নুসরাত জাহান' : 'Nusrat Jahan', type: 'student', photo: '', dept: 'Class 8', section: 'A' },
+      { id: 'STU-2026-005', name: isBn ? 'মাহমুদুল হাসান' : 'Mahmudul Hasan', type: 'student', photo: '', dept: 'Class 7', section: 'A' },
+    ],
+    [isBn]
+  )
+
   const allPeople = useMemo<Person[]>(() => {
     const staff: Person[] = activeTeachers.map((t) => ({
       id: t.id,
@@ -24,16 +35,19 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
       photo: t.photo || '',
       dept: t.departmentId,
     }))
-    const stu: Person[] = activeStudents.map((s) => ({
-      id: s.id,
-      name: isBn ? s.nameBn || s.nameEn : s.nameEn,
-      type: 'student' as const,
-      photo: s.photo || '',
-      dept: s.class,
-      section: s.section,
-    }))
+    const stu: Person[] =
+      activeStudents.length > 0
+        ? activeStudents.map((s) => ({
+            id: s.id,
+            name: isBn ? s.nameBn || s.nameEn : s.nameEn,
+            type: 'student' as const,
+            photo: s.photo || '',
+            dept: s.class,
+            section: s.section,
+          }))
+        : defaultDemoStudents
     return [...staff, ...stu]
-  }, [activeTeachers, activeStudents, isBn])
+  }, [activeTeachers, activeStudents, defaultDemoStudents, isBn])
 
   // Attendance store state
   const devices = useAttendanceStore((s) => s.devices)
@@ -190,15 +204,14 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
   const handleAddRfid = () => {
     if (newRFID.staffId && newRFID.rfidCard) {
       const p = allPeople.find((pe) => pe.id === newRFID.staffId)
-      if (p) {
-        useAttendanceStore.getState().addRfidEntry({
-          staffId: p.id,
-          staffName: p.name,
-          rfidCard: newRFID.rfidCard,
-          type: p.type === 'student' ? 'Student' : 'Staff',
-          assigned: true,
-        })
-      }
+      const isStu = p ? p.type === 'student' : newRFID.staffId.startsWith('STU')
+      useAttendanceStore.getState().addRfidEntry({
+        staffId: newRFID.staffId,
+        staffName: p ? p.name : newRFID.staffId,
+        rfidCard: newRFID.rfidCard,
+        type: isStu ? 'Student' : 'Staff',
+        assigned: true,
+      })
       setShowAddRFID(false)
       setNewRFID({ staffId: '', rfidCard: '' })
     }
@@ -207,15 +220,13 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
   const handleAddFp = () => {
     if (newFP.staffId) {
       const p = allPeople.find((pe) => pe.id === newFP.staffId)
-      if (p) {
-        useAttendanceStore.getState().addFpEntry({
-          staffId: p.id,
-          staffName: p.name,
-          fpId: fpEntries.length + 1,
-          templates: 2,
-          status: 'enrolled',
-        })
-      }
+      useAttendanceStore.getState().addFpEntry({
+        staffId: newFP.staffId,
+        staffName: p ? p.name : newFP.staffId,
+        fpId: fpEntries.length + 1,
+        templates: 2,
+        status: 'enrolled',
+      })
       setShowAddFP(false)
       setNewFP({ staffId: '' })
     }
@@ -224,15 +235,13 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
   const handleAddFace = () => {
     if (newFace.staffId) {
       const p = allPeople.find((pe) => pe.id === newFace.staffId)
-      if (p) {
-        useAttendanceStore.getState().addFaceEntry({
-          staffId: p.id,
-          staffName: p.name,
-          faceId: faceEntries.length + 1,
-          quality: 95,
-          status: 'enrolled',
-        })
-      }
+      useAttendanceStore.getState().addFaceEntry({
+        staffId: newFace.staffId,
+        staffName: p ? p.name : newFace.staffId,
+        faceId: faceEntries.length + 1,
+        quality: 95,
+        status: 'enrolled',
+      })
       setShowAddFace(false)
       setNewFace({ staffId: '' })
     }

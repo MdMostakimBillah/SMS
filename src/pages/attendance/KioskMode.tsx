@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { ScanFace, User, GraduationCap } from 'lucide-react'
-import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import { useSessionStudents } from '@/store/admissionStore'
@@ -15,16 +14,24 @@ import AuditLog from './kiosk/AuditLog'
 import ExportImport from './kiosk/ExportImport'
 
 export default function KioskMode({ isBn, date }: { isBn: boolean; date: string }) {
-  const { teachers, attendance } = useTeacherStore(
-    useShallow((s) => ({
-      teachers: s.teachers,
-      attendance: s.attendance,
-    }))
-  )
+  const teachers = useTeacherStore((s) => s.teachers)
+  const attendance = useAttendanceStore((s) => s.attendance)
   const students = useSessionStudents()
   const { institution } = useClassStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
+
+  const demoFallbackStudents = useMemo(
+    () => [
+      { id: 'STU-2026-001', nameEn: 'Arafat Rahman', nameBn: 'আরাফাত রহমান', photo: '', class: 'Class 10', section: 'A' },
+      { id: 'STU-2026-002', nameEn: 'Sumaiya Akter', nameBn: 'সুমাইয়া আক্তার', photo: '', class: 'Class 10', section: 'A' },
+      { id: 'STU-2026-003', nameEn: 'Tanvir Hasan', nameBn: 'তানভীর হাসান', photo: '', class: 'Class 9', section: 'B' },
+      { id: 'STU-2026-004', nameEn: 'Nusrat Jahan', nameBn: 'নুসরাত জাহান', photo: '', class: 'Class 8', section: 'A' },
+      { id: 'STU-2026-005', nameEn: 'Mahmudul Hasan', nameBn: 'মাহমুদুল হাসান', photo: '', class: 'Class 7', section: 'A' },
+    ],
+    []
+  )
+  const effectiveStudents = activeStudents.length > 0 ? activeStudents : demoFallbackStudents
   const { loaded: faceApiLoaded, error: faceApiError } = useFaceApi()
 
   const [kioskMode, setKioskMode] = useState<'register' | 'attendance'>('register')
@@ -44,7 +51,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       photo: t.photo || '',
       type: 'staff' as const,
     }))
-    const stu = activeStudents.map((s) => ({
+    const stu = effectiveStudents.map((s) => ({
       id: s.id,
       name: isBn ? (s.nameBn || s.nameEn) : s.nameEn,
       nameEn: s.nameEn,
@@ -52,7 +59,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
       type: 'student' as const,
     }))
     return [...staff, ...stu]
-  }, [activeTeachers, activeStudents, isBn])
+  }, [activeTeachers, effectiveStudents, isBn])
 
   const filteredPeople = useMemo(() => {
     if (!regSearch) return allPeople

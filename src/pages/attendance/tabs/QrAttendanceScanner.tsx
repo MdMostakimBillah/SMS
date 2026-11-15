@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { QrCode, Camera, CheckCircle, AlertCircle, RefreshCw, Volume2, VolumeX, Sparkles, User } from 'lucide-react'
+import { QrCode, Camera, CheckCircle, AlertCircle, RefreshCw, Volume2, VolumeX, Sparkles, User, GraduationCap, Zap } from 'lucide-react'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import type { Person } from '../types'
 
@@ -65,7 +65,7 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
     const trimmed = text.trim()
     if (!trimmed) return ''
 
-    // Try parsing JSON format { "id": "STU-001" } or { "studentId": "..." }
+    // Try parsing JSON format { "id": "STU-001" } or { "studentId": "..." } or { "rfidCard": "..." }
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
       try {
         const parsed = JSON.parse(trimmed)
@@ -73,6 +73,8 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
         if (parsed.studentId) return String(parsed.studentId)
         if (parsed.staffId) return String(parsed.staffId)
         if (parsed.teacherId) return String(parsed.teacherId)
+        if (parsed.rfidCard) return String(parsed.rfidCard)
+        if (parsed.cardId) return String(parsed.cardId)
       } catch {
         // Not valid JSON
       }
@@ -82,7 +84,11 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
     if (trimmed.includes('http://') || trimmed.includes('https://')) {
       try {
         const url = new URL(trimmed)
-        const idParam = url.searchParams.get('id') || url.searchParams.get('studentId') || url.searchParams.get('staffId')
+        const idParam =
+          url.searchParams.get('id') ||
+          url.searchParams.get('studentId') ||
+          url.searchParams.get('staffId') ||
+          url.searchParams.get('card')
         if (idParam) return idParam
         const parts = url.pathname.split('/').filter(Boolean)
         if (parts.length > 0) return parts[parts.length - 1]
@@ -101,24 +107,44 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
 
     // Debounce duplicate scans for the same person within 4 seconds
     const now = Date.now()
-    const lastScan = lastScanTimeRef.current[personId] || 0
+    const lastScan = lastScanTimeRef.current[personId.toLowerCase()] || 0
     if (now - lastScan < 4000) {
       return
     }
-    lastScanTimeRef.current[personId] = now
+    lastScanTimeRef.current[personId.toLowerCase()] = now
 
     setProcessing(true)
 
-    // Match person from allPeople or create fallback
+    // 1. Check direct person match in allPeople
     let person: Person | { id: string; name: string; type: string; photo?: string } | undefined = allPeople.find(
       (p) => p.id.toLowerCase() === personId.toLowerCase()
     )
 
+    // 2. If not found, match by RFID Card number
     if (!person) {
+      const rfidMatch = useAttendanceStore.getState().rfidEntries.find(
+        (r) => r.rfidCard.toLowerCase() === personId.toLowerCase()
+      )
+      if (rfidMatch) {
+        const found = allPeople.find((p) => p.id.toLowerCase() === rfidMatch.staffId.toLowerCase())
+        person = found || {
+          id: rfidMatch.staffId,
+          name: rfidMatch.staffName,
+          type: rfidMatch.type?.toLowerCase().includes('student') || rfidMatch.staffId.startsWith('STU') ? 'student' : 'staff',
+          photo: '',
+        }
+      }
+    }
+
+    // 3. Fallback for unlisted person
+    if (!person) {
+      const isStu = personId.startsWith('STU')
       person = {
         id: personId,
-        name: isBn ? `আইডি: ${personId}` : `ID: ${personId}`,
-        type: personId.startsWith('STU') ? 'student' : 'staff',
+        name: isBn
+          ? (isStu ? `শিক্ষার্থী (${personId})` : `স্টাফ (${personId})`)
+          : (isStu ? `Student (${personId})` : `Staff (${personId})`),
+        type: isStu ? 'student' : 'staff',
         photo: '',
       }
     }
@@ -164,6 +190,14 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
     const startCamera = async () => {
       setCameraError(null)
       try {
+        // Defensive check: wait until DOM element is mounted
+        let container = document.getElementById('qr-reader-container')
+        if (!container) {
+          await new Promise((r) => setTimeout(r, 80))
+          container = document.getElementById('qr-reader-container')
+        }
+        if (!mounted || !container) return
+
         const { Html5Qrcode } = await import('html5-qrcode')
         if (!mounted) return
 
@@ -203,8 +237,20 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
     }
   }, [cameraActive, facingMode, processAttendanceScan, isBn])
 
-  // Sample people for quick test
-  const samplePeople = allPeople.slice(0, 4)
+  // Sample people for quick test: ensure both students & teachers are presented
+  const sampleStudents = allPeople.filter((p) => p.type === 'student').slice(0, 2)
+  const sampleStaff = allPeople.filter((p) => p.type === 'staff').slice(0, 2)
+  const defaultStudents: Person[] = [
+    { id: 'STU-2026-001', name: 'Arafat Rahman', type: 'student', photo: '', dept: 'Class 10', section: 'A' },
+    { id: 'STU-2026-002', name: 'Sumaiya Akter', type: 'student', photo: '', dept: 'Class 10', section: 'A' },
+  ]
+  const defaultStaff: Person[] = [
+    { id: 'TCH-2026-001', name: 'Dr. Rafiqul Islam', type: 'staff', photo: '', dept: 'Science' },
+    { id: 'TCH-2026-002', name: 'Prof. Salma Khatun', type: 'staff', photo: '', dept: 'Arts' },
+  ]
+  const displayStudents = sampleStudents.length > 0 ? sampleStudents : defaultStudents
+  const displayStaff = sampleStaff.length > 0 ? sampleStaff : defaultStaff
+  const samplePeople = [...displayStudents, ...displayStaff]
 
   return (
     <div className="space-y-4">
@@ -216,10 +262,10 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
           </div>
           <div>
             <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-              {isBn ? 'আইডি কার্ড QR কোড স্ক্যানার' : 'ID Card QR Code Attendance'}
+              {isBn ? 'আইডি কার্ড QR কোড উপস্থিতি স্ক্যানার' : 'ID Card QR Code Attendance Scanner'}
             </div>
             <div className="text-[0.625rem] text-[var(--text-muted)]">
-              {isBn ? 'ক্যামেরার সামনে শিক্ষার্থী বা শিক্ষকের ID কার্ড ধরুন' : 'Show student or staff ID card QR to camera'}
+              {isBn ? 'ক্যামেরার সামনে শিক্ষার্থী বা শিক্ষকের ID কার্ড ধরুন' : 'Point camera at student or teacher ID card QR code'}
             </div>
           </div>
         </div>
@@ -238,18 +284,17 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
             <button
               type="button"
               onClick={() => setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'))}
-              title={isBn ? 'ক্যামেরা পরিবর্তন' : 'Flip Camera'}
-              className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.6875rem] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer flex items-center gap-1.5"
+              title={isBn ? 'ক্যামেরা পরিবর্তন' : 'Flip camera'}
+              className="px-2.5 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.6875rem] font-medium text-[var(--text-secondary)] cursor-pointer hover:bg-[var(--border)]"
             >
-              <RefreshCw size={12} />
-              {facingMode === 'environment' ? (isBn ? 'ফ্রন্ট ক্যামেরা' : 'Front Cam') : (isBn ? 'ব্যাক ক্যামেরা' : 'Back Cam')}
+              {facingMode === 'environment' ? (isBn ? 'সেলফি ক্যামেরা' : 'Front Cam') : (isBn ? 'ব্যাক ক্যামেরা' : 'Back Cam')}
             </button>
           )}
 
           <button
             type="button"
             onClick={() => setCameraActive(!cameraActive)}
-            className={`px-4 py-2 rounded-lg text-white text-[0.75rem] font-semibold cursor-pointer border-0 flex items-center gap-1.5 transition-all shadow-sm ${
+            className={`px-3.5 py-1.5 rounded-lg text-white text-[0.75rem] font-semibold cursor-pointer border-0 transition-all shadow-sm flex items-center gap-1.5 ${
               cameraActive ? 'bg-[var(--red)] hover:opacity-90' : 'bg-[var(--brand)] hover:opacity-90'
             }`}
           >
@@ -332,7 +377,7 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
               <input
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
-                placeholder="e.g. STU-2026-001 or TCH-2026-001"
+                placeholder="e.g. STU-2026-001, CARD-2001 or TCH-2026-001"
                 className="flex-1 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.75rem] text-[var(--text-primary)] font-mono outline-none focus:border-[var(--brand)]"
               />
               <button
@@ -365,8 +410,10 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
                 <div className="w-12 h-12 rounded-lg overflow-hidden bg-[var(--bg-primary)] border border-[var(--border)] flex items-center justify-center shrink-0">
                   {lastResult.person.photo ? (
                     <img src={lastResult.person.photo} alt={lastResult.person.name} className="w-full h-full object-cover" />
+                  ) : lastResult.person.type === 'student' ? (
+                    <GraduationCap size={24} className="text-[var(--green)]" />
                   ) : (
-                    <User size={24} className="text-[var(--text-muted)]" />
+                    <User size={24} className="text-[var(--brand)]" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -375,17 +422,25 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
                   </div>
                   <div className="text-[0.6875rem] text-[var(--text-muted)] font-mono flex items-center gap-2 mt-0.5">
                     <span>{lastResult.person.id}</span>
-                    <span className="text-[0.5625rem] px-1.5 py-0.2 rounded font-semibold bg-[var(--brand-light)] text-[var(--brand)]">
-                      {lastResult.person.type?.toUpperCase()}
+                    <span
+                      className={`text-[0.5625rem] px-1.5 py-0.2 rounded font-semibold ${
+                        lastResult.person.type === 'student'
+                          ? 'bg-[var(--green-light)] text-[var(--green)]'
+                          : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                      }`}
+                    >
+                      {lastResult.person.type === 'student' ? (isBn ? 'শিক্ষার্থী' : 'STUDENT') : (isBn ? 'স্টাফ' : 'STAFF')}
                     </span>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className={`text-[0.6875rem] font-bold px-2 py-1 rounded-md ${
-                    lastResult.type === 'in'
-                      ? 'bg-[var(--green-light)] text-[var(--green)]'
-                      : 'bg-[var(--amber-light)] text-[var(--amber)]'
-                  }`}>
+                  <span
+                    className={`text-[0.6875rem] font-bold px-2 py-1 rounded-md ${
+                      lastResult.type === 'in'
+                        ? 'bg-[var(--green-light)] text-[var(--green)]'
+                        : 'bg-[var(--amber-light)] text-[var(--amber)]'
+                    }`}
+                  >
                     {lastResult.type === 'in' ? (isBn ? 'ইন' : 'CHECK IN') : (isBn ? 'আউট' : 'CHECK OUT')}
                   </span>
                 </div>
@@ -401,8 +456,8 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
               </div>
               <p className="text-[0.625rem] text-[var(--text-muted)] max-w-xs mx-auto">
                 {isBn
-                  ? 'ক্যামেরা দিয়ে আইডি কার্ড স্ক্যান করুন অথবা নিচের টেস্ট বাটনে ক্লিক করে উপস্থিতি পরীক্ষা করুন।'
-                  : 'Scan an ID card with camera or click a demo card below to test instant punch recording.'}
+                  ? 'ক্যামেরা দিয়ে আইডি কার্ড স্ক্যান করুন অথবা নিচের শিক্ষার্থী ও শিক্ষক কার্ডে ক্লিক করে উপস্থিতি পরীক্ষা করুন।'
+                  : 'Scan an ID card with camera or click a demo student/teacher below to test instant punch recording.'}
               </p>
             </div>
           )}
@@ -411,27 +466,40 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
             <div className="text-[0.625rem] font-semibold text-[var(--text-muted)] mb-2 flex items-center gap-1">
               <Sparkles size={11} className="text-[var(--brand)]" />
-              {isBn ? 'কুইক টেস্ট (ক্যামেরা ছাড়া পরীক্ষা করুন):' : 'Instant One-Click Punch Test:'}
+              {isBn ? 'কুইক টেস্ট (ক্যামেরা ছাড়া ১-ক্লিকে উপস্থিতি পরীক্ষা করুন):' : 'Instant One-Click Punch Test (Student & Staff):'}
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {samplePeople.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => processAttendanceScan(p.id)}
-                  className="p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)] text-left cursor-pointer transition-all flex items-center gap-2 group"
-                >
-                  <div className="w-7 h-7 rounded-md bg-[var(--bg-primary)] flex items-center justify-center text-[var(--text-muted)] shrink-0">
-                    <User size={13} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate group-hover:text-[var(--brand)]">
-                      {p.name}
+              {samplePeople.map((p) => {
+                const isStudent = p.type === 'student'
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => processAttendanceScan(p.id)}
+                    className="p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)] text-left cursor-pointer transition-all flex items-center gap-2 group"
+                  >
+                    <div
+                      className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
+                        isStudent
+                          ? 'bg-[var(--green-light)] text-[var(--green)]'
+                          : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                      }`}
+                    >
+                      {isStudent ? <GraduationCap size={13} /> : <User size={13} />}
                     </div>
-                    <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono">{p.id}</div>
-                  </div>
-                </button>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate group-hover:text-[var(--brand)]">
+                        {p.name}
+                      </div>
+                      <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono flex items-center gap-1">
+                        <span>{p.id}</span>
+                        <span className="text-[0.5rem] opacity-75">{isStudent ? '• Cls 10' : ''}</span>
+                      </div>
+                    </div>
+                    <Zap size={10} className="text-[var(--text-muted)] group-hover:text-[var(--brand)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -450,10 +518,12 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
                       <span className="text-[0.5625rem] text-[var(--text-muted)] font-mono">({r.person.id})</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[0.5625rem] font-bold text-[var(--green)]">
-                        {r.type.toUpperCase()}
+                      <span className={`text-[0.5625rem] font-bold px-1.5 py-0.5 rounded ${
+                        r.type === 'in' ? 'bg-[var(--green-light)] text-[var(--green)]' : 'bg-[var(--amber-light)] text-[var(--amber)]'
+                      }`}>
+                        {r.type === 'in' ? (isBn ? 'ইন' : 'IN') : (isBn ? 'আউট' : 'OUT')}
                       </span>
-                      <span className="font-mono text-[var(--text-secondary)] text-[0.625rem]">{r.time}</span>
+                      <span className="text-[0.625rem] text-[var(--text-muted)] font-mono">{r.time}</span>
                     </div>
                   </div>
                 ))}

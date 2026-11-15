@@ -191,15 +191,26 @@ export const useAttendanceStore = create<AttendanceState>()(
             const finalDevices = Array.isArray(res.devices) && res.devices.length > 0
               ? res.devices
               : (current.devices && current.devices.length > 0 ? current.devices : initialDevices)
-            const finalRfid = Array.isArray(res.rfidEntries) && res.rfidEntries.length > 0
+            let finalRfid = Array.isArray(res.rfidEntries) && res.rfidEntries.length > 0
               ? res.rfidEntries
               : (current.rfidEntries && current.rfidEntries.length > 0 ? current.rfidEntries : initialRfidEntries)
-            const finalFp = Array.isArray(res.fpEntries) && res.fpEntries.length > 0
+            if (!finalRfid.some((r) => r.type === 'Student' || r.staffId.startsWith('STU'))) {
+              finalRfid = [...finalRfid, ...initialRfidEntries.filter((r) => r.type === 'Student')]
+            }
+
+            let finalFp = Array.isArray(res.fpEntries) && res.fpEntries.length > 0
               ? res.fpEntries
               : (current.fpEntries && current.fpEntries.length > 0 ? current.fpEntries : initialFpEntries)
-            const finalFace = Array.isArray(res.faceEntries) && res.faceEntries.length > 0
+            if (!finalFp.some((e) => e.staffId.startsWith('STU'))) {
+              finalFp = [...finalFp, ...initialFpEntries.filter((e) => e.staffId.startsWith('STU'))]
+            }
+
+            let finalFace = Array.isArray(res.faceEntries) && res.faceEntries.length > 0
               ? res.faceEntries
               : (current.faceEntries && current.faceEntries.length > 0 ? current.faceEntries : initialFaceEntries)
+            if (!finalFace.some((e) => e.staffId.startsWith('STU'))) {
+              finalFace = [...finalFace, ...initialFaceEntries.filter((e) => e.staffId.startsWith('STU'))]
+            }
             const finalMobile = Array.isArray(res.mobileDevices) && res.mobileDevices.length > 0 ? res.mobileDevices : current.mobileDevices
             const finalLogs = Array.isArray(res.deviceLogs) && res.deviceLogs.length > 0 ? res.deviceLogs : current.deviceLogs
 

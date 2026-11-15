@@ -165,10 +165,16 @@ export function MobileTab({
                 <div className="w-8 h-8 rounded-lg bg-[var(--teal-light)] flex items-center justify-center"><Wifi size={15} className="text-[var(--teal)]" /></div>
                 <div>
                   <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{isBn ? 'ডিভাইস নিবন্ধন' : 'Register Device'}</div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'ফিঙ্গারপ্রিন্ট/ফেস দিয়ে নিবন্ধন' : 'Register with biometric'}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'শিক্ষার্থী বা স্টাফের ফিঙ্গারপ্রিন্ট/ফেস দিয়ে নিবন্ধন' : 'Register with biometric (Student or Staff)'}</div>
                 </div>
               </div>
-              <PersonSearchInput value={mobileRegStaff} onChange={(id) => setMobileRegStaff(id)} isBn={isBn} people={allPeople.filter((p) => p.type === 'staff' && !mobileDevices.find((d) => d.staffId === p.id))} />
+              <PersonSearchInput
+                value={mobileRegStaff}
+                onChange={(id) => setMobileRegStaff(id)}
+                isBn={isBn}
+                placeholder={isBn ? 'শিক্ষক বা শিক্ষার্থী নির্বাচন করুন...' : 'Select staff or student...'}
+                people={allPeople.filter((p) => !mobileDevices.find((d) => d.staffId === p.id))}
+              />
               <button type="button" onClick={handleRegisterDevice} disabled={!mobileRegStaff || mobileRegPending} className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileRegPending ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileRegStaff ? 'bg-[var(--teal)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
                 {mobileRegPending ? (isBn ? 'নিবন্ধন হচ্ছে...' : 'Registering...') : isBn ? 'নিবন্ধন করুন' : 'Register Now'}
               </button>
@@ -178,10 +184,26 @@ export function MobileTab({
                 <div className="w-8 h-8 rounded-lg bg-[var(--green-light)] flex items-center justify-center"><CheckCircle size={15} className="text-[var(--green)]" /></div>
                 <div>
                   <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">{isBn ? 'চেক-ইন / আউট' : 'Check In / Out'}</div>
-                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'বায়োমেট্রিক + WiFi' : 'Biometric + WiFi verified'}</div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)]">{isBn ? 'বায়োমেট্রিক + WiFi যাচাই' : 'Biometric + WiFi verified'}</div>
                 </div>
               </div>
-              <PersonSearchInput value={mobileAuthStaff} onChange={(id) => setMobileAuthStaff(id)} isBn={isBn} people={mobileDevices.map((d) => ({ id: d.staffId, name: d.staffName, type: 'staff' as const, photo: '' }))} />
+              <PersonSearchInput
+                value={mobileAuthStaff}
+                onChange={(id) => setMobileAuthStaff(id)}
+                isBn={isBn}
+                placeholder={isBn ? 'নিবন্ধিত ব্যক্তি নির্বাচন করুন...' : 'Select registered person...'}
+                people={mobileDevices.map((d) => {
+                  const person = allPeople.find((p) => p.id === d.staffId)
+                  return {
+                    id: d.staffId,
+                    name: d.staffName,
+                    type: person?.type || (d.staffId.startsWith('STU') ? ('student' as const) : ('staff' as const)),
+                    photo: person?.photo || '',
+                    dept: person?.dept,
+                    section: person?.section,
+                  }
+                })}
+              />
               <button type="button" onClick={handleMobileAuth} disabled={!mobileAuthStaff || mobileAuthPending || wifiChecking} className={`w-full py-2 mt-2 rounded-lg text-[0.75rem] font-semibold cursor-pointer border-none transition-all ${mobileAuthPending || wifiChecking ? 'bg-[var(--amber-light)] text-[var(--amber)] animate-pulse' : mobileAuthStaff ? 'bg-[var(--green)] text-white hover:shadow-md' : 'bg-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'}`}>
                 {wifiChecking ? (isBn ? 'ওয়াইফাই যাচাই...' : 'Checking WiFi...') : mobileAuthPending ? (isBn ? 'প্রমাণীকরণ...' : 'Authenticating...') : (isBn ? 'বায়োমেট্রিক চেক' : 'Biometric Check')}
               </button>

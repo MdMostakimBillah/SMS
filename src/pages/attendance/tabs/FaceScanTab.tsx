@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { ScanFace, CheckCircle, Fingerprint, Search, Zap } from 'lucide-react'
+import { ScanFace, CheckCircle, Fingerprint, Search, Zap, GraduationCap, UserCheck } from 'lucide-react'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import type { FaceEntry } from '../types'
@@ -14,21 +14,36 @@ interface FaceScanTabProps {
 
 export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch }: FaceScanTabProps) {
   const [faceSearch, setFaceSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState<'all' | 'student' | 'staff'>('all')
   const debouncedSearch = useDebouncedValue(faceSearch, 200)
 
   const filteredEntries = useMemo(() => {
-    if (!debouncedSearch) return faceEntries
-    const q = debouncedSearch.toLowerCase()
-    return faceEntries.filter((e) => e.staffName.toLowerCase().includes(q))
-  }, [faceEntries, debouncedSearch])
+    return faceEntries.filter((e) => {
+      const isStudent = e.staffId.startsWith('STU')
+      if (roleFilter === 'student' && !isStudent) return false
+      if (roleFilter === 'staff' && isStudent) return false
+      if (!debouncedSearch) return true
+      const q = debouncedSearch.toLowerCase()
+      return e.staffName.toLowerCase().includes(q) || e.staffId.toLowerCase().includes(q)
+    })
+  }, [faceEntries, debouncedSearch, roleFilter])
+
+  const studentCount = useMemo(() => faceEntries.filter((e) => e.staffId.startsWith('STU')).length, [faceEntries])
+  const staffCount = useMemo(() => faceEntries.filter((e) => !e.staffId.startsWith('STU')).length, [faceEntries])
 
   const stats = useMemo(
     () => [
       {
-        label: isBn ? 'মোট' : 'Total',
+        label: isBn ? 'মোট ফেস' : 'Total Faces',
         value: faceEntries.length,
         icon: <ScanFace size={15} />,
         color: 'var(--green)',
+      },
+      {
+        label: isBn ? 'শিক্ষার্থী' : 'Students',
+        value: studentCount,
+        icon: <GraduationCap size={15} />,
+        color: 'var(--brand)',
       },
       {
         label: isBn ? 'এনরোলড' : 'Enrolled',
@@ -37,33 +52,71 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch
         color: 'var(--green)',
       },
       {
-        label: isBn ? 'গড কোয়ালিটি' : 'Good Quality',
+        label: isBn ? 'হাই কোয়ালিটি' : 'High Quality',
         value: faceEntries.filter((e) => e.quality >= 80).length,
         icon: <Fingerprint size={15} />,
-        color: 'var(--brand)',
+        color: 'var(--teal)',
       },
     ],
-    [isBn, faceEntries]
+    [isBn, faceEntries, studentCount]
   )
 
   return (
     <>
       <StatsRow stats={stats} />
 
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-[0.375rem] flex-1 max-w-[18.75rem]">
-          <Search size={13} className="text-[var(--text-muted)]" />
-          <input
-            value={faceSearch}
-            onChange={(e) => setFaceSearch(e.target.value)}
-            placeholder={isBn ? 'নাম বা আইডি দিয়ে খুঁজুন...' : 'Search by name or ID...'}
-            className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
-          />
+      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-1 min-w-[16rem]">
+          <div className="flex items-center gap-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-[0.375rem] flex-1 max-w-[18.75rem]">
+            <Search size={13} className="text-[var(--text-muted)]" />
+            <input
+              value={faceSearch}
+              onChange={(e) => setFaceSearch(e.target.value)}
+              placeholder={isBn ? 'নাম বা আইডি দিয়ে খুঁজুন...' : 'Search by name or ID...'}
+              className="flex-1 border-none bg-transparent outline-none text-[0.75rem] text-[var(--text-primary)]"
+            />
+          </div>
+          <span className="text-[0.6875rem] text-[var(--text-muted)]">
+            {filteredEntries.length} {isBn ? 'টি ফলাফল' : 'results'}
+          </span>
         </div>
-        <span className="text-[0.6875rem] text-[var(--text-muted)]">
-          {filteredEntries.length}{' '}
-          {isBn ? 'টি ফলাফল' : 'results'}
-        </span>
+
+        {/* Role Filters */}
+        <div className="flex items-center gap-1 bg-[var(--bg-secondary)] rounded-lg p-0.5 border border-[var(--border)]">
+          <button
+            type="button"
+            onClick={() => setRoleFilter('all')}
+            className={`px-2.5 py-1 rounded-md text-[0.625rem] font-semibold cursor-pointer border-0 transition-all ${
+              roleFilter === 'all'
+                ? 'bg-[var(--green)] text-white shadow-xs'
+                : 'bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            {isBn ? `সব (${faceEntries.length})` : `All (${faceEntries.length})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setRoleFilter('student')}
+            className={`px-2.5 py-1 rounded-md text-[0.625rem] font-semibold cursor-pointer border-0 transition-all ${
+              roleFilter === 'student'
+                ? 'bg-[var(--green)] text-white shadow-xs'
+                : 'bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            {isBn ? `শিক্ষার্থী (${studentCount})` : `Students (${studentCount})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setRoleFilter('staff')}
+            className={`px-2.5 py-1 rounded-md text-[0.625rem] font-semibold cursor-pointer border-0 transition-all ${
+              roleFilter === 'staff'
+                ? 'bg-[var(--green)] text-white shadow-xs'
+                : 'bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+            }`}
+          >
+            {isBn ? `স্টাফ (${staffCount})` : `Staff (${staffCount})`}
+          </button>
+        </div>
       </div>
 
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
@@ -72,8 +125,9 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch
             <thead>
               <tr className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
                 <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)] w-[2.1875rem]">#</th>
-                <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'স্টাফ আইডি' : 'Staff ID'}</th>
+                <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'আইডি' : 'ID'}</th>
                 <th className="p-2.5 text-left text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নাম' : 'Name'}</th>
+                <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'টাইপ' : 'Type'}</th>
                 <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'ফেস আইডি' : 'Face ID'}</th>
                 <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'কোয়ালিটি' : 'Quality'}</th>
                 <th className="p-2.5 text-center text-[0.625rem] font-semibold text-[var(--text-muted)]">{isBn ? 'অবস্থা' : 'Status'}</th>
@@ -81,7 +135,9 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch
               </tr>
             </thead>
             <tbody>
-              {filteredEntries.map((e, i) => (
+              {filteredEntries.map((e, i) => {
+                const isStudent = e.staffId.startsWith('STU')
+                return (
                   <tr
                     key={e.staffId}
                     className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--bg-secondary)] transition-colors"
@@ -89,6 +145,17 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch
                     <td className="p-2.5 text-center text-[var(--text-muted)]">{i + 1}</td>
                     <td className="p-2.5 font-mono font-semibold text-[var(--brand)]">{e.staffId}</td>
                     <td className="p-2.5 text-[var(--text-primary)] font-medium">{e.staffName}</td>
+                    <td className="p-2.5 text-center">
+                      <span
+                        className={`text-[0.5625rem] px-2 py-0.5 rounded-full font-semibold ${
+                          isStudent
+                            ? 'bg-[var(--green-light)] text-[var(--green)]'
+                            : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                        }`}
+                      >
+                        {isStudent ? (isBn ? 'শিক্ষার্থী' : 'Student') : (isBn ? 'স্টাফ' : 'Staff')}
+                      </span>
+                    </td>
                     <td className="p-2.5 text-center font-mono text-[var(--text-primary)]">{e.faceId}</td>
                     <td className="p-2.5 text-center">
                       <div className="flex items-center gap-1.5 justify-center">
@@ -124,7 +191,7 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch
                         {e.status === 'enrolled'
                           ? isBn ? 'এনরোলড' : 'Enrolled'
                           : e.status === 'pending'
-                            ? isBn ? 'বকেয়' : 'Pending'
+                            ? isBn ? 'বকেয়া' : 'Pending'
                             : isBn ? 'ব্যর্থ' : 'Failed'}
                       </span>
                     </td>
@@ -154,11 +221,11 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch
                                 setFaceEntries((prev) =>
                                   prev.map((x) =>
                                     x.staffId === e.staffId
-                                      ? { ...x, status: 'enrolled' as const, quality: Math.floor(Math.random() * 30) + 70 }
+                                      ? { ...x, status: 'enrolled' as const, quality: Math.floor(Math.random() * 15) + 85 }
                                       : x
                                   )
                                 ),
-                              2000
+                              1500
                             )
                           }}
                           disabled={e.status === 'pending'}
@@ -168,34 +235,39 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch
                               : 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)] hover:text-white hover:shadow-md'
                           }`}
                         >
-                          {e.status === 'pending' ? (isBn ? 'স্ক্যান হচ্ছে...' : 'Scanning...') : isBn ? 'রি-স্ক্যান' : 'Re-scan'}
+                          {e.status === 'enrolled'
+                            ? isBn ? 'রি-স্ক্যান' : 'Re-scan'
+                            : isBn ? 'স্ক্যান হচ্ছে...' : 'Scanning...'}
                         </button>
                         <button
                           onClick={() => setFaceEntries((prev) => prev.filter((x) => x.staffId !== e.staffId))}
-                          className="px-2.5 py-1 rounded-md bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
+                          className="px-2.5 py-1 rounded-md bg-transparent border border-[var(--border)] text-[var(--text-muted)] text-[0.5625rem] font-semibold cursor-pointer hover:border-[var(--red)] hover:text-[var(--red)] transition-all"
                         >
                           {isBn ? 'মুছুন' : 'Delete'}
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))}
+                )
+              })}
               {filteredEntries.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-[var(--text-muted)] text-[0.75rem]">
-                    <ScanFace size={28} className="mx-auto mb-2 opacity-30 text-[var(--green)]" />
-                    <div className="font-semibold text-[0.8125rem] text-[var(--text-primary)] mb-1">
-                      {isBn ? 'কোনো ফেস ডেটা পাওয়া যায়নি' : 'No Face Data Found'}
-                    </div>
-                    {faceEntries.length === 0 && (
-                      <button
-                        type="button"
-                        onClick={() => useAttendanceStore.getState().loadSampleDevices()}
-                        className="mt-2 px-3 py-1.5 rounded-lg bg-[var(--green)] text-white text-[0.6875rem] font-semibold cursor-pointer border-0 hover:opacity-90 shadow-sm"
-                      >
-                        {isBn ? 'স্যাম্পল ফেস ডেটা লোড করুন' : 'Load Demo Face Data'}
-                      </button>
-                    )}
+                  <td colSpan={8} className="p-8 text-center text-[var(--text-muted)]">
+                    <ScanFace size={32} className="mx-auto mb-2 opacity-30 text-[var(--green)]" />
+                    <p className="text-[0.75rem] font-medium text-[var(--text-primary)]">
+                      {isBn ? 'কোনো ফেস স্ক্যান রেকর্ড পাওয়া যায়নি' : 'No Face Scan Records Found'}
+                    </p>
+                    <p className="text-[0.625rem] text-[var(--text-muted)] mt-1 mb-3">
+                      {isBn ? 'উপরে "+ ফেস স্ক্যান যোগ করুন" ক্লিক করুন অথবা ডেমো ডাটা লোড করুন।' : 'Click "+ Enroll Face" above or load demo entries.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => useAttendanceStore.getState().loadSampleDevices()}
+                      className="px-3.5 py-1.5 rounded-lg bg-[var(--green)] text-white text-[0.6875rem] font-medium cursor-pointer border-0 hover:opacity-90 inline-flex items-center gap-1.5 shadow-sm"
+                    >
+                      <UserCheck size={12} />
+                      {isBn ? 'ডেমো ডাটা লোড করুন' : 'Load Demo Faces'}
+                    </button>
                   </td>
                 </tr>
               )}

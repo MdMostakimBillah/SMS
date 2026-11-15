@@ -188,8 +188,22 @@ export default function AttendancePage() {
   const dayAtt = attendance[date] || {}
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
 
+  const defaultDemoStudents = useMemo(
+    () => [
+      { id: 'STU-2026-001', nameEn: 'Arafat Rahman', nameBn: 'আরাফাত রহমান', class: 'Class 10', section: 'A', status: 'approved', active: true, roll: '101' },
+      { id: 'STU-2026-002', nameEn: 'Sumaiya Akter', nameBn: 'সুমাইয়া আক্তার', class: 'Class 10', section: 'A', status: 'approved', active: true, roll: '102' },
+      { id: 'STU-2026-003', nameEn: 'Tanvir Hasan', nameBn: 'তানভীর হাসান', class: 'Class 9', section: 'B', status: 'approved', active: true, roll: '201' },
+      { id: 'STU-2026-004', nameEn: 'Nusrat Jahan', nameBn: 'নুসরাত জাহান', class: 'Class 8', section: 'A', status: 'approved', active: true, roll: '301' },
+      { id: 'STU-2026-005', nameEn: 'Mahmudul Hasan', nameBn: 'মাহমুদুল হাসান', class: 'Class 7', section: 'A', status: 'approved', active: true, roll: '401' },
+    ],
+    []
+  )
+
   const filteredStudents = useMemo(() => {
     let l = students.filter((s) => s.status === 'approved' && s.active !== false)
+    if (l.length === 0) {
+      l = defaultDemoStudents as any
+    }
     if (fClass) l = l.filter((s) => s.class === fClass)
     if (fSection) l = l.filter((s) => s.section === fSection)
     if (studentSearch) {
@@ -197,7 +211,7 @@ export default function AttendancePage() {
       l = l.filter((s) => s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(studentSearch) || s.id.toLowerCase().includes(q))
     }
     return l
-  }, [students, fClass, fSection, studentSearch])
+  }, [students, defaultDemoStudents, fClass, fSection, studentSearch])
 
   const filteredEmployees = useMemo(() => {
     let l = activeTeachers
@@ -260,10 +274,39 @@ export default function AttendancePage() {
         name: isBn ? s.nameBn || s.nameEn : s.nameEn,
         nameBn: s.nameBn,
         nameEn: s.nameEn,
-        photo: '',
+        photo: s.photo || '',
         type: 'student',
         designation: `${s.class} · ${s.section || '—'}`,
         dept: isBn ? 'শিক্ষার্থী' : 'Student',
+        attStatus: status,
+        inTime: inPunch?.time || '—',
+        outTime: outPunch?.time || '—',
+        isLate: false,
+      })
+    }
+
+    // Include any punch logged today for students or staff not in filtered lists (e.g. newly punched)
+    const processedIds = new Set(result.map((r) => r.id))
+    const dayPunches = attendance[date] || {}
+    for (const [personId, dayData] of Object.entries(dayPunches)) {
+      if (processedIds.has(personId)) continue
+      const status: AttendanceStatus = (dayData as any)?.status || 'present'
+      if (statusFilter !== 'all' && status !== statusFilter) continue
+      const inPunch = (dayData as any)?.punches?.find((p: any) => p.type === 'in')
+      const outPunch = (dayData as any)?.punches?.filter((p: any) => p.type === 'out').pop()
+      const isStu = personId.startsWith('STU')
+      const rfid = useAttendanceStore.getState().rfidEntries.find((r) => r.staffId === personId)
+      const face = useAttendanceStore.getState().faceEntries.find((f) => f.staffId === personId)
+      const name = rfid?.staffName || face?.staffName || personId
+      result.push({
+        id: personId,
+        name,
+        nameBn: name,
+        nameEn: name,
+        photo: '',
+        type: isStu ? 'student' : 'staff',
+        designation: isStu ? (isBn ? 'শিক্ষার্থী' : 'Student') : (isBn ? 'স্টাফ' : 'Staff'),
+        dept: isStu ? (isBn ? 'বায়োমেট্রিক পাঞ্চ' : 'Biometric') : (isBn ? 'ডিভাইস পাঞ্চ' : 'Device'),
         attStatus: status,
         inTime: inPunch?.time || '—',
         outTime: outPunch?.time || '—',
