@@ -403,6 +403,49 @@ describe('normalizeVaultJsonForStore', () => {
     expect(parsed.state.sessionRoutines['2025-26']).toHaveLength(1)
   })
 
+  it('normalizes classes.json with sessionClasses preserving empty classes in newly created session', () => {
+    const existing = JSON.stringify({
+      state: {
+        institution: { currentSession: '2025-26', sessions: ['2025-26', '2026-27'] },
+        classes: [{ id: 'CLS-01', name: 'Class 1', sections: [] }],
+        sessionClasses: {
+          '2025-26': [{ id: 'CLS-01', name: 'Class 1', sections: [] }],
+          '2026-27': [],
+        },
+      },
+      version: 1,
+    })
+
+    // Incoming file where user is now in session 2026-27 with 0 classes
+    const incomingClassesJson = JSON.stringify({
+      state: {
+        institution: { currentSession: '2026-27', sessions: ['2025-26', '2026-27'] },
+        classes: [],
+        routines: [],
+        sessionClasses: {
+          '2025-26': [{ id: 'CLS-01', name: 'Class 1', sections: [] }],
+          '2026-27': [],
+        },
+        sessionRoutines: {
+          '2025-26': [{ classId: 'CLS-01', sectionId: 'A', periods: [] }],
+          '2026-27': [],
+        },
+      },
+    })
+
+    const normalized = normalizeVaultJsonForStore('edutech-classes_demo', incomingClassesJson, existing, 'demo/classes.json')
+    const parsed = JSON.parse(normalized)
+    // 2026-27 must have 0 classes and 0 routines
+    expect(parsed.state.institution.currentSession).toBe('2026-27')
+    expect(parsed.state.classes).toHaveLength(0)
+    expect(parsed.state.routines).toHaveLength(0)
+    // Previous session 2025-26 must still have its class and routine preserved
+    expect(parsed.state.sessionClasses['2025-26']).toHaveLength(1)
+    expect(parsed.state.sessionClasses['2025-26'][0].name).toBe('Class 1')
+    expect(parsed.state.sessionRoutines['2025-26']).toHaveLength(1)
+    expect(parsed.state.sessionClasses['2026-27']).toHaveLength(0)
+  })
+
   it('normalizes sections.json into class store and assigns to matching class', () => {
     const existing = JSON.stringify({
       state: {

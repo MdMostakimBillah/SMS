@@ -147,9 +147,21 @@ export function getItemCount(content: string): number {
         hasDomainField = true
         count += state.classes.length
       }
+      if (state.sessionClasses && typeof state.sessionClasses === 'object') {
+        hasDomainField = true
+        for (const arr of Object.values(state.sessionClasses)) {
+          if (Array.isArray(arr)) count += arr.length
+        }
+      }
       if (Array.isArray(state.routines)) {
         hasDomainField = true
         count += state.routines.length
+      }
+      if (state.sessionRoutines && typeof state.sessionRoutines === 'object') {
+        hasDomainField = true
+        for (const arr of Object.values(state.sessionRoutines)) {
+          if (Array.isArray(arr)) count += arr.length
+        }
       }
       if (Array.isArray(state.structures)) {
         hasDomainField = true
@@ -286,8 +298,24 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
     if (typeof state === 'object' && state !== null) {
       if (Array.isArray(state.teachers)) counts.teachers = state.teachers.length
       if (Array.isArray(state.students)) counts.students = state.students.length
-      if (Array.isArray(state.classes)) counts.classes = state.classes.length
-      if (Array.isArray(state.routines)) counts.routines = state.routines.length
+      if (Array.isArray(state.classes) || (state.sessionClasses && typeof state.sessionClasses === 'object')) {
+        let total = Array.isArray(state.classes) ? state.classes.length : 0
+        if (state.sessionClasses && typeof state.sessionClasses === 'object') {
+          for (const arr of Object.values(state.sessionClasses)) {
+            if (Array.isArray(arr)) total += arr.length
+          }
+        }
+        counts.classes = total
+      }
+      if (Array.isArray(state.routines) || (state.sessionRoutines && typeof state.sessionRoutines === 'object')) {
+        let total = Array.isArray(state.routines) ? state.routines.length : 0
+        if (state.sessionRoutines && typeof state.sessionRoutines === 'object') {
+          for (const arr of Object.values(state.sessionRoutines)) {
+            if (Array.isArray(arr)) total += arr.length
+          }
+        }
+        counts.routines = total
+      }
       if (Array.isArray(state.departments)) counts.departments = state.departments.length
       if (Array.isArray(state.subjects)) counts.subjects = state.subjects.length
       if (Array.isArray(state.designations)) counts.designations = state.designations.length
@@ -311,6 +339,21 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
 }
 
 export function shouldBlockDomainOverwrite(subPath: string, incomingText: string, diskText: string): { blocked: boolean; reason?: string } {
+  // In multi-session setups, routines and sections can legitimately be empty in a newly selected session
+  if (subPath.endsWith('routines.json') || subPath.endsWith('sections.json')) {
+    const slug = currentSlug() || 'demo'
+    const classStoreRaw = localStorage.getItem(`edutech-classes_${slug}`) || localStorage.getItem('edutech-classes')
+    if (classStoreRaw) {
+      try {
+        const cs = JSON.parse(classStoreRaw)
+        const st = cs?.state ?? cs
+        if (st?.sessionClasses && Object.keys(st.sessionClasses).length > 0) {
+          return { blocked: false }
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
   const inCounts = extractDomainCounts(incomingText, subPath)
   const diskCounts = extractDomainCounts(diskText, subPath)
 
@@ -1040,7 +1083,7 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
 
       // 1. routines.json
       const routines = state.routines ?? []
-      if (routines.length > 0 || isRecentExplicitDelete()) {
+      if (routines.length > 0 || isRecentExplicitDelete() || state.sessionRoutines) {
         const routinesPretty = JSON.stringify(routines, null, 2)
         await writeVaultFile(`${slug}/routines.json`, routinesPretty)
         await writeVaultFile('routines.json', routinesPretty)
@@ -1055,7 +1098,7 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
           ...s,
         }))
       )
-      if (sections.length > 0 || isRecentExplicitDelete()) {
+      if (sections.length > 0 || isRecentExplicitDelete() || state.sessionClasses) {
         const sectionsPretty = JSON.stringify(sections, null, 2)
         await writeVaultFile(`${slug}/sections.json`, sectionsPretty)
         await writeVaultFile('sections.json', sectionsPretty)

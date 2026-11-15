@@ -257,4 +257,58 @@ describe('classStore actions', () => {
     await useClassStore.getState().syncToServer()
     expect(classesApi.update).not.toHaveBeenCalled()
   })
+
+  it('in local_computer mode, creating new session and switching isolates session classes and routines in localStorage', () => {
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    useClassStore.setState({
+      institution: {
+        ...useClassStore.getState().institution,
+        storageMode: 'local_computer',
+        currentSession: '2025-26',
+        sessions: ['2025-26'],
+      },
+    })
+
+    // Add class to 2025-26
+    useClassStore.getState().addClass({
+      id: 'CLS-2025',
+      name: 'Class 2025',
+      sections: [],
+      subjectIds: [],
+      startTime: '08:00',
+      endTime: '13:00',
+    })
+    expect(useClassStore.getState().classes).toHaveLength(1)
+    expect(useClassStore.getState().sessionClasses['2025-26']).toHaveLength(1)
+
+    // User creates new session '2026-27'
+    useClassStore.getState().addSession('2026-27')
+    expect(useClassStore.getState().sessionClasses['2026-27']).toEqual([])
+
+    // User switches to '2026-27'
+    useClassStore.getState().switchSession('2026-27')
+    expect(useClassStore.getState().institution.currentSession).toBe('2026-27')
+    expect(useClassStore.getState().classes).toEqual([]) // Must be empty!
+
+    // Add a class specific to 2026-27
+    useClassStore.getState().addClass({
+      id: 'CLS-2026',
+      name: 'Class 2026',
+      sections: [],
+      subjectIds: [],
+      startTime: '08:00',
+      endTime: '13:00',
+    })
+    expect(useClassStore.getState().classes).toHaveLength(1)
+    expect(useClassStore.getState().classes[0].id).toBe('CLS-2026')
+    expect(useClassStore.getState().sessionClasses['2026-27']).toHaveLength(1)
+    expect(useClassStore.getState().sessionClasses['2025-26']).toHaveLength(1)
+    expect(useClassStore.getState().sessionClasses['2025-26'][0].id).toBe('CLS-2025')
+
+    // Switch back to 2025-26
+    useClassStore.getState().switchSession('2025-26')
+    expect(useClassStore.getState().institution.currentSession).toBe('2025-26')
+    expect(useClassStore.getState().classes).toHaveLength(1)
+    expect(useClassStore.getState().classes[0].id).toBe('CLS-2025')
+  })
 })

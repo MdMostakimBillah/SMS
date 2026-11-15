@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useAdmissionStore } from '@/store/admissionStore'
+import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import { logger } from '@/lib/logger'
 import { registerWebAuthnDevice, authenticateWebAuthnDevice, getWebAuthnErrorMessage, getAuthErrorMessage, getDeviceName, saveMobileDevices } from '@/hooks/useWebAuthn'
@@ -13,7 +13,8 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
     useShallow((s) => ({ teachers: s.teachers }))
   )
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
-  const students = useAdmissionStore((s) => s.students)
+  const allInstitutionStudents = useAdmissionStore((s) => s.students)
+  const students = useSessionStudents()
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
 
   const defaultDemoStudents = useMemo<Person[]>(
@@ -45,9 +46,11 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
             dept: s.class,
             section: s.section,
           }))
-        : defaultDemoStudents
+        : allInstitutionStudents.length > 0
+          ? []
+          : defaultDemoStudents
     return [...staff, ...stu]
-  }, [activeTeachers, activeStudents, defaultDemoStudents, isBn])
+  }, [activeTeachers, activeStudents, allInstitutionStudents.length, defaultDemoStudents, isBn])
 
   // Attendance store state
   const devices = useAttendanceStore((s) => s.devices)

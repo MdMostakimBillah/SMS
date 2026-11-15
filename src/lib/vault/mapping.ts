@@ -765,27 +765,54 @@ export function normalizeVaultJsonForStore(
       }))
     }
 
-    const finalClasses = normalizedClasses.length > 0 ? normalizedClasses : (existingState.classes || [])
-    const finalRoutines = normalizedRoutines.length > 0 ? normalizedRoutines : (existingState.routines || [])
-
-    const curSession = existingState.institution?.currentSession || '2025-26'
-    const finalSessionClasses = {
-      ...(existingState.sessionClasses || {}),
-      [curSession]: finalClasses,
-    }
-    const finalSessionRoutines = {
-      ...(existingState.sessionRoutines || {}),
-      [curSession]: finalRoutines,
-    }
-
     const parsedInner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+    const curSession =
+      (parsedInner.institution && parsedInner.institution.currentSession) ||
+      existingState.institution?.currentSession ||
+      '2025-26'
+
+    const mergedSessionClasses: Record<string, any[]> = {
+      ...(existingState.sessionClasses || {}),
+      ...(parsedInner.sessionClasses || {}),
+    }
+    const mergedSessionRoutines: Record<string, any[]> = {
+      ...(existingState.sessionRoutines || {}),
+      ...(parsedInner.sessionRoutines || {}),
+    }
+
+    let finalClasses: any[]
+    if (parsedInner.sessionClasses && curSession in parsedInner.sessionClasses) {
+      finalClasses = Array.isArray(parsedInner.sessionClasses[curSession]) ? parsedInner.sessionClasses[curSession] : []
+    } else if (rawClasses !== null) {
+      finalClasses = normalizedClasses
+      mergedSessionClasses[curSession] = finalClasses
+    } else if (existingState.sessionClasses && curSession in existingState.sessionClasses) {
+      finalClasses = existingState.sessionClasses[curSession] || []
+    } else {
+      finalClasses = normalizedClasses.length > 0 ? normalizedClasses : (existingState.classes || [])
+      mergedSessionClasses[curSession] = finalClasses
+    }
+
+    let finalRoutines: any[]
+    if (parsedInner.sessionRoutines && curSession in parsedInner.sessionRoutines) {
+      finalRoutines = Array.isArray(parsedInner.sessionRoutines[curSession]) ? parsedInner.sessionRoutines[curSession] : []
+    } else if (rawRoutines !== null) {
+      finalRoutines = normalizedRoutines
+      mergedSessionRoutines[curSession] = finalRoutines
+    } else if (existingState.sessionRoutines && curSession in existingState.sessionRoutines) {
+      finalRoutines = existingState.sessionRoutines[curSession] || []
+    } else {
+      finalRoutines = normalizedRoutines.length > 0 ? normalizedRoutines : (existingState.routines || [])
+      mergedSessionRoutines[curSession] = finalRoutines
+    }
+
     const finalState = {
       ...existingState,
       ...parsedInner,
       classes: finalClasses,
       routines: finalRoutines,
-      sessionClasses: finalSessionClasses,
-      sessionRoutines: finalSessionRoutines,
+      sessionClasses: mergedSessionClasses,
+      sessionRoutines: mergedSessionRoutines,
       serverSynced: true,
       syncing: false,
     }
