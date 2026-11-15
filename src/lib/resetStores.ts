@@ -11,6 +11,7 @@ import { useTodoStore } from '@/store/todoStore'
 import { useStoreStore } from '@/store/storeStore'
 import { useTransportStore } from '@/store/transportStore'
 import { useHostelStore } from '@/store/hostelStore'
+import { useAttendanceStore } from '@/store/attendanceStore'
 
 export function resetAllInstitutionStores(): void {
   useClassStore.setState({
@@ -48,4 +49,5 @@ export function resetAllInstitutionStores(): void {
   useStoreStore.setState({ products: [], categories: [], sales: [] })
   useTransportStore.setState({ vehicles: [], routes: [], assignments: [] })
   useHostelStore.setState({ rooms: [], assignments: [] })
+  useAttendanceStore.setState({ attendance: {}, devices: [], rfidEntries: [], fpEntries: [], faceEntries: [], mobileDevices: [], deviceLogs: [] })
 }

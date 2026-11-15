@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { ScanFace, CheckCircle, Fingerprint, Search } from 'lucide-react'
+import { ScanFace, CheckCircle, Fingerprint, Search, Zap } from 'lucide-react'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import type { FaceEntry } from '../types'
 import { StatsRow } from './StatsRow'
@@ -7,10 +7,11 @@ import { StatsRow } from './StatsRow'
 interface FaceScanTabProps {
   isBn: boolean
   faceEntries: FaceEntry[]
-  setFaceEntries: React.Dispatch<React.SetStateAction<FaceEntry[]>>
+  setFaceEntries: React.Dispatch<React.SetStateAction<FaceEntry[]>> | ((entries: FaceEntry[] | ((prev: FaceEntry[]) => FaceEntry[])) => void)
+  onSimulatePunch?: (personId: string, method?: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'mobile', deviceId?: string) => Promise<any>
 }
 
-export function FaceScanTab({ isBn, faceEntries, setFaceEntries }: FaceScanTabProps) {
+export function FaceScanTab({ isBn, faceEntries, setFaceEntries, onSimulatePunch }: FaceScanTabProps) {
   const [faceSearch, setFaceSearch] = useState('')
   const debouncedSearch = useDebouncedValue(faceSearch, 200)
 
@@ -128,6 +129,16 @@ export function FaceScanTab({ isBn, faceEntries, setFaceEntries }: FaceScanTabPr
                     </td>
                     <td className="p-2.5 text-center">
                       <div className="flex gap-1.5 justify-center">
+                        {onSimulatePunch && e.status === 'enrolled' && (
+                          <button
+                            onClick={() => onSimulatePunch(e.staffId, 'face', 'FACE-DESK')}
+                            title={isBn ? 'ফেস স্ক্যান পাঞ্চ টেস্ট' : 'Test Face Scan Punch'}
+                            className="px-2.5 py-1 rounded-md bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--green)] hover:text-white transition-all flex items-center gap-1"
+                          >
+                            <Zap size={9} />
+                            {isBn ? 'পাঞ্চ' : 'Punch'}
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setFaceEntries((prev) =>

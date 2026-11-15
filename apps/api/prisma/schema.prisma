@@ -55,6 +55,8 @@ model School {
   syllabusData String? @default("{}") @map("syllabus_data")
   assignmentsData String? @default("{}") @map("assignments_data")
   onlineData String? @default("[]") @map("online_data")
+  attendanceData String? @default("{}") @map("attendance_data")
+  devicesData String? @default("{}") @map("devices_data")
   status      String   @default("active")
   plan        String   @default("basic")
   expiresAt   DateTime? @map("expires_at")

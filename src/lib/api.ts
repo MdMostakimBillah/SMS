@@ -1255,3 +1255,71 @@ export const backupApi = {
     `/api/backup/export${schoolId ? `?schoolId=${encodeURIComponent(schoolId)}` : ''}`,
 }
 
+export interface AttendanceResponse {
+  storageMode?: string
+  attendance: Record<string, Record<string, any>>
+  devices?: any[]
+  rfidEntries?: any[]
+  fpEntries?: any[]
+  faceEntries?: any[]
+  mobileDevices?: any[]
+  deviceLogs?: any[]
+}
+
+export interface AttendancePunchPayload {
+  personId?: string
+  rfidCard?: string
+  fpId?: number
+  faceId?: number
+  type?: 'in' | 'out'
+  time?: string
+  date?: string
+  deviceId?: string
+  method?: 'manual' | 'punch' | 'rfid' | 'fingerprint' | 'face' | 'mobile'
+}
+
+export const attendanceApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<AttendanceResponse>(`/api/attendance${q}`)
+  },
+  updateAttendance: (data: { attendance: Record<string, any>; schoolId?: string }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean; attendance: Record<string, any> }>('/api/attendance', {
+      method: 'PUT',
+      body,
+    })
+  },
+  updateDevices: (data: {
+    devices?: any[]
+    rfidEntries?: any[]
+    fpEntries?: any[]
+    faceEntries?: any[]
+    mobileDevices?: any[]
+    deviceLogs?: any[]
+    schoolId?: string
+  }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean }>('/api/attendance/devices', {
+      method: 'PUT',
+      body,
+    })
+  },
+  recordPunch: (data: AttendancePunchPayload) => {
+    return apiRequest<{ success: boolean; personId: string; date: string; time: string; type: 'in' | 'out'; method: string; deviceId: string; punches: any[] }>('/api/attendance/punch', {
+      method: 'POST',
+      body: data,
+    })
+  },
+}
+
+

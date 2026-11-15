@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { CreditCard, CheckCircle, XCircle, Search } from 'lucide-react'
+import { CreditCard, CheckCircle, XCircle, Search, Zap } from 'lucide-react'
 import type { RfidEntry } from '../types'
 import { StatsRow } from './StatsRow'
 
 interface RfidCardsTabProps {
   isBn: boolean
   rfidEntries: RfidEntry[]
-  setRfidEntries: React.Dispatch<React.SetStateAction<RfidEntry[]>>
+  setRfidEntries: React.Dispatch<React.SetStateAction<RfidEntry[]>> | ((entries: RfidEntry[] | ((prev: RfidEntry[]) => RfidEntry[])) => void)
+  onSimulatePunch?: (personId: string, method?: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'mobile', deviceId?: string) => Promise<any>
 }
 
-export function RfidCardsTab({ isBn, rfidEntries, setRfidEntries }: RfidCardsTabProps) {
+export function RfidCardsTab({ isBn, rfidEntries, setRfidEntries, onSimulatePunch }: RfidCardsTabProps) {
   const [rfidSearch, setRfidSearch] = useState('')
 
   return (
@@ -121,6 +122,16 @@ export function RfidCardsTab({ isBn, rfidEntries, setRfidEntries }: RfidCardsTab
                     </td>
                     <td className="p-2.5 text-center">
                       <div className="flex gap-1.5 justify-center">
+                        {onSimulatePunch && e.assigned && (
+                          <button
+                            onClick={() => onSimulatePunch(e.staffId, 'rfid', 'RFID-DESK')}
+                            title={isBn ? 'কার্ড সোয়াইপ টেস্ট' : 'Test Card Swipe'}
+                            className="px-2.5 py-1 rounded-md bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--green)] hover:text-white transition-all flex items-center gap-1"
+                          >
+                            <Zap size={9} />
+                            {isBn ? 'পাঞ্চ' : 'Punch'}
+                          </button>
+                        )}
                         <button
                           onClick={() =>
                             setRfidEntries((prev) =>

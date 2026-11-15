@@ -1,15 +1,16 @@
 import { useState } from 'react'
-import { Fingerprint, CheckCircle, Clock, Search } from 'lucide-react'
+import { Fingerprint, CheckCircle, Clock, Search, Zap } from 'lucide-react'
 import type { FpEntry } from '../types'
 import { StatsRow } from './StatsRow'
 
 interface FingerprintTabProps {
   isBn: boolean
   fpEntries: FpEntry[]
-  setFpEntries: React.Dispatch<React.SetStateAction<FpEntry[]>>
+  setFpEntries: React.Dispatch<React.SetStateAction<FpEntry[]>> | ((entries: FpEntry[] | ((prev: FpEntry[]) => FpEntry[])) => void)
+  onSimulatePunch?: (personId: string, method?: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'mobile', deviceId?: string) => Promise<any>
 }
 
-export function FingerprintTab({ isBn, fpEntries, setFpEntries }: FingerprintTabProps) {
+export function FingerprintTab({ isBn, fpEntries, setFpEntries, onSimulatePunch }: FingerprintTabProps) {
   const [fpSearch, setFpSearch] = useState('')
 
   return (
@@ -108,6 +109,16 @@ export function FingerprintTab({ isBn, fpEntries, setFpEntries }: FingerprintTab
                     </td>
                     <td className="p-2.5 text-center">
                       <div className="flex gap-1.5 justify-center">
+                        {onSimulatePunch && e.status === 'enrolled' && (
+                          <button
+                            onClick={() => onSimulatePunch(e.staffId, 'fingerprint', 'FP-DESK')}
+                            title={isBn ? 'ফিঙ্গারপ্রিন্ট পাঞ্চ টেস্ট' : 'Test FP Scan Punch'}
+                            className="px-2.5 py-1 rounded-md bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--green)] hover:text-white transition-all flex items-center gap-1"
+                          >
+                            <Zap size={9} />
+                            {isBn ? 'পাঞ্চ' : 'Punch'}
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setFpEntries((prev) =>

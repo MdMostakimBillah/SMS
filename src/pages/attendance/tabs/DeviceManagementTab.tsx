@@ -1,24 +1,51 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { RefreshCw, Settings, Trash2, Wifi, WifiOff, X } from 'lucide-react'
+import { RefreshCw, Settings, Trash2, Wifi, WifiOff, X, Zap } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
+import { useAttendanceStore } from '@/store/attendanceStore'
 import type { DeviceEntry } from '../types'
 
 interface DeviceManagementTabProps {
   isBn: boolean
   devices: DeviceEntry[]
-  setDevices: React.Dispatch<React.SetStateAction<DeviceEntry[]>>
+  setDevices: React.Dispatch<React.SetStateAction<DeviceEntry[]>> | ((devices: DeviceEntry[] | ((prev: DeviceEntry[]) => DeviceEntry[])) => void)
+  onSimulatePunch?: (personId: string, method?: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'mobile', deviceId?: string) => Promise<any>
 }
 
-export function DeviceManagementTab({ isBn, devices, setDevices }: DeviceManagementTabProps) {
+export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch }: DeviceManagementTabProps) {
   const { canDelete } = usePermission()
   const [syncingDevice, setSyncingDevice] = useState<string | null>(null)
+  const [testingPunchDevice, setTestingPunchDevice] = useState<string | null>(null)
   const [showDeviceSettings, setShowDeviceSettings] = useState<string | null>(null)
   const [deviceSettings, setDeviceSettings] = useState({
     autoSync: true,
     syncInterval: 5,
     playSound: true,
   })
+
+  const handleTestConnection = async (id: string) => {
+    setSyncingDevice(id)
+    try {
+      await useAttendanceStore.getState().testDeviceConnection(id)
+    } finally {
+      setSyncingDevice(null)
+    }
+  }
+
+  const handleTriggerPunch = async (device: DeviceEntry) => {
+    setTestingPunchDevice(device.id)
+    try {
+      if (onSimulatePunch) {
+        // Find person from rfid or fp entries, or fallback to first person
+        const store = useAttendanceStore.getState()
+        const targetId = store.rfidEntries[0]?.staffId || store.fpEntries[0]?.staffId || 'TCH-2026-001'
+        const method = device.type === 'punch' || device.type === 'multi' ? 'punch' : (device.type as any)
+        await onSimulatePunch(targetId, method, device.id)
+      }
+    } finally {
+      setTimeout(() => setTestingPunchDevice(null), 500)
+    }
+  }
 
   return (
     <>
@@ -66,8 +93,18 @@ export function DeviceManagementTab({ isBn, devices, setDevices }: DeviceManagem
                   </td>
                   <td className="p-3 font-mono text-[var(--text-secondary)]">{d.ip}</td>
                   <td className="p-3">
-                    <span className={`text-[0.625rem] px-2 py-0.5 rounded-full font-medium ${d.type === 'rfid' ? 'bg-purple-100 text-purple-700' : d.type === 'fingerprint' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {d.type === 'rfid' ? 'RFID' : d.type === 'fingerprint' ? 'FP' : 'Face'}
+                    <span className={`text-[0.625rem] px-2 py-0.5 rounded-full font-medium ${
+                      d.type === 'punch'
+                        ? 'bg-blue-100 text-blue-700'
+                        : d.type === 'rfid'
+                        ? 'bg-purple-100 text-purple-700'
+                        : d.type === 'fingerprint'
+                        ? 'bg-amber-100 text-amber-700'
+                        : d.type === 'face'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-indigo-100 text-indigo-700'
+                    }`}>
+                      {d.type === 'punch' ? 'Punch' : d.type === 'rfid' ? 'RFID' : d.type === 'fingerprint' ? 'FP' : d.type === 'face' ? 'Face' : 'Multi'}
                     </span>
                   </td>
                   <td className="p-3 text-center text-[var(--text-secondary)]">{d.staffCount}</td>
@@ -77,19 +114,23 @@ export function DeviceManagementTab({ isBn, devices, setDevices }: DeviceManagem
                   <td className="p-3">
                     <div className="flex items-center justify-center gap-1">
                       <button
-                        onClick={() => {
-                          setSyncingDevice(d.id)
-                          setTimeout(() => {
-                            setDevices((prev) => prev.map((dev) => dev.id === d.id ? { ...dev, lastSync: new Date().toISOString(), status: 'online' } : dev))
-                            setSyncingDevice(null)
-                          }, 2000)
-                        }}
+                        onClick={() => handleTestConnection(d.id)}
                         disabled={syncingDevice === d.id}
-                        title={isBn ? 'সিঙ্ক' : 'Sync'}
+                        title={isBn ? 'সংযোগ পরীক্ষা ও সিঙ্ক' : 'Test Connection & Sync'}
                         className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--green-light)] hover:border-[var(--green)] hover:text-[var(--green)] transition-all"
                       >
                         <RefreshCw size={11} className={syncingDevice === d.id ? 'animate-spin' : ''} />
                       </button>
+                      {onSimulatePunch && (
+                        <button
+                          onClick={() => handleTriggerPunch(d)}
+                          disabled={testingPunchDevice === d.id}
+                          title={isBn ? 'টেস্ট পাঞ্চ পাঠান' : 'Send Test Punch'}
+                          className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center cursor-pointer hover:bg-[var(--brand-light)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+                        >
+                          <Zap size={11} className={testingPunchDevice === d.id ? 'animate-pulse text-[var(--brand)]' : ''} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setShowDeviceSettings(d.id)}
                         title={isBn ? 'এডিট' : 'Edit'}

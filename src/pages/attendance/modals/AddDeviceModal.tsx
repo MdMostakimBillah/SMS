@@ -1,11 +1,11 @@
 import { createPortal } from 'react-dom'
-import { CreditCard, Fingerprint, ScanFace, Layers } from 'lucide-react'
+import { Clock, CreditCard, Fingerprint, ScanFace, Layers } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
 
 interface AddDeviceModalProps {
   isBn: boolean
-  newDevice: { name: string; model: string; ip: string; type: 'rfid' | 'fingerprint' | 'face' | 'multi' }
-  setNewDevice: React.Dispatch<React.SetStateAction<{ name: string; model: string; ip: string; type: 'rfid' | 'fingerprint' | 'face' | 'multi' }>>
+  newDevice: { name: string; model: string; ip: string; type: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'multi' }
+  setNewDevice: React.Dispatch<React.SetStateAction<{ name: string; model: string; ip: string; type: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'multi' }>>
   onAdd: () => void
   onClose: () => void
 }
@@ -52,8 +52,9 @@ export function AddDeviceModal({ isBn, newDevice, setNewDevice, onAdd, onClose }
             <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">
               {isBn ? 'ডিভাইস টাইপ' : 'Device Type'}
             </label>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-5 gap-1.5">
               {[
+                { k: 'punch' as const, l: 'Punch', I: Clock },
                 { k: 'rfid' as const, l: 'RFID', I: CreditCard },
                 { k: 'fingerprint' as const, l: 'FP', I: Fingerprint },
                 { k: 'face' as const, l: 'Face', I: ScanFace },

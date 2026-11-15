@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react'
-import { Fingerprint, CreditCard, ScanFace, Wifi, Plus } from 'lucide-react'
+import { Fingerprint, CreditCard, ScanFace, Wifi, Plus, CheckCircle, XCircle, X } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import type { DeviceSubTab } from './types'
 import { useDeviceTab } from './useDeviceTab'
@@ -91,10 +91,59 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
         )}
       </div>
 
-      {tab.deviceTab === 'devices' && <DeviceManagementTab isBn={isBn} devices={tab.devices} setDevices={tab.setDevices} />}
-      {tab.deviceTab === 'rfid' && <RfidCardsTab isBn={isBn} rfidEntries={tab.rfidEntries} setRfidEntries={tab.setRfidEntries} />}
-      {tab.deviceTab === 'fingerprint' && <FingerprintTab isBn={isBn} fpEntries={tab.fpEntries} setFpEntries={tab.setFpEntries} />}
-      {tab.deviceTab === 'face' && <FaceScanTab isBn={isBn} faceEntries={tab.faceEntries} setFaceEntries={tab.setFaceEntries} />}
+      {tab.mobileAuthMsg && (
+        <div
+          className={`flex items-center justify-between p-3 mb-3.5 rounded-xl border text-[0.75rem] font-medium transition-all ${
+            tab.mobileAuthMsg.type === 'success'
+              ? 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)]'
+              : 'bg-[var(--red-light)] border-[var(--red)] text-[var(--red)]'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {tab.mobileAuthMsg.type === 'success' ? <CheckCircle size={15} /> : <XCircle size={15} />}
+            <span>{tab.mobileAuthMsg.text}</span>
+          </div>
+          <button
+            onClick={() => tab.setMobileAuthMsg(null)}
+            className="bg-transparent border-none cursor-pointer p-1 text-current opacity-70 hover:opacity-100"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {tab.deviceTab === 'devices' && (
+        <DeviceManagementTab
+          isBn={isBn}
+          devices={tab.devices}
+          setDevices={tab.setDevices}
+          onSimulatePunch={tab.handleSimulatePunch}
+        />
+      )}
+      {tab.deviceTab === 'rfid' && (
+        <RfidCardsTab
+          isBn={isBn}
+          rfidEntries={tab.rfidEntries}
+          setRfidEntries={tab.setRfidEntries}
+          onSimulatePunch={tab.handleSimulatePunch}
+        />
+      )}
+      {tab.deviceTab === 'fingerprint' && (
+        <FingerprintTab
+          isBn={isBn}
+          fpEntries={tab.fpEntries}
+          setFpEntries={tab.setFpEntries}
+          onSimulatePunch={tab.handleSimulatePunch}
+        />
+      )}
+      {tab.deviceTab === 'face' && (
+        <FaceScanTab
+          isBn={isBn}
+          faceEntries={tab.faceEntries}
+          setFaceEntries={tab.setFaceEntries}
+          onSimulatePunch={tab.handleSimulatePunch}
+        />
+      )}
       {tab.deviceTab === 'mobile' && (
         <MobileTab isBn={isBn} date={date} allPeople={tab.allPeople} mobileDevices={tab.mobileDevices}
           mobileRegStaff={tab.mobileRegStaff} setMobileRegStaff={tab.setMobileRegStaff} mobileRegPending={tab.mobileRegPending} handleRegisterDevice={tab.handleRegisterDevice}

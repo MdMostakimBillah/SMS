@@ -12,8 +12,10 @@ export type DeviceEntry = {
   name: string
   model: string
   ip: string
+  port?: number
+  location?: string
   status: 'online' | 'offline' | 'error'
-  type: 'rfid' | 'fingerprint' | 'face' | 'multi'
+  type: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'multi'
   lastSync: string
   staffCount: number
 }
@@ -50,6 +52,18 @@ export type MobileDevice = {
   credentialId: string
   registeredAt: string
   lastAuth: string
+}
+
+export type DeviceLog = {
+  id: string
+  deviceId: string
+  personId: string
+  time: string
+  date?: string
+  timestamp?: string
+  type: 'in' | 'out'
+  method: 'manual' | 'punch' | 'rfid' | 'fingerprint' | 'face' | 'mobile'
+  status?: 'success' | 'failed'
 }
 
 export type DeviceSubTab = 'devices' | 'rfid' | 'fingerprint' | 'face' | 'mobile'

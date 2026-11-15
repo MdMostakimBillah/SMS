@@ -41,6 +41,16 @@ export const initialDevices: DeviceEntry[] = [
     lastSync: new Date().toISOString(),
     staffCount: 20,
   },
+  {
+    id: 'DEV-005',
+    name: 'Time Clock Terminal',
+    model: 'ZKTeco K14 Pro Punch',
+    ip: '192.168.1.104',
+    status: 'online',
+    type: 'punch',
+    lastSync: new Date().toISOString(),
+    staffCount: 25,
+  },
 ]
 
 export const initialRfidEntries: RfidEntry[] = [

@@ -56,6 +56,7 @@ interface TodayTabProps {
   setShowMarkAll: (val: boolean) => void
   statusFilters: { key: StatusFilter; labelBn: string; labelEn: string; color: string }[]
   statusBadge: (s: AttendanceStatus) => React.ReactNode
+  onToggleStatus?: (personId: string, date?: string) => void
 }
 
 export const TodayTab = React.memo(function TodayTab({
@@ -80,6 +81,7 @@ export const TodayTab = React.memo(function TodayTab({
   setShowMarkAll,
   statusFilters,
   statusBadge,
+  onToggleStatus,
 }: TodayTabProps) {
   const { canCreate } = usePermission()
   const filterTabsRef = useRef<HTMLDivElement>(null)
@@ -319,7 +321,11 @@ export const TodayTab = React.memo(function TodayTab({
                         <span className="text-[0.625rem] text-[var(--text-muted)]">—</span>
                       )}
                     </td>
-                    <td className="p-2 text-center">
+                    <td
+                      className="p-2 text-center cursor-pointer select-none"
+                      title={isBn ? 'ক্লিক করে উপস্থিতি পরিবর্তন করুন' : 'Click to cycle status'}
+                      onClick={() => onToggleStatus?.(t.id, date)}
+                    >
                       {statusBadge(t.attStatus)}
                       {t.isLate && isPresent && <span className="text-[0.5rem] text-[var(--amber)] font-semibold ml-1">LATE</span>}
                     </td>

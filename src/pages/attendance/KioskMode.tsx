@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { ScanFace, User, GraduationCap } from 'lucide-react'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
-import type { AttendanceStatus } from '@/store/teacherStore'
+import { useAttendanceStore } from '@/store/attendanceStore'
 import { useSessionStudents } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useFaceApi, type RegisteredFace } from '@/hooks/useFaceApi'
@@ -67,19 +67,15 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
     logAuditEvent({ type: 'deleted', personId: staffId })
   }
 
-  const handlePunch = (staffId: string, _staffName: string, _photo: string, punchType: 'in' | 'out', time: string) => {
-    const existing = attendance[date]?.[staffId]
-    const punches = existing?.punches || []
-    const punchesNew = [...punches, { time, type: punchType }]
-    const status = punchType === 'in' ? 'present' : existing?.status || 'present'
-    const updatedAttendance = {
-      ...attendance,
-      [date]: {
-        ...attendance[date],
-        [staffId]: { status: status as AttendanceStatus, punches: punchesNew },
-      },
-    }
-    useTeacherStore.setState({ attendance: updatedAttendance })
+  const handlePunch = async (staffId: string, _staffName: string, _photo: string, punchType: 'in' | 'out', time: string) => {
+    await useAttendanceStore.getState().recordPunch({
+      personId: staffId,
+      date,
+      time,
+      type: punchType,
+      method: 'face',
+      deviceId: 'KIOSK-FACE',
+    })
   }
 
   const selectedPerson = allPeople.find((p) => p.id === selectedStaff)

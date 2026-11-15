@@ -1839,6 +1839,32 @@ export function normalizeVaultJsonForStore(
     return JSON.stringify({ state: finalState, version: existingVersion || 1 })
   }
 
+  if (key.includes('attendance')) {
+    const inner = (parsed && typeof parsed === 'object' && parsed.state) ? parsed.state : parsed
+    const finalAttendance = (inner && typeof inner.attendance === 'object') ? inner.attendance : (inner && typeof inner === 'object' && !('devices' in inner) ? inner : (existingState.attendance || {}))
+    const finalDevices = Array.isArray(inner?.devices) ? inner.devices : (existingState.devices || [])
+    const finalRfid = Array.isArray(inner?.rfidEntries) ? inner.rfidEntries : (existingState.rfidEntries || [])
+    const finalFp = Array.isArray(inner?.fpEntries) ? inner.fpEntries : (existingState.fpEntries || [])
+    const finalFace = Array.isArray(inner?.faceEntries) ? inner.faceEntries : (existingState.faceEntries || [])
+    const finalMobile = Array.isArray(inner?.mobileDevices) ? inner.mobileDevices : (existingState.mobileDevices || [])
+    const finalLogs = Array.isArray(inner?.deviceLogs) ? inner.deviceLogs : (existingState.deviceLogs || [])
+
+    const finalState = {
+      ...existingState,
+      attendance: finalAttendance,
+      devices: finalDevices,
+      rfidEntries: finalRfid,
+      fpEntries: finalFp,
+      faceEntries: finalFace,
+      mobileDevices: finalMobile,
+      deviceLogs: finalLogs,
+      serverSynced: true,
+      syncing: false,
+      syncError: null,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion || 1 })
+  }
+
   // Fallback generic handler: ensure state wrapper exists
   if (parsed && typeof parsed === 'object' && 'state' in parsed) {
     return JSON.stringify(parsed)

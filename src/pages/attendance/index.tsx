@@ -17,6 +17,7 @@ import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useAttendanceStore } from '@/store/attendanceStore'
 import { useSessionStudents, useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore, getClassOptions, buildSectionsMap } from '@/store/classStore'
 import { useScrollLock } from '@/hooks/useScrollLock'
@@ -81,14 +82,13 @@ function AttendancePageSkeleton() {
 export default function AttendancePage() {
   const isBn = useBn()
   const { isMobile, isTablet } = useWindowSize()
-  const { teachers, departments, attendance, markAllPresent } = useTeacherStore(
+  const { teachers, departments } = useTeacherStore(
     useShallow((s) => ({
       teachers: s.teachers,
       departments: s.departments,
-      attendance: s.attendance,
-      markAllPresent: s.markAllPresent,
     }))
   )
+  const attendance = useAttendanceStore((s) => s.attendance)
   const students = useSessionStudents()
   const { classes, institution } = useClassStore()
   const { canRead } = usePermission()
@@ -112,6 +112,7 @@ export default function AttendancePage() {
       if (active) setIsLoading(false)
     }, 1500)
     Promise.allSettled([
+      useAttendanceStore.getState().syncFromServer(),
       useTeacherStore.getState().syncFromServer(),
       useAdmissionStore.getState().syncFromServer(),
     ]).finally(() => {
@@ -295,19 +296,41 @@ export default function AttendancePage() {
     let present = 0,
       absent = 0,
       onLeave = 0
-    activeTeachers.forEach((t) => {
-      const s = dayAtt[t.id]?.status
+    const dayAttendance = attendance[date] || {}
+    filteredEmployees.forEach((t) => {
+      const s = dayAttendance[t.id]?.status || 'absent'
       if (s === 'present') present++
-      else if (s === 'absent') absent++
-      else if (s === 'on-leave') onLeave++
+      else if (s === 'on-leave' || (s as any) === 'leave') onLeave++
+      else absent++
+    })
+    filteredStudents.forEach((st) => {
+      const s = dayAttendance[st.id]?.status || 'absent'
+      if (s === 'present') present++
+      else if (s === 'on-leave' || (s as any) === 'leave') onLeave++
+      else absent++
     })
     return { present, absent, onLeave }
-  }, [activeTeachers, dayAtt])
+  }, [filteredEmployees, filteredStudents, attendance, date])
 
   const handleMarkAll = () => {
-    markAllPresent(date)
+    const allIds = [
+      ...filteredEmployees.map((t) => t.id),
+      ...filteredStudents.map((s) => s.id),
+    ]
+    useAttendanceStore.getState().markAllPresent(date, allIds)
     setShowMarkAll(false)
   }
+
+  const handleToggleStatus = useCallback(
+    (personId: string, targetDate: string = date) => {
+      const currentDayData = attendance[targetDate]?.[personId]
+      const currentStatus = currentDayData?.status || 'absent'
+      const nextStatus: AttendanceStatus =
+        currentStatus === 'present' ? 'absent' : currentStatus === 'absent' ? 'on-leave' : 'present'
+      useAttendanceStore.getState().markAttendance(targetDate, personId, nextStatus)
+    },
+    [attendance, date]
+  )
 
   const getStatus = (dayData?: DayAttendance): AttendanceStatus => dayData?.status || 'absent'
 
@@ -851,6 +874,7 @@ export default function AttendancePage() {
           setShowMarkAll={setShowMarkAll}
           statusFilters={statusFilters}
           statusBadge={statusBadge}
+          onToggleStatus={handleToggleStatus}
         />
       )}
 
@@ -893,6 +917,7 @@ export default function AttendancePage() {
           weeklyHolidayBadge={weeklyHolidayBadge}
           getStatus={getStatus}
           getDeptName={getDeptName}
+          onToggleStatus={handleToggleStatus}
         />
       )}
 
@@ -931,6 +956,7 @@ export default function AttendancePage() {
           statusBadge={statusBadge}
           weeklyHolidayBadge={weeklyHolidayBadge}
           getStatus={getStatus}
+          onToggleStatus={handleToggleStatus}
         />
       )}
 

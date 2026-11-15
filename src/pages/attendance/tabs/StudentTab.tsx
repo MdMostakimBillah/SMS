@@ -53,6 +53,7 @@ interface StudentTabProps {
   statusBadge: (s: AttendanceStatus) => React.ReactNode
   weeklyHolidayBadge: () => React.ReactNode
   getStatus: (dayData?: any) => AttendanceStatus
+  onToggleStatus?: (personId: string, date: string) => void
 }
 
 export const StudentTab = React.memo(function StudentTab({
@@ -87,6 +88,7 @@ export const StudentTab = React.memo(function StudentTab({
   statusBadge,
   weeklyHolidayBadge,
   getStatus,
+  onToggleStatus,
 }: StudentTabProps) {
   const { canExport } = usePermission()
   const sel =
@@ -374,7 +376,12 @@ export const StudentTab = React.memo(function StudentTab({
                       )
                     const st = getStatus(attendance[ds]?.[s.id])
                     return (
-                      <td key={ds} className="p-[0.25rem] text-center">
+                      <td
+                        key={ds}
+                        className="p-[0.25rem] text-center cursor-pointer select-none"
+                        title={isBn ? 'ক্লিক করে উপস্থিতি পরিবর্তন করুন' : 'Click to cycle status'}
+                        onClick={() => onToggleStatus?.(s.id, ds)}
+                      >
                         {statusBadge(st)}
                       </td>
                     )

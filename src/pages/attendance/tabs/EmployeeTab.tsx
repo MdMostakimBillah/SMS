@@ -52,6 +52,7 @@ interface EmployeeTabProps {
   weeklyHolidayBadge: () => React.ReactNode
   getStatus: (dayData?: any) => AttendanceStatus
   getDeptName: (id: string) => string
+  onToggleStatus?: (personId: string, date: string) => void
 }
 
 export const EmployeeTab = React.memo(function EmployeeTab({
@@ -83,6 +84,7 @@ export const EmployeeTab = React.memo(function EmployeeTab({
   weeklyHolidayBadge,
   getStatus,
   getDeptName,
+  onToggleStatus,
 }: EmployeeTabProps) {
   const { canExport } = usePermission()
   const sel =
@@ -378,7 +380,12 @@ export const EmployeeTab = React.memo(function EmployeeTab({
                       )
                     const st = getStatus(attendance[ds]?.[t.id])
                     return (
-                      <td key={ds} className="p-[0.25rem] text-center">
+                      <td
+                        key={ds}
+                        className="p-[0.25rem] text-center cursor-pointer select-none"
+                        title={isBn ? 'ক্লিক করে উপস্থিতি পরিবর্তন করুন' : 'Click to cycle status'}
+                        onClick={() => onToggleStatus?.(t.id, ds)}
+                      >
                         {statusBadge(st)}
                       </td>
                     )
