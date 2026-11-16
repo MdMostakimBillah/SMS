@@ -18,6 +18,7 @@ import { requireTrustedOrigin } from '../middleware/origin.js'
 import { audit } from '../audit.js'
 import type { MediaStorage } from '../storage.js'
 import { uploadBase64Media } from '../lib/media-helper.js'
+import { authPool } from '../lib/better-auth.js'
 
 const loginSchema = z.object({
   email: z.string().email().max(254),
@@ -346,16 +347,21 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
   /** Logout — revokes the server-side session and clears cookies. */
   router.post('/logout', requireAuth(prisma, jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
     try {
-      await prisma.session.updateMany({
-        where: { id: req.sessionId },
-        data: { revokedAt: new Date() },
-      })
+      if (req.sessionId) {
+        await prisma.session.updateMany({
+          where: { id: req.sessionId },
+          data: { revokedAt: new Date() },
+        })
+        await authPool.query('DELETE FROM neon_auth.session WHERE id = $1 OR token = $1', [req.sessionId]).catch(() => {})
+      }
     } catch (err) {
       console.error('[auth] logout revoke failed:', err instanceof Error ? err.message : err)
     }
     const secure = isCookieSecure()
     res.clearCookie(SESSION_COOKIE, { path: '/', secure, sameSite: 'lax', httpOnly: true })
     res.clearCookie(CSRF_COOKIE, { path: '/', secure, sameSite: 'lax' })
+    res.clearCookie('better-auth.session_token', { path: '/', secure, sameSite: 'lax', httpOnly: true })
+    res.clearCookie('__Secure-better-auth.session_token', { path: '/', secure: true, sameSite: 'lax', httpOnly: true })
     res.json({ success: true })
   })
 

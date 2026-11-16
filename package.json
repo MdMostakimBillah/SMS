@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "npm run dev --prefix apps/api",
     "prebuild": "node -e \"require('fs').writeFileSync('public/version.txt', String(Date.now()))\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
@@ -32,6 +33,7 @@
     "@tiptap/react": "^3.26.0",
     "@tiptap/starter-kit": "^3.26.0",
     "@vladmandic/face-api": "^1.7.15",
+    "better-auth": "^1.7.25",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "exceljs": "^4.4.0",

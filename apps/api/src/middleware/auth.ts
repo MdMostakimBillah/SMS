@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from 'express'
 import type { PrismaClient } from '@prisma/client'
 import jwt from 'jsonwebtoken'
+import { fromNodeHeaders } from 'better-auth/node'
+import { auth } from '../lib/better-auth.js'
 
 export interface AuthenticatedRequest extends Request {
   userId?: string
@@ -62,56 +64,92 @@ async function resolveSession(
   req: Request
 ): Promise<SessionResolution> {
   const token = req.cookies?.[SESSION_COOKIE] as string | undefined
-  if (!token) {
-    return { ok: false, status: 401, message: 'Authentication required' }
+
+  if (token) {
+    try {
+      const claims = jwt.verify(token, jwtSecret) as SessionClaims
+      if (claims.jti && claims.userId) {
+        const session = await prisma.session.findUnique({
+          where: { id: claims.jti },
+          include: {
+            user: {
+              select: { id: true, role: true, schoolId: true, isActive: true },
+            },
+          },
+        })
+        if (session && session.userId === claims.userId && !session.revokedAt && session.expiresAt.getTime() > Date.now()) {
+          const user = session.user
+          if (user && user.isActive) {
+            let resolvedSchoolId = user.schoolId
+            if (user.role === 'super_admin' && req.headers['x-school-id']) {
+              const headerSchoolId = String(req.headers['x-school-id']).trim()
+              const targetSchool = await prisma.school.findFirst({
+                where: { OR: [{ id: headerSchoolId }, { domain: headerSchoolId }] },
+                select: { id: true },
+              })
+              if (targetSchool) {
+                resolvedSchoolId = targetSchool.id
+              }
+            }
+
+            return {
+              ok: true,
+              ctx: { userId: user.id, userRole: user.role, schoolId: resolvedSchoolId, sessionId: claims.jti },
+            }
+          }
+        }
+      }
+    } catch {
+      // Legacy token expired or invalid — fall through to Better Auth
+    }
   }
 
-  let claims: SessionClaims
+  // Fallback to Better Auth session (cookie or Authorization header)
   try {
-    claims = jwt.verify(token, jwtSecret) as SessionClaims
-    if (!claims.jti || !claims.userId) throw new Error('missing claims')
-  } catch {
-    return { ok: false, status: 401, message: 'Invalid or expired session' }
-  }
-
-  try {
-    const session = await prisma.session.findUnique({
-      where: { id: claims.jti },
-      include: {
-        user: {
-          select: { id: true, role: true, schoolId: true, isActive: true },
-        },
-      },
+    const betterSession = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
     })
-    if (!session || session.userId !== claims.userId || session.revokedAt || session.expiresAt.getTime() <= Date.now()) {
-      return { ok: false, status: 401, message: 'Session expired or revoked' }
-    }
 
-    const user = session.user
-    if (!user || !user.isActive) {
-      return { ok: false, status: 401, message: 'Authentication required' }
-    }
-
-    let resolvedSchoolId = user.schoolId
-    if (user.role === 'super_admin' && req.headers['x-school-id']) {
-      const headerSchoolId = String(req.headers['x-school-id']).trim()
-      const targetSchool = await prisma.school.findFirst({
-        where: { OR: [{ id: headerSchoolId }, { domain: headerSchoolId }] },
-        select: { id: true },
+    if (betterSession?.session && betterSession?.user) {
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { id: betterSession.user.id },
+            { email: betterSession.user.email.toLowerCase() },
+          ],
+        },
+        select: { id: true, role: true, schoolId: true, isActive: true },
       })
-      if (targetSchool) {
-        resolvedSchoolId = targetSchool.id
+
+      if (user && user.isActive) {
+        let resolvedSchoolId = user.schoolId
+        if (user.role === 'super_admin' && req.headers['x-school-id']) {
+          const headerSchoolId = String(req.headers['x-school-id']).trim()
+          const targetSchool = await prisma.school.findFirst({
+            where: { OR: [{ id: headerSchoolId }, { domain: headerSchoolId }] },
+            select: { id: true },
+          })
+          if (targetSchool) {
+            resolvedSchoolId = targetSchool.id
+          }
+        }
+
+        return {
+          ok: true,
+          ctx: {
+            userId: user.id,
+            userRole: user.role,
+            schoolId: resolvedSchoolId,
+            sessionId: betterSession.session.id,
+          },
+        }
       }
     }
-
-    return {
-      ok: true,
-      ctx: { userId: user.id, userRole: user.role, schoolId: resolvedSchoolId, sessionId: claims.jti },
-    }
   } catch (err) {
-    console.error('[auth] session resolution error:', err instanceof Error ? err.message : err)
-    return { ok: false, status: 500, message: 'Internal server error' }
+    console.error('[auth] better-auth session check error:', err instanceof Error ? err.message : err)
   }
+
+  return { ok: false, status: 401, message: 'Authentication required' }
 }
 
 /**

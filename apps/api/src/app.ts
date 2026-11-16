@@ -5,6 +5,8 @@ import compression from 'compression'
 import rateLimit from 'express-rate-limit'
 import cookieParser from 'cookie-parser'
 import type { PrismaClient } from '@prisma/client'
+import { toNodeHandler } from 'better-auth/node'
+import { auth } from './lib/better-auth.js'
 import { authRouter } from './routes/auth.js'
 import { teacherRouter } from './routes/teachers.js'
 import { departmentRouter } from './routes/departments.js'
@@ -87,7 +89,10 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
   })
 
+  // Auth routes: legacy endpoints handled first, unhandled auth endpoints fall through to Better Auth
   app.use('/api/auth', authRouter(prisma, jwtSecret, corsOrigin, storage))
+  app.all('/api/auth', toNodeHandler(auth))
+  app.all('/api/auth/*', toNodeHandler(auth))
   app.use('/api/teachers', teacherRouter(prisma, jwtSecret))
   app.use('/api/students', studentRouter(prisma, jwtSecret))
   app.use('/api/departments', departmentRouter(prisma, jwtSecret))
