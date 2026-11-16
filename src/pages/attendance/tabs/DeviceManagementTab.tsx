@@ -1,22 +1,47 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { RefreshCw, Settings, Trash2, Wifi, WifiOff, X, Zap, Fingerprint, Sparkles } from 'lucide-react'
+import {
+  RefreshCw,
+  Settings,
+  Trash2,
+  Wifi,
+  WifiOff,
+  X,
+  Zap,
+  Fingerprint,
+  Sparkles,
+  BookOpen,
+  UserPlus,
+  Network,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
 import { useAttendanceStore } from '@/store/attendanceStore'
-import type { DeviceEntry } from '../types'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { useNetworkStatus } from '@/lib/networkConnectivity'
+import type { DeviceEntry, Person } from '../types'
+import { DeviceConnectionGuideModal } from '../modals/DeviceConnectionGuideModal'
+import { DeviceEnrollmentModal } from '../modals/DeviceEnrollmentModal'
 
 interface DeviceManagementTabProps {
   isBn: boolean
   devices: DeviceEntry[]
   setDevices: React.Dispatch<React.SetStateAction<DeviceEntry[]>> | ((devices: DeviceEntry[] | ((prev: DeviceEntry[]) => DeviceEntry[])) => void)
   onSimulatePunch?: (personId: string, method?: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'mobile', deviceId?: string) => Promise<any>
+  allPeople?: Person[]
 }
 
-export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch }: DeviceManagementTabProps) {
+export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch, allPeople = [] }: DeviceManagementTabProps) {
   const { canDelete } = usePermission()
+  const isLocalPc = isLocalComputerMode()
+  const { isOnline, checking, checkNow } = useNetworkStatus()
   const [syncingDevice, setSyncingDevice] = useState<string | null>(null)
   const [testingPunchDevice, setTestingPunchDevice] = useState<string | null>(null)
   const [showDeviceSettings, setShowDeviceSettings] = useState<string | null>(null)
+  const [showGuideModal, setShowGuideModal] = useState(false)
+  const [showQuickGuide, setShowQuickGuide] = useState(true)
+  const [enrollDevice, setEnrollDevice] = useState<DeviceEntry | null>(null)
   const [deviceSettings, setDeviceSettings] = useState({
     autoSync: true,
     syncInterval: 5,
@@ -49,6 +74,119 @@ export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch
 
   return (
     <>
+      {/* Device Connection Setup Guide Banner */}
+      <div className="mb-3.5 rounded-xl border border-[#7C3AED30] bg-[#7C3AED08] p-3 text-[0.75rem]">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#7C3AED18] text-[#7C3AED] flex items-center justify-center shrink-0">
+              <BookOpen size={14} />
+            </div>
+            <div>
+              <div className="font-bold text-[var(--text-primary)] flex items-center gap-2">
+                <span>{isBn ? 'বায়োমেট্রিক ও পাঞ্চ মেশিন কানেকশন গাইড' : 'Biometric & Punch Device Connection Guide'}</span>
+                <span className="text-[0.5625rem] px-2 py-0.5 rounded-full bg-[#7C3AED20] text-[#7C3AED] font-semibold">
+                  ZKTeco • Hikvision • Realtime
+                </span>
+              </div>
+              <p className="text-[0.625rem] text-[var(--text-muted)]">
+                {isBn
+                  ? 'লোকাল কেবল, ক্লাউড পুশ (ADMS) ও ইউএসবি দিয়ে মেশিন কানেক্ট ও সদস্য নিবন্ধনের নির্দেশিকা'
+                  : 'Step-by-step setup for LAN cables, Cloud ADMS push, and member registration'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowGuideModal(true)}
+              className="px-3 py-1.5 rounded-lg bg-[#7C3AED] text-white text-[0.6875rem] font-semibold cursor-pointer hover:opacity-90 flex items-center gap-1.5 border-0 shadow-sm transition-all"
+            >
+              <Network size={12} />
+              <span>{isBn ? 'সম্পূর্ণ গাইড ও প্যারামিটার দেখুন' : 'View Full Guide & Parameters'}</span>
+            </button>
+            <button
+              onClick={() => setShowQuickGuide((prev) => !prev)}
+              className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] flex items-center justify-center cursor-pointer hover:bg-[var(--border)] transition-colors"
+              title={showQuickGuide ? (isBn ? 'সংক্ষিপ্ত করুন' : 'Collapse') : (isBn ? 'বিস্তারিত' : 'Expand')}
+            >
+              {showQuickGuide ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+          </div>
+        </div>
+
+        {showQuickGuide && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 mt-3 pt-3 border-t border-[#7C3AED20] text-[0.6875rem]">
+            <div className="p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] flex items-start gap-2">
+              <div className="w-5 h-5 rounded-full bg-[#7C3AED18] text-[#7C3AED] font-bold text-[0.625rem] flex items-center justify-center shrink-0 mt-0.5">১</div>
+              <div>
+                <div className="font-semibold text-[var(--text-primary)]">{isBn ? '১. লোকাল নেটওয়ার্ক (LAN)' : '1. Local Network (LAN)'}</div>
+                <p className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
+                  {isBn ? 'রাউটারে কেবল লাগিয়ে মেশিনে স্ট্যাটিক IP (192.168.1.201, Port 4370) দিন।' : 'Connect RJ45 to router, set Static IP (192.168.1.201, Port 4370).'}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] flex items-start gap-2">
+              <div className="w-5 h-5 rounded-full bg-[#7C3AED18] text-[#7C3AED] font-bold text-[0.625rem] flex items-center justify-center shrink-0 mt-0.5">২</div>
+              <div>
+                <div className="font-semibold text-[var(--text-primary)]">{isBn ? '২. ক্লাউড পুশ (ADMS)' : '2. Cloud Push (ADMS)'}</div>
+                <p className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
+                  {isBn ? 'Comm ➜ Cloud Server এ পুশ ওয়েবহুক বসিয়ে রিয়েল-টাইমে হাজিরা পান।' : 'Configure Cloud Server push URL for real-time punch streaming.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] flex items-start gap-2">
+              <div className="w-5 h-5 rounded-full bg-[#7C3AED18] text-[#7C3AED] font-bold text-[0.625rem] flex items-center justify-center shrink-0 mt-0.5">৩</div>
+              <div>
+                <div className="font-semibold text-[var(--text-primary)]">{isBn ? '৩. সদস্য নিবন্ধন (Enroll)' : '3. Member Registration'}</div>
+                <p className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
+                  {isBn ? 'টেবিলের "নিবন্ধন" বাটনে ক্লিক করে শিক্ষার্থী ও স্টাফদের যুক্ত করুন।' : 'Click "Enroll" on any device to register students & staff to machine.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Local PC Storage Mode Internet Connection Banner */}
+      {isLocalPc && (
+        <div
+          className={`mb-3.5 p-3 rounded-xl border flex items-center justify-between gap-3 text-[0.75rem] transition-all ${
+            isOnline
+              ? 'bg-[var(--green-light)] border-[var(--green)] text-[var(--green)]'
+              : 'bg-[var(--red-light)] border-[var(--red)] text-[var(--red)]'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOnline ? 'bg-[var(--green)] animate-pulse' : 'bg-[var(--red)]'}`} />
+            <div>
+              <div className="font-bold flex items-center gap-1.5">
+                <span>{isBn ? 'লোকাল পিসি স্টোরেজ মোড' : 'Local PC Storage Mode'}</span>
+                <span>•</span>
+                <span>{isOnline ? (isBn ? 'ইন্টারনেট সংযুক্ত (সক্রিয়)' : 'Internet Connected (Active)') : (isBn ? 'ইন্টারনেট বিচ্ছিন্ন' : 'No Internet Connection')}</span>
+              </div>
+              <p className="text-[0.625rem] opacity-90 mt-0.5">
+                {isOnline
+                  ? (isBn
+                      ? 'সক্রিয় ইন্টারনেট সংযোগ রয়েছে। বায়োমেট্রিক ও পাঞ্চ মেশিনের ডাটা সফটওয়্যারে তাৎক্ষণিক আপডেট হতে প্রস্তুত।'
+                      : 'Active internet connection detected. Attendance punch device data is ready to update in the software.')
+                  : (isBn
+                      ? 'লোকাল পিসি মোডে ডিভাইস সংযোগ করতে এবং সফটওয়্যারে পাঞ্চ ডাটা আপডেট করার জন্য ইন্টারনেট সংযোগ আবশ্যক।'
+                      : 'Active internet connection is strictly required to connect devices and receive punch updates in Local PC mode.')}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => void checkNow()}
+            disabled={checking}
+            className="px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-current text-[0.6875rem] font-semibold cursor-pointer shrink-0 hover:opacity-90 flex items-center gap-1"
+          >
+            <RefreshCw size={11} className={checking ? 'animate-spin' : ''} />
+            <span>{isBn ? 'চেক ইন্টারনেট' : 'Check Internet'}</span>
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-4 mb-4 text-[0.75rem] flex-wrap">
         <div className="flex items-center gap-4">
           <span className="text-[var(--text-muted)] font-medium">
@@ -63,18 +201,33 @@ export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch
             {devices.filter((d) => d.status === 'offline').length} {isBn ? 'অফলাইন' : 'offline'}
           </span>
           <span className="text-[var(--text-muted)]">
-            {devices.reduce((s, d) => s + (d.staffCount || 0), 0)} {isBn ? 'স্টাফ/শিক্ষার্থী' : 'enrolled'}
+            {devices.reduce((s, d) => s + ((d.enrolledUsers?.length ?? d.staffCount) || 0), 0)} {isBn ? 'নিবন্ধিত সদস্য' : 'enrolled members'}
           </span>
         </div>
-        {devices.length === 0 && (
-          <button
-            onClick={() => useAttendanceStore.getState().loadSampleDevices()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#7C3AED18] border border-[#7C3AED40] text-[#7C3AED] text-[0.6875rem] font-semibold cursor-pointer hover:bg-[#7C3AED25] transition-all"
-          >
-            <Sparkles size={12} />
-            {isBn ? 'ডেমো ডিভাইস সেটআপ করুন' : 'Load Demo Devices'}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {devices.length === 0 ? (
+            <button
+              onClick={() => useAttendanceStore.getState().loadSampleDevices()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#7C3AED18] border border-[#7C3AED40] text-[#7C3AED] text-[0.6875rem] font-semibold cursor-pointer hover:bg-[#7C3AED25] transition-all"
+            >
+              <Sparkles size={12} />
+              {isBn ? 'ডেমো ডিভাইস সেটআপ করুন' : 'Load Demo Devices'}
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                if (confirm(isBn ? 'আপনি কি নিশ্চিত যে সকল ডেমো ডিভাইস ও ডাটা মুছে ফেলতে চান?' : 'Are you sure you want to remove all demo devices and data?')) {
+                  useAttendanceStore.getState().clearDemoData()
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-[0.6875rem] font-semibold cursor-pointer hover:bg-[var(--red)] hover:text-white transition-all"
+              title={isBn ? 'সকল ডেমো ডিভাইস ও ডাটা মুছে ফেলুন' : 'Remove all demo devices & data'}
+            >
+              <Trash2 size={12} />
+              {isBn ? 'ডেমো ডাটা মুছুন' : 'Clear Demo Data'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl overflow-hidden">
@@ -85,7 +238,7 @@ export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch
                 <th className="p-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'ডিভাইস' : 'Device'}</th>
                 <th className="p-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)]">IP</th>
                 <th className="p-3 text-left text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'টাইপ' : 'Type'}</th>
-                <th className="p-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'স্টাফ' : 'Staff'}</th>
+                <th className="p-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'নিবন্ধিত সদস্য' : 'Enrolled'}</th>
                 <th className="p-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'সিঙ্ক' : 'Sync'}</th>
                 <th className="p-3 text-center text-[0.6875rem] font-semibold text-[var(--text-muted)]">{isBn ? 'অ্যাকশন' : 'Action'}</th>
               </tr>
@@ -101,6 +254,9 @@ export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch
                         <div className="text-[0.625rem] text-[var(--text-muted)] flex items-center gap-2">
                           <span>{d.model}</span>
                           {d.location && <span className="opacity-70">· {d.location}</span>}
+                          {d.connectionType === 'cloud_adms' && (
+                            <span className="text-[#7C3AED] font-semibold">· Cloud</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -123,12 +279,28 @@ export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch
                       {d.type === 'punch' ? 'Punch' : d.type === 'rfid' ? 'RFID' : d.type === 'fingerprint' ? 'FP' : d.type === 'face' ? 'Face' : 'Multi'}
                     </span>
                   </td>
-                  <td className="p-3 text-center text-[var(--text-secondary)]">{d.staffCount}</td>
+                  <td className="p-3 text-center">
+                    <button
+                      onClick={() => setEnrollDevice(d)}
+                      className="px-2 py-0.5 rounded-full bg-[#7C3AED12] text-[#7C3AED] hover:bg-[#7C3AED] hover:text-white font-semibold text-[0.6875rem] cursor-pointer border border-[#7C3AED30] transition-all"
+                      title={isBn ? 'সদস্য তালিকা ও নিবন্ধন' : 'Enrolled roster & registration'}
+                    >
+                      {d.enrolledUsers?.length ?? d.staffCount ?? 0} {isBn ? 'জন' : ''}
+                    </button>
+                  </td>
                   <td className="p-3 text-center text-[0.625rem] text-[var(--text-muted)]">
                     {d.lastSync ? new Date(d.lastSync).toLocaleString('en', { hour: '2-digit', minute: '2-digit', hour12: true, day: '2-digit', month: 'short' }) : '—'}
                   </td>
                   <td className="p-3">
                     <div className="flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => setEnrollDevice(d)}
+                        title={isBn ? 'সদস্য নিবন্ধন (শিক্ষার্থী ও স্টাফ)' : 'Register Members (Students & Staff)'}
+                        className="px-2 py-1 rounded-md bg-[#7C3AED18] border border-[#7C3AED40] text-[#7C3AED] hover:bg-[#7C3AED] hover:text-white flex items-center gap-1 text-[0.625rem] font-semibold cursor-pointer transition-all"
+                      >
+                        <UserPlus size={11} />
+                        <span>{isBn ? 'নিবন্ধন' : 'Enroll'}</span>
+                      </button>
                       <button
                         onClick={() => handleTestConnection(d.id)}
                         disabled={syncingDevice === d.id}
@@ -271,6 +443,22 @@ export function DeviceManagementTab({ isBn, devices, setDevices, onSimulatePunch
           </div>
         </div>,
         document.body
+      )}
+      {showGuideModal && (
+        <DeviceConnectionGuideModal
+          isBn={isBn}
+          onClose={() => setShowGuideModal(false)}
+        />
+      )}
+
+      {enrollDevice && (
+        <DeviceEnrollmentModal
+          isBn={isBn}
+          device={enrollDevice}
+          allPeople={allPeople}
+          onSimulatePunch={onSimulatePunch}
+          onClose={() => setEnrollDevice(null)}
+        />
       )}
     </>
   )

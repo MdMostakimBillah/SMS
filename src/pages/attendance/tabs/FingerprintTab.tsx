@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
-import { Fingerprint, CheckCircle, Search, Zap, GraduationCap, UserCheck } from 'lucide-react'
+import { Fingerprint, CheckCircle, Search, Zap, GraduationCap, UserCheck, Laptop } from 'lucide-react'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { authenticateWebAuthnDevice } from '@/hooks/useWebAuthn'
 import type { FpEntry } from '../types'
 import { StatsRow } from './StatsRow'
 
@@ -9,12 +10,13 @@ interface FingerprintTabProps {
   isBn: boolean
   fpEntries: FpEntry[]
   setFpEntries: React.Dispatch<React.SetStateAction<FpEntry[]>> | ((entries: FpEntry[] | ((prev: FpEntry[]) => FpEntry[])) => void)
-  onSimulatePunch?: (personId: string, method?: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'mobile', deviceId?: string) => Promise<any>
+  onSimulatePunch?: (personId: string, method?: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'mobile', deviceId?: string) => Promise<unknown>
 }
 
 export function FingerprintTab({ isBn, fpEntries, setFpEntries, onSimulatePunch }: FingerprintTabProps) {
   const [fpSearch, setFpSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<'all' | 'student' | 'staff'>('all')
+  const [authPendingStaffId, setAuthPendingStaffId] = useState<string | null>(null)
   const debouncedSearch = useDebouncedValue(fpSearch, 200)
 
   const filteredEntries = useMemo(() => {
@@ -30,6 +32,21 @@ export function FingerprintTab({ isBn, fpEntries, setFpEntries, onSimulatePunch 
 
   const studentCount = useMemo(() => fpEntries.filter((e) => e.staffId.startsWith('STU')).length, [fpEntries])
   const staffCount = useMemo(() => fpEntries.filter((e) => !e.staffId.startsWith('STU')).length, [fpEntries])
+
+  const handleBiometricAuthPunch = async (entry: FpEntry) => {
+    if (!entry.biometricCredentialId || !onSimulatePunch) return
+    setAuthPendingStaffId(entry.staffId)
+    try {
+      const verified = await authenticateWebAuthnDevice({ credentialId: entry.biometricCredentialId })
+      if (verified) {
+        await onSimulatePunch(entry.staffId, 'fingerprint', 'BIO-HARDWARE')
+      }
+    } catch {
+      // Handled via toast banner in parent
+    } finally {
+      setAuthPendingStaffId(null)
+    }
+  }
 
   const stats = useMemo(
     () => [
@@ -64,6 +81,23 @@ export function FingerprintTab({ isBn, fpEntries, setFpEntries, onSimulatePunch 
   return (
     <>
       <StatsRow stats={stats} />
+
+      {/* Device-Free Testing Guidance Banner */}
+      <div className="bg-[var(--bg-secondary)] border border-[var(--amber)]/30 rounded-xl p-3 mb-3 text-[0.6875rem] flex items-start gap-2.5 shadow-xs">
+        <div className="w-6 h-6 rounded-md bg-[var(--amber-light)] flex items-center justify-center text-[var(--amber)] shrink-0 mt-0.5">
+          <Fingerprint size={13} />
+        </div>
+        <div className="flex-1">
+          <p className="font-semibold text-[var(--text-primary)]">
+            {isBn ? 'ডিভাইস ছাড়া কীভাবে ফিঙ্গারপ্রিন্ট টেস্ট করবেন?' : 'How to test Fingerprint attendance without a punch device?'}
+          </p>
+          <p className="text-[0.625rem] text-[var(--text-secondary)] mt-0.5">
+            {isBn
+              ? '১. বাস্তব বায়োমেট্রিক: নতুন এনরোল করার সময় আপনার ল্যাপটপ/ফোনের সেন্সরে আঙুল স্পর্শ করুন। নিবন্ধিত হলে "বায়োমেট্রিক" বাটনে ক্লিক করে স্পর্শের মাধ্যমে পাঞ্চ দিন। ২. সফটওয়্যার পাঞ্চ: যেকোনো ব্যক্তির পাশে "পাঞ্চ" বাটনে ক্লিক করে তাত্ক্ষণিক টেস্ট করুন।'
+              : '1. Real Biometrics: Touch your laptop/phone sensor during enrollment. Once enrolled, click "Biometric" to verify by touch. 2. Instant Punch: Click "Punch" next to any member for instant software testing.'}
+          </p>
+        </div>
+      </div>
 
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <div className="flex items-center gap-2 flex-1 min-w-[16rem]">
@@ -168,24 +202,32 @@ export function FingerprintTab({ isBn, fpEntries, setFpEntries, onSimulatePunch 
                       </div>
                     </td>
                     <td className="p-2.5 text-center">
-                      <span
-                        className={`text-[0.5625rem] px-2.5 py-1 rounded-full font-semibold ${
-                          e.status === 'enrolled'
-                            ? 'bg-[var(--green-light)] text-[var(--green)]'
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span
+                          className={`text-[0.5625rem] px-2.5 py-0.5 rounded-full font-semibold ${
+                            e.status === 'enrolled'
+                              ? 'bg-[var(--green-light)] text-[var(--green)]'
+                              : e.status === 'pending'
+                                ? 'bg-[var(--amber-light)] text-[var(--amber)]'
+                                : 'bg-[var(--red-light)] text-[var(--red)]'
+                          }`}
+                        >
+                          {e.status === 'enrolled'
+                            ? isBn ? 'এনরোলড' : 'Enrolled'
                             : e.status === 'pending'
-                              ? 'bg-[var(--amber-light)] text-[var(--amber)]'
-                              : 'bg-[var(--red-light)] text-[var(--red)]'
-                        }`}
-                      >
-                        {e.status === 'enrolled'
-                          ? isBn ? 'এনরোলড' : 'Enrolled'
-                          : e.status === 'pending'
-                            ? isBn ? 'বকেয়া' : 'Pending'
-                            : isBn ? 'ব্যর্থ' : 'Failed'}
-                      </span>
+                              ? isBn ? 'বকেয়া' : 'Pending'
+                              : isBn ? 'ব্যর্থ' : 'Failed'}
+                        </span>
+                        {e.biometricCredentialId && (
+                          <span className="text-[0.5rem] px-1.5 py-0.2 rounded bg-[var(--brand-light)] text-[var(--brand)] font-medium flex items-center gap-0.5">
+                            <Laptop size={8} />
+                            WebAuthn
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="p-2.5 text-center">
-                      <div className="flex gap-1.5 justify-center">
+                      <div className="flex gap-1.5 justify-center flex-wrap">
                         {onSimulatePunch && e.status === 'enrolled' && (
                           <button
                             onClick={() => onSimulatePunch(e.staffId, 'fingerprint', 'FP-DESK')}
@@ -194,6 +236,19 @@ export function FingerprintTab({ isBn, fpEntries, setFpEntries, onSimulatePunch 
                           >
                             <Zap size={9} />
                             {isBn ? 'পাঞ্চ' : 'Punch'}
+                          </button>
+                        )}
+                        {onSimulatePunch && e.status === 'enrolled' && e.biometricCredentialId && (
+                          <button
+                            onClick={() => handleBiometricAuthPunch(e)}
+                            disabled={authPendingStaffId === e.staffId}
+                            title={isBn ? 'ল্যাপটপ বায়োমেট্রিক সেন্সরে যাচাই করুন' : 'Verify with device fingerprint sensor'}
+                            className="px-2.5 py-1 rounded-md bg-[var(--amber-light)] border border-[var(--amber)] text-[var(--amber)] text-[0.5625rem] font-semibold cursor-pointer hover:bg-[var(--amber)] hover:text-white transition-all flex items-center gap-1"
+                          >
+                            <Laptop size={9} />
+                            {authPendingStaffId === e.staffId
+                              ? (isBn ? 'যাচাই...' : 'Verifying...')
+                              : (isBn ? 'বায়োমেট্রিক' : 'Biometric')}
                           </button>
                         )}
                         <button

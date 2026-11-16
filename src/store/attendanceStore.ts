@@ -2,9 +2,10 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug } from '@/lib/storage'
 import { isLocalComputerMode } from '@/lib/storageMode'
+import { isNetworkOnline } from '@/lib/networkConnectivity'
 import { attendanceApi } from '@/lib/api'
 import { initialDevices, initialRfidEntries, initialFpEntries, initialFaceEntries } from '@/pages/attendance/deviceData'
-import type { DeviceEntry, RfidEntry, FpEntry, FaceEntry, MobileDevice, DeviceLog } from '@/pages/attendance/types'
+import type { DeviceEntry, RfidEntry, FpEntry, FaceEntry, MobileDevice, DeviceLog, DeviceEnrolledUser } from '@/pages/attendance/types'
 import { useTeacherStore } from './teacherStore'
 
 export type AttendanceStatus = 'present' | 'absent' | 'on-leave'
@@ -78,6 +79,7 @@ export interface AttendanceState {
   serverSynced: boolean
   syncing: boolean
   syncError: string | null
+  demoDataCleared: boolean
 
   syncFromServer: (slugOrId?: string) => Promise<void>
 
@@ -109,6 +111,10 @@ export interface AttendanceState {
   updateDevice: (id: string, data: Partial<DeviceEntry>) => void
   deleteDevice: (id: string) => void
   testDeviceConnection: (id: string) => Promise<{ success: boolean; status: 'online' | 'offline' | 'error'; message: string }>
+  enrollMembersToDevice: (deviceId: string, members: DeviceEnrolledUser[]) => void
+  unenrollMemberFromDevice: (deviceId: string, personId: string) => void
+  updateDeviceEnrolledUser: (deviceId: string, personId: string, updates: Partial<DeviceEnrolledUser>) => void
+  importUsbPunchLogs: (deviceId: string, punchRecords: Array<{ pin: string; time: string; date?: string; type?: 'in' | 'out' }>) => Promise<{ processed: number; matched: number; failed: number }>
 
   // RFID actions
   setRfidEntries: (entries: RfidEntry[] | ((prev: RfidEntry[]) => RfidEntry[])) => void
@@ -135,6 +141,7 @@ export interface AttendanceState {
   updateMobileLastAuth: (id: string, time: string) => void
 
   loadSampleDevices: () => void
+  clearDemoData: () => void
 }
 
 export const useAttendanceStore = create<AttendanceState>()(
@@ -151,6 +158,7 @@ export const useAttendanceStore = create<AttendanceState>()(
       serverSynced: false,
       syncing: false,
       syncError: null,
+      demoDataCleared: false,
 
       loadSampleDevices: () => {
         set({
@@ -158,14 +166,27 @@ export const useAttendanceStore = create<AttendanceState>()(
           rfidEntries: initialRfidEntries,
           fpEntries: initialFpEntries,
           faceEntries: initialFaceEntries,
+          demoDataCleared: false,
+        })
+        queueServerSync(get)
+      },
+
+      clearDemoData: () => {
+        set({
+          devices: [],
+          rfidEntries: [],
+          fpEntries: [],
+          faceEntries: [],
+          deviceLogs: [],
+          demoDataCleared: true,
         })
         queueServerSync(get)
       },
 
       syncFromServer: async (slugOrId?: string) => {
+        const current = get()
         if (isLocalComputerMode()) {
-          const current = get()
-          if (!current.devices || current.devices.length === 0) {
+          if (!current.demoDataCleared && current.devices === undefined) {
             set({
               devices: initialDevices,
               rfidEntries: initialRfidEntries,
@@ -190,27 +211,18 @@ export const useAttendanceStore = create<AttendanceState>()(
 
             const finalDevices = Array.isArray(res.devices) && res.devices.length > 0
               ? res.devices
-              : (current.devices && current.devices.length > 0 ? current.devices : initialDevices)
+              : (current.demoDataCleared ? [] : (current.devices && current.devices.length > 0 ? current.devices : []))
             let finalRfid = Array.isArray(res.rfidEntries) && res.rfidEntries.length > 0
               ? res.rfidEntries
-              : (current.rfidEntries && current.rfidEntries.length > 0 ? current.rfidEntries : initialRfidEntries)
-            if (!finalRfid.some((r) => r.type === 'Student' || r.staffId.startsWith('STU'))) {
-              finalRfid = [...finalRfid, ...initialRfidEntries.filter((r) => r.type === 'Student')]
-            }
+              : (current.demoDataCleared ? [] : (current.rfidEntries && current.rfidEntries.length > 0 ? current.rfidEntries : []))
 
             let finalFp = Array.isArray(res.fpEntries) && res.fpEntries.length > 0
               ? res.fpEntries
-              : (current.fpEntries && current.fpEntries.length > 0 ? current.fpEntries : initialFpEntries)
-            if (!finalFp.some((e) => e.staffId.startsWith('STU'))) {
-              finalFp = [...finalFp, ...initialFpEntries.filter((e) => e.staffId.startsWith('STU'))]
-            }
+              : (current.demoDataCleared ? [] : (current.fpEntries && current.fpEntries.length > 0 ? current.fpEntries : []))
 
             let finalFace = Array.isArray(res.faceEntries) && res.faceEntries.length > 0
               ? res.faceEntries
-              : (current.faceEntries && current.faceEntries.length > 0 ? current.faceEntries : initialFaceEntries)
-            if (!finalFace.some((e) => e.staffId.startsWith('STU'))) {
-              finalFace = [...finalFace, ...initialFaceEntries.filter((e) => e.staffId.startsWith('STU'))]
-            }
+              : (current.demoDataCleared ? [] : (current.faceEntries && current.faceEntries.length > 0 ? current.faceEntries : []))
             const finalMobile = Array.isArray(res.mobileDevices) && res.mobileDevices.length > 0 ? res.mobileDevices : current.mobileDevices
             const finalLogs = Array.isArray(res.deviceLogs) && res.deviceLogs.length > 0 ? res.deviceLogs : current.deviceLogs
 
@@ -314,6 +326,17 @@ export const useAttendanceStore = create<AttendanceState>()(
       },
 
       recordPunch: async ({ personId, date, time, type, method = 'punch', deviceId = 'LOCAL' }) => {
+        // In Local PC Storage mode, hardware attendance punches require internet connectivity
+        if (isLocalComputerMode() && method !== 'manual') {
+          if (!isNetworkOnline()) {
+            return {
+              success: false,
+              punch: { time: time || '00:00', type: type || 'in', method, deviceId },
+              status: 'absent' as AttendanceStatus,
+            }
+          }
+        }
+
         const now = new Date()
         const targetDate = date || now.toISOString().split('T')[0]
         const targetTime = time || `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
@@ -423,15 +446,32 @@ export const useAttendanceStore = create<AttendanceState>()(
       },
 
       deleteDevice: (id) => {
-        set((state) => ({
-          devices: state.devices.filter((d) => d.id !== id),
-        }))
+        set((state) => {
+          const updated = state.devices.filter((d) => d.id !== id)
+          return {
+            devices: updated,
+            demoDataCleared: updated.length === 0 ? true : state.demoDataCleared,
+          }
+        })
         queueServerSync(get)
       },
 
       testDeviceConnection: async (id) => {
         const dev = get().devices.find((d) => d.id === id)
         if (!dev) return { success: false, status: 'error', message: 'Device not found' }
+
+        // Local PC Storage Mode strictly requires internet connectivity for hardware device communication
+        if (isLocalComputerMode()) {
+          const online = isNetworkOnline()
+          if (!online) {
+            get().updateDevice(id, { status: 'offline', lastSync: new Date().toISOString() })
+            return {
+              success: false,
+              status: 'offline',
+              message: 'No internet connection detected. In Local PC Storage mode, an active internet connection is required to connect devices and receive punch data.',
+            }
+          }
+        }
 
         // Simulation/verification of device ping
         const isLikelyOnline = dev.ip.startsWith('192.168.') || dev.ip.startsWith('10.') || dev.ip.startsWith('127.0.0.1') || dev.ip.includes('.')
@@ -442,6 +482,99 @@ export const useAttendanceStore = create<AttendanceState>()(
           status: newStatus,
           message: isLikelyOnline ? `Connected to ${dev.name} (${dev.ip}) successfully.` : `Could not reach ${dev.ip}. Check LAN cable or power.`,
         }
+      },
+
+      enrollMembersToDevice: (deviceId, members) => {
+        set((state) => {
+          const updatedDevices = state.devices.map((d) => {
+            if (d.id !== deviceId) return d
+            const existing = d.enrolledUsers || []
+            const existingMap = new Map(existing.map((m) => [m.personId, m]))
+            for (const member of members) {
+              existingMap.set(member.personId, {
+                ...(existingMap.get(member.personId) || {}),
+                ...member,
+                syncStatus: 'synced',
+              })
+            }
+            const combined = Array.from(existingMap.values())
+            return {
+              ...d,
+              enrolledUsers: combined,
+              staffCount: combined.length,
+              lastSync: new Date().toISOString(),
+            }
+          })
+          return { devices: updatedDevices }
+        })
+        queueServerSync(get)
+      },
+
+      unenrollMemberFromDevice: (deviceId, personId) => {
+        set((state) => {
+          const updatedDevices = state.devices.map((d) => {
+            if (d.id !== deviceId) return d
+            const filtered = (d.enrolledUsers || []).filter((m) => m.personId !== personId)
+            return {
+              ...d,
+              enrolledUsers: filtered,
+              staffCount: filtered.length,
+            }
+          })
+          return { devices: updatedDevices }
+        })
+        queueServerSync(get)
+      },
+
+      updateDeviceEnrolledUser: (deviceId, personId, updates) => {
+        set((state) => {
+          const updatedDevices = state.devices.map((d) => {
+            if (d.id !== deviceId) return d
+            const updated = (d.enrolledUsers || []).map((m) =>
+              m.personId === personId ? { ...m, ...updates } : m
+            )
+            return { ...d, enrolledUsers: updated }
+          })
+          return { devices: updatedDevices }
+        })
+        queueServerSync(get)
+      },
+
+      importUsbPunchLogs: async (deviceId, punchRecords) => {
+        const dev = get().devices.find((d) => d.id === deviceId)
+        const enrolled = dev?.enrolledUsers || []
+        let matched = 0
+        let failed = 0
+
+        for (const p of punchRecords) {
+          let targetMember = enrolled.find((m) => m.devicePin === p.pin || m.cardNo === p.pin)
+          if (!targetMember) {
+            for (const d of get().devices) {
+              const found = (d.enrolledUsers || []).find((m) => m.devicePin === p.pin || m.cardNo === p.pin)
+              if (found) {
+                targetMember = found
+                break
+              }
+            }
+          }
+
+          if (targetMember) {
+            await get().recordPunch({
+              personId: targetMember.personId,
+              date: p.date,
+              time: p.time,
+              type: p.type,
+              method: 'punch',
+              deviceId,
+            })
+            matched++
+          } else {
+            failed++
+          }
+        }
+
+        get().updateDevice(deviceId, { lastSync: new Date().toISOString() })
+        return { processed: punchRecords.length, matched, failed }
       },
 
       setRfidEntries: (entries) => {
@@ -573,6 +706,7 @@ export const useAttendanceStore = create<AttendanceState>()(
         mobileDevices: state.mobileDevices,
         deviceLogs: state.deviceLogs,
         serverSynced: state.serverSynced,
+        demoDataCleared: state.demoDataCleared,
       }),
     }
   )
@@ -581,15 +715,16 @@ export const useAttendanceStore = create<AttendanceState>()(
 registerStoreReset(() => {
   useAttendanceStore.setState({
     attendance: {},
-    devices: initialDevices,
-    rfidEntries: initialRfidEntries,
-    fpEntries: initialFpEntries,
+    devices: [],
+    rfidEntries: [],
+    fpEntries: [],
     faceEntries: [],
     mobileDevices: [],
     deviceLogs: [],
     serverSynced: false,
     syncing: false,
     syncError: null,
+    demoDataCleared: false,
   })
 })
 

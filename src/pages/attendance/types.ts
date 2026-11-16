@@ -7,6 +7,20 @@ export type Person = {
   section?: string
 }
 
+export type DeviceConnectionType = 'lan' | 'cloud_adms' | 'usb_offline'
+
+export type DeviceEnrolledUser = {
+  personId: string
+  personType: 'student' | 'staff'
+  personName: string
+  devicePin: string
+  cardNo?: string
+  fpEnrolled?: boolean
+  faceEnrolled?: boolean
+  enrolledAt: string
+  syncStatus: 'synced' | 'pending' | 'failed'
+}
+
 export type DeviceEntry = {
   id: string
   name: string
@@ -18,6 +32,10 @@ export type DeviceEntry = {
   type: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'multi'
   lastSync: string
   staffCount: number
+  connectionType?: DeviceConnectionType
+  cloudToken?: string
+  pushUrl?: string
+  enrolledUsers?: DeviceEnrolledUser[]
 }
 
 export type RfidEntry = {
@@ -34,6 +52,9 @@ export type FpEntry = {
   fpId: number
   templates: number
   status: 'enrolled' | 'pending' | 'failed'
+  biometricCredentialId?: string
+  biometricType?: 'hardware_webauthn' | 'simulated'
+  enrolledAt?: string
 }
 
 export type FaceEntry = {

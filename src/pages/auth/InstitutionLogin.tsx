@@ -117,6 +117,7 @@ function loadInstitutionData(inst: Institution, opts: LoadInstitutionOptions = {
   // `null` while seeding, so every "prefer the existing config" branch falls
   // through to the new institution's own values instead.
   const prev = opts.fresh ? null : current
+  const effectiveStorageMode = inst.storageMode || prev?.storageMode || 'cloud'
   useClassStore.getState().updateInstitution({
     name: inst.name, nameBn: inst.nameBn, logo: inst.logo, banner: inst.banner,
     brandName: inst.brandName || inst.name, motto: inst.motto, mottoBn: inst.mottoBn,
@@ -127,10 +128,16 @@ function loadInstitutionData(inst: Institution, opts: LoadInstitutionOptions = {
     breaks: prev?.breaks?.length ? prev.breaks : [],
     currentSession: prev?.currentSession || inst.sessions?.[0] || '2025-26',
     sessions: prev?.sessions?.length ? prev.sessions : (inst.sessions?.length ? inst.sessions : ['2025-26']),
+    storageMode: effectiveStorageMode,
+    serverUrl: inst.serverUrl || prev?.serverUrl || '',
+    folderName: inst.folderName || prev?.folderName || '',
     lightColors: prev && prev.lightColors?.brand !== defaultThemeColors.brand ? prev.lightColors : generateLightColors(brandColor),
     darkColors: prev && prev.darkColors?.brand !== defaultThemeColorsDark.brand ? prev.darkColors : generateDarkColors(brandColor),
     bannerPosition: prev?.bannerPosition || { x: 0, y: 0 },
   })
+  if (effectiveStorageMode === 'local_computer' || effectiveStorageMode === 'local_server') {
+    setLocalStorageMode(effectiveStorageMode, inst.serverUrl || prev?.serverUrl || '')
+  }
 }
 
 export { loadInstitutionData }

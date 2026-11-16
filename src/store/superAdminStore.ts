@@ -64,6 +64,7 @@ export interface Institution {
   endTime: string
   optionalSubjects: string[]
   sessions: string[]
+  currentSession?: string
   /**
    * Institution admin password — session-only convenience value so admins can
    * view/copy it right after creation. NEVER persisted: `partialize` strips it

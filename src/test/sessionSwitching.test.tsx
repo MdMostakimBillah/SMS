@@ -4,6 +4,9 @@ import { MemoryRouter } from 'react-router-dom'
 import Sidebar from '@/components/layouts/Sidebar'
 import { SessionManagementPanel } from '@/pages/settings/panels/SessionManagement'
 import { useClassStore } from '@/store/classStore'
+import { isLocalComputerMode, setLocalStorageMode } from '@/lib/storageMode'
+import { shouldBlockDomainOverwrite } from '@/lib/vault/vault'
+import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
 
 import React, { createContext } from 'react'
 
@@ -175,5 +178,112 @@ describe('Session Creation and Switching', () => {
 
     expect(useClassStore.getState().institution.currentSession).toBe('2027-28')
     expect(useClassStore.getState().institution.sessions).toContain('2027-28')
+  })
+
+  it('Local PC storage mode session creation, switching and persistence', () => {
+    // 1. Configure institution for Local Computer mode
+    setLocalStorageMode('local_computer')
+    useClassStore.setState((prev) => ({
+      ...prev,
+      institution: {
+        ...prev.institution,
+        storageMode: 'local_computer',
+      },
+    }))
+
+    expect(isLocalComputerMode()).toBe(true)
+
+    // 2. Add and switch to a new session
+    const store = useClassStore.getState()
+    store.addSession('2026-27')
+    store.switchSession('2026-27')
+
+    const afterSwitch = useClassStore.getState()
+    expect(afterSwitch.institution.currentSession).toBe('2026-27')
+    expect(afterSwitch.institution.sessions).toContain('2026-27')
+    expect(afterSwitch.classes).toEqual([]) // new session starts empty
+
+    // 3. Add a class to the new session
+    store.addClass({
+      id: 'CLS-NEW',
+      name: 'Class 6',
+      nameBn: 'শ্রেণি ৬',
+      sections: [],
+      subjectIds: [],
+      startTime: '08:00',
+      endTime: '13:00',
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+    })
+
+    expect(useClassStore.getState().classes.length).toBe(1)
+    expect(useClassStore.getState().sessionClasses['2026-27'].length).toBe(1)
+
+    // 4. Switch back to 2025-26 and verify original classes are restored
+    store.switchSession('2025-26')
+    expect(useClassStore.getState().institution.currentSession).toBe('2025-26')
+    expect(useClassStore.getState().classes.length).toBe(1)
+    expect(useClassStore.getState().classes[0].id).toBe('CLS-1')
+
+    // 5. Switch back to 2026-27 and verify session class is preserved
+    store.switchSession('2026-27')
+    expect(useClassStore.getState().institution.currentSession).toBe('2026-27')
+    expect(useClassStore.getState().classes[0].id).toBe('CLS-NEW')
+  })
+
+  it('shouldBlockDomainOverwrite does not block zero-class new sessions in multi-session setup', () => {
+    localStorage.setItem('edutech_inst_slug', 'demo')
+    localStorage.setItem(
+      'edutech-classes_demo',
+      JSON.stringify({
+        state: {
+          institution: {
+            currentSession: '2026-27',
+            sessions: ['2025-26', '2026-27'],
+          },
+          sessionClasses: {
+            '2025-26': [{ id: 'CLS-1', name: 'Class 1' }],
+            '2026-27': [],
+          },
+        },
+      })
+    )
+
+    const diskText = JSON.stringify({
+      state: {
+        classes: [{ id: 'CLS-1', name: 'Class 1' }],
+      },
+    })
+    const incomingText = JSON.stringify({
+      state: {
+        classes: [],
+        institution: { currentSession: '2026-27', sessions: ['2025-26', '2026-27'] },
+      },
+    })
+
+    const checkClasses = shouldBlockDomainOverwrite('classes.json', incomingText, diskText)
+    expect(checkClasses.blocked).toBe(false)
+
+    const checkRoutines = shouldBlockDomainOverwrite('routines.json', '[]', diskText)
+    expect(checkRoutines.blocked).toBe(false)
+
+    const checkSections = shouldBlockDomainOverwrite('sections.json', '[]', diskText)
+    expect(checkSections.blocked).toBe(false)
+  })
+
+  it('loadInstitutionData correctly sets and preserves local_computer storageMode', () => {
+    const mockInst: any = {
+      name: 'Local High School',
+      nameBn: 'লোকাল হাই স্কুল',
+      storageMode: 'local_computer',
+      sessions: ['2025-26'],
+      brandColor: '#6366f1',
+    }
+
+    loadInstitutionData(mockInst, { fresh: true })
+
+    const inst = useClassStore.getState().institution
+    expect(inst.storageMode).toBe('local_computer')
+    expect(isLocalComputerMode()).toBe(true)
   })
 })

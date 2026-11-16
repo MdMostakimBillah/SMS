@@ -700,11 +700,27 @@ export function normalizeVaultJsonForStore(
 
     if (isInst) {
       const inst = parsed.state?.institution || parsed.institution || parsed
+      const newCurrentSession = existingState.institution?.currentSession || inst.currentSession || '2025-26'
+      const targetClasses =
+        existingState.sessionClasses?.[newCurrentSession] ||
+        (newCurrentSession === existingState.institution?.currentSession ? (existingState.classes || []) : [])
+      const targetRoutines =
+        existingState.sessionRoutines?.[newCurrentSession] ||
+        (newCurrentSession === existingState.institution?.currentSession ? (existingState.routines || []) : [])
+      const mergedSessions = Array.from(new Set([
+        ...(existingState.institution?.sessions || []),
+        ...(inst.sessions || []),
+        newCurrentSession,
+      ])).filter(Boolean)
       const finalState = {
         ...existingState,
+        classes: targetClasses,
+        routines: targetRoutines,
         institution: {
           ...existingState.institution,
           ...inst,
+          sessions: mergedSessions,
+          currentSession: newCurrentSession,
         },
         serverSynced: true,
         syncing: false,
@@ -806,9 +822,21 @@ export function normalizeVaultJsonForStore(
       mergedSessionRoutines[curSession] = finalRoutines
     }
 
+    const mergedSessions = Array.from(new Set([
+      ...(existingState.institution?.sessions || []),
+      ...(parsedInner.institution?.sessions || []),
+      curSession,
+    ])).filter(Boolean)
+
     const finalState = {
       ...existingState,
       ...parsedInner,
+      institution: {
+        ...(existingState.institution || {}),
+        ...(parsedInner.institution || {}),
+        sessions: mergedSessions,
+        currentSession: curSession,
+      },
       classes: finalClasses,
       routines: finalRoutines,
       sessionClasses: mergedSessionClasses,

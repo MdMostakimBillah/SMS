@@ -4,6 +4,7 @@ import { useAttendanceStore } from '@/store/attendanceStore'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import type { RfidEntry } from '../types'
 import { StatsRow } from './StatsRow'
+import { RfidSwipeTester } from './RfidSwipeTester'
 
 interface RfidCardsTabProps {
   isBn: boolean
@@ -74,6 +75,12 @@ export function RfidCardsTab({ isBn, rfidEntries, setRfidEntries, onSimulatePunc
   return (
     <>
       <StatsRow stats={stats} />
+
+      <RfidSwipeTester
+        isBn={isBn}
+        rfidEntries={rfidEntries}
+        onSimulatePunch={onSimulatePunch}
+      />
 
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <div className="flex items-center gap-2 flex-1 min-w-[16rem]">

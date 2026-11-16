@@ -375,5 +375,186 @@ export function attendanceRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
+  /**
+   * POST /api/attendance/push
+   * Cloud push receiver for biometric punch machines (ADMS, Hikvision ISAPI, Webhook, ZKTeco).
+   * Supports both direct webhook JSON and ADMS table=ATTLOG text formats.
+   */
+  router.all('/push', async (req: Request, res: Response) => {
+    try {
+      const serialNo = (req.query.SN as string) || (req.body?.serialNo as string) || (req.body?.deviceId as string) || 'ADMS-DEVICE'
+      const schoolToken = (req.query.token as string) || (req.headers['x-device-token'] as string) || (req.body?.token as string)
+      const requestedSchoolId = (req.query.schoolId as string) || (req.query.slug as string) || (req.body?.schoolId as string)
+
+      let school = null
+      if (requestedSchoolId) {
+        school = await prisma.school.findFirst({
+          where: { OR: [{ id: requestedSchoolId }, { domain: requestedSchoolId }] },
+          select: { id: true, storageMode: true, attendanceData: true, devicesData: true },
+        })
+      }
+      if (!school && schoolToken) {
+        const schools = await prisma.school.findMany({
+          select: { id: true, storageMode: true, attendanceData: true, devicesData: true },
+          take: 20,
+        })
+        school = schools.find((s) => typeof s.devicesData === 'string' && s.devicesData.includes(schoolToken)) || null
+      }
+      if (!school) {
+        school = await prisma.school.findFirst({
+          select: { id: true, storageMode: true, attendanceData: true, devicesData: true },
+        })
+      }
+
+      if (!school) {
+        return res.status(404).send('Institution not found')
+      }
+
+      let parsedDevices: any = {}
+      try {
+        if ((school as any).devicesData) {
+          parsedDevices = typeof (school as any).devicesData === 'string'
+            ? JSON.parse((school as any).devicesData)
+            : (school as any).devicesData
+        }
+      } catch {
+        parsedDevices = {}
+      }
+
+      let parsedAttendance: any = {}
+      try {
+        if ((school as any).attendanceData) {
+          parsedAttendance = typeof (school as any).attendanceData === 'string'
+            ? JSON.parse((school as any).attendanceData)
+            : (school as any).attendanceData
+        }
+      } catch {
+        parsedAttendance = {}
+      }
+
+      const rawRecords: Array<{ pin: string; time?: string; date?: string; type?: 'in' | 'out'; method?: string }> = []
+
+      if (Array.isArray(req.body?.punches)) {
+        for (const p of req.body.punches) {
+          rawRecords.push({
+            pin: String(p.pin || p.userId || p.personId || p.cardNo || ''),
+            time: p.time,
+            date: p.date,
+            type: p.type,
+            method: p.method || 'punch',
+          })
+        }
+      } else if (req.body?.pin || req.body?.userId || req.body?.personId) {
+        rawRecords.push({
+          pin: String(req.body.pin || req.body.userId || req.body.personId || ''),
+          time: req.body.time,
+          date: req.body.date,
+          type: req.body.type,
+          method: req.body.method || 'punch',
+        })
+      } else if (typeof req.body === 'string' && req.body.includes('\t')) {
+        const lines = req.body.split(/\r?\n/)
+        for (const line of lines) {
+          const parts = line.split('\t')
+          if (parts.length >= 2) {
+            const pin = parts[0].trim()
+            const dt = parts[1].trim()
+            const [d, t] = dt.includes(' ') ? dt.split(' ') : [undefined, dt]
+            rawRecords.push({ pin, date: d, time: t ? t.slice(0, 5) : undefined, method: 'punch' })
+          }
+        }
+      }
+
+      const now = new Date()
+      const today = now.toISOString().split('T')[0]
+      const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+
+      let recordedCount = 0
+      const newLogs: any[] = []
+
+      for (const rec of rawRecords) {
+        if (!rec.pin) continue
+        let targetPersonId = ''
+        const allDevices = Array.isArray(parsedDevices.devices) ? parsedDevices.devices : []
+        for (const d of allDevices) {
+          const enrolled = Array.isArray(d.enrolledUsers) ? d.enrolledUsers : []
+          const found = enrolled.find((m: any) => String(m.devicePin) === rec.pin || String(m.cardNo) === rec.pin || m.personId === rec.pin)
+          if (found) {
+            targetPersonId = found.personId
+            break
+          }
+        }
+
+        if (!targetPersonId && Array.isArray(parsedDevices.rfidEntries)) {
+          const rfidMatch = parsedDevices.rfidEntries.find((r: any) => r.rfidCard === rec.pin || r.staffId === rec.pin)
+          if (rfidMatch) targetPersonId = rfidMatch.staffId
+        }
+
+        if (!targetPersonId) {
+          targetPersonId = rec.pin
+        }
+
+        const date = rec.date || today
+        const time = rec.time || currentTime
+        const dayAtt = parsedAttendance[date] || {}
+        const existingPersonAtt = dayAtt[targetPersonId] || { status: 'present', punches: [] }
+        const punches = existingPersonAtt.punches || []
+
+        let punchType = rec.type
+        if (!punchType) {
+          const lastPunch = punches[punches.length - 1]
+          punchType = !lastPunch || lastPunch.type === 'out' ? 'in' : 'out'
+        }
+
+        const newPunch = { time, type: punchType, method: rec.method || 'punch', deviceId: serialNo }
+        dayAtt[targetPersonId] = {
+          status: 'present',
+          punches: [...punches, newPunch],
+          note: existingPersonAtt.note,
+        }
+        parsedAttendance[date] = dayAtt
+
+        newLogs.push({
+          id: `LOG-PUSH-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          timestamp: now.toISOString(),
+          date,
+          time,
+          personId: targetPersonId,
+          type: punchType,
+          method: rec.method || 'punch',
+          deviceId: serialNo,
+        })
+        recordedCount++
+      }
+
+      if (recordedCount > 0 && school.storageMode !== 'local_computer') {
+        const existingLogs = Array.isArray(parsedDevices.deviceLogs) ? parsedDevices.deviceLogs : []
+        parsedDevices.deviceLogs = [...newLogs, ...existingLogs].slice(0, 500)
+
+        await prisma.school.update({
+          where: { id: school.id },
+          data: {
+            attendanceData: JSON.stringify(parsedAttendance),
+            devicesData: JSON.stringify(parsedDevices),
+          } as any,
+        })
+      }
+
+      if (req.query.table === 'ATTLOG' || req.query.SN) {
+        return res.send(`OK: ${recordedCount}`)
+      }
+
+      res.json({
+        success: true,
+        recorded: recordedCount,
+        deviceId: serialNo,
+        timestamp: now.toISOString(),
+      })
+    } catch (err) {
+      console.error('[attendance/push] Error:', err instanceof Error ? err.message : err)
+      res.status(500).send('ERROR')
+    }
+  })
+
   return router
 }

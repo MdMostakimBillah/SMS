@@ -124,6 +124,7 @@ export default function DeviceTab({ isBn, date }: { isBn: boolean; date: string 
           devices={tab.devices}
           setDevices={tab.setDevices}
           onSimulatePunch={tab.handleSimulatePunch}
+          allPeople={tab.allPeople}
         />
       )}
       {tab.deviceTab === 'rfid' && (

@@ -243,6 +243,8 @@ export default React.memo(function InstitutionTab({
   const [backupLoading, setBackupLoading] = useState(false)
   const [backupNotice, setBackupNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [showCloudPermissionModal, setShowCloudPermissionModal] = useState(false)
+  const [quickSessionInput, setQuickSessionInput] = useState('')
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
   const restoreFileRef = useRef<HTMLInputElement>(null)
 
   const handleQuickTelegramBackup = async () => {
@@ -510,12 +512,101 @@ export default React.memo(function InstitutionTab({
                     <span className="text-xs font-semibold text-[var(--text-primary)]">{isBn ? 'একাডেমিক সেশন' : 'Academic Session'}</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-[var(--bg-primary)] mb-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-bold text-[var(--brand)]">{institution.currentSession}</span>
-                      <span className="text-[0.625rem] text-[var(--text-muted)]">({isBn ? 'বর্তমান' : 'Current'})</span>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base font-bold text-[var(--brand)]">{institution.currentSession}</span>
+                        <span className="text-[0.625rem] text-[var(--text-muted)]">({isBn ? 'বর্তমান' : 'Current'})</span>
+                      </div>
+                      <div className="text-[0.625rem] text-[var(--text-muted)]">
+                        {institution.sessions.length} {isBn ? 'টি সেশন সংরক্ষিত' : 'sessions saved'}
+                      </div>
                     </div>
-                    <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                      {institution.sessions.length} {isBn ? 'টি সেশন সংরক্ষিত' : 'sessions saved'}
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-[var(--border)]">
+                      {institution.sessions.map((s: string) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => {
+                            switchSession(s)
+                            setInstForm((p: any) => ({ ...p, currentSession: s }))
+                          }}
+                          className={`text-[0.625rem] py-0.5 px-2 rounded cursor-pointer font-[inherit] transition-all ${
+                            s === institution.currentSession
+                              ? 'bg-[var(--brand)] text-white font-semibold border-none shadow-xs'
+                              : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+
+                      {canEdit('classes.institution') && (
+                        !showQuickAdd ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowQuickAdd(true)}
+                            className="text-[0.625rem] py-0.5 px-2 rounded cursor-pointer font-[inherit] transition-all bg-[var(--surface)] text-[var(--brand)] border border-dashed border-[var(--brand)] hover:bg-[var(--brand)] hover:text-white flex items-center gap-1"
+                            title={isBn ? 'নতুন সেশন যোগ করুন' : 'Add New Session'}
+                          >
+                            <Plus size={10} />
+                            {isBn ? 'নতুন সেশন' : 'New Session'}
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-1 w-full mt-1.5 bg-[var(--bg-secondary)] p-1.5 rounded-lg border border-[var(--border)]">
+                            <input
+                              value={quickSessionInput}
+                              onChange={(e) => setQuickSessionInput(e.target.value)}
+                              placeholder="e.g. 2026-27"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  const val = quickSessionInput.trim()
+                                  if (val && !institution.sessions.includes(val)) {
+                                    addSession(val)
+                                    switchSession(val)
+                                    setInstForm((p: any) => ({
+                                      ...p,
+                                      sessions: Array.from(new Set([...(p.sessions || []), val])),
+                                      currentSession: val,
+                                    }))
+                                    setQuickSessionInput('')
+                                    setShowQuickAdd(false)
+                                  }
+                                }
+                              }}
+                              className="flex-1 min-w-[7rem] px-2 py-1 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const val = quickSessionInput.trim()
+                                if (val && !institution.sessions.includes(val)) {
+                                  addSession(val)
+                                  switchSession(val)
+                                  setInstForm((p: any) => ({
+                                    ...p,
+                                    sessions: Array.from(new Set([...(p.sessions || []), val])),
+                                    currentSession: val,
+                                  }))
+                                  setQuickSessionInput('')
+                                  setShowQuickAdd(false)
+                                }
+                              }}
+                              disabled={!quickSessionInput.trim() || institution.sessions.includes(quickSessionInput.trim())}
+                              className="px-2.5 py-1 rounded bg-[var(--brand)] text-white text-[0.625rem] font-semibold border-none cursor-pointer disabled:opacity-50"
+                            >
+                              {isBn ? 'যোগ ও পরিবর্তন' : 'Add & Switch'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowQuickAdd(false)}
+                              className="px-2 py-1 rounded bg-[var(--bg-primary)] text-[var(--text-muted)] text-[0.625rem] border border-[var(--border)] cursor-pointer"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )
+                      )}
                     </div>
                   </div>
                   {(institution.subjects || []).length > 0 && (
@@ -851,6 +942,7 @@ export default React.memo(function InstitutionTab({
                     onChange={(e) => setNewSessionInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
+                        e.preventDefault()
                         const val = newSessionInput.trim()
                         if (val && !instForm.sessions.includes(val)) {
                           setInstForm((p: any) => ({ ...p, sessions: [...p.sessions, val].sort(), currentSession: val }))
@@ -863,23 +955,22 @@ export default React.memo(function InstitutionTab({
                     className="flex-1 py-[0.5625rem] px-[0.6875rem] rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none focus:border-[var(--brand)]"
                     placeholder={isBn ? 'নতুন সেশন যোগ করুন (Enter চাপুন)' : 'Add new session (press Enter)'}
                   />
-                  {canEdit('classes.institution') && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const val = newSessionInput.trim()
-                        if (val && !instForm.sessions.includes(val)) {
-                          setInstForm((p: any) => ({ ...p, sessions: [...p.sessions, val].sort(), currentSession: val }))
-                          setNewSessionInput('')
-                          addSession(val)
-                          switchSession(val)
-                        }
-                      }}
-                      className="py-[0.5625rem] px-3 rounded-lg bg-[var(--brand)] border-none text-white text-[0.75rem] font-medium cursor-pointer font-[inherit] shrink-0"
-                    >
-                      <Plus size={14} />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const val = newSessionInput.trim()
+                      if (val && !instForm.sessions.includes(val)) {
+                        setInstForm((p: any) => ({ ...p, sessions: [...p.sessions, val].sort(), currentSession: val }))
+                        setNewSessionInput('')
+                        addSession(val)
+                        switchSession(val)
+                      }
+                    }}
+                    disabled={!newSessionInput.trim() || instForm.sessions.includes(newSessionInput.trim())}
+                    className="py-[0.5625rem] px-3 rounded-lg bg-[var(--brand)] border-none text-white text-[0.75rem] font-medium cursor-pointer font-[inherit] shrink-0 disabled:opacity-50"
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {instForm.sessions.map((s: string) => (

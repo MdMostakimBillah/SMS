@@ -75,7 +75,7 @@ export function getActiveStorageMode(): StorageMode {
 
     if (typeof sessionStorage !== 'undefined') {
       const sess = sessionStorage.getItem('edutech_storage_mode')
-      if (sess === 'cloud' || sess === 'local_computer' || sess === 'local_server') {
+      if (sess === 'local_computer' || sess === 'local_server') {
         return sess as StorageMode
       }
     }
@@ -87,6 +87,13 @@ export function getActiveStorageMode(): StorageMode {
       }
     } catch {
       /* ignore */
+    }
+
+    if (typeof sessionStorage !== 'undefined') {
+      const sess = sessionStorage.getItem('edutech_storage_mode')
+      if (sess === 'cloud') {
+        return 'cloud'
+      }
     }
 
     if (typeof localStorage !== 'undefined') {

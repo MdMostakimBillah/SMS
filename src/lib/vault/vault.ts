@@ -339,15 +339,22 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
 }
 
 export function shouldBlockDomainOverwrite(subPath: string, incomingText: string, diskText: string): { blocked: boolean; reason?: string } {
-  // In multi-session setups, routines and sections can legitimately be empty in a newly selected session
-  if (subPath.endsWith('routines.json') || subPath.endsWith('sections.json')) {
+  // In multi-session setups, classes, routines and sections can legitimately be empty in a newly selected session
+  if (subPath.endsWith('classes.json') || subPath.endsWith('routines.json') || subPath.endsWith('sections.json')) {
     const slug = currentSlug() || 'demo'
-    const classStoreRaw = localStorage.getItem(`edutech-classes_${slug}`) || localStorage.getItem('edutech-classes')
+    let classStoreRaw = localStorage.getItem(`edutech-classes_${slug}`) || localStorage.getItem('edutech-classes')
+    if (!classStoreRaw && typeof localStorage !== 'undefined') {
+      const matchingKey = Object.keys(localStorage).find((k) => k.startsWith('edutech-classes'))
+      if (matchingKey) classStoreRaw = localStorage.getItem(matchingKey)
+    }
     if (classStoreRaw) {
       try {
         const cs = JSON.parse(classStoreRaw)
         const st = cs?.state ?? cs
-        if (st?.sessionClasses && Object.keys(st.sessionClasses).length > 0) {
+        if (
+          (st?.sessionClasses && Object.keys(st.sessionClasses).length > 0) ||
+          (st?.institution?.sessions && st.institution.sessions.length > 0)
+        ) {
           return { blocked: false }
         }
       } catch { /* ignore */ }

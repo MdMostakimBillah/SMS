@@ -105,6 +105,10 @@ export default function ClassesPage() {
 
   // Fetch institution data and classes/routines from database on mount if available
   useEffect(() => {
+    if (isLocalComputerMode()) {
+      return
+    }
+
     const viewingId = useSuperAdminStore.getState().viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
     const slug = (user?.role === 'super_admin' && viewingId) ? viewingId : (getSlug() || user?.subdomain || (user?.schoolId ? String(user.schoolId) : null) || viewingId)
     if (slug) {
@@ -151,6 +155,17 @@ export default function ClassesPage() {
         const brandColor = instForm.lightColors?.brand || '#6366f1'
         const isLocalComp = instForm.storageMode === 'local_computer'
         setLocalStorageMode(instForm.storageMode || 'cloud', instForm.serverUrl || '')
+
+        const matchingInst = useSuperAdminStore.getState().institutions.find(
+          (i) => i.id === targetId || i.slug === targetId || i.subdomain === targetId
+        )
+        if (matchingInst) {
+          useSuperAdminStore.getState().updateInstitution(matchingInst.id, {
+            sessions: instForm.sessions,
+            currentSession: instForm.currentSession || useClassStore.getState().institution.currentSession,
+          })
+        }
+
         if (isLocalComp || isLocalComputerMode()) {
           return
         }

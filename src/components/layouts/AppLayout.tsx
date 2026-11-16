@@ -18,6 +18,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo'
 import { clearSlug, setSlug } from '@/lib/storage'
 import { useBn } from '@/hooks/useBn'
 import { getVaultStatus, subscribeVault, vaultReconnect, type VaultStatus } from '@/lib/vault/vault'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { prefetchAllRoutes } from '@/lib/prefetchRoutes'
 
 export default function AppLayout() {
@@ -109,6 +110,13 @@ export default function AppLayout() {
     }
 
     if (user?.school) {
+      if (isLocalComputerMode()) {
+        const brand = user.school.brandColor || '#6366f1'
+        const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+        return
+      }
+
       const targetSlug =
         user.schoolDomain ||
         user.school.domain ||
@@ -138,6 +146,7 @@ export default function AppLayout() {
       useClassStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
       useFeeStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
     } else {
+      if (isLocalComputerMode()) return
       const pathSlug =
         (typeof window !== 'undefined' ? window.location.pathname.match(/^\/i\/([^/]+)/)?.[1] : null) ||
         sessionStorage.getItem('edutech_inst_slug') ||

@@ -6,7 +6,7 @@ import { useAttendanceStore } from '@/store/attendanceStore'
 import { logger } from '@/lib/logger'
 import { registerWebAuthnDevice, authenticateWebAuthnDevice, getWebAuthnErrorMessage, getAuthErrorMessage, getDeviceName, saveMobileDevices } from '@/hooks/useWebAuthn'
 import { useInstitutionWifi } from '@/hooks/useInstitutionWifi'
-import type { Person, MobileDevice, DeviceSubTab } from './types'
+import type { Person, MobileDevice, DeviceSubTab, DeviceConnectionType } from './types'
 
 export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
   const { teachers } = useTeacherStore(
@@ -66,11 +66,22 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
   const deviceLogs = useAttendanceStore((s) => s.deviceLogs)
 
   const [showAddDevice, setShowAddDevice] = useState(false)
-  const [newDevice, setNewDevice] = useState({
+  const [newDevice, setNewDevice] = useState<{
+    name: string
+    model: string
+    ip: string
+    port?: number
+    location?: string
+    type: 'punch' | 'rfid' | 'fingerprint' | 'face' | 'multi'
+    connectionType?: DeviceConnectionType
+  }>({
     name: '',
     model: '',
     ip: '',
-    type: 'punch' as 'punch' | 'rfid' | 'fingerprint' | 'face' | 'multi',
+    port: 4370,
+    location: '',
+    type: 'punch',
+    connectionType: 'lan',
   })
   const [deviceTab, setDeviceTab] = useState<DeviceSubTab>('devices')
 
@@ -189,18 +200,30 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
   }
 
   const handleAddDevice = () => {
-    if (newDevice.name && newDevice.ip) {
+    if (newDevice.name.trim()) {
       useAttendanceStore.getState().addDevice({
-        name: newDevice.name,
-        model: newDevice.model,
-        ip: newDevice.ip,
+        name: newDevice.name.trim(),
+        model: newDevice.model || 'Universal Biometric',
+        ip: newDevice.ip || (newDevice.connectionType === 'cloud_adms' ? 'cloud.push.host' : '192.168.1.100'),
+        port: newDevice.port || (newDevice.connectionType === 'cloud_adms' ? 80 : 4370),
+        location: newDevice.location || (isBn ? 'মূল ফটক' : 'Main Gate'),
         status: 'online',
         type: newDevice.type,
+        connectionType: newDevice.connectionType || 'lan',
         lastSync: new Date().toISOString(),
         staffCount: 0,
+        enrolledUsers: [],
       })
       setShowAddDevice(false)
-      setNewDevice({ name: '', model: '', ip: '', type: 'punch' })
+      setNewDevice({
+        name: '',
+        model: '',
+        ip: '',
+        port: 4370,
+        location: '',
+        type: 'punch',
+        connectionType: 'lan',
+      })
     }
   }
 
@@ -220,7 +243,7 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
     }
   }
 
-  const handleAddFp = () => {
+  const handleAddFp = (details?: { credentialId?: string; biometricType?: 'hardware_webauthn' | 'simulated' }) => {
     if (newFP.staffId) {
       const p = allPeople.find((pe) => pe.id === newFP.staffId)
       useAttendanceStore.getState().addFpEntry({
@@ -229,6 +252,9 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
         fpId: fpEntries.length + 1,
         templates: 2,
         status: 'enrolled',
+        biometricCredentialId: details?.credentialId,
+        biometricType: details?.biometricType || (details?.credentialId ? 'hardware_webauthn' : 'simulated'),
+        enrolledAt: new Date().toISOString(),
       })
       setShowAddFP(false)
       setNewFP({ staffId: '' })

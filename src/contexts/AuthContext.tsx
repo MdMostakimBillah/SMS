@@ -5,6 +5,7 @@ import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, gen
 import { useAppStore } from '@/store/appStore'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import {
   saveOfflineSession,
   getOfflineSession,
@@ -140,6 +141,16 @@ function resolveUserSlug(u: User): string {
 
 export function syncUserSchool(school: any, u: SessionUser | User): void {
   if (!school) return
+
+  if (isLocalComputerMode()) {
+    const brandColor = school.brandColor || '#6366f1'
+    const currentTheme = useAppStore.getState().theme
+    const isDark =
+      currentTheme === 'dark' ||
+      (currentTheme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    applyThemeColors(isDark ? generateDarkColors(brandColor) : generateLightColors(brandColor))
+    return
+  }
   const targetSlug =
     u.schoolDomain ||
     school.domain ||

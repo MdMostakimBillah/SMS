@@ -6,6 +6,7 @@ import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/brid
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { classesApi } from '@/lib/api'
 import { getPermanentStorageModeSync, getPermanentTelegramSync } from '@/lib/permanentConfig'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 
 export interface BreakTime {
   id: string
@@ -654,6 +655,16 @@ export const useClassStore = create<ClassState>()(
             sessionRoutines: newSessionRoutines,
           }
         })
+        const slug = getSlug()
+        if (slug) {
+          const inst = useSuperAdminStore.getState().institutions.find((i) => i.slug === slug || i.subdomain === slug || i.id === slug)
+          if (inst) {
+            useSuperAdminStore.getState().updateInstitution(inst.id, {
+              currentSession: session,
+              sessions: Array.from(new Set([...(inst.sessions || []), session])),
+            })
+          }
+        }
         flushPendingWrites()
         void flushVaultWrites()
         queueServerSync(_get)
@@ -681,6 +692,15 @@ export const useClassStore = create<ClassState>()(
           }
         })
         if (added) {
+          const slug = getSlug()
+          if (slug) {
+            const inst = useSuperAdminStore.getState().institutions.find((i) => i.slug === slug || i.subdomain === slug || i.id === slug)
+            if (inst) {
+              useSuperAdminStore.getState().updateInstitution(inst.id, {
+                sessions: Array.from(new Set([...(inst.sessions || []), session])),
+              })
+            }
+          }
           flushPendingWrites()
           void flushVaultWrites()
           queueServerSync(_get)

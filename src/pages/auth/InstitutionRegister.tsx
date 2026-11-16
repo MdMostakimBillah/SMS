@@ -13,6 +13,7 @@ import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
 import { compressImageWithinLimit } from '@/lib/imageUpload'
 import { loadInstitutionData } from '@/pages/auth/InstitutionLogin'
+import { setLocalStorageMode } from '@/lib/storageMode'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { authApi, ApiError } from '@/lib/api'
 import { OtpInput } from '@/components/shared/OtpInput'
@@ -372,7 +373,8 @@ export default function InstitutionRegister() {
     sessionStorage.setItem('edutech_inst_slug', slug)
     localStorage.setItem(`edutech_inst_slug`, slug)
 
-    loadInstitutionData(inst)
+    setLocalStorageMode(effectiveStorageMode, '')
+    loadInstitutionData(inst, { fresh: true })
 
     setCreateSubmitting(false)
     setCreated(true)
