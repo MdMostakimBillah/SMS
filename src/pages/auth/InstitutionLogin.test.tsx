@@ -4,7 +4,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import InstitutionLogin from './InstitutionLogin'
 import { authApi, ApiError } from '@/lib/api'
-import { authClient } from '@/lib/auth-client'
 import { browserStorageDump, makeInstitution } from '@/test-fixtures'
 
 vi.mock('@/lib/api', async (importOriginal) => {
@@ -20,14 +19,6 @@ vi.mock('@/lib/api', async (importOriginal) => {
     },
   }
 })
-
-vi.mock('@/lib/auth-client', () => ({
-  authClient: {
-    signIn: {
-      social: vi.fn().mockResolvedValue({ data: { url: 'https://accounts.google.com' } }),
-    },
-  },
-}))
 
 // BackgroundPaths animates SVG paths via GSAP (`getTotalLength`), which jsdom
 // does not implement — stub it out; it has no bearing on login behavior.
@@ -188,38 +179,7 @@ describe('InstitutionLogin credential handling (Phase 6)', () => {
     expect(browserStorageDump()).not.toContain(SECRET)
   })
 
-  it('invokes authClient.signIn.social with google provider and /dashboard callback when Sign in with Google is clicked', async () => {
-    vi.mocked(authClient.signIn.social).mockResolvedValueOnce({
-      data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
-    } as never)
-
-    render(
-      <MemoryRouter initialEntries={['/i/testschool/login']}>
-        <LocationProbe />
-        <InstitutionLogin subdomain="testschool" institution={makeInstitution()} />
-      </MemoryRouter>
-    )
-
-    const googleBtn = screen.getByRole('button', { name: /Google/i })
-    expect(googleBtn).toBeTruthy()
-    fireEvent.click(googleBtn)
-
-    await waitFor(() => {
-      expect(authClient.signIn.social).toHaveBeenCalledTimes(1)
-      expect(authClient.signIn.social).toHaveBeenCalledWith({
-        provider: 'google',
-        callbackURL: `${window.location.origin}/dashboard?institution=testschool`,
-      })
-    })
-
-    expect(sessionStorage.getItem('edutech_intended_institution')).toBe('testschool')
-  })
-
-  it('displays configuration notice and avoids insecure passwordless prompt when Google provider is not configured', async () => {
-    vi.mocked(authClient.signIn.social).mockResolvedValueOnce({
-      error: { message: 'Provider not found' },
-    } as never)
-
+  it('renders standard email and password authentication without any Google button', () => {
     render(
       <MemoryRouter initialEntries={['/login']}>
         <LocationProbe />
@@ -227,34 +187,7 @@ describe('InstitutionLogin credential handling (Phase 6)', () => {
       </MemoryRouter>
     )
 
-    const googleBtn = screen.getByRole('button', { name: /Google/i })
-    fireEvent.click(googleBtn)
-
-    const errorMsg = await screen.findByText(/Google Sign-In is not configured on the server yet/i)
-    expect(errorMsg).toBeTruthy()
-    expect(screen.queryByPlaceholderText('username@gmail.com')).toBeNull()
-  })
-
-  it('keeps the email/password Sign In button label intact when clicking Sign in with Google', async () => {
-    vi.mocked(authClient.signIn.social).mockImplementation(
-      () => new Promise(() => {}) // pending promise
-    )
-
-    render(
-      <MemoryRouter initialEntries={['/login']}>
-        <LocationProbe />
-        <InstitutionLogin institution={makeInstitution()} />
-      </MemoryRouter>
-    )
-
-    const signInBtn = screen.getByRole('button', { name: /^Sign In$|^সাইন ইন$/i })
-    expect(signInBtn).toHaveTextContent(/Sign In|সাইন ইন/i)
-
-    const googleBtn = screen.getByRole('button', { name: /Google/i })
-    fireEvent.click(googleBtn)
-
-    // The email/password Sign In button must NOT change to "Signing in..."
-    expect(signInBtn).toHaveTextContent(/Sign In|সাইন ইন/i)
-    expect(signInBtn).not.toHaveTextContent(/Signing in|সাইন ইন হচ্ছে/i)
+    expect(screen.getByRole('button', { name: /^Sign In$|^সাইন ইন$/i })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Google/i })).toBeNull()
   })
 })
