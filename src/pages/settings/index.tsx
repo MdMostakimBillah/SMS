@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { AlertTriangle, Search } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
@@ -62,7 +63,9 @@ export default function Page() {
 }
 
 function SettingsContent({ isBn, isInstAdmin, isSuperAdmin }: { isBn: boolean; isInstAdmin: boolean; isSuperAdmin: boolean }) {
-  const [activePanel, setActivePanel] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
+  const initialPanel = searchParams.get('panel') || searchParams.get('tab')
+  const [activePanel, setActivePanel] = useState<string | null>(initialPanel)
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null)
   const [creatingRole, setCreatingRole] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')

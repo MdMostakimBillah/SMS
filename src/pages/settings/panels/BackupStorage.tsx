@@ -17,6 +17,7 @@ import { LocalDatabaseControlPanel } from './backup/LocalDatabaseControlPanel'
 import { ProviderCloudControlPanel } from './backup/ProviderCloudControlPanel'
 import { VPSServerControlPanel } from './backup/VPSServerControlPanel'
 import { TelegramBackupSection } from './backup/TelegramBackupSection'
+import { EmailBackupSection } from './backup/EmailBackupSection'
 import { LocalBackupSection } from './backup/LocalBackupSection'
 import { CloudPermissionModal } from '@/components/shared/CloudPermissionModal'
 
@@ -348,7 +349,16 @@ export const BackupStoragePanel: React.FC<Props> = ({ isBn, onBack }) => {
         onAutoBackupChange={handleAutoBackupChange}
       />
 
-      {/* 4. Manual JSON Backup & Restore Tools */}
+      {/* 4. Email & Proton Mail Cloud Backup Fetcher */}
+      <EmailBackupSection
+        isBn={isBn}
+        schoolSlug={schoolSlug}
+        schoolName={schoolName}
+        email={settings.backupEmail || ''}
+        onEmailChange={(val) => updateSettings({ backupEmail: val })}
+      />
+
+      {/* 5. Manual JSON Backup & Restore Tools */}
       <LocalBackupSection
         isBn={isBn}
         schoolSlug={schoolSlug}

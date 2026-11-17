@@ -1103,6 +1103,7 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
           classId: c.id,
           className: c.name,
           ...s,
+          subjectIds: Array.isArray(s.subjectIds) ? s.subjectIds : [],
         }))
       )
       if (sections.length > 0 || isRecentExplicitDelete() || state.sessionClasses) {
@@ -1339,6 +1340,30 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
         const fPretty = JSON.stringify(funds, null, 2)
         await writeVaultFile(`${slug}/hr_funds.json`, fPretty)
         await writeVaultFile('hr_funds.json', fPretty)
+      }
+
+      // 6. hr_teacher_facilities.json
+      const teacherFacilities = state.teacherFacilities ?? []
+      if (teacherFacilities.length > 0 || isRecentExplicitDelete()) {
+        const tfPretty = JSON.stringify(teacherFacilities, null, 2)
+        await writeVaultFile(`${slug}/hr_teacher_facilities.json`, tfPretty)
+        await writeVaultFile('hr_teacher_facilities.json', tfPretty)
+      }
+
+      // 7. hr_salary_configs.json
+      const monthlySalaryConfigs = state.monthlySalaryConfigs ?? []
+      if (monthlySalaryConfigs.length > 0 || isRecentExplicitDelete()) {
+        const scPretty = JSON.stringify(monthlySalaryConfigs, null, 2)
+        await writeVaultFile(`${slug}/hr_salary_configs.json`, scPretty)
+        await writeVaultFile('hr_salary_configs.json', scPretty)
+      }
+
+      // 8. hr_recommendations.json
+      const recommendations = state.recommendations ?? []
+      if (recommendations.length > 0 || isRecentExplicitDelete()) {
+        const rPretty = JSON.stringify(recommendations, null, 2)
+        await writeVaultFile(`${slug}/hr_recommendations.json`, rPretty)
+        await writeVaultFile('hr_recommendations.json', rPretty)
       }
     } catch { /* ignore */ }
   }

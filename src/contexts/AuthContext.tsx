@@ -18,6 +18,12 @@ export type SessionSource = 'server' | 'offline_cache' | null
 
 export type User = OfflineUser
 
+export interface LoginResult {
+  user?: User
+  requiresVerification?: boolean
+  verificationToken?: string
+}
+
 interface AuthContextType {
   user: User | null
   loading: boolean
@@ -27,7 +33,7 @@ interface AuthContextType {
   /** Re-runs the server session check (used by the connection-error screen). */
   retryRestore: () => void
   updateCurrentUser: (partial: Partial<User>) => void
-  login: (email: string, password: string) => Promise<User | void>
+  login: (email: string, password: string, securityPin?: string, verificationToken?: string) => Promise<LoginResult | User | void>
   register: (email: string, password: string, name: string, role?: string) => Promise<void>
   logout: () => void
   error: string | null
@@ -420,7 +426,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLockoutRemaining(remaining)
   }, [])
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, securityPin?: string, verificationToken?: string) => {
     setError(null)
 
     if (isCurrentlyLockedOut()) {
@@ -431,7 +437,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const res = await authApi.login(email, password)
+      const res = await authApi.login(email, password, securityPin, verificationToken)
+
+      if (res.requiresVerification) {
+        return {
+          requiresVerification: true,
+          verificationToken: res.verificationToken,
+        }
+      }
+
+      if (!res.user) {
+        throw new Error('Authentication response did not contain user data')
+      }
+
       const userObj = serverUserToUser(res.user)
       setUser(userObj)
       setSessionSource('server')

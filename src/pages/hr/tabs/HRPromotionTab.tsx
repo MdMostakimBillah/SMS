@@ -28,6 +28,7 @@ interface HRPromotionTabProps {
   setModalType: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | null) => void
   setProForm: (form: ProForm) => void
   deletePromotion: (id: string) => void
+  setEditingRecordId?: (id: string | null) => void
   setShowPDFModal: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary' | null) => void
   getTeacherName: (id: string) => string
 }
@@ -51,6 +52,7 @@ export const HRPromotionTab = React.memo(function HRPromotionTab({
   setModalType,
   setProForm,
   deletePromotion,
+  setEditingRecordId,
   setShowPDFModal,
   getTeacherName,
 }: HRPromotionTabProps) {
@@ -75,7 +77,10 @@ export const HRPromotionTab = React.memo(function HRPromotionTab({
           )}
           {canCreate('hr.promotion') && (
             <button
-              onClick={() => setModalType('promotion')}
+              onClick={() => {
+                setEditingRecordId?.(null)
+                setModalType('promotion')
+              }}
               className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--purple)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
             >
               <Plus size={14} />
@@ -166,6 +171,7 @@ export const HRPromotionTab = React.memo(function HRPromotionTab({
                         {canEdit('hr.promotion') && (
                           <button
                             onClick={() => {
+                              setEditingRecordId?.(p.id)
                               setProForm({
                                 teacherId: p.teacherId,
                                 fromDesignation: p.fromDesignation,

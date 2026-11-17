@@ -142,6 +142,14 @@ export interface AuthResponse {
   user: SessionUser
 }
 
+export interface LoginAuthResponse {
+  user?: SessionUser
+  requiresVerification?: boolean
+  verificationToken?: string
+  message?: string
+  code?: string
+}
+
 export interface RegisterInstitutionPayload {
   name: string
   nameBn?: string
@@ -244,10 +252,22 @@ export interface AccountInfo {
 }
 
 export const authApi = {
-  login: (email: string, password: string) =>
-    apiRequest<AuthResponse>('/api/auth/login', {
+  login: (email: string, password: string, securityPin?: string, verificationToken?: string) =>
+    apiRequest<LoginAuthResponse>('/api/auth/login', {
       method: 'POST',
-      body: { email, password },
+      body: { email, password, securityPin, verificationToken },
+    }),
+
+  sendLoginOtp: (email: string) =>
+    apiRequest<{ success: boolean; message: string; demoCode?: string }>('/api/auth/send-login-otp', {
+      method: 'POST',
+      body: { email },
+    }),
+
+  emailLogin: (data: { email: string; code?: string; verified?: boolean; institution?: string }) =>
+    apiRequest<LoginAuthResponse>('/api/auth/email-login', {
+      method: 'POST',
+      body: data,
     }),
 
   /** Restore the current session from the HttpOnly cookie after a page reload. */
@@ -1270,6 +1290,21 @@ export const backupApi = {
     clientData?: Record<string, any>
   }) =>
     apiRequest<TelegramBackupResponse>('/api/backup/telegram/send', {
+      method: 'POST',
+      body: data,
+    }),
+  testEmail: (data: { email: string }) =>
+    apiRequest<{ success: boolean; message: string; email: string }>('/api/backup/email/test', {
+      method: 'POST',
+      body: data,
+    }),
+  sendEmailBackup: (data: {
+    email: string
+    schoolSlug?: string
+    schoolName?: string
+    clientData?: Record<string, any>
+  }) =>
+    apiRequest<{ success: boolean; message: string; details?: any }>('/api/backup/email/send', {
       method: 'POST',
       body: data,
     }),

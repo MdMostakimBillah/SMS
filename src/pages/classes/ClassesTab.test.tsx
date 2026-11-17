@@ -1,7 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import ClassesTab from './ClassesTab'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
+
+vi.mock('@/hooks/usePermission', () => ({
+  usePermission: () => ({
+    can: () => true,
+    canCreate: () => true,
+    canEdit: () => true,
+    canDelete: () => true,
+    canRead: () => true,
+    isAdmin: true,
+  }),
+}))
+
+vi.mock('@/lib/vault/vault', () => ({
+  flushVaultWrites: vi.fn(),
+}))
 
 describe('ClassesTab Component', () => {
   const mockInstitution = {
@@ -120,5 +136,235 @@ describe('ClassesTab Component', () => {
     // Section card should now show the 1/250 student count and 249 seats left
     expect(screen.getByText('1/250')).toBeInTheDocument()
     expect(screen.getByText('249 seats left')).toBeInTheDocument()
+  })
+
+  it('displays class-level subjects and allows assigning subjects to a class', () => {
+    const updateClass = vi.fn()
+    const updateSection = vi.fn()
+    const mockSubjects = [
+      { id: 'SUB-01', name: 'Mathematics', nameBn: 'গণিত', code: 'MATH' },
+      { id: 'SUB-02', name: 'English', nameBn: 'ইংরেজি', code: 'ENG' },
+      { id: 'SUB-03', name: 'Science', nameBn: 'বিজ্ঞান', code: 'SCI' },
+    ]
+
+    const testClass = {
+      id: 'CLS-01',
+      name: 'Class 5',
+      nameBn: 'শ্রেণি ৫',
+      startTime: '08:00',
+      endTime: '14:00',
+      subjectIds: ['SUB-01', 'SUB-02'],
+      sections: [
+        {
+          id: 'SEC-CLS-01-A',
+          name: 'A',
+          seatQuantity: 40,
+          classTeacherId: '',
+          subjectIds: ['SUB-01'],
+        },
+      ],
+    }
+
+    render(
+      <MemoryRouter>
+        <ClassesTab
+          {...baseProps}
+          classes={[testClass]}
+          subjects={mockSubjects}
+          updateClass={updateClass}
+          updateSection={updateSection}
+        />
+      </MemoryRouter>
+    )
+
+    // Check subject count badge in class header
+    expect(screen.getByText('2 subjects')).toBeInTheDocument()
+
+    // Expand class card
+    const classCard = screen.getByText('Class 5').closest('div[style*="cursor: pointer"]')!
+    fireEvent.click(classCard)
+
+    // Check class subjects section
+    expect(screen.getByText('Class Subjects')).toBeInTheDocument()
+    expect(screen.getByText('Mathematics')).toBeInTheDocument()
+    expect(screen.getByText('English')).toBeInTheDocument()
+
+    // Click "Edit Subjects" button in class subjects container
+    const editBtn = screen.getByText('Edit Subjects')
+    fireEvent.click(editBtn)
+
+    // Modal opens for Class 5
+    expect(screen.getByText('Select Subjects')).toBeInTheDocument()
+    expect(screen.getAllByText('Class 5').length).toBeGreaterThanOrEqual(2)
+
+    // Select Science (SUB-03)
+    const scienceOption = screen.getByText('Science')
+    fireEvent.click(scienceOption)
+
+    // Save modal
+    const saveBtn = screen.getByText(/Save \([0-9]+\)/)
+    fireEvent.click(saveBtn)
+
+    // updateClass should have been called with ['SUB-01', 'SUB-02', 'SUB-03']
+    expect(updateClass).toHaveBeenCalledWith('CLS-01', {
+      subjectIds: expect.arrayContaining(['SUB-01', 'SUB-02', 'SUB-03']),
+    })
+
+    // Child sections should also receive the updated class subjects
+    expect(updateSection).toHaveBeenCalledWith('CLS-01', 'SEC-CLS-01-A', {
+      subjectIds: expect.arrayContaining(['SUB-01', 'SUB-02', 'SUB-03']),
+    })
+  })
+
+  it('allows copying class subjects in section subject modal', () => {
+    const updateSection = vi.fn()
+    const updateClass = vi.fn()
+    const mockSubjects = [
+      { id: 'SUB-01', name: 'Mathematics', nameBn: 'গণিত', code: 'MATH' },
+      { id: 'SUB-02', name: 'English', nameBn: 'ইংরেজি', code: 'ENG' },
+    ]
+
+    const testClass = {
+      id: 'CLS-01',
+      name: 'Class 6',
+      nameBn: 'শ্রেণি ৬',
+      startTime: '08:00',
+      endTime: '14:00',
+      subjectIds: ['SUB-01', 'SUB-02'],
+      sections: [
+        {
+          id: 'SEC-CLS-01-A',
+          name: 'A',
+          seatQuantity: 40,
+          classTeacherId: '',
+          subjectIds: [],
+        },
+      ],
+    }
+
+    render(
+      <MemoryRouter>
+        <ClassesTab
+          {...baseProps}
+          classes={[testClass]}
+          subjects={mockSubjects}
+          updateClass={updateClass}
+          updateSection={updateSection}
+        />
+      </MemoryRouter>
+    )
+
+    // Expand class card
+    const classCard = screen.getByText('Class 6').closest('div[style*="cursor: pointer"]')!
+    fireEvent.click(classCard)
+
+    // Expand section card to edit mode
+    const sectionCard = screen.getByText('Section A').closest('div[style*="cursor: pointer"]')!
+    fireEvent.click(sectionCard)
+
+    // Click section subject button
+    const addSubjectBtn = screen.getByText('Add Subject')
+    fireEvent.click(addSubjectBtn)
+
+    // Modal should show Section mode title
+    expect(screen.getByText('Class 6 — Section A')).toBeInTheDocument()
+
+    // "Copy from class" button should be visible because parent class has subjects
+    const copyBtn = screen.getByText(/Copy from class subjects/)
+    expect(copyBtn).toBeInTheDocument()
+    fireEvent.click(copyBtn)
+
+    // Save modal
+    const saveBtn = screen.getByText(/Save \([0-9]+\)/)
+    fireEvent.click(saveBtn)
+
+    expect(updateSection).toHaveBeenCalledWith('CLS-01', 'SEC-CLS-01-A', {
+      subjectIds: expect.arrayContaining(['SUB-01', 'SUB-02']),
+    })
+  })
+
+  it('applies bulk subjects to both classes and their sections', () => {
+    const updateClass = vi.fn()
+    const updateSection = vi.fn()
+    const mockSubjects = [
+      { id: 'SUB-01', name: 'Mathematics', nameBn: 'গণিত', code: 'MATH' },
+      { id: 'SUB-02', name: 'English', nameBn: 'ইংরেজি', code: 'ENG' },
+    ]
+
+    const testClasses = [
+      {
+        id: 'CLS-01',
+        name: 'Class 1',
+        nameBn: 'শ্রেণি ১',
+        startTime: '08:00',
+        endTime: '14:00',
+        subjectIds: [],
+        sections: [
+          { id: 'SEC-01-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+        ],
+      },
+      {
+        id: 'CLS-02',
+        name: 'Class 2',
+        nameBn: 'শ্রেণি ২',
+        startTime: '08:00',
+        endTime: '14:00',
+        subjectIds: [],
+        sections: [
+          { id: 'SEC-02-A', name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] },
+        ],
+      },
+    ]
+
+    render(
+      <MemoryRouter>
+        <ClassesTab
+          {...baseProps}
+          classes={testClasses}
+          subjects={mockSubjects}
+          updateClass={updateClass}
+          updateSection={updateSection}
+        />
+      </MemoryRouter>
+    )
+
+    // Toggle bulk mode
+    const bulkBtn = screen.getByRole('button', { name: /bulk/i })
+    fireEvent.click(bulkBtn)
+
+    // Select classes
+    fireEvent.click(screen.getByText('Class 1'))
+    fireEvent.click(screen.getByText('Class 2'))
+
+    // Click "Subject" button in TopBar
+    const subjectBtn = screen.getByRole('button', { name: /subject/i })
+    fireEvent.click(subjectBtn)
+
+    // Bulk subject modal is shown
+    expect(screen.getByText('Bulk Assign Subjects')).toBeInTheDocument()
+
+    // Select Mathematics
+    const mathOption = screen.getByText('Mathematics')
+    fireEvent.click(mathOption)
+
+    // Click Save in bulk modal
+    const saveBtn = screen.getByText(/Save \([0-9]+\)/)
+    fireEvent.click(saveBtn)
+
+    // Check that both classes were updated with Mathematics
+    expect(updateClass).toHaveBeenCalledWith('CLS-01', {
+      subjectIds: ['SUB-01'],
+    })
+    expect(updateClass).toHaveBeenCalledWith('CLS-02', {
+      subjectIds: ['SUB-01'],
+    })
+
+    // Check that sections of both classes were also updated
+    expect(updateSection).toHaveBeenCalledWith('CLS-01', 'SEC-01-A', {
+      subjectIds: ['SUB-01'],
+    })
+    expect(updateSection).toHaveBeenCalledWith('CLS-02', 'SEC-02-A', {
+      subjectIds: ['SUB-01'],
+    })
   })
 })

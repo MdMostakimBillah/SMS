@@ -110,12 +110,16 @@ export default function HRPage() {
     facilities,
     teacherFacilities,
     addIncrement,
+    updateIncrement,
     deleteIncrement,
     addBonus,
+    updateBonus,
     deleteBonus,
     addPromotion,
+    updatePromotion,
     deletePromotion,
     addFund,
+    updateFund,
     deleteFund,
     addRecommendation,
     updateRecommendation,
@@ -140,12 +144,16 @@ export default function HRPage() {
       facilities: s.facilities,
       teacherFacilities: s.teacherFacilities,
       addIncrement: s.addIncrement,
+      updateIncrement: s.updateIncrement,
       deleteIncrement: s.deleteIncrement,
       addBonus: s.addBonus,
+      updateBonus: s.updateBonus,
       deleteBonus: s.deleteBonus,
       addPromotion: s.addPromotion,
+      updatePromotion: s.updatePromotion,
       deletePromotion: s.deletePromotion,
       addFund: s.addFund,
+      updateFund: s.updateFund,
       deleteFund: s.deleteFund,
       addRecommendation: s.addRecommendation,
       updateRecommendation: s.updateRecommendation,
@@ -164,6 +172,10 @@ export default function HRPage() {
   // ─── Tab & Modal State ───
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [modalType, setModalType] = useState<ModalType>(null)
+  const handleSetModalType = useCallback((v: ModalType) => {
+    setModalType(v)
+    if (!v) setEditingRecordId(null)
+  }, [])
   const [facModalType, setFacModalType] = useState<FacModalType>(null)
   const [showPDFModal, setShowPDFModal] = useState<PDFModalType>(null)
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
@@ -195,6 +207,7 @@ export default function HRPage() {
   })
 
   // ─── Form State ───
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null)
   const [incForm, setIncForm] = useState<IncForm>({ teacherId: '', type: 'annual', percentage: '', reason: '' })
   const [bonForm, setBonForm] = useState<BonForm>({ teacherId: '', type: 'festival', amount: '', reason: '', month: '' })
   const [proForm, setProForm] = useState<ProForm>({ teacherId: '', fromDesignation: '', toDesignation: '', reason: '' })
@@ -693,62 +706,103 @@ export default function HRPage() {
     const t = teachers.find((t) => t.id === incForm.teacherId)
     if (!t) return
     const amount = Math.round((t.salary * Number(incForm.percentage)) / 100)
-    addIncrement({
-      id: `INC-${Date.now()}`,
-      teacherId: incForm.teacherId,
-      type: incForm.type,
-      amount,
-      percentage: Number(incForm.percentage),
-      reason: incForm.reason,
-      date: today,
-      approvedBy: getAuditUser(user),
-    })
+    if (editingRecordId) {
+      updateIncrement(editingRecordId, {
+        teacherId: incForm.teacherId,
+        type: incForm.type,
+        amount,
+        percentage: Number(incForm.percentage),
+        reason: incForm.reason,
+      })
+    } else {
+      addIncrement({
+        id: `INC-${Date.now()}`,
+        teacherId: incForm.teacherId,
+        type: incForm.type,
+        amount,
+        percentage: Number(incForm.percentage),
+        reason: incForm.reason,
+        date: today,
+        approvedBy: getAuditUser(user),
+      })
+    }
+    setEditingRecordId(null)
     setIncForm({ teacherId: '', type: 'annual', percentage: '', reason: '' })
     setModalType(null)
   }
 
   const handleAddBonus = () => {
     if (!bonForm.teacherId || !bonForm.amount) return
-    addBonus({
-      id: `BON-${Date.now()}`,
-      teacherId: bonForm.teacherId,
-      type: bonForm.type,
-      amount: Number(bonForm.amount),
-      month: bonForm.month || today.slice(0, 7),
-      reason: bonForm.reason,
-      date: today,
-      createdBy: getAuditUser(user),
-    })
+    if (editingRecordId) {
+      updateBonus(editingRecordId, {
+        teacherId: bonForm.teacherId,
+        type: bonForm.type,
+        amount: Number(bonForm.amount),
+        month: bonForm.month || today.slice(0, 7),
+        reason: bonForm.reason,
+      })
+    } else {
+      addBonus({
+        id: `BON-${Date.now()}`,
+        teacherId: bonForm.teacherId,
+        type: bonForm.type,
+        amount: Number(bonForm.amount),
+        month: bonForm.month || today.slice(0, 7),
+        reason: bonForm.reason,
+        date: today,
+        createdBy: getAuditUser(user),
+      })
+    }
+    setEditingRecordId(null)
     setBonForm({ teacherId: '', type: 'festival', amount: '', reason: '', month: '' })
     setModalType(null)
   }
 
   const handleAddPromotion = () => {
     if (!proForm.teacherId || !proForm.toDesignation) return
-    addPromotion({
-      id: `PRO-${Date.now()}`,
-      teacherId: proForm.teacherId,
-      fromDesignation: proForm.fromDesignation,
-      toDesignation: proForm.toDesignation,
-      date: today,
-      reason: proForm.reason,
-      createdBy: getAuditUser(user),
-    })
+    if (editingRecordId) {
+      updatePromotion(editingRecordId, {
+        teacherId: proForm.teacherId,
+        fromDesignation: proForm.fromDesignation,
+        toDesignation: proForm.toDesignation,
+        reason: proForm.reason,
+      })
+    } else {
+      addPromotion({
+        id: `PRO-${Date.now()}`,
+        teacherId: proForm.teacherId,
+        fromDesignation: proForm.fromDesignation,
+        toDesignation: proForm.toDesignation,
+        date: today,
+        reason: proForm.reason,
+        createdBy: getAuditUser(user),
+      })
+    }
     useTeacherStore.getState().bulkUpdateTeachers([{ id: proForm.teacherId, data: { designation: proForm.toDesignation } }])
+    setEditingRecordId(null)
     setProForm({ teacherId: '', fromDesignation: '', toDesignation: '', reason: '' })
     setModalType(null)
   }
 
   const handleAddFund = () => {
     if (!fundForm.amount) return
-    addFund({
-      id: `FND-${Date.now()}`,
-      type: fundForm.type,
-      amount: Number(fundForm.amount),
-      description: fundForm.description,
-      date: today,
-      createdBy: getAuditUser(user),
-    })
+    if (editingRecordId) {
+      updateFund(editingRecordId, {
+        type: fundForm.type,
+        amount: Number(fundForm.amount),
+        description: fundForm.description,
+      })
+    } else {
+      addFund({
+        id: `FND-${Date.now()}`,
+        type: fundForm.type,
+        amount: Number(fundForm.amount),
+        description: fundForm.description,
+        date: today,
+        createdBy: getAuditUser(user),
+      })
+    }
+    setEditingRecordId(null)
     setFundForm({ type: 'contribution', amount: '', description: '' })
     setModalType(null)
   }
@@ -1237,9 +1291,10 @@ export default function HRPage() {
           setIncDateFrom={setIncDateFrom}
           incDateTo={incDateTo}
           setIncDateTo={setIncDateTo}
-          setModalType={setModalType as any}
+          setModalType={handleSetModalType as any}
           setIncForm={setIncForm}
           deleteIncrement={deleteIncrement}
+          setEditingRecordId={setEditingRecordId}
           setShowPDFModal={setShowPDFModal as any}
           getTeacherName={getTeacherName}
         />
@@ -1263,7 +1318,7 @@ export default function HRPage() {
           setBonusDateFrom={setBonusDateFrom}
           bonusDateTo={bonusDateTo}
           setBonusDateTo={setBonusDateTo}
-          setModalType={setModalType as any}
+          setModalType={handleSetModalType as any}
           setBonForm={setBonForm}
           deleteBonus={deleteBonus}
           setShowPDFModal={setShowPDFModal as any}
@@ -1290,9 +1345,10 @@ export default function HRPage() {
           setProDateFrom={setProDateFrom}
           proDateTo={proDateTo}
           setProDateTo={setProDateTo}
-          setModalType={setModalType as any}
+          setModalType={handleSetModalType as any}
           setProForm={setProForm}
           deletePromotion={deletePromotion}
+          setEditingRecordId={setEditingRecordId}
           setShowPDFModal={setShowPDFModal as any}
           getTeacherName={getTeacherName}
         />
@@ -1318,7 +1374,7 @@ export default function HRPage() {
           setFundDateFrom={setFundDateFrom}
           fundDateTo={fundDateTo}
           setFundDateTo={setFundDateTo}
-          setModalType={setModalType as any}
+          setModalType={handleSetModalType as any}
           setShowPDFModal={setShowPDFModal as any}
           fundBalance={fundBalance}
           monthlySalaryConfigs={monthlySalaryConfigs}
@@ -1412,7 +1468,8 @@ export default function HRPage() {
       {/* Modals */}
         <HRModals
         modalType={modalType}
-        setModalType={setModalType as any}
+        setModalType={handleSetModalType as any}
+        isEditing={!!editingRecordId}
         incForm={incForm}
         setIncForm={setIncForm}
         bonForm={bonForm}

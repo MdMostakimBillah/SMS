@@ -151,6 +151,28 @@ export async function createBackupZip(
           }
         }
 
+        const classesList = storeData?.state?.classes || storeData?.classes
+        if (Array.isArray(classesList)) {
+          const sections = classesList.flatMap((c: any) =>
+            (c.sections || []).map((s: any) => ({
+              classId: c.id,
+              className: c.name,
+              id: s.id,
+              name: s.name,
+              seatQuantity: Number(s.seatQuantity) || 40,
+              classTeacherId: s.classTeacherId || '',
+              subjectIds: Array.isArray(s.subjectIds) ? s.subjectIds : [],
+            }))
+          )
+          if (sections.length > 0 && !zip.file('sections.json')) {
+            const sectionsJson = JSON.stringify(sections, null, 2)
+            zip.file('sections.json', sectionsJson)
+            if (targetSlug && !zip.file(`${targetSlug}/sections.json`)) {
+              zip.file(`${targetSlug}/sections.json`, sectionsJson)
+            }
+          }
+        }
+
         const depts = storeData?.state?.departments || storeData?.departments
         if (Array.isArray(depts) && !zip.file('departments.json')) {
           const deptsJson = JSON.stringify({ departments: depts }, null, 2)
@@ -206,6 +228,20 @@ export async function createBackupZip(
           zip.file('hr_funds.json', fndJson)
           if (targetSlug && !zip.file(`${targetSlug}/hr_funds.json`)) {
             zip.file(`${targetSlug}/hr_funds.json`, fndJson)
+          }
+        }
+        if (Array.isArray(state?.teacherFacilities) && !zip.file('hr_teacher_facilities.json')) {
+          const tfJson = JSON.stringify(state.teacherFacilities, null, 2)
+          zip.file('hr_teacher_facilities.json', tfJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_teacher_facilities.json`)) {
+            zip.file(`${targetSlug}/hr_teacher_facilities.json`, tfJson)
+          }
+        }
+        if (Array.isArray(state?.monthlySalaryConfigs) && !zip.file('hr_salary_configs.json')) {
+          const scJson = JSON.stringify(state.monthlySalaryConfigs, null, 2)
+          zip.file('hr_salary_configs.json', scJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_salary_configs.json`)) {
+            zip.file(`${targetSlug}/hr_salary_configs.json`, scJson)
           }
         }
       }
@@ -356,6 +392,20 @@ export async function createBackupZip(
           zip.file('hr_funds.json', fndJson)
           if (targetSlug && !zip.file(`${targetSlug}/hr_funds.json`)) {
             zip.file(`${targetSlug}/hr_funds.json`, fndJson)
+          }
+        }
+        if (Array.isArray(state?.teacherFacilities) && !zip.file('hr_teacher_facilities.json')) {
+          const tfJson = JSON.stringify(state.teacherFacilities, null, 2)
+          zip.file('hr_teacher_facilities.json', tfJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_teacher_facilities.json`)) {
+            zip.file(`${targetSlug}/hr_teacher_facilities.json`, tfJson)
+          }
+        }
+        if (Array.isArray(state?.monthlySalaryConfigs) && !zip.file('hr_salary_configs.json')) {
+          const scJson = JSON.stringify(state.monthlySalaryConfigs, null, 2)
+          zip.file('hr_salary_configs.json', scJson)
+          if (targetSlug && !zip.file(`${targetSlug}/hr_salary_configs.json`)) {
+            zip.file(`${targetSlug}/hr_salary_configs.json`, scJson)
           }
         }
       }
@@ -605,14 +655,18 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
       const hrFacFile = zip.file('hr_facilities.json') || zip.file(/(^|\/)hr_facilities\.json$/i)[0]
       const hrProFile = zip.file('hr_promotions.json') || zip.file(/(^|\/)hr_promotions\.json$/i)[0]
       const hrFndFile = zip.file('hr_funds.json') || zip.file(/(^|\/)hr_funds\.json$/i)[0]
+      const hrTfFile = zip.file('hr_teacher_facilities.json') || zip.file(/(^|\/)hr_teacher_facilities\.json$/i)[0]
+      const hrScFile = zip.file('hr_salary_configs.json') || zip.file(/(^|\/)hr_salary_configs\.json$/i)[0]
 
-      if (hrIncFile || hrBonFile || hrFacFile || hrProFile || hrFndFile) {
+      if (hrIncFile || hrBonFile || hrFacFile || hrProFile || hrFndFile || hrTfFile || hrScFile) {
         try {
           const incs = hrIncFile ? JSON.parse(await hrIncFile.async('text')) : []
           const bons = hrBonFile ? JSON.parse(await hrBonFile.async('text')) : []
           const facs = hrFacFile ? JSON.parse(await hrFacFile.async('text')) : []
           const pros = hrProFile ? JSON.parse(await hrProFile.async('text')) : []
           const fnds = hrFndFile ? JSON.parse(await hrFndFile.async('text')) : []
+          const tfs = hrTfFile ? JSON.parse(await hrTfFile.async('text')) : []
+          const scs = hrScFile ? JSON.parse(await hrScFile.async('text')) : []
 
           stores['edutech-hr'] = {
             state: {
@@ -621,8 +675,8 @@ export async function extractBackupFromZip(data: Blob | ArrayBuffer | Uint8Array
               facilities: Array.isArray(facs) ? facs : [],
               promotions: Array.isArray(pros) ? pros : [],
               funds: Array.isArray(fnds) ? fnds : [],
-              teacherFacilities: [],
-              monthlySalaryConfigs: [],
+              teacherFacilities: Array.isArray(tfs) ? tfs : [],
+              monthlySalaryConfigs: Array.isArray(scs) ? scs : [],
               recommendations: [],
               homeworkRecords: [],
               dailyReports: [],

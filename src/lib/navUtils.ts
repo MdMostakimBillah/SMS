@@ -85,6 +85,7 @@ export function getDashboardPath(
     session.slug ||
     (user as any).subdomain ||
     (user as any).schoolDomain ||
+    sessionStorage.getItem('edutech_intended_institution') ||
     sessionStorage.getItem('edutech_inst_slug') ||
     localStorage.getItem('edutech_inst_slug')
   if (slug) {

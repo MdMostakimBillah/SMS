@@ -27,8 +27,13 @@ export function cookieHeader(jar: CookieJar): string[] {
   return Object.entries(jar).map(([k, v]) => `${k}=${v}`)
 }
 
-export async function login(app: Express, email: string, password: string) {
-  const res = await request(app).post('/api/auth/login').send({ email, password })
+export async function login(app: Express, email: string, password: string, securityPin?: string) {
+  const pin = securityPin !== undefined ? securityPin : (process.env.SUPER_ADMIN_SECURITY_PIN || '849201')
+  const res = await request(app).post('/api/auth/login').send({
+    email,
+    password,
+    securityPin: pin,
+  })
   return { res, jar: extractCookies(res) }
 }
 

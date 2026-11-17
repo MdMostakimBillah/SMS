@@ -29,6 +29,7 @@ interface HRIncrementTabProps {
   setModalType: (t: 'increment' | 'bonus' | 'promotion' | 'fund' | null) => void
   setIncForm: (f: { teacherId: string; type: 'annual' | 'performance' | 'special'; percentage: string; reason: string }) => void
   deleteIncrement: (id: string) => void
+  setEditingRecordId?: (id: string | null) => void
   setShowPDFModal: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | 'assignment' | 'salary' | null) => void
   getTeacherName: (id: string) => string
   sectionCls?: (isMobile: boolean) => string
@@ -55,6 +56,7 @@ export const HRIncrementTab = React.memo(function HRIncrementTab({
   setModalType,
   setIncForm,
   deleteIncrement,
+  setEditingRecordId,
   setShowPDFModal,
   getTeacherName,
   sectionCls: sectionClsProp,
@@ -81,7 +83,10 @@ export const HRIncrementTab = React.memo(function HRIncrementTab({
           )}
           {canCreate('hr.increment') && (
             <button
-              onClick={() => setModalType('increment')}
+              onClick={() => {
+                setEditingRecordId?.(null)
+                setModalType('increment')
+              }}
               className="flex items-center gap-[0.3125rem] py-[0.4375rem] px-[0.875rem] rounded-lg bg-[var(--green)] border-none text-white text-xs font-medium cursor-pointer font-[inherit]"
             >
               <Plus size={14} />
@@ -174,6 +179,7 @@ export const HRIncrementTab = React.memo(function HRIncrementTab({
                       {canEdit('hr.increment') && (
                         <button
                           onClick={() => {
+                            setEditingRecordId?.(inc.id)
                             setIncForm({
                               teacherId: inc.teacherId,
                               type: inc.type,

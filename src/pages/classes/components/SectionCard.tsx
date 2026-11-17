@@ -5,6 +5,7 @@ import type { Teacher, Subject } from '@/pages/teachers/types'
 import { flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
 import { TeacherPreviewCard } from './TeacherPreviewCard'
+import type { SubjectModalTarget } from '../modals/SubjectSelectionModal'
 
 interface SectionCardProps {
   cls: ClassInfo
@@ -24,7 +25,7 @@ interface SectionCardProps {
   setCopySectionModal: (v: { fromClassId: string; fromSectionId: string }) => void
   setCopyTarget: (v: { classId: string; sectionId: string }) => void
   setTempSelectedSubjects: React.Dispatch<React.SetStateAction<string[]>>
-  setShowSubjectModal: React.Dispatch<React.SetStateAction<{ classId: string; sectionId: string } | null>>
+  setShowSubjectModal: React.Dispatch<React.SetStateAction<SubjectModalTarget | null>>
 }
 
 export function SectionCard({
@@ -222,10 +223,10 @@ export function SectionCard({
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                 {sec.subjectIds.map((sid: string) => {
                   const sub = subjectMap.get(sid)
-                  if (!sub) return null
+                  const label = sub ? (isBn ? (sub.nameBn || sub.name) : (sub.name || sub.nameBn)) : sid
                   return (
                     <span key={sid} style={{ padding: '3px 8px', borderRadius: '0.625rem', background: 'var(--bg-primary)', border: '1px solid var(--border)', fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      {isBn ? sub.nameBn : sub.name}
+                      {label}
                       <button
                         onClick={() => {
                           const updated = sec.subjectIds.filter((s) => s !== sid)
@@ -249,7 +250,12 @@ export function SectionCard({
             <button
               onClick={() => {
                 setTempSelectedSubjects(sec.subjectIds || [])
-                setShowSubjectModal({ classId: cls.id, sectionId: sec.id })
+                setShowSubjectModal({
+                  classId: cls.id,
+                  sectionId: sec.id,
+                  className: isBn ? cls.nameBn : cls.name,
+                  sectionName: sec.name,
+                })
               }}
               style={{ flex: 1, padding: '0.4375rem', borderRadius: '0.4375rem', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '0.6875rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
             >

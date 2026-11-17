@@ -35,6 +35,7 @@ import { libraryRouter } from './routes/library.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
+import type { DbKeepAlive } from './lib/db-keepalive.js'
 
 export interface AppOptions {
   prisma: PrismaClient
@@ -44,9 +45,11 @@ export interface AppOptions {
   storage?: MediaStorage | null
   /** Secret used to verify signed license keys; empty string disables licensing. */
   licenseSecret?: string
+  /** Database keep-alive monitor to track active query traffic. */
+  dbKeepAlive?: DbKeepAlive
 }
 
-export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licenseSecret = '' }: AppOptions): Express {
+export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licenseSecret = '', dbKeepAlive }: AppOptions): Express {
   const app = express()
 
   const allowedOrigins = corsOrigin.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
@@ -82,11 +85,59 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
     })
   )
 
+  // Track database and API activity to debounce keepalive queries during active usage
+  if (dbKeepAlive) {
+    app.use(dbKeepAlive.createActivityMiddleware())
+  }
+
   // Cookie-session CSRF protection for every mutating /api request
   app.use('/api', csrfProtection)
 
-  app.get('/health', (_req: Request, res: Response) => {
+  app.get('/health', async (req: Request, res: Response) => {
+    if (req.query.check === 'db') {
+      try {
+        const start = performance.now()
+        await prisma.$queryRawUnsafe('SELECT 1')
+        const latencyMs = Math.round((performance.now() - start) * 100) / 100
+        dbKeepAlive?.recordActivity()
+        return res.json({
+          status: 'ok',
+          database: 'connected',
+          latencyMs,
+          timestamp: new Date().toISOString(),
+        })
+      } catch (err) {
+        return res.status(503).json({
+          status: 'degraded',
+          database: 'disconnected',
+          error: 'Database ping failed',
+          timestamp: new Date().toISOString(),
+        })
+      }
+    }
     res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  })
+
+  app.get('/health/db', async (_req: Request, res: Response) => {
+    try {
+      const start = performance.now()
+      await prisma.$queryRawUnsafe('SELECT 1')
+      const latencyMs = Math.round((performance.now() - start) * 100) / 100
+      dbKeepAlive?.recordActivity()
+      res.json({
+        status: 'ok',
+        database: 'connected',
+        latencyMs,
+        timestamp: new Date().toISOString(),
+      })
+    } catch (err) {
+      res.status(503).json({
+        status: 'degraded',
+        database: 'disconnected',
+        error: 'Database ping failed',
+        timestamp: new Date().toISOString(),
+      })
+    }
   })
 
   // Auth routes: legacy endpoints handled first, unhandled auth endpoints fall through to Better Auth

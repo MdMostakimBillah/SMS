@@ -371,6 +371,7 @@ function queueServerSync(get: () => ClassState) {
           sessionRoutines: s.sessionRoutines,
           sessions: s.institution.sessions,
           currentSession: s.institution.currentSession,
+          schoolId: getSlug() || undefined,
         })
       } catch (err) {
         // Warning only

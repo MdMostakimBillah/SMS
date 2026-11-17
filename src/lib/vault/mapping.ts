@@ -116,7 +116,19 @@ export function vaultPathToKey(
     else if (base === 'rooms' || base === 'hostel_assignments' || base === 'hostel') storeBase = 'hostel'
     else if (base === 'others_income' || base === 'others-income' || base === 'others_income_categories' || base === 'others_income_assignments' || base === 'other_income') storeBase = 'others-income'
     else if (base === 'expenses' || base === 'expense_categories' || base === 'expense_entries') storeBase = 'expenses'
-    else if (base === 'hr' || base === 'hr_increments' || base === 'hr_bonuses' || base === 'hr_promotions' || base === 'hr_funds' || base === 'hr_facilities') storeBase = 'hr'
+    else if (
+      base === 'hr' ||
+      base === 'hr_increments' ||
+      base === 'hr_bonuses' ||
+      base === 'hr_promotions' ||
+      base === 'hr_funds' ||
+      base === 'hr_facilities' ||
+      base === 'hr_teacher_facilities' ||
+      base === 'teacher_facilities' ||
+      base === 'hr_salary_configs' ||
+      base === 'monthly_salary_configs' ||
+      base === 'hr_recommendations'
+    ) storeBase = 'hr'
     else if (base === 'exams' || base === 'exam_configs' || base === 'subject_mark_configs' || base === 'student_marks' || base === 'exam_routines' || base === 'marksheet_configs') storeBase = 'exams'
     else if (base === 'syllabus' || base === 'syllabi') storeBase = 'syllabus'
     else if (base === 'assignments' || base === 'assignment' || base === 'submissions') storeBase = 'assignments'
@@ -789,16 +801,41 @@ export function normalizeVaultJsonForStore(
 
     const mergedSessionClasses: Record<string, any[]> = {
       ...(existingState.sessionClasses || {}),
-      ...(parsedInner.sessionClasses || {}),
     }
+    if (parsedInner.sessionClasses) {
+      for (const [sess, list] of Object.entries(parsedInner.sessionClasses)) {
+        if (Array.isArray(list)) {
+          mergedSessionClasses[sess] = list.map((c: any, index: number) => ({
+            id: c.id !== undefined && c.id !== null ? c.id : `CLS-${String(index + 1).padStart(2, '0')}`,
+            name: String(c.name || '').trim(),
+            nameBn: String(c.nameBn || '').trim(),
+            startTime: String(c.startTime || '07:30').trim(),
+            endTime: String(c.endTime || '14:30').trim(),
+            subjectIds: Array.isArray(c.subjectIds) ? c.subjectIds : [],
+            sections: Array.isArray(c.sections)
+              ? c.sections.map((s: any, sIdx: number) => ({
+                  id: String(s.id || `SEC-${c.id || index + 1}-${String.fromCharCode(65 + sIdx)}`).trim(),
+                  name: String(s.name || String.fromCharCode(65 + sIdx)).trim(),
+                  seatQuantity: Number(s.seatQuantity) || 40,
+                  classTeacherId: String(s.classTeacherId || '').trim(),
+                  subjectIds: Array.isArray(s.subjectIds) ? s.subjectIds : [],
+                }))
+              : [],
+            createdAt: c.createdAt || today,
+            updatedAt: c.updatedAt || today,
+          }))
+        }
+      }
+    }
+
     const mergedSessionRoutines: Record<string, any[]> = {
       ...(existingState.sessionRoutines || {}),
       ...(parsedInner.sessionRoutines || {}),
     }
 
     let finalClasses: any[]
-    if (parsedInner.sessionClasses && curSession in parsedInner.sessionClasses) {
-      finalClasses = Array.isArray(parsedInner.sessionClasses[curSession]) ? parsedInner.sessionClasses[curSession] : []
+    if (mergedSessionClasses[curSession]) {
+      finalClasses = mergedSessionClasses[curSession]
     } else if (rawClasses !== null) {
       finalClasses = normalizedClasses
       mergedSessionClasses[curSession] = finalClasses
@@ -1597,6 +1634,59 @@ export function normalizeVaultJsonForStore(
         state: {
           ...existingState,
           funds: rawFunds,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isTeacherFacilitiesOnly =
+      filePath?.includes('teacher_facilities') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].facilityId !== undefined && parsed[0].teacherId !== undefined)
+    if (isTeacherFacilitiesOnly) {
+      const rawTeacherFacilities = Array.isArray(parsed) ? parsed : (parsed.teacherFacilities || parsed.state?.teacherFacilities || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          teacherFacilities: rawTeacherFacilities,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isSalaryConfigsOnly =
+      filePath?.includes('salary_configs') ||
+      filePath?.includes('monthly_salary_configs') ||
+      (Array.isArray(parsed) &&
+        parsed.length > 0 &&
+        parsed[0].month !== undefined &&
+        parsed[0].teacherId !== undefined &&
+        (parsed[0].bonus !== undefined || parsed[0].festivalBonus !== undefined || parsed[0].applyDeductionRule !== undefined))
+    if (isSalaryConfigsOnly) {
+      const rawConfigs = Array.isArray(parsed) ? parsed : (parsed.monthlySalaryConfigs || parsed.state?.monthlySalaryConfigs || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          monthlySalaryConfigs: rawConfigs,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isRecommendationsOnly =
+      filePath?.includes('recommendations') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].status !== undefined && parsed[0].score !== undefined)
+    if (isRecommendationsOnly) {
+      const rawRecs = Array.isArray(parsed) ? parsed : (parsed.recommendations || parsed.state?.recommendations || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          recommendations: rawRecs,
           serverSynced: true,
           syncing: false,
         },

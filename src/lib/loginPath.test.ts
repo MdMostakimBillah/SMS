@@ -6,6 +6,8 @@ import {
   clearLoginSecret,
   getLoginRoute,
   getSecretPath,
+  isValidLoginSecret,
+  DEFAULT_LOGIN_SECRET,
 } from './loginPath'
 
 describe('loginPath helpers', () => {
@@ -30,12 +32,21 @@ describe('loginPath helpers', () => {
     expect(getLoginSecret()).toBe(s2)
   })
 
-  it('clears persisted login secret and falls back to env var', () => {
+  it('clears persisted login secret and falls back to env var or default', () => {
     setLoginSecret('custom-temp')
     expect(getLoginSecret()).toBe('custom-temp')
 
     clearLoginSecret()
-    // Should fall back to import.meta.env.VITE_LOGIN_PATH (cleaned) or empty string
     expect(getLoginSecret()).not.toBe('custom-temp')
+    expect(getLoginSecret().length).toBeGreaterThan(0)
+  })
+
+  it('strictly validates login secret candidate (fail closed)', () => {
+    setLoginSecret('secure-vault-token-99')
+    expect(isValidLoginSecret('secure-vault-token-99')).toBe(true)
+    expect(isValidLoginSecret('/secure-vault-token-99/')).toBe(true)
+    expect(isValidLoginSecret('wrong-token')).toBe(false)
+    expect(isValidLoginSecret('')).toBe(false)
+    expect(isValidLoginSecret(undefined)).toBe(false)
   })
 })

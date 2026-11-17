@@ -263,6 +263,15 @@ export const useTeacherStore = create<TeacherState>()(
         }))
         flushPendingWrites()
         void flushVaultWrites()
+        if (!isLocalComputerMode()) {
+          for (const u of updates) {
+            const payload: Partial<TeacherData> = {
+              ...(u.data as any),
+              ...(u.data.salary !== undefined ? { salary: u.data.salary != null ? String(u.data.salary) : null } : {}),
+            }
+            void teachersApi.update(u.id, payload).catch(() => {})
+          }
+        }
       },
 
       removeServerTeacher: (id) => {

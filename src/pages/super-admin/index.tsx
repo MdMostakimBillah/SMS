@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import {
   Crown, Building2, Users, Mail, Lock,
   CheckCircle, Plus, Database, CreditCard, MessageSquare, FileText, Globe,
-  Bell, KeyRound, Copy, Check,
+  Bell, KeyRound, Copy, Check, Settings,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAuth } from '@/contexts/AuthContext'
@@ -128,6 +128,7 @@ export default function SuperAdminPage() {
 }
 
 function AccountSettings({ isBn }: { isBn: boolean }) {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const [copied, setCopied] = useState(false)
   const secret = getLoginSecret()
@@ -212,6 +213,15 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
               </div>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => navigate('/super-admin/admin/settings?panel=email-password')}
+            className="w-full py-2.5 px-4 rounded-xl text-[0.75rem] font-semibold text-white bg-[var(--brand)] hover:opacity-90 flex items-center justify-center gap-2 border-none cursor-pointer transition-all shadow-sm"
+          >
+            <Settings size={14} />
+            <span>{isBn ? 'ইমেইল পরিবর্তন করতে সেটিংসে যান' : 'Go to Email Settings'}</span>
+          </button>
         </div>
       </div>
 
@@ -238,6 +248,15 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
               </div>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => navigate('/super-admin/admin/settings?panel=email-password')}
+            className="w-full py-2.5 px-4 rounded-xl text-[0.75rem] font-semibold text-white bg-[#8b5cf6] hover:opacity-90 flex items-center justify-center gap-2 border-none cursor-pointer transition-all shadow-sm"
+          >
+            <Settings size={14} />
+            <span>{isBn ? 'পাসওয়ার্ড পরিবর্তন করতে সেটিংসে যান' : 'Go to Password Settings'}</span>
+          </button>
         </div>
       </div>
     </div>

@@ -122,8 +122,13 @@ export const ChangeEmailTab = React.memo(function ChangeEmailTab({
       setError(isBn ? 'সঠিক নতুন ইমেইল দিন' : 'Please enter a valid new email')
       return
     }
-    if (!isVerified) {
-      setError(isBn ? 'অনুগ্রহ করে নতুন ইমেইল যাচাই করুন' : 'Please verify your new email first')
+    const hasPassword = Boolean(currentPassword && currentPassword.trim().length > 0)
+    if (!isVerified && !hasPassword) {
+      setError(
+        isBn
+          ? 'অনুগ্রহ করে বর্তমান পাসওয়ার্ড দিন অথবা নতুন ইমেইল কোড যাচাই করুন'
+          : 'Please enter your current password or verify the email code'
+      )
       return
     }
 
@@ -134,13 +139,13 @@ export const ChangeEmailTab = React.memo(function ChangeEmailTab({
       if (isSuperAdmin) {
         await authApi.updateSuperAdmin({
           email: trimmed,
-          currentPassword: currentPassword || undefined,
+          currentPassword: currentPassword.trim() || undefined,
           emailVerified: isVerified,
         })
       } else {
         await authApi.updateCredentials({
           email: trimmed,
-          currentPassword: currentPassword || undefined,
+          currentPassword: currentPassword.trim() || undefined,
           emailVerified: isVerified,
         })
       }
@@ -288,7 +293,9 @@ export const ChangeEmailTab = React.memo(function ChangeEmailTab({
             {isBn ? 'বর্তমান পাসওয়ার্ড' : 'Current Password'}
           </span>
           <span className="text-[0.6875rem] text-[var(--text-muted)] font-normal">
-            {isBn ? '(ঐচ্ছিক)' : '(Optional)'}
+            {isVerified
+              ? (isBn ? '(ঐচ্ছিক — কোড যাচাইকৃত)' : '(Optional — code verified)')
+              : (isBn ? '(পাসওয়ার্ড দিলে কোড ছাড়া সরাসরি সংরক্ষণ হবে)' : '(Allows instant update without email code)')}
           </span>
         </label>
         <div className="relative">
@@ -331,7 +338,7 @@ export const ChangeEmailTab = React.memo(function ChangeEmailTab({
       <button
         type="button"
         onClick={handleSaveEmail}
-        disabled={saving || !isEmailValid || !isChanged || !isVerified}
+        disabled={saving || !isEmailValid || !isChanged || (!isVerified && !currentPassword.trim())}
         className="w-full h-10 rounded-xl text-[0.8125rem] font-semibold border-none cursor-pointer flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shadow-sm"
         style={{ background: saved ? 'var(--green)' : 'var(--brand)' }}
       >

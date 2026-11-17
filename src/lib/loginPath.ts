@@ -11,18 +11,35 @@
  */
 
 const STORAGE_KEY = 'edutech_login_secret'
+export const DEFAULT_LOGIN_SECRET = 'edutech-core-admin'
 
 /**
  * Returns the active login secret path (normalized: trimmed, without leading or trailing slashes).
- * Checks localStorage first, then VITE_LOGIN_PATH env, then empty string.
+ * Checks localStorage first, then VITE_LOGIN_PATH env, then DEFAULT_LOGIN_SECRET.
+ * Never returns empty string so route evaluation is always strict and fail-closed.
  */
 export function getLoginSecret(): string {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) return stored.trim().replace(/^\/+|\/+$/g, '')
+    if (stored) {
+      const cleanStored = stored.trim().replace(/^\/+|\/+$/g, '')
+      if (cleanStored) return cleanStored
+    }
   } catch { /* ignore */ }
   const envVal = import.meta.env.VITE_LOGIN_PATH || ''
-  return envVal.trim().replace(/^\/+|\/+$/g, '')
+  const cleanEnv = envVal.trim().replace(/^\/+|\/+$/g, '')
+  return cleanEnv || DEFAULT_LOGIN_SECRET
+}
+
+/**
+ * Validates whether an incoming path token matches the active super admin login secret.
+ * Enforces strict non-empty matching (fail-closed).
+ */
+export function isValidLoginSecret(candidate?: string): boolean {
+  if (!candidate) return false
+  const active = getLoginSecret()
+  const cleanCandidate = candidate.trim().replace(/^\/+|\/+$/g, '')
+  return Boolean(active && cleanCandidate && active === cleanCandidate)
 }
 
 /**

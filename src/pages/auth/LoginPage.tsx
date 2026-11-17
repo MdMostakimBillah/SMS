@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock, ChevronRight } from 'lucide-react'
+import { useNavigate, useParams, Navigate } from 'react-router-dom'
+import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock, ChevronRight, ShieldCheck } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { getDashboardPath } from '@/lib/navUtils'
-import { getLoginSecret } from '@/lib/loginPath'
+import { isValidLoginSecret } from '@/lib/loginPath'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
+import { SuperAdminSecurityPinForm } from './SuperAdminSecurityPinForm'
 
 function getInitialTheme(): 'light' | 'dark' {
   try {
@@ -19,7 +20,10 @@ function getInitialTheme(): 'light' | 'dark' {
       if (t === 'dark') return 'dark'
     }
   } catch { /* ignore */ }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return 'light'
 }
 
 export default function LoginPage() {
@@ -27,14 +31,12 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { loginSecret } = useParams<{ loginSecret: string }>()
 
-  const active = getLoginSecret()
-  const cleanActive = (active || '').trim().replace(/^\/+|\/+$/g, '')
-  const cleanSecret = (loginSecret || '').trim().replace(/^\/+|\/+$/g, '')
-  const isAllowed = cleanActive ? cleanSecret === cleanActive : true
+  // Strict fail-closed verification of the secret path
+  const isAllowed = isValidLoginSecret(loginSecret)
 
   useEffect(() => {
     if (!isAllowed) {
-      navigate('/', { replace: true })
+      navigate('/register', { replace: true })
     }
   }, [isAllowed, navigate])
 
@@ -42,8 +44,12 @@ export default function LoginPage() {
     if (user) navigate(getDashboardPath(user), { replace: true })
   }, [user, navigate])
 
-  if (!isAllowed) return null
+  if (!isAllowed) {
+    return <Navigate to="/register" replace />
+  }
 
+  const [step, setStep] = useState<'credentials' | 'verification'>('credentials')
+  const [verificationToken, setVerificationToken] = useState<string>('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -76,12 +82,34 @@ export default function LoginPage() {
     if (!canSubmit) return
     setSubmitting(true)
     try {
-      await login(email, password)
+      const res = await login(email, password)
+      if (res && 'requiresVerification' in res && res.requiresVerification) {
+        setVerificationToken(res.verificationToken || '')
+        setStep('verification')
+        clearError()
+      }
     } catch {
-      // error is set in AuthContext
+      // error is handled in AuthContext
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleVerifyPin = async (pin: string) => {
+    try {
+      const res = await login(email, password, pin, verificationToken)
+      if (res && 'role' in res && res.role === 'super_admin') {
+        navigate('/super-admin', { replace: true })
+      }
+    } catch {
+      // error is handled in AuthContext
+    }
+  }
+
+  const handleBackToCredentials = () => {
+    setStep('credentials')
+    setVerificationToken('')
+    clearError()
   }
 
   return (
@@ -127,6 +155,12 @@ export default function LoginPage() {
       <div className={`flex-1 flex items-center justify-center px-6 py-12 ${isDark ? 'bg-[#0a0a0f]' : 'bg-[#f0f2f8]'}`}>
         <div className="w-full max-w-[24rem] relative">
 
+          {/* Hardened portal badge */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[0.6875rem] font-medium w-fit mb-4">
+            <ShieldCheck size={13} />
+            <span>{isBn ? 'নিরাপদ হার্ডেনড প্রবেশদ্বার' : 'Hardened Admin Portal'}</span>
+          </div>
+
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <BrandLogo size={64} className="mx-auto mb-4" />
@@ -136,101 +170,118 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="mb-6">
-            <h2 className={`text-[1.5rem] font-bold mb-2 ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>
-              {isBn ? 'সুপার অ্যাডমিন লগইন' : 'Super Admin Login'}
-            </h2>
-            <p className={`text-[0.875rem] ${isDark ? 'text-white/40' : 'text-[var(--text-secondary)]'}`}>
-              {isBn ? 'সিস্টেম অ্যাডমিন পোর্টালে সাইন ইন করুন' : 'Sign in to super admin portal'}
-            </p>
-          </div>
-
-          {/* Lockout banner */}
-          {isLockedOut && (
-            <div className="mb-4 px-3 py-2 rounded-lg bg-amber-500/8 border border-amber-500/15 flex items-center gap-2">
-              <Clock size={13} className="text-amber-500/80 shrink-0" />
-              <span className="text-[0.75rem] text-amber-500/90">
-                {isBn ? `আবার চেষ্টা করুন ${formatTime(lockoutRemaining)}` : `Try again in ${formatTime(lockoutRemaining)}`}
-              </span>
-            </div>
-          )}
-
-          {/* Error */}
-          {error && !isLockedOut && (
-            <div className="mb-4 px-3 py-2 rounded-lg bg-[var(--red)]/8 border border-[var(--red)]/15 flex items-center gap-2">
-              <X size={13} className="text-[var(--red)]/70 shrink-0" />
-              <span className="text-[0.75rem] text-[var(--red)]/90 flex-1">{error}</span>
-              <button onClick={clearError} className="text-[var(--red)]/30 hover:text-[var(--red)]/60 cursor-pointer bg-transparent border-none p-0">
-                <X size={12} />
-              </button>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
-            <div>
-              <label className={`text-[0.75rem] font-medium mb-1.5 block ${isDark ? 'text-white/50' : 'text-[var(--text-secondary)]'}`}>
-                {isBn ? 'ইমেইল' : 'Email'}
-              </label>
-              <div className="relative">
-                <Mail size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
-                <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); clearError() }}
-                  placeholder="admin@example.com" disabled={isLockedOut}
-                  className={`w-full h-11 pl-10 pr-4 rounded-xl border text-[0.875rem] outline-none transition-all ${
-                    isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50 focus:bg-[var(--bg-secondary)]'
-                  } ${isLockedOut ? 'opacity-50 cursor-not-allowed' : ''}`} required />
+          {step === 'verification' ? (
+            <SuperAdminSecurityPinForm
+              email={email}
+              isBn={isBn}
+              isDark={isDark}
+              isLockedOut={isLockedOut}
+              lockoutRemaining={lockoutRemaining}
+              formatTime={formatTime}
+              error={error}
+              clearError={clearError}
+              onVerify={handleVerifyPin}
+              onBack={handleBackToCredentials}
+            />
+          ) : (
+            <>
+              <div className="mb-6">
+                <h2 className={`text-[1.5rem] font-bold mb-2 ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>
+                  {isBn ? 'সুপার অ্যাডমিন লগইন' : 'Super Admin Login'}
+                </h2>
+                <p className={`text-[0.875rem] ${isDark ? 'text-white/40' : 'text-[var(--text-secondary)]'}`}>
+                  {isBn ? 'সিস্টেম অ্যাডমিন পোর্টালে সাইন ইন করুন' : 'Sign in to super admin portal'}
+                </p>
               </div>
-            </div>
 
-            {/* Password */}
-            <div>
-              <label className={`text-[0.75rem] font-medium mb-1.5 block ${isDark ? 'text-white/50' : 'text-[var(--text-secondary)]'}`}>
-                {isBn ? 'পাসওয়ার্ড' : 'Password'}
-              </label>
-              <div className="relative">
-                <Lock size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
-                <input type={showPassword ? 'text' : 'password'} value={password}
-                  onChange={(e) => { setPassword(e.target.value); clearError() }}
-                  placeholder="••••••••" disabled={isLockedOut}
-                  className={`w-full h-11 pl-10 pr-11 rounded-xl border text-[0.875rem] outline-none transition-all ${
-                    isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50 focus:bg-[var(--bg-secondary)]'
-                  } ${isLockedOut ? 'opacity-50 cursor-not-allowed' : ''}`} required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/60' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              {/* Lockout banner */}
+              {isLockedOut && (
+                <div className="mb-4 px-3 py-2 rounded-lg bg-amber-500/8 border border-amber-500/15 flex items-center gap-2">
+                  <Clock size={13} className="text-amber-500/80 shrink-0" />
+                  <span className="text-[0.75rem] text-amber-500/90">
+                    {isBn ? `আবার চেষ্টা করুন ${formatTime(lockoutRemaining)}` : `Try again in ${formatTime(lockoutRemaining)}`}
+                  </span>
+                </div>
+              )}
+
+              {/* Error */}
+              {error && !isLockedOut && (
+                <div className="mb-4 px-3 py-2 rounded-lg bg-[var(--red)]/8 border border-[var(--red)]/15 flex items-center gap-2">
+                  <X size={13} className="text-[var(--red)]/70 shrink-0" />
+                  <span className="text-[0.75rem] text-[var(--red)]/90 flex-1">{error}</span>
+                  <button onClick={clearError} className="text-[var(--red)]/30 hover:text-[var(--red)]/60 cursor-pointer bg-transparent border-none p-0">
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Email */}
+                <div>
+                  <label className={`text-[0.75rem] font-medium mb-1.5 block ${isDark ? 'text-white/50' : 'text-[var(--text-secondary)]'}`}>
+                    {isBn ? 'ইমেইল' : 'Email'}
+                  </label>
+                  <div className="relative">
+                    <Mail size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
+                    <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); clearError() }}
+                      placeholder="admin@example.com" disabled={isLockedOut}
+                      className={`w-full h-11 pl-10 pr-4 rounded-xl border text-[0.875rem] outline-none transition-all ${
+                        isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
+                          : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50 focus:bg-[var(--bg-secondary)]'
+                      } ${isLockedOut ? 'opacity-50 cursor-not-allowed' : ''}`} required />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className={`text-[0.75rem] font-medium mb-1.5 block ${isDark ? 'text-white/50' : 'text-[var(--text-secondary)]'}`}>
+                    {isBn ? 'পাসওয়ার্ড' : 'Password'}
+                  </label>
+                  <div className="relative">
+                    <Lock size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-white/25' : 'text-[var(--text-muted)]'}`} />
+                    <input type={showPassword ? 'text' : 'password'} value={password}
+                      onChange={(e) => { setPassword(e.target.value); clearError() }}
+                      placeholder="••••••••" disabled={isLockedOut}
+                      className={`w-full h-11 pl-10 pr-11 rounded-xl border text-[0.875rem] outline-none transition-all ${
+                        isDark ? 'border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-[var(--brand)]/50 focus:bg-white/[0.07]'
+                          : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--brand)]/50 focus:bg-[var(--bg-secondary)]'
+                      } ${isLockedOut ? 'opacity-50 cursor-not-allowed' : ''}`} required />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/60' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Forgot password */}
+                <div className="text-right -mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setForgotModalOpen(true)}
+                    className={`text-[0.6875rem] cursor-pointer bg-transparent border-none hover:underline transition-colors ${
+                      isDark ? 'text-white/40 hover:text-white/70' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    {isBn ? 'পাসওয়ার্ড মনে নেই?' : 'Forgot password?'}
+                  </button>
+                </div>
+
+                {/* Submit */}
+                <button type="submit" disabled={!canSubmit}
+                  className="w-full h-11 rounded-xl text-[0.875rem] font-semibold border-none cursor-pointer flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: canSubmit ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                    color: canSubmit ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                  }}>
+                  {!isLockedOut && !submitting && <LogIn size={16} />}
+                  {isLockedOut && <Clock size={16} />}
+                  {isLockedOut ? (isBn ? `লকড আউট — ${formatTime(lockoutRemaining)}` : `Locked out — ${formatTime(lockoutRemaining)}`)
+                    : submitting ? (isBn ? 'যাচাই করা হচ্ছে...' : 'Verifying...')
+                    : (isBn ? 'পরবর্তী ধাপ (যাচাইকরণ)' : 'Continue to Verification')}
                 </button>
-              </div>
-            </div>
-
-            {/* Forgot password */}
-            <div className="text-right -mt-1">
-              <button
-                type="button"
-                onClick={() => setForgotModalOpen(true)}
-                className={`text-[0.6875rem] cursor-pointer bg-transparent border-none hover:underline transition-colors ${
-                  isDark ? 'text-white/40 hover:text-white/70' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
-                }`}
-              >
-                {isBn ? 'পাসওয়ার্ড মনে নেই?' : 'Forgot password?'}
-              </button>
-            </div>
-
-            {/* Submit */}
-            <button type="submit" disabled={!canSubmit}
-              className="w-full h-11 rounded-xl text-[0.875rem] font-semibold border-none cursor-pointer flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{
-                background: canSubmit ? 'linear-gradient(135deg, #6366f1 0%, #818cf8 100%)' : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                color: canSubmit ? '#fff' : isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-              }}>
-              {!isLockedOut && !submitting && <LogIn size={16} />}
-              {isLockedOut && <Clock size={16} />}
-              {isLockedOut ? (isBn ? `লকড আউট — ${formatTime(lockoutRemaining)}` : `Locked out — ${formatTime(lockoutRemaining)}`)
-                : submitting ? (isBn ? 'সাইন ইন হচ্ছে...' : 'Signing in...')
-                : (isBn ? 'সাইন ইন' : 'Sign In')}
-            </button>
-          </form>
+              </form>
+            </>
+          )}
 
           <div className="mt-6 text-center">
             <button onClick={() => navigate('/register')}

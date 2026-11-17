@@ -133,8 +133,9 @@ export default function ClassesPage() {
         .catch(() => {})
     }
 
-    // Load classes and routines from database, and students for section capacity counts
+    // Load classes and routines from database, and teachers/subjects and students for capacity counts
     useClassStore.getState().syncFromServer(slug || undefined).catch(() => {})
+    useTeacherStore.getState().syncFromServer().catch(() => {})
     useAdmissionStore.getState().syncFromServer().catch(() => {})
   }, [user?.subdomain, user?.schoolId, user?.role])
 

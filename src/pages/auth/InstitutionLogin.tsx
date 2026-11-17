@@ -16,6 +16,7 @@ import { applyThemeColors } from '@/hooks/useThemeColors'
 import { presets } from '@/components/shared/ColorSettings'
 import { getVaultStatus, vaultReconnect } from '@/lib/vault/vault'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
+import { OtherMailLoginModal } from './OtherMailLoginModal'
 import { authClient } from '@/lib/auth-client'
 
 const MAX_ATTEMPTS = 5
@@ -231,6 +232,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [forgotModalOpen, setForgotModalOpen] = useState(false)
+  const [otherMailModalOpen, setOtherMailModalOpen] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -682,12 +684,33 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
             onClick={async () => {
               try {
                 setLoading(true)
-                await authClient.signIn.social({
+                setError('')
+                const targetPath = subdomain ? `/dashboard?institution=${encodeURIComponent(subdomain)}` : '/dashboard'
+                const callbackURL = `${window.location.origin}${targetPath}`
+
+                if (subdomain) {
+                  sessionStorage.setItem('edutech_intended_institution', subdomain)
+                }
+
+                const res = await authClient.signIn.social({
                   provider: 'google',
-                  callbackURL: window.location.origin,
+                  callbackURL,
                 })
+
+                if (res?.error) {
+                  throw new Error(res.error.message || 'Google sign-in failed')
+                }
               } catch (err: any) {
-                setError(err?.message || (isBn ? 'Google দিয়ে সাইন ইন করতে সমস্যা হয়েছে' : 'Google sign-in failed'))
+                const msg = err?.message || ''
+                if (msg.includes('not enabled') || msg.includes('socialProvider') || msg.includes('provider')) {
+                  setError(
+                    isBn
+                      ? 'Google সাইন-ইন এখনও সার্ভারে সক্রিয় নয়। দয়া করে সার্ভার কনফিগারেশনে GOOGLE_CLIENT_ID এবং GOOGLE_CLIENT_SECRET সেট করুন।'
+                      : 'Google Sign-In is not enabled on the server yet. Please configure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the server environment.'
+                  )
+                } else {
+                  setError(msg || (isBn ? 'Google দিয়ে সাইন ইন করতে সমস্যা হয়েছে' : 'Google sign-in failed'))
+                }
                 setLoading(false)
               }
             }}
@@ -719,6 +742,20 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
             <span>{isBn ? 'Google দিয়ে সাইন ইন করুন' : 'Sign in with Google'}</span>
           </button>
 
+          {/* Other Mail (Proton Mail, Outlook, Yahoo, Custom Domain) Sign In Button */}
+          <button
+            type="button"
+            onClick={() => setOtherMailModalOpen(true)}
+            className={`w-full h-11 mt-2.5 rounded-xl text-[0.875rem] font-medium border cursor-pointer flex items-center justify-center gap-2.5 transition-all ${
+              isDark
+                ? 'border-white/10 bg-white/5 hover:bg-white/10 text-white'
+                : 'border-gray-200 bg-white hover:bg-gray-50 text-gray-700 shadow-sm'
+            }`}
+          >
+            <Mail size={16} className="text-[var(--brand)]" />
+            <span>{isBn ? 'অন্যান্য মেইল (Proton, Outlook ইত্যাদি) দিয়ে সাইন ইন' : 'Sign in with Other Mail (Proton, Outlook, etc.)'}</span>
+          </button>
+
           {/* Forgot password */}
           <div className="mt-4 text-center">
             <p className={`text-[0.6875rem] ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`}>
@@ -733,6 +770,15 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
               </button>
             </p>
           </div>
+
+          <OtherMailLoginModal
+            isOpen={otherMailModalOpen}
+            onClose={() => setOtherMailModalOpen(false)}
+            isBn={isBn}
+            subdomain={subdomain}
+            brandColor={institution.brandColor}
+            isDark={isDark}
+          />
 
           <ForgotPasswordModal
             isOpen={forgotModalOpen}

@@ -18,7 +18,7 @@ import { ClassCard } from './components/ClassCard'
 import { BulkTimeModal } from './modals/BulkTimeModal'
 import { BulkSubjectModal } from './modals/BulkSubjectModal'
 import { BulkSectionModal } from './modals/BulkSectionModal'
-import { SubjectSelectionModal } from './modals/SubjectSelectionModal'
+import { SubjectSelectionModal, type SubjectModalTarget } from './modals/SubjectSelectionModal'
 import { CopySectionModal } from './modals/CopySectionModal'
 
 interface ClassesTabProps {
@@ -65,7 +65,7 @@ export default function ClassesTab({
   const [classTimeForm, setClassTimeForm] = useState({ startTime: '', endTime: '' })
   const [editingSection, setEditingSection] = useState<string | null>(null)
   const [secForm, setSecForm] = useState({ name: '', seatQuantity: 40, classTeacherId: '' })
-  const [showSubjectModal, setShowSubjectModal] = useState<{ classId: string; sectionId: string } | null>(null)
+  const [showSubjectModal, setShowSubjectModal] = useState<SubjectModalTarget | null>(null)
   const [tempSelectedSubjects, setTempSelectedSubjects] = useState<string[]>([])
   const [editingClassName, setEditingClassName] = useState<string | null>(null)
   const [classNameForm, setClassNameForm] = useState({ name: '', nameBn: '' })
@@ -207,9 +207,15 @@ export default function ClassesTab({
     selectedClasses.forEach((classId) => {
       const cls = classes.find((c) => c.id === classId)
       if (!cls) return
+      // 1. Update class subjects
+      const existingClassSubs = cls.subjectIds || []
+      const mergedClass = Array.from(new Set([...existingClassSubs, ...bulkSubjectIds]))
+      updateClass(classId, { subjectIds: mergedClass })
+
+      // 2. Update all sections of this class
       cls.sections.forEach((sec: ClassSection) => {
         const existing = sec.subjectIds || []
-        const merged = [...new Set([...existing, ...bulkSubjectIds])]
+        const merged = Array.from(new Set([...existing, ...bulkSubjectIds]))
         updateSection(classId, sec.id, { subjectIds: merged })
       })
     })
@@ -321,10 +327,21 @@ export default function ClassesTab({
       {/* Bulk mode: select all bar */}
       {bulkMode && (
         <div className="flex items-center gap-3 py-2 px-3 mb-3">
-          <button onClick={toggleSelectAll} className="flex items-center gap-2 cursor-pointer bg-transparent border-none font-[inherit] text-[0.75rem] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={toggleSelectAll}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                toggleSelectAll()
+              }
+            }}
+            className="flex items-center gap-2 cursor-pointer bg-transparent border-none font-[inherit] text-[0.75rem] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+          >
             <ModernCheckbox checked={selectedClasses.length === classes.length} onChange={() => toggleSelectAll()} color="brand" size="xs" />
             {isBn ? 'সব নির্বাচন' : 'Select All'}
-          </button>
+          </div>
           {selectedClasses.length > 0 && (
             <span className="text-[0.6875rem] text-[var(--brand)] font-medium">
               {selectedClasses.length} {isBn ? 'নির্বাচিত' : 'selected'}
@@ -359,6 +376,7 @@ export default function ClassesTab({
           handleSaveClassTime={handleSaveClassTime}
           handleAddSection={handleAddSection}
           deleteClass={deleteClass}
+          updateClass={updateClass}
           toggleSelectClass={toggleSelectClass}
           setExpandedClass={setExpandedClass}
           teachers={teachers}
@@ -422,6 +440,9 @@ export default function ClassesTab({
           tempSelectedSubjects={tempSelectedSubjects}
           setTempSelectedSubjects={setTempSelectedSubjects}
           updateSection={updateSection}
+          updateClass={updateClass}
+          classes={classes}
+          institutionSubjects={institution.subjects}
           isBn={isBn}
         />
       )}

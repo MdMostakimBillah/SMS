@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug, flushPendingWrites } from '@/lib/storage'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { hrApi } from '@/lib/api'
 
@@ -127,12 +128,16 @@ interface HRState {
   syncToServer: () => Promise<void>
 
   addIncrement: (record: IncrementRecord) => void
+  updateIncrement: (id: string, data: Partial<IncrementRecord>) => void
   deleteIncrement: (id: string) => void
   addBonus: (record: BonusRecord) => void
+  updateBonus: (id: string, data: Partial<BonusRecord>) => void
   deleteBonus: (id: string) => void
   addPromotion: (record: PromotionRecord) => void
+  updatePromotion: (id: string, data: Partial<PromotionRecord>) => void
   deletePromotion: (id: string) => void
   addFund: (record: FundRecord) => void
+  updateFund: (id: string, data: Partial<FundRecord>) => void
   deleteFund: (id: string) => void
   addHomeworkRecord: (record: HomeworkRecord) => void
   toggleHomework: (id: string) => void
@@ -165,7 +170,9 @@ function queueServerSync(get: () => HRState) {
       state.promotions.length === 0 &&
       state.funds.length === 0 &&
       state.facilities.length === 0 &&
-      state.teacherFacilities.length === 0
+      state.teacherFacilities.length === 0 &&
+      state.monthlySalaryConfigs.length === 0 &&
+      state.recommendations.length === 0
     ) {
       return
     }
@@ -180,6 +187,8 @@ function queueServerSync(get: () => HRState) {
           s.funds.length === 0 &&
           s.facilities.length === 0 &&
           s.teacherFacilities.length === 0 &&
+          s.monthlySalaryConfigs.length === 0 &&
+          s.recommendations.length === 0 &&
           !isRecentExplicitDelete()
         ) {
           return
@@ -206,6 +215,8 @@ function queueServerSync(get: () => HRState) {
 }
 
 function onStateMutated(get: () => HRState) {
+  flushPendingWrites()
+  void flushVaultWrites()
   queueServerSync(get)
 }
 
@@ -245,7 +256,9 @@ export const useHRStore = create<HRState>()(
               (Array.isArray(res.facilities) && res.facilities.length > 0) ||
               (Array.isArray(res.teacherFacilities) && res.teacherFacilities.length > 0) ||
               (Array.isArray(res.monthlySalaryConfigs) && res.monthlySalaryConfigs.length > 0) ||
-              (Array.isArray(res.recommendations) && res.recommendations.length > 0)
+              (Array.isArray(res.recommendations) && res.recommendations.length > 0) ||
+              (Array.isArray(res.homeworkRecords) && res.homeworkRecords.length > 0) ||
+              (Array.isArray(res.dailyReports) && res.dailyReports.length > 0)
 
             const state = get()
             if (hasAny) {
@@ -270,7 +283,11 @@ export const useHRStore = create<HRState>()(
               state.promotions.length > 0 ||
               state.funds.length > 0 ||
               state.facilities.length > 0 ||
-              state.teacherFacilities.length > 0
+              state.teacherFacilities.length > 0 ||
+              state.monthlySalaryConfigs.length > 0 ||
+              state.recommendations.length > 0 ||
+              state.homeworkRecords.length > 0 ||
+              state.dailyReports.length > 0
             ) {
               await hrApi.update({
                 increments: state.increments,
@@ -324,6 +341,12 @@ export const useHRStore = create<HRState>()(
         set((state) => ({ increments: [...state.increments, record] }))
         onStateMutated(get)
       },
+      updateIncrement: (id, data) => {
+        set((state) => ({
+          increments: state.increments.map((i) => (i.id === id ? { ...i, ...data } : i)),
+        }))
+        onStateMutated(get)
+      },
       deleteIncrement: (id) => {
         markExplicitUserDelete()
         set((state) => ({ increments: state.increments.filter((i) => i.id !== id) }))
@@ -331,6 +354,12 @@ export const useHRStore = create<HRState>()(
       },
       addBonus: (record) => {
         set((state) => ({ bonuses: [...state.bonuses, record] }))
+        onStateMutated(get)
+      },
+      updateBonus: (id, data) => {
+        set((state) => ({
+          bonuses: state.bonuses.map((b) => (b.id === id ? { ...b, ...data } : b)),
+        }))
         onStateMutated(get)
       },
       deleteBonus: (id) => {
@@ -342,6 +371,12 @@ export const useHRStore = create<HRState>()(
         set((state) => ({ promotions: [...state.promotions, record] }))
         onStateMutated(get)
       },
+      updatePromotion: (id, data) => {
+        set((state) => ({
+          promotions: state.promotions.map((p) => (p.id === id ? { ...p, ...data } : p)),
+        }))
+        onStateMutated(get)
+      },
       deletePromotion: (id) => {
         markExplicitUserDelete()
         set((state) => ({ promotions: state.promotions.filter((p) => p.id !== id) }))
@@ -349,6 +384,12 @@ export const useHRStore = create<HRState>()(
       },
       addFund: (record) => {
         set((state) => ({ funds: [...state.funds, record] }))
+        onStateMutated(get)
+      },
+      updateFund: (id, data) => {
+        set((state) => ({
+          funds: state.funds.map((f) => (f.id === id ? { ...f, ...data } : f)),
+        }))
         onStateMutated(get)
       },
       deleteFund: (id) => {

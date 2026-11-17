@@ -11,6 +11,7 @@ import type { MonthlySalaryConfig } from '@/store/hrStore'
 interface HRModalsProps {
   modalType: 'increment' | 'bonus' | 'promotion' | 'fund' | null
   setModalType: (v: 'increment' | 'bonus' | 'promotion' | 'fund' | null) => void
+  isEditing?: boolean
   incForm: { teacherId: string; type: 'annual' | 'performance' | 'special'; percentage: string; reason: string }
   setIncForm: React.Dispatch<React.SetStateAction<{ teacherId: string; type: 'annual' | 'performance' | 'special'; percentage: string; reason: string }>>
   bonForm: { teacherId: string; type: 'festival' | 'performance' | 'attendance' | 'special'; amount: string; reason: string; month: string }
@@ -77,6 +78,7 @@ interface HRModalsProps {
 export default function HRModals({
   modalType,
   setModalType,
+  isEditing,
   incForm,
   setIncForm,
   bonForm,
@@ -141,10 +143,10 @@ export default function HRModals({
           <div className={`modal-content ${modalStyleCls}`} onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-base font-semibold text-[var(--text-primary)]">
-                {modalType === 'increment' && (isBn ? 'বেতন বৃদ্ধি যোগ' : 'Add Increment')}
-                {modalType === 'bonus' && (isBn ? 'বোনাস যোগ' : 'Add Bonus')}
-                {modalType === 'promotion' && (isBn ? 'পদোন্নতি যোগ' : 'Add Promotion')}
-                {modalType === 'fund' && (isBn ? 'লেনদেন যোগ' : 'Add Transaction')}
+                {modalType === 'increment' && (isBn ? (isEditing ? 'বেতন বৃদ্ধি সম্পাদনা' : 'বেতন বৃদ্ধি যোগ') : (isEditing ? 'Edit Increment' : 'Add Increment'))}
+                {modalType === 'bonus' && (isBn ? (isEditing ? 'বোনাস সম্পাদনা' : 'বোনাস যোগ') : (isEditing ? 'Edit Bonus' : 'Add Bonus'))}
+                {modalType === 'promotion' && (isBn ? (isEditing ? 'পদোন্নতি সম্পাদনা' : 'পদোন্নতি যোগ') : (isEditing ? 'Edit Promotion' : 'Add Promotion'))}
+                {modalType === 'fund' && (isBn ? (isEditing ? 'লেনদেন সম্পাদনা' : 'লেনদেন যোগ') : (isEditing ? 'Edit Transaction' : 'Add Transaction'))}
               </h2>
               <button
                 onClick={() => setModalType(null)}
@@ -207,7 +209,7 @@ export default function HRModals({
                   className="p-[0.5625rem] rounded-lg bg-[var(--green)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
                 >
                   <Save size={14} />
-                  {isBn ? 'সংরক্ষণ' : 'Save'}
+                  {isBn ? (isEditing ? 'আপডেট' : 'সংরক্ষণ') : (isEditing ? 'Update' : 'Save')}
                 </button>
               </div>
             )}
@@ -265,7 +267,7 @@ export default function HRModals({
                   className="p-[0.5625rem] rounded-lg bg-[var(--amber)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
                 >
                   <Save size={14} />
-                  {isBn ? 'সংরক্ষণ' : 'Save'}
+                  {isBn ? (isEditing ? 'আপডেট' : 'সংরক্ষণ') : (isEditing ? 'Update' : 'Save')}
                 </button>
               </div>
             )}
@@ -333,7 +335,7 @@ export default function HRModals({
                   className="p-[0.5625rem] rounded-lg bg-[var(--purple)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
                 >
                   <Save size={14} />
-                  {isBn ? 'সংরক্ষণ' : 'Save'}
+                  {isBn ? (isEditing ? 'আপডেট' : 'সংরক্ষণ') : (isEditing ? 'Update' : 'Save')}
                 </button>
               </div>
             )}
@@ -376,7 +378,7 @@ export default function HRModals({
                   className="p-[0.5625rem] rounded-lg bg-[var(--brand)] border-none text-white text-[0.8125rem] font-medium cursor-pointer font-[inherit] flex items-center justify-center gap-1.5"
                 >
                   <Save size={14} />
-                  {isBn ? 'সংরক্ষণ' : 'Save'}
+                  {isBn ? (isEditing ? 'আপডেট' : 'সংরক্ষণ') : (isEditing ? 'Update' : 'Save')}
                 </button>
               </div>
             )}

@@ -12,6 +12,14 @@ const connectionString =
 
 export const authPool = new Pool({
   connectionString,
+  max: 10,
+  idleTimeoutMillis: 30_000, // Evict idle connections before Neon severs them
+  connectionTimeoutMillis: 15_000, // Allow 15s for Neon serverless wake-up
+})
+
+// Prevent unhandled error events from crashing Node when Neon drops idle connections during suspend
+authPool.on('error', (err) => {
+  console.warn('[auth-pool] Idle connection error (safe to ignore on serverless):', err instanceof Error ? err.message : err)
 })
 
 const ARGON2_OPTIONS = {
@@ -22,7 +30,10 @@ const ARGON2_OPTIONS = {
 } as const
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3001',
+  baseURL:
+    process.env.BETTER_AUTH_URL ||
+    (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}` : undefined) ||
+    'http://localhost:3001',
   basePath: '/api/auth',
   database: {
     dialect: new PostgresDialect({ pool: authPool }),
@@ -56,6 +67,8 @@ export const auth = betterAuth({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
       enabled: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+      accessType: 'offline',
+      prompt: 'select_account',
     },
   },
   plugins: [
@@ -69,9 +82,14 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:5173',
     'http://localhost',
     'https://localhost',
     'https://smsappbd.vercel.app',
     ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map((s) => s.trim()) : []),
+    ...(process.env.PUBLIC_API_URL ? [process.env.PUBLIC_API_URL.trim()] : []),
+    ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL.trim()] : []),
   ],
 })

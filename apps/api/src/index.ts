@@ -4,6 +4,8 @@ import { hash } from '@node-rs/argon2'
 import { createApp } from './app.js'
 import { createStorageFromEnv } from './storage.js'
 import { ensureDatabaseSchema } from './lib/ensure-schema.js'
+import { DbKeepAlive } from './lib/db-keepalive.js'
+import { authPool } from './lib/better-auth.js'
 
 const PORT = process.env.PORT || 3001
 
@@ -67,11 +69,18 @@ async function ensureSuperAdmin(prisma: PrismaClient) {
 const prisma = new PrismaClient()
 await ensureDatabaseSchema(prisma)
 void ensureSuperAdmin(prisma)
+
+// Neon Database Heartbeat Keep-Alive:
+// Prevents Neon serverless compute from auto-suspending after 5 minutes of inactivity.
+// Debounces pings when real user traffic is active, executes lightweight SELECT 1 every 3.5 minutes.
+const dbKeepAlive = new DbKeepAlive({ prisma, pool: authPool })
+dbKeepAlive.start()
+
 const storage = createStorageFromEnv()
 if (!storage) {
   console.warn('[API] R2 media storage NOT configured — /api/media endpoints will answer 503')
 }
-const app = createApp({ prisma, jwtSecret: JWT_SECRET, corsOrigin: CORS_ORIGIN, storage, licenseSecret: LICENSE_SECRET })
+const app = createApp({ prisma, jwtSecret: JWT_SECRET, corsOrigin: CORS_ORIGIN, storage, licenseSecret: LICENSE_SECRET, dbKeepAlive })
 
 const server = app.listen(PORT, () => {
   console.log(`[API] Server running on http://localhost:${PORT}`)
@@ -85,15 +94,15 @@ const sessionCleanup = setInterval(() => {
 }, 60 * 60 * 1000)
 sessionCleanup.unref()
 
-// Keep-alive self-ping: prevents free hosting tiers (e.g. Render) from sleeping after 15 mins.
-// No hardcoded default URL — the ping only runs when the deployment declares its own public URL.
+// Keep-alive self-ping: prevents free hosting tiers (e.g. Render) from sleeping after 15 mins
+// and touches the database via /health/db to verify connectivity.
 const externalUrl = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_API_URL || ''
 if (externalUrl && (process.env.NODE_ENV === 'production' || process.env.RENDER || Boolean(process.env.RENDER_EXTERNAL_URL))) {
   const KEEP_ALIVE_INTERVAL = 14 * 60 * 1000 // every 14 minutes (just before 15 min idle sleep)
   const keepAlive = setInterval(async () => {
     try {
-      const res = await fetch(`${externalUrl}/health`)
-      console.log(`[keep-alive] Render self-ping: ${res.status}`)
+      const res = await fetch(`${externalUrl}/health/db`)
+      console.log(`[keep-alive] Render & DB self-ping: ${res.status}`)
     } catch (err) {
       console.warn('[keep-alive] Ping failed:', err instanceof Error ? err.message : err)
     }
@@ -106,6 +115,7 @@ async function shutdown(signal: string) {
   if (shuttingDown) return
   shuttingDown = true
   console.log(`[API] Received ${signal}, shutting down gracefully`)
+  dbKeepAlive.stop()
   const force = setTimeout(() => {
     console.error('[API] Forced shutdown after timeout')
     process.exit(1)
