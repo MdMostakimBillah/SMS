@@ -19,7 +19,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/lib/api'
 import { getSlug, flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
-import { setLocalStorageMode, isLocalComputerMode } from '@/lib/storageMode'
+import { setLocalStorageMode } from '@/lib/storageMode'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { useAppStore } from '@/store/appStore'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -36,7 +36,6 @@ export default function ClassesPage() {
     institution,
     classes,
     routines,
-    serverSynced,
     syncing,
     updateInstitution,
     addClass,
@@ -105,10 +104,6 @@ export default function ClassesPage() {
 
   // Fetch institution data and classes/routines from database on mount if available
   useEffect(() => {
-    if (isLocalComputerMode()) {
-      return
-    }
-
     const viewingId = useSuperAdminStore.getState().viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
     const slug = (user?.role === 'super_admin' && viewingId) ? viewingId : (getSlug() || user?.subdomain || (user?.schoolId ? String(user.schoolId) : null) || viewingId)
     if (slug) {
@@ -167,9 +162,6 @@ export default function ClassesPage() {
           })
         }
 
-        if (isLocalComp || isLocalComputerMode()) {
-          return
-        }
         const res = await authApi.updateSchool(targetId, {
           name: instForm.name,
           nameBn: instForm.nameBn,
@@ -336,7 +328,7 @@ export default function ClassesPage() {
 
       {/* Classes Tab */}
       {activeTab === 'classes' && (
-        (!serverSynced && !isLocalComputerMode()) || (syncing && classes.length === 0) ? (
+        syncing && classes.length === 0 ? (
           <div className="space-y-4">
             <div className="skeleton h-12 w-full rounded-xl" />
             <SkeletonCards count={6} />

@@ -147,13 +147,6 @@ export const useTeacherStore = create<TeacherState>()(
       legacyDepartments: [],
 
       syncFromServer: async () => {
-        // When in Local Computer mode, cloud database sync is stopped completely;
-        // teachers stay in local computer storage (JSON/localStorage).
-        if (isLocalComputerMode()) {
-          set({ syncing: false, serverSynced: true, syncError: null })
-          return
-        }
-
         if (syncPromise) return syncPromise
         const current = get()
         // Fresh server data already on screen: avoid re-fetching on every mount.
@@ -179,7 +172,16 @@ export const useTeacherStore = create<TeacherState>()(
             // keep local teachers (never wipe existing teachers when server is empty)!
             const finalTeachers = serverTeachers.length > 0 ? serverTeachers : (prev.teachers.length > 0 ? prev.teachers : [])
             const finalDepartments = serverDepts.length > 0 ? serverDepts : prev.departments
-            const finalSubjects = serverSubjects.length > 0 ? serverSubjects : prev.subjects
+
+            // Safe merge for subjects: local subjects are merged with database subjects
+            const serverSubMap = new Map(serverSubjects.map((s) => [s.id, s]))
+            const mergedSubjects = [...serverSubjects]
+            for (const ls of prev.subjects) {
+              if (!serverSubMap.has(ls.id) && !mergedSubjects.some((s) => s.name.toLowerCase() === ls.name.toLowerCase())) {
+                mergedSubjects.push(ls)
+              }
+            }
+            const finalSubjects = mergedSubjects.length > 0 ? mergedSubjects : prev.subjects
 
             // Safe merge for designations: NEVER reset user designations automatically!
             const serverDesMap = new Map(serverDesignations.map((d) => [d.id, d]))

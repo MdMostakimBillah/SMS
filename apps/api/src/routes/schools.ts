@@ -406,15 +406,6 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         dataToUpdate.routinesData = typeof val === 'object' ? JSON.stringify(val) : String(val)
       }
 
-      const targetStorageMode = storageMode !== undefined ? storageMode : existingSchool.storageMode
-      const isLocalComputer = targetStorageMode === 'local_computer'
-
-      if (isLocalComputer) {
-        // In local computer mode, operational classes and routines are stored locally on the PC
-        dataToUpdate.classesData = null
-        dataToUpdate.routinesData = null
-      }
-
       // Institution logo and banner remain available on the server for institution identification and branding
       if (logo !== undefined) {
         if (typeof logo === 'string' && logo.startsWith('data:image/')) {

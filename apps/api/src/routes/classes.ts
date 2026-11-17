@@ -61,19 +61,6 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
 
       const currentSession = (parsedClassesData?.currentSession as string) || sessions[0] || '2025-26'
 
-      if (school.storageMode === 'local_computer') {
-        return res.json({
-          storageMode: 'local_computer',
-          classes: [],
-          routines: [],
-          sessions,
-          currentSession,
-          breaks: [],
-          startTime: '',
-          endTime: '',
-        })
-      }
-
       let breaks = []
       try {
         if (school.breaks) {
@@ -111,6 +98,7 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
       }
 
       res.json({
+        storageMode: school.storageMode,
         classes: currentSessionClasses,
         routines: currentSessionRoutines,
         sessionClasses,
@@ -162,23 +150,6 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
 
       if (req.userRole !== 'super_admin' && req.schoolId && school.id !== req.schoolId) {
         return res.status(403).json({ error: 'Forbidden' })
-      }
-
-      if (school.storageMode === 'local_computer') {
-        if (Array.isArray(req.body.sessions)) {
-          await prisma.school.update({
-            where: { id: school.id },
-            data: { sessions: JSON.stringify(req.body.sessions) },
-          })
-        }
-        return res.json({
-          success: true,
-          message: 'Local computer storage: classes stored locally on PC.',
-          classes: [],
-          routines: [],
-          sessions: req.body.sessions || ['2025-26'],
-          currentSession: req.body.currentSession,
-        })
       }
 
       const updateData: any = {}
@@ -291,15 +262,6 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
 
       if (req.userRole !== 'super_admin' && req.schoolId && school.id !== req.schoolId) {
         return res.status(403).json({ error: 'Forbidden' })
-      }
-
-      if (school.storageMode === 'local_computer') {
-        return res.json({
-          success: true,
-          message: 'Local computer storage: classes stored locally on PC.',
-          classes: [],
-          routines: [],
-        })
       }
 
       const routinesData = typeof req.body.routines === 'object' ? JSON.stringify(req.body.routines) : String(req.body.routines || '[]')

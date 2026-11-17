@@ -10,7 +10,6 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { usePermission } from '@/hooks/usePermission'
 import type { Subject } from '@/pages/teachers/types'
 import { subjectsApi } from '@/lib/api'
-import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverSubjectToSubject } from '@/lib/teacherMappers'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { SkeletonTable } from '@/components/ui/Skeleton'
@@ -77,23 +76,18 @@ export default function SubjectsPage() {
     const now = new Date().toISOString().split('T')[0]
     const localId = `SUB-${String(subjects.length + 1).padStart(3, '0')}`
 
-    if (isLocalComputerMode()) {
-      addSubject({
-        id: localId,
-        name: newName.trim(),
-        nameBn: newNameBn.trim(),
-        departmentId: newDeptIds[0],
-        departmentIds: newDeptIds,
-        createdAt: now,
-        updatedAt: now,
-      })
-      setNewName('')
-      setNewNameBn('')
-      setNewDeptIds([])
-      setShowAdd(false)
-      return
-    }
+    // Always update local PC storage (Zustand + Vault) immediately
+    addSubject({
+      id: localId,
+      name: newName.trim(),
+      nameBn: newNameBn.trim(),
+      departmentId: newDeptIds[0],
+      departmentIds: newDeptIds,
+      createdAt: now,
+      updatedAt: now,
+    })
 
+    // Also persist to database
     try {
       const created = await subjectsApi.create({
         name: newName.trim(),
@@ -101,17 +95,14 @@ export default function SubjectsPage() {
         departmentId: newDeptIds[0] || null,
         departmentIds: newDeptIds,
       })
-      upsertServerSubject(serverSubjectToSubject(created))
-    } catch {
-      addSubject({
-        id: localId,
-        name: newName.trim(),
-        nameBn: newNameBn.trim(),
-        departmentId: newDeptIds[0],
-        departmentIds: newDeptIds,
-        createdAt: now,
-        updatedAt: now,
-      })
+      if (created?.id) {
+        if (created.id !== localId) {
+          deleteSubject(localId)
+        }
+        upsertServerSubject(serverSubjectToSubject(created))
+      }
+    } catch (err) {
+      console.warn('[Subjects] Database create error (persisted to local PC storage):', err)
     }
     setNewName('')
     setNewNameBn('')
@@ -121,15 +112,15 @@ export default function SubjectsPage() {
 
   const handleEdit = async () => {
     if (!editS || !newName.trim() || newDeptIds.length === 0) return
-    if (isLocalComputerMode()) {
-      updateSubject(editS.id, { name: newName.trim(), nameBn: newNameBn.trim(), departmentId: newDeptIds[0], departmentIds: newDeptIds })
-      setEditS(null)
-      setNewName('')
-      setNewNameBn('')
-      setNewDeptIds([])
-      return
-    }
+    // Always update local PC storage (Zustand + Vault) immediately
+    updateSubject(editS.id, {
+      name: newName.trim(),
+      nameBn: newNameBn.trim(),
+      departmentId: newDeptIds[0],
+      departmentIds: newDeptIds,
+    })
 
+    // Also persist to database
     try {
       const updated = await subjectsApi.update(editS.id, {
         name: newName.trim(),
@@ -137,9 +128,11 @@ export default function SubjectsPage() {
         departmentId: newDeptIds[0] || null,
         departmentIds: newDeptIds,
       })
-      upsertServerSubject(serverSubjectToSubject(updated))
-    } catch {
-      updateSubject(editS.id, { name: newName.trim(), nameBn: newNameBn.trim(), departmentId: newDeptIds[0], departmentIds: newDeptIds })
+      if (updated?.id) {
+        upsertServerSubject(serverSubjectToSubject(updated))
+      }
+    } catch (err) {
+      console.warn('[Subjects] Database update error (persisted to local PC storage):', err)
     }
     setEditS(null)
     setNewName('')
@@ -148,16 +141,15 @@ export default function SubjectsPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (isLocalComputerMode()) {
-      deleteSubject(id)
-      setDelConfirm(null)
-      return
-    }
+    // Always delete from local PC storage (Zustand + Vault) immediately
+    deleteSubject(id)
+    removeServerSubject(id)
+
+    // Also delete from database
     try {
       await subjectsApi.delete(id)
-      removeServerSubject(id)
-    } catch {
-      deleteSubject(id)
+    } catch (err) {
+      console.warn('[Subjects] Database delete error:', err)
     }
     setDelConfirm(null)
   }

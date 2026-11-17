@@ -1044,8 +1044,12 @@ async function writeVaultFile(subPath: string, content: string): Promise<void> {
 }
 
 async function syncIndividualDomainFiles(slug: string, path: string, rawJson: string): Promise<void> {
-  if (path === `${slug}/teachers.json`) {
+  const isTeachers = (slug && path === `${slug}/teachers.json`) || path === 'teachers.json' || path.endsWith('/teachers.json')
+  if (isTeachers) {
     await writeVaultFile('teachers.json', prettifyJson(rawJson))
+    if (slug && path !== `${slug}/teachers.json`) {
+      await writeVaultFile(`${slug}/teachers.json`, prettifyJson(rawJson))
+    }
     try {
       const parsed = JSON.parse(rawJson)
       const state = parsed?.state ?? parsed
@@ -1053,38 +1057,45 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       const departments = state.departments ?? []
       if (departments.length > 0 || isRecentExplicitDelete()) {
         const deptsPretty = JSON.stringify(departments, null, 2)
-        await writeVaultFile(`${slug}/departments.json`, deptsPretty)
+        if (slug) await writeVaultFile(`${slug}/departments.json`, deptsPretty)
         await writeVaultFile('departments.json', deptsPretty)
       }
 
       const subjects = state.subjects ?? []
       if (subjects.length > 0 || isRecentExplicitDelete()) {
         const subjectsPretty = JSON.stringify(subjects, null, 2)
-        await writeVaultFile(`${slug}/subjects.json`, subjectsPretty)
+        if (slug) await writeVaultFile(`${slug}/subjects.json`, subjectsPretty)
         await writeVaultFile('subjects.json', subjectsPretty)
       }
 
       const designations = state.designations ?? []
       if (designations.length > 0 || isRecentExplicitDelete()) {
         const designationsPretty = JSON.stringify(designations, null, 2)
-        await writeVaultFile(`${slug}/designations.json`, designationsPretty)
+        if (slug) await writeVaultFile(`${slug}/designations.json`, designationsPretty)
         await writeVaultFile('designations.json', designationsPretty)
       }
     } catch { /* ignore */ }
   }
 
-  if (path === `${slug}/admissions.json`) {
+  const isAdmissions = (slug && path === `${slug}/admissions.json`) || path === 'admissions.json' || path.endsWith('/admissions.json')
+  if (isAdmissions) {
+    if (path !== 'admissions.json') {
+      await writeVaultFile('admissions.json', prettifyJson(rawJson))
+    }
+    if (slug && path !== `${slug}/admissions.json`) {
+      await writeVaultFile(`${slug}/admissions.json`, prettifyJson(rawJson))
+    }
     try {
       const parsed = JSON.parse(rawJson)
       const state = parsed?.state ?? parsed
       const students = state.students ?? []
       if (students.length > 0 || isRecentExplicitDelete()) {
         const studentsPretty = JSON.stringify(students, null, 2)
-        await writeVaultFile(`${slug}/students.json`, studentsPretty)
+        if (slug) await writeVaultFile(`${slug}/students.json`, studentsPretty)
         await writeVaultFile('students.json', studentsPretty)
       }
     } catch {
-      await writeVaultFile(`${slug}/students.json`, prettifyJson(rawJson))
+      if (slug) await writeVaultFile(`${slug}/students.json`, prettifyJson(rawJson))
       await writeVaultFile('students.json', prettifyJson(rawJson))
     }
   }
@@ -1559,8 +1570,8 @@ async function writePath(path: string, json: string): Promise<void> {
   const slug = currentSlug()
   try {
     await writeVaultFile(path, prettifyJson(json))
+    await syncIndividualDomainFiles(slug || '', path, json)
     if (slug) {
-      await syncIndividualDomainFiles(slug, path, json)
       void exportStoreImages(slug, path, json)
     }
     emit({ lastSyncAt: Date.now(), error: null })

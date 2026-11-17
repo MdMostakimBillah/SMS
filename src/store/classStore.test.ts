@@ -240,7 +240,7 @@ describe('classStore actions', () => {
     )
   })
 
-  it('in local_computer mode, syncFromServer and syncToServer skip server mutations', async () => {
+  it('in local_computer mode, syncFromServer and syncToServer still sync to database for dual persistence', async () => {
     sessionStorage.setItem('edutech_storage_mode', 'local_computer')
     useClassStore.setState({
       institution: {
@@ -252,10 +252,10 @@ describe('classStore actions', () => {
     vi.mocked(classesApi.update).mockClear()
 
     await useClassStore.getState().syncFromServer('test-slug')
-    expect(classesApi.get).not.toHaveBeenCalled()
+    expect(classesApi.get).toHaveBeenCalledWith('test-slug', '2025-26')
 
     await useClassStore.getState().syncToServer()
-    expect(classesApi.update).not.toHaveBeenCalled()
+    expect(classesApi.update).toHaveBeenCalled()
   })
 
   it('in local_computer mode, creating new session and switching isolates session classes and routines in localStorage', () => {

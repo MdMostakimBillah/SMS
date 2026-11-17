@@ -101,6 +101,15 @@ export function keyToVaultPath(key: string, fallbackSlug?: string | null): strin
   if (key === 'edutech-classes' || key === 'edutech_classes') {
     return effSlug ? `${effSlug}/classes.json` : 'classes.json'
   }
+  if (key === 'edutech-teachers' || key === 'edutech_teachers') {
+    return effSlug ? `${effSlug}/teachers.json` : 'teachers.json'
+  }
+  if (key === 'edutech-admissions' || key === 'edutech_admissions') {
+    return effSlug ? `${effSlug}/admissions.json` : 'admissions.json'
+  }
+  if (key === 'edutech-fees' || key === 'edutech_fees') {
+    return effSlug ? `${effSlug}/fees.json` : 'fees.json'
+  }
   return null
 }
 

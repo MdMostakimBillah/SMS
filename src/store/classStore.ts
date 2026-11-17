@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getSlug } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
-import { isLocalComputerMode } from '@/lib/storageMode'
 import { classesApi } from '@/lib/api'
 import { getPermanentStorageModeSync, getPermanentTelegramSync } from '@/lib/permanentConfig'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -346,7 +345,6 @@ interface ClassState {
 let serverSyncTimer: any = null
 function queueServerSync(get: () => ClassState) {
   try {
-    if (isLocalComputerMode()) return
     const state = get()
     const hasAnyClasses = state.classes.length > 0 || Object.values(state.sessionClasses || {}).some((c) => c && c.length > 0)
     const hasAnyRoutines = state.routines.length > 0 || Object.values(state.sessionRoutines || {}).some((r) => r && r.length > 0)
@@ -771,10 +769,6 @@ export const useClassStore = create<ClassState>()(
       },
 
       syncFromServer: async (slugOrId?: string) => {
-        if (isLocalComputerMode()) {
-          set({ serverSynced: true, syncing: false })
-          return
-        }
         set({ syncing: true })
         try {
           const state = _get()
@@ -966,7 +960,6 @@ export const useClassStore = create<ClassState>()(
       },
 
       syncToServer: async () => {
-        if (isLocalComputerMode()) return
         set({ syncing: true })
         try {
           const state = _get()
