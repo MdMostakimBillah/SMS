@@ -1,4 +1,4 @@
-import { Trash2, Save, Copy, BookOpen, X } from 'lucide-react'
+import { Trash2, Save, Copy, BookOpen, X, Plus } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
 import { useClassStore } from '@/store/classStore'
@@ -49,7 +49,7 @@ export function SectionCard({
   setTempSelectedSubjects,
   setShowSubjectModal,
 }: SectionCardProps) {
-  const { canDelete } = usePermission()
+  const { canDelete, canEdit } = usePermission()
   const teacher = sec.classTeacherId ? getTeacher(sec.classTeacherId) : undefined
 
   return (
@@ -135,7 +135,54 @@ export function SectionCard({
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', flexShrink: 0 }}>
+          {canEdit('classes.classes') && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setTempSelectedSubjects(sec.subjectIds || [])
+                setShowSubjectModal({
+                  classId: cls.id,
+                  sectionId: sec.id,
+                  className: isBn ? cls.nameBn : cls.name,
+                  sectionName: sec.name,
+                })
+              }}
+              style={{
+                padding: '3px 8px',
+                borderRadius: '0.3125rem',
+                background: 'var(--teal-light)',
+                border: '1px solid var(--teal)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                color: 'var(--teal)',
+                fontSize: '0.625rem',
+                fontWeight: 600,
+                fontFamily: 'inherit',
+              }}
+              title={isBn ? 'সেকশনের বিষয় নির্বাচন' : 'Section Subjects'}
+            >
+              <BookOpen size={11} />
+              <span>{sec.subjectIds && sec.subjectIds.length > 0 ? (isBn ? 'বিষয়' : 'Subjects') : (isBn ? 'বিষয় যোগ' : 'Add Subjects')}</span>
+              {sec.subjectIds && sec.subjectIds.length > 0 && (
+                <span
+                  style={{
+                    background: 'var(--teal)',
+                    color: '#fff',
+                    borderRadius: '0.25rem',
+                    padding: '1px 4px',
+                    fontSize: '0.5625rem',
+                    fontWeight: 700,
+                    lineHeight: 1,
+                  }}
+                >
+                  {sec.subjectIds.length}
+                </span>
+              )}
+            </button>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -180,6 +227,84 @@ export function SectionCard({
           )}
         </div>
       </div>
+
+      {/* Section Subjects List inside collapse */}
+      {sec.subjectIds && sec.subjectIds.length > 0 && !isEditing && (
+        <div style={{ padding: '0 12px 10px', display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
+          {sec.subjectIds.map((sid: string) => {
+            const sub = subjectMap.get(sid)
+            const label = sub ? (isBn ? (sub.nameBn || sub.name) : (sub.name || sub.nameBn)) : sid
+            return (
+              <span
+                key={sid}
+                style={{
+                  padding: '2px 7px',
+                  borderRadius: '0.375rem',
+                  background: 'var(--bg-primary)',
+                  border: '1px solid var(--border)',
+                  fontSize: '0.625rem',
+                  fontWeight: 500,
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                }}
+              >
+                {label}
+                {canEdit('classes.classes') && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const updated = (sec.subjectIds || []).filter((s) => s !== sid)
+                      updateSection(cls.id, sec.id, { subjectIds: updated })
+                      flushPendingWrites()
+                      void flushVaultWrites()
+                      void useClassStore.getState().syncToServer()
+                      setSecForm((p) => ({ ...p, subjectIds: updated }))
+                    }}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
+                    title={isBn ? 'মুছে ফেলুন' : 'Remove'}
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </span>
+            )
+          })}
+          {canEdit('classes.classes') && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setTempSelectedSubjects(sec.subjectIds || [])
+                setShowSubjectModal({
+                  classId: cls.id,
+                  sectionId: sec.id,
+                  className: isBn ? cls.nameBn : cls.name,
+                  sectionName: sec.name,
+                })
+              }}
+              style={{
+                background: 'transparent',
+                border: '1px dashed var(--teal)',
+                borderRadius: '0.375rem',
+                padding: '2px 6px',
+                fontSize: '0.5625rem',
+                color: 'var(--teal)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.125rem',
+                fontFamily: 'inherit',
+              }}
+            >
+              <Plus size={9} />
+              {isBn ? 'যোগ' : 'Add'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Expanded edit form */}
       {isEditing && (
@@ -270,9 +395,14 @@ export function SectionCard({
           <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.375rem' }}>
             <button
               onClick={() => {
-                updateSection(cls.id, sec.id, { name: secForm.name || sec.name, seatQuantity: secForm.seatQuantity, classTeacherId: secForm.classTeacherId })
+                updateSection(cls.id, sec.id, {
+                  name: secForm.name || sec.name,
+                  seatQuantity: secForm.seatQuantity,
+                  classTeacherId: secForm.classTeacherId,
+                })
                 flushPendingWrites()
                 void flushVaultWrites()
+                void useClassStore.getState().syncToServer()
                 setEditingSection(null)
               }}
               style={{ flex: 1, padding: '0.4375rem', borderRadius: '0.4375rem', background: 'var(--brand)', border: 'none', color: '#fff', fontSize: '0.6875rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}

@@ -131,16 +131,14 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
    * PUT /api/classes
    * Save classes and/or routines for the institution.
    */
-  router.put('/', requireAuth(prisma, jwtSecret), requireRole('school_admin', 'super_admin'), async (req: AuthenticatedRequest, res: Response) => {
+  router.put('/', requireAuth(prisma, jwtSecret), requireRole('school_admin', 'teacher', 'super_admin', 'hr_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
       let targetSchoolId = req.schoolId
       if (req.userRole === 'super_admin') {
         targetSchoolId = (req.query.schoolId as string) || req.body.schoolId || (req.query.slug as string) || req.schoolId
       } else {
         const requestedTarget = (req.query.schoolId as string) || req.body.schoolId || (req.query.slug as string)
-        if (requestedTarget) {
-          targetSchoolId = requestedTarget
-        }
+        targetSchoolId = req.schoolId || requestedTarget
       }
 
       if (!targetSchoolId) {
@@ -162,7 +160,7 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(404).json({ error: 'Institution not found' })
       }
 
-      if (req.userRole !== 'super_admin' && req.schoolId !== school.id) {
+      if (req.userRole !== 'super_admin' && req.schoolId && school.id !== req.schoolId) {
         return res.status(403).json({ error: 'Forbidden' })
       }
 
@@ -262,16 +260,14 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
    * PUT /api/classes/routines
    * Specifically update only routines for the institution.
    */
-  router.put('/routines', requireAuth(prisma, jwtSecret), requireRole('school_admin', 'super_admin'), async (req: AuthenticatedRequest, res: Response) => {
+  router.put('/routines', requireAuth(prisma, jwtSecret), requireRole('school_admin', 'teacher', 'super_admin', 'hr_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
       let targetSchoolId = req.schoolId
       if (req.userRole === 'super_admin') {
         targetSchoolId = (req.query.schoolId as string) || req.body.schoolId || (req.query.slug as string) || req.schoolId
       } else {
         const requestedTarget = (req.query.schoolId as string) || req.body.schoolId || (req.query.slug as string)
-        if (requestedTarget) {
-          targetSchoolId = requestedTarget
-        }
+        targetSchoolId = req.schoolId || requestedTarget
       }
 
       if (!targetSchoolId) {
@@ -293,7 +289,7 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(404).json({ error: 'Institution not found' })
       }
 
-      if (req.userRole !== 'super_admin' && req.schoolId !== school.id) {
+      if (req.userRole !== 'super_admin' && req.schoolId && school.id !== req.schoolId) {
         return res.status(403).json({ error: 'Forbidden' })
       }
 

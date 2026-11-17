@@ -1089,8 +1089,11 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
     }
   }
 
-  if (path === `${slug}/classes.json`) {
+  if (path === `${slug}/classes.json` || path === 'classes.json' || path.endsWith('/classes.json')) {
     await writeVaultFile('classes.json', prettifyJson(rawJson))
+    if (slug && path !== `${slug}/classes.json`) {
+      await writeVaultFile(`${slug}/classes.json`, prettifyJson(rawJson))
+    }
 
     try {
       const parsed = JSON.parse(rawJson)
@@ -1100,7 +1103,7 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       const routines = state.routines ?? []
       if (routines.length > 0 || isRecentExplicitDelete() || state.sessionRoutines) {
         const routinesPretty = JSON.stringify(routines, null, 2)
-        await writeVaultFile(`${slug}/routines.json`, routinesPretty)
+        if (slug) await writeVaultFile(`${slug}/routines.json`, routinesPretty)
         await writeVaultFile('routines.json', routinesPretty)
       }
 
@@ -1116,14 +1119,14 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       )
       if (sections.length > 0 || isRecentExplicitDelete() || state.sessionClasses) {
         const sectionsPretty = JSON.stringify(sections, null, 2)
-        await writeVaultFile(`${slug}/sections.json`, sectionsPretty)
+        if (slug) await writeVaultFile(`${slug}/sections.json`, sectionsPretty)
         await writeVaultFile('sections.json', sectionsPretty)
       }
 
       // 3. institution.json
       if (state.institution) {
         const instPretty = JSON.stringify(state.institution, null, 2)
-        await writeVaultFile(`${slug}/institution.json`, instPretty)
+        if (slug) await writeVaultFile(`${slug}/institution.json`, instPretty)
         await writeVaultFile('institution.json', instPretty)
       }
     } catch { /* ignore */ }

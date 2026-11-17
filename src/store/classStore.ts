@@ -799,12 +799,76 @@ export const useClassStore = create<ClassState>()(
               }))
             }
 
+            const mergeClassLists = (localList: ClassInfo[], serverList: ClassInfo[]): ClassInfo[] => {
+              if (!serverList || serverList.length === 0) return localList || []
+              if (!localList || localList.length === 0) return serverList || []
+
+              const localMap = new Map(localList.map((c) => [c.id, c]))
+              const merged = serverList.map((serverCls) => {
+                const localCls = localMap.get(serverCls.id)
+                if (!localCls) return serverCls
+
+                const localSecMap = new Map((localCls.sections || []).map((s) => [s.id, s]))
+                const mergedSections = (serverCls.sections || []).map((serverSec) => {
+                  const localSec = localSecMap.get(serverSec.id)
+                  if (!localSec) return serverSec
+                  // Merge section subjectIds so locally configured subjects are never lost
+                  const mergedSecSubjectIds = Array.from(new Set([
+                    ...(serverSec.subjectIds || []),
+                    ...(localSec.subjectIds || []),
+                  ]))
+                  return {
+                    ...serverSec,
+                    ...localSec,
+                    subjectIds: mergedSecSubjectIds,
+                  }
+                })
+
+                // Include any local sections not yet present on server
+                const serverSecIds = new Set((serverCls.sections || []).map((s) => s.id))
+                for (const lSec of localCls.sections || []) {
+                  if (!serverSecIds.has(lSec.id)) {
+                    mergedSections.push(lSec)
+                  }
+                }
+
+                const mergedClassSubjectIds = Array.from(new Set([
+                  ...(serverCls.subjectIds || []),
+                  ...(localCls.subjectIds || []),
+                ]))
+
+                return {
+                  ...serverCls,
+                  ...localCls,
+                  subjectIds: mergedClassSubjectIds,
+                  sections: mergedSections,
+                }
+              })
+
+              // Include any local classes not yet present on server
+              const serverClassIds = new Set(serverList.map((c) => c.id))
+              for (const lCls of localList) {
+                if (!serverClassIds.has(lCls.id)) {
+                  merged.push(lCls)
+                }
+              }
+
+              return merged
+            }
+
             if (hasServerSessionClasses) {
               const mergedSessions = Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
               const activeSession = state.institution.currentSession || res.currentSession || currentSession
               const normalizedSessionClasses: Record<string, ClassInfo[]> = {}
+              let needsPush = false
               for (const [sess, list] of Object.entries(res.sessionClasses || {})) {
-                normalizedSessionClasses[sess] = normalizeClassList(list)
+                const normalized = normalizeClassList(list)
+                const localForSess = state.sessionClasses?.[sess] || (sess === activeSession ? state.classes : [])
+                const merged = mergeClassLists(localForSess, normalized)
+                normalizedSessionClasses[sess] = merged
+                if (localForSess.some((lc) => (lc.subjectIds?.length ?? 0) > 0 || (lc.sections || []).some((ls) => (ls.subjectIds?.length ?? 0) > 0))) {
+                  needsPush = true
+                }
               }
               const mergedSessionClasses = { ...state.sessionClasses, ...normalizedSessionClasses }
               const mergedSessionRoutines = { ...state.sessionRoutines, ...(res.sessionRoutines || {}) }
@@ -826,21 +890,25 @@ export const useClassStore = create<ClassState>()(
                 serverSynced: true,
                 syncing: false,
               }))
+              if (needsPush) {
+                void queueServerSync(_get)
+              }
             } else if (hasServerClasses || hasServerRoutines) {
               const mergedSessions = Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
               const defaultSession = res.currentSession || res.sessions?.[0] || '2025-26'
               const activeSession = state.institution.currentSession || defaultSession
               const isCurrentSameAsServerDefault = activeSession === defaultSession
               const normalizedServerClasses = normalizeClassList(res.classes || [])
+              const mergedActiveClasses = mergeClassLists(state.classes, normalizedServerClasses)
               const newSessionClasses = {
                 ...state.sessionClasses,
-                [defaultSession]: normalizedServerClasses,
+                [defaultSession]: mergedActiveClasses,
               }
               const newSessionRoutines = {
                 ...state.sessionRoutines,
                 [defaultSession]: res.routines || [],
               }
-              const activeClasses = isCurrentSameAsServerDefault ? normalizedServerClasses : (state.sessionClasses[activeSession] || [])
+              const activeClasses = isCurrentSameAsServerDefault ? mergedActiveClasses : (state.sessionClasses[activeSession] || [])
               const activeRoutines = isCurrentSameAsServerDefault ? (res.routines || []) : (state.sessionRoutines[activeSession] || [])
               set((prev) => ({
                 classes: activeClasses,
@@ -858,6 +926,9 @@ export const useClassStore = create<ClassState>()(
                 serverSynced: true,
                 syncing: false,
               }))
+              if (state.classes.some((lc) => (lc.subjectIds?.length ?? 0) > 0 || (lc.sections || []).some((ls) => (ls.subjectIds?.length ?? 0) > 0))) {
+                void queueServerSync(_get)
+              }
             } else if (state.classes.length > 0 || Object.keys(state.sessionClasses).length > 0) {
               // Local store has classes/routines but database is empty: push local classes to server
               await classesApi.update({

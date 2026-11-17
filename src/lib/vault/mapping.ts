@@ -98,6 +98,9 @@ export function keyToVaultPath(key: string, fallbackSlug?: string | null): strin
       return `${effSlug}/${rawBase}.json`
     }
   }
+  if (key === 'edutech-classes' || key === 'edutech_classes') {
+    return effSlug ? `${effSlug}/classes.json` : 'classes.json'
+  }
   return null
 }
 

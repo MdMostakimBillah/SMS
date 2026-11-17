@@ -138,7 +138,7 @@ describe('ClassesTab Component', () => {
     expect(screen.getByText('249 seats left')).toBeInTheDocument()
   })
 
-  it('displays class-level subjects and allows assigning subjects to a class', () => {
+  it('displays section-level subjects and allows assigning subjects directly to a section inside the collapse', () => {
     const updateClass = vi.fn()
     const updateSection = vi.fn()
     const mockSubjects = [
@@ -160,7 +160,7 @@ describe('ClassesTab Component', () => {
           name: 'A',
           seatQuantity: 40,
           classTeacherId: '',
-          subjectIds: ['SUB-01'],
+          subjectIds: ['SUB-01', 'SUB-02'],
         },
       ],
     }
@@ -177,25 +177,25 @@ describe('ClassesTab Component', () => {
       </MemoryRouter>
     )
 
-    // Check subject count badge in class header
-    expect(screen.getByText('2 subjects')).toBeInTheDocument()
+    // Verify top class card does NOT have the old Class Subjects view button
+    expect(screen.queryByTitle('Class Subjects')).not.toBeInTheDocument()
 
     // Expand class card
     const classCard = screen.getByText('Class 5').closest('div[style*="cursor: pointer"]')!
     fireEvent.click(classCard)
 
-    // Check class subjects section
-    expect(screen.getByText('Class Subjects')).toBeInTheDocument()
+    // Inside the collapse, Section A displays its assigned subjects chips
     expect(screen.getByText('Mathematics')).toBeInTheDocument()
     expect(screen.getByText('English')).toBeInTheDocument()
 
-    // Click "Edit Subjects" button in class subjects container
-    const editBtn = screen.getByText('Edit Subjects')
-    fireEvent.click(editBtn)
+    // Section card has a direct section subjects button
+    const sectionSubjectBtn = screen.getByTitle('Section Subjects')
+    expect(sectionSubjectBtn).toBeInTheDocument()
+    fireEvent.click(sectionSubjectBtn)
 
-    // Modal opens for Class 5
+    // Modal opens specifically for Class 5 — Section A
     expect(screen.getByText('Select Subjects')).toBeInTheDocument()
-    expect(screen.getAllByText('Class 5').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByText('Class 5 — Section A')).toBeInTheDocument()
 
     // Select Science (SUB-03)
     const scienceOption = screen.getByText('Science')
@@ -205,12 +205,7 @@ describe('ClassesTab Component', () => {
     const saveBtn = screen.getByText(/Save \([0-9]+\)/)
     fireEvent.click(saveBtn)
 
-    // updateClass should have been called with ['SUB-01', 'SUB-02', 'SUB-03']
-    expect(updateClass).toHaveBeenCalledWith('CLS-01', {
-      subjectIds: expect.arrayContaining(['SUB-01', 'SUB-02', 'SUB-03']),
-    })
-
-    // Child sections should also receive the updated class subjects
+    // Section should be updated with SUB-01, SUB-02, and SUB-03
     expect(updateSection).toHaveBeenCalledWith('CLS-01', 'SEC-CLS-01-A', {
       subjectIds: expect.arrayContaining(['SUB-01', 'SUB-02', 'SUB-03']),
     })

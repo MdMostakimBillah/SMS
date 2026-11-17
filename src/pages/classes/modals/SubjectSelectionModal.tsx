@@ -103,10 +103,13 @@ export function SubjectSelectionModal({
   const handleSave = async () => {
     if (isSectionMode && showSubjectModal.sectionId) {
       updateSection(showSubjectModal.classId, showSubjectModal.sectionId, { subjectIds: tempSelectedSubjects })
-      // Also ensure parent class subjectIds includes these section subjects
+      // Keep parent class subjectIds aligned with the union of its sections' subjects
       if (updateClass && targetClass) {
-        const mergedClass = Array.from(new Set([...(targetClass.subjectIds || []), ...tempSelectedSubjects]))
-        updateClass(showSubjectModal.classId, { subjectIds: mergedClass })
+        const otherSectionsSubs = (targetClass.sections || [])
+          .filter((s) => s.id !== showSubjectModal.sectionId)
+          .flatMap((s) => s.subjectIds || [])
+        const unionSubs = Array.from(new Set([...otherSectionsSubs, ...tempSelectedSubjects]))
+        updateClass(showSubjectModal.classId, { subjectIds: unionSubs })
       }
     } else if (updateClass) {
       updateClass(showSubjectModal.classId, { subjectIds: tempSelectedSubjects })
@@ -122,7 +125,7 @@ export function SubjectSelectionModal({
     }
     flushPendingWrites()
     await flushVaultWrites()
-    void useClassStore.getState().syncToServer()
+    await useClassStore.getState().syncToServer()
     setShowSubjectModal(null)
   }
 

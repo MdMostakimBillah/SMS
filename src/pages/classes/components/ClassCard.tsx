@@ -1,8 +1,7 @@
 import React from 'react'
-import { Clock, Trash2, Save, Plus, ChevronDown, ChevronUp, Pencil, X, BookOpen } from 'lucide-react'
+import { Clock, Trash2, Save, Plus, ChevronDown, ChevronUp, Pencil, X } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
-import { useClassStore } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import { flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
@@ -35,7 +34,7 @@ interface ClassCardProps {
   handleSaveClassTime: (classId: string) => void
   handleAddSection: (classId: string) => void
   deleteClass: (id: string) => void
-  updateClass: (id: string, data: Partial<ClassInfo>) => void
+  updateClass?: (id: string, data: Partial<ClassInfo>) => void
   toggleSelectClass: (classId: string) => void
   setExpandedClass: React.Dispatch<React.SetStateAction<string | null>>
   teachers: Teacher[]
@@ -74,7 +73,7 @@ export const ClassCard = React.memo(function ClassCard({
   handleSaveClassTime,
   handleAddSection,
   deleteClass,
-  updateClass,
+  updateClass: _updateClass,
   toggleSelectClass,
   setExpandedClass,
   teachers,
@@ -175,64 +174,15 @@ export const ClassCard = React.memo(function ClassCard({
               <Clock size={10} />
               {cls.startTime} - {cls.endTime}
             </span>
-            {cls.subjectIds && cls.subjectIds.length > 0 && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.1875rem', color: 'var(--teal)', fontWeight: 600 }}>
-                <BookOpen size={10} />
-                {cls.subjectIds.length} {isBn ? 'টি বিষয়' : 'subjects'}
-              </span>
-            )}
           </div>
         </div>
         {!bulkMode && (
           <>
             {canEdit('classes.classes') && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setTempSelectedSubjects(cls.subjectIds || [])
-                  setShowSubjectModal({
-                    classId: cls.id,
-                    className: isBn ? cls.nameBn : cls.name,
-                  })
-                }}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '0.375rem',
-                  background: 'var(--teal-light)',
-                  border: '1px solid var(--teal)',
-                  cursor: 'pointer',
-                  fontSize: '0.625rem',
-                  color: 'var(--teal)',
-                  fontFamily: 'inherit',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                }}
-                title={isBn ? 'শ্রেণির বিষয় নির্বাচন' : 'Class Subjects'}
-              >
-                <BookOpen size={11} />
-                <span>{isBn ? 'বিষয়' : 'Subjects'}</span>
-                {cls.subjectIds && cls.subjectIds.length > 0 && (
-                  <span
-                    style={{
-                      background: 'var(--teal)',
-                      color: '#fff',
-                      borderRadius: '0.25rem',
-                      padding: '1px 4px',
-                      fontSize: '0.5625rem',
-                      fontWeight: 700,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {cls.subjectIds.length}
-                  </span>
-                )}
-              </button>
-            )}
-            {canEdit('classes.classes') && (
-              <button
                 onClick={(e) => { e.stopPropagation(); setEditingClassTime(cls.id); setClassTimeForm({ startTime: cls.startTime, endTime: cls.endTime }) }}
                 style={{ padding: '4px 8px', borderRadius: '0.375rem', background: 'var(--bg-secondary)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.625rem', color: 'var(--text-secondary)', fontFamily: 'inherit' }}
+                title={isBn ? 'সময়সূচি পরিবর্তন' : 'Edit Class Time'}
               >
                 <Clock size={11} />
               </button>
@@ -275,97 +225,6 @@ export const ClassCard = React.memo(function ClassCard({
       {/* Class Details & Sections */}
       {isExpanded && !bulkMode && (
         <div style={{ marginTop: '0.75rem', borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
-          {/* Class Subjects Box */}
-          <div style={{ marginBottom: '0.75rem', padding: '0.625rem 0.75rem', borderRadius: '0.5rem', background: 'var(--teal-light)', border: '1px solid var(--teal-border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: cls.subjectIds?.length ? '0.375rem' : 0 }}>
-              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--teal)', display: 'flex', alignItems: 'center', gap: '0.3125rem' }}>
-                <BookOpen size={12} />
-                {isBn ? 'শ্রেণির বিষয়সমূহ' : 'Class Subjects'}
-                {cls.subjectIds && cls.subjectIds.length > 0 && (
-                  <span style={{ background: 'var(--teal)', color: '#fff', borderRadius: '0.25rem', padding: '1px 5px', fontSize: '0.5625rem', fontWeight: 700 }}>
-                    {cls.subjectIds.length}
-                  </span>
-                )}
-              </div>
-              {canEdit('classes.classes') && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTempSelectedSubjects(cls.subjectIds || [])
-                    setShowSubjectModal({
-                      classId: cls.id,
-                      className: isBn ? cls.nameBn : cls.name,
-                    })
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    padding: '3px 8px',
-                    borderRadius: '0.3125rem',
-                    background: 'var(--teal)',
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: '0.625rem',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  <BookOpen size={10} />
-                  {cls.subjectIds && cls.subjectIds.length > 0 ? (isBn ? 'বিষয় পরিবর্তন' : 'Edit Subjects') : (isBn ? 'বিষয় যোগ' : 'Add Subjects')}
-                </button>
-              )}
-            </div>
-            {cls.subjectIds && cls.subjectIds.length > 0 ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                {cls.subjectIds.map((sid) => {
-                  const sub = subjectMap.get(sid)
-                  const label = sub ? (isBn ? (sub.nameBn || sub.name) : (sub.name || sub.nameBn)) : sid
-                  return (
-                    <span
-                      key={sid}
-                      style={{
-                        padding: '2px 7px',
-                        borderRadius: '0.5rem',
-                        background: 'var(--bg-primary)',
-                        border: '1px solid var(--border)',
-                        fontSize: '0.625rem',
-                        fontWeight: 500,
-                        color: 'var(--text-primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                      }}
-                    >
-                      {label}
-                      {canEdit('classes.classes') && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const updated = (cls.subjectIds || []).filter((s) => s !== sid)
-                            updateClass(cls.id, { subjectIds: updated })
-                            flushPendingWrites()
-                            void flushVaultWrites()
-                            void useClassStore.getState().syncToServer()
-                          }}
-                          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
-                          title={isBn ? 'মুছে ফেলুন' : 'Remove'}
-                        >
-                          <X size={10} />
-                        </button>
-                      )}
-                    </span>
-                  )
-                })}
-              </div>
-            ) : (
-              <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                {isBn ? 'এই শ্রেণিতে কোনো বিষয় যুক্ত করা হয়নি। বিষয় যোগ করতে উপরের বাটনে ক্লিক করুন।' : 'No subjects assigned to this class yet. Click the button above to add subjects.'}
-              </div>
-            )}
-          </div>
-
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.625rem' }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.0313rem' }}>
               {isBn ? 'সেকশন সমূহ' : 'Sections'}
