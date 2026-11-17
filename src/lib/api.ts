@@ -266,11 +266,6 @@ export const authApi = {
       body: { email },
     }),
 
-  googleLogin: (data: { email: string; name?: string; image?: string; institution?: string; idToken?: string }) =>
-    apiRequest<LoginAuthResponse>('/api/auth/google', {
-      method: 'POST',
-      body: data,
-    }),
 
   emailLogin: (data: { email: string; code?: string; verified?: boolean; institution?: string }) =>
     apiRequest<LoginAuthResponse>('/api/auth/email-login', {

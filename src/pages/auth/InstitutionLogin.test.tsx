@@ -191,7 +191,7 @@ describe('InstitutionLogin credential handling (Phase 6)', () => {
   it('invokes authClient.signIn.social with google provider and /dashboard callback when Sign in with Google is clicked', async () => {
     vi.mocked(authClient.signIn.social).mockResolvedValueOnce({
       data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
-    } as any)
+    } as never)
 
     render(
       <MemoryRouter initialEntries={['/i/testschool/login']}>
@@ -215,10 +215,10 @@ describe('InstitutionLogin credential handling (Phase 6)', () => {
     expect(sessionStorage.getItem('edutech_intended_institution')).toBe('testschool')
   })
 
-  it('opens GoogleLoginModal when Better Auth Google provider is not configured or fails', async () => {
+  it('displays configuration notice and avoids insecure passwordless prompt when Google provider is not configured', async () => {
     vi.mocked(authClient.signIn.social).mockResolvedValueOnce({
       error: { message: 'Provider not found' },
-    } as any)
+    } as never)
 
     render(
       <MemoryRouter initialEntries={['/login']}>
@@ -230,10 +230,9 @@ describe('InstitutionLogin credential handling (Phase 6)', () => {
     const googleBtn = screen.getByRole('button', { name: /Google/i })
     fireEvent.click(googleBtn)
 
-    // GoogleLoginModal opens gracefully without displaying Provider not found
-    const emailInput = await screen.findByPlaceholderText('username@gmail.com')
-    expect(emailInput).toBeTruthy()
-    expect(screen.getByRole('heading', { name: /Google/i })).toBeTruthy()
+    const errorMsg = await screen.findByText(/Google Sign-In is not configured on the server yet/i)
+    expect(errorMsg).toBeTruthy()
+    expect(screen.queryByPlaceholderText('username@gmail.com')).toBeNull()
   })
 
   it('keeps the email/password Sign In button label intact when clicking Sign in with Google', async () => {

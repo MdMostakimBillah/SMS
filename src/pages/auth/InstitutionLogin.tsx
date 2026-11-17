@@ -16,7 +16,6 @@ import { applyThemeColors } from '@/hooks/useThemeColors'
 import { presets } from '@/components/shared/ColorSettings'
 import { getVaultStatus, vaultReconnect } from '@/lib/vault/vault'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
-import { GoogleLoginModal } from './GoogleLoginModal'
 import { authClient } from '@/lib/auth-client'
 
 const MAX_ATTEMPTS = 5
@@ -233,7 +232,6 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   const [showPassword, setShowPassword] = useState(false)
   const [forgotModalOpen, setForgotModalOpen] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [googleModalOpen, setGoogleModalOpen] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -693,25 +691,32 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
                   sessionStorage.setItem('edutech_intended_institution', subdomain)
                 }
 
-                // Attempt Better-Auth social sign in
+                // Attempt Better-Auth social sign in (redirects browser to Google's official OAuth login)
                 const res = await authClient.signIn.social({
                   provider: 'google',
                   callbackURL,
-                }).catch((e: unknown) => ({ error: { message: e instanceof Error ? e.message : 'Provider not found' } }))
+                }).catch((e: unknown) => ({ error: { message: e instanceof Error ? e.message : 'Google sign-in failed' } }))
 
                 if (res?.error) {
                   const msg = String(res.error.message || '').toLowerCase()
-                  if (msg.includes('provider') || msg.includes('not enabled') || msg.includes('not found') || msg.includes('failed')) {
-                    // Google OAuth keys not yet configured on server — open Google Sign-In prompt
-                    setGoogleModalOpen(true)
-                    return
+                  if (msg.includes('provider') || msg.includes('not enabled') || msg.includes('not found')) {
+                    setError(
+                      isBn
+                        ? 'Google সাইন-ইন এখনও সার্ভারে কনফিগার করা হয়নি (GOOGLE_CLIENT_ID এবং GOOGLE_CLIENT_SECRET প্রয়োজন)।'
+                        : 'Google Sign-In is not configured on the server yet (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET required in .env).'
+                    )
+                  } else {
+                    setError(res.error.message || (isBn ? 'Google দিয়ে সাইন ইন করতে সমস্যা হয়েছে' : 'Google sign-in failed'))
                   }
-                  throw new Error(res.error.message || 'Google sign-in failed')
                 }
               } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : String(err)
                 if (msg.toLowerCase().includes('provider') || msg.toLowerCase().includes('not enabled') || msg.toLowerCase().includes('not found')) {
-                  setGoogleModalOpen(true)
+                  setError(
+                    isBn
+                      ? 'Google সাইন-ইন এখনও সার্ভারে কনফিগার করা হয়নি (GOOGLE_CLIENT_ID এবং GOOGLE_CLIENT_SECRET প্রয়োজন)।'
+                      : 'Google Sign-In is not configured on the server yet (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET required in .env).'
+                  )
                 } else {
                   setError(msg || (isBn ? 'Google দিয়ে সাইন ইন করতে সমস্যা হয়েছে' : 'Google sign-in failed'))
                 }
@@ -770,15 +775,6 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
               </button>
             </p>
           </div>
-
-          <GoogleLoginModal
-            isOpen={googleModalOpen}
-            onClose={() => setGoogleModalOpen(false)}
-            subdomain={subdomain}
-            isBn={isBn}
-            isDark={isDark}
-            brandColor={institution.brandColor}
-          />
 
           <ForgotPasswordModal
             isOpen={forgotModalOpen}
