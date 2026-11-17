@@ -1,6 +1,7 @@
 import { Trash2, Save, Copy, BookOpen, X } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
+import { useClassStore } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import { flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
@@ -229,10 +230,11 @@ export function SectionCard({
                       {label}
                       <button
                         onClick={() => {
-                          const updated = sec.subjectIds.filter((s) => s !== sid)
+                          const updated = (sec.subjectIds || []).filter((s) => s !== sid)
                           updateSection(cls.id, sec.id, { subjectIds: updated })
                           flushPendingWrites()
                           void flushVaultWrites()
+                          void useClassStore.getState().syncToServer()
                           setSecForm((p) => ({ ...p, subjectIds: updated }))
                         }}
                         style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}

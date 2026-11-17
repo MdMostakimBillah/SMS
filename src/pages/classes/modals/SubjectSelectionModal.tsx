@@ -6,6 +6,7 @@ import { useNavChain } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
 import type { Subject } from '@/pages/teachers/types'
 import type { ClassInfo, ClassSection } from '@/store/classStore'
+import { useClassStore } from '@/store/classStore'
 import { flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
 import { useTeacherStore } from '@/store/teacherStore'
@@ -99,7 +100,7 @@ export function SubjectSelectionModal({
     setTempSelectedSubjects((prev) => Array.from(new Set([...prev, ...(targetClass.subjectIds || [])])))
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isSectionMode && showSubjectModal.sectionId) {
       updateSection(showSubjectModal.classId, showSubjectModal.sectionId, { subjectIds: tempSelectedSubjects })
       // Also ensure parent class subjectIds includes these section subjects
@@ -111,14 +112,17 @@ export function SubjectSelectionModal({
       updateClass(showSubjectModal.classId, { subjectIds: tempSelectedSubjects })
       // Propagate class subjects to all sections in this class so sections inherit them
       if (targetClass?.sections?.length) {
+        const removedFromClass = new Set((targetClass.subjectIds || []).filter((id) => !tempSelectedSubjects.includes(id)))
         targetClass.sections.forEach((sec) => {
-          const mergedSec = Array.from(new Set([...(sec.subjectIds || []), ...tempSelectedSubjects]))
+          const preserved = (sec.subjectIds || []).filter((id) => !removedFromClass.has(id))
+          const mergedSec = Array.from(new Set([...preserved, ...tempSelectedSubjects]))
           updateSection(showSubjectModal.classId, sec.id, { subjectIds: mergedSec })
         })
       }
     }
     flushPendingWrites()
-    void flushVaultWrites()
+    await flushVaultWrites()
+    void useClassStore.getState().syncToServer()
     setShowSubjectModal(null)
   }
 

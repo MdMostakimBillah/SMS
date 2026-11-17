@@ -519,5 +519,60 @@ describe('normalizeVaultJsonForStore', () => {
     expect(parsed.state.classes[0].title).toBe('Local PC Online Class')
     expect(parsed.state.serverSynced).toBe(true)
   })
+
+  it('normalizes classes.json with class and section subjectIds into Zustand format', () => {
+    const raw = JSON.stringify([
+      {
+        id: 'CLS-01',
+        name: 'Class 1',
+        subjectIds: ['SUB-01', 'SUB-02'],
+        sections: [
+          {
+            id: 'SEC-CLS-01-A',
+            name: 'A',
+            seatQuantity: 40,
+            subjectIds: ['SUB-01'],
+          },
+        ],
+      },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-classes_demo', raw, null, 'demo/classes.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.classes).toHaveLength(1)
+    expect(parsed.state.classes[0].subjectIds).toEqual(['SUB-01', 'SUB-02'])
+    expect(parsed.state.classes[0].sections).toHaveLength(1)
+    expect(parsed.state.classes[0].sections[0].subjectIds).toEqual(['SUB-01'])
+  })
+
+  it('normalizes sections.json preserving section subjectIds and overlaying onto classes', () => {
+    const existing = JSON.stringify({
+      state: {
+        classes: [
+          { id: 'CLS-01', name: 'Class 1', subjectIds: ['SUB-01', 'SUB-02'], sections: [] },
+        ],
+        institution: { currentSession: '2025-26' },
+      },
+      version: 7,
+    })
+    const sectionsRaw = JSON.stringify([
+      {
+        classId: 'CLS-01',
+        id: 'SEC-CLS-01-A',
+        name: 'A',
+        seatQuantity: 35,
+        subjectIds: ['SUB-01'],
+      },
+    ])
+    const normalized = normalizeVaultJsonForStore('edutech-classes_demo', sectionsRaw, existing, 'demo/sections.json')
+    const parsed = JSON.parse(normalized)
+    expect(parsed.state.classes[0].sections).toHaveLength(1)
+    expect(parsed.state.classes[0].sections[0].subjectIds).toEqual(['SUB-01'])
+    expect(parsed.state.classes[0].subjectIds).toEqual(['SUB-01', 'SUB-02'])
+  })
+
+  it('supports un-suffixed base keys like edutech-classes in keyMatchesInstitution and keyToVaultPath', () => {
+    expect(keyMatchesInstitution('edutech-classes', 'myschool')).toBe(true)
+    expect(keyToVaultPath('edutech-classes', 'myschool')).toBe('myschool/classes.json')
+  })
 })
 

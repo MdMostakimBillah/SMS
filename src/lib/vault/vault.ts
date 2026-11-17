@@ -11,7 +11,7 @@
  *             data or image is immediately deleted/cleared in the software.
  */
 
-import { onSlugChange } from '../storage'
+import { onSlugChange, getSlug } from '../storage'
 import { isWriteAllowed } from '../writeGuard'
 import { useAppStore } from '@/store/appStore'
 import {
@@ -445,7 +445,15 @@ export function subscribeVault(fn: (s: VaultStatus) => void): () => void {
 
 function currentSlug(): string | null {
   try {
-    return sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
+    const s = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
+    if (s) return s
+    const fromGetSlug = getSlug()
+    if (fromGetSlug) return fromGetSlug
+    return sessionStorage.getItem('edutech_viewing_id') ||
+      sessionStorage.getItem('edutech_school_domain') ||
+      sessionStorage.getItem('edutech_school_id') ||
+      localStorage.getItem('edutech_school_id') ||
+      null
   } catch {
     return null
   }
@@ -1103,7 +1111,7 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
           classId: c.id,
           className: c.name,
           ...s,
-          subjectIds: Array.isArray(s.subjectIds) ? s.subjectIds : [],
+          subjectIds: Array.isArray(s.subjectIds) ? s.subjectIds : (Array.isArray(s.subjects) ? s.subjects : []),
         }))
       )
       if (sections.length > 0 || isRecentExplicitDelete() || state.sessionClasses) {
@@ -1469,7 +1477,7 @@ async function seedVaultFromStorage(): Promise<number> {
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)
     if (!key || !keyMatchesInstitution(key, slug, userId)) continue
-    const path = keyToVaultPath(key)
+    const path = keyToVaultPath(key, currentSlug())
     const raw = localStorage.getItem(key)
     if (!path || raw === null) continue
     const pretty = prettifyJson(raw)
@@ -1521,7 +1529,7 @@ function handleStoreWrite(key: string, json: string): void {
   if (!isVaultHydrated) return
   const slug = currentSlug()
   if (!slug || !keyMatchesInstitution(key, slug, currentUserId())) return
-  const path = keyToVaultPath(key)
+  const path = keyToVaultPath(key, slug)
   if (!path || fileContentCache.get(path) === json) return // no-op change
 
   const existing = pendingWrites.get(path)
@@ -1563,7 +1571,7 @@ async function handleStoreRemove(key: string): Promise<void> {
   // Only remove files from disk if this was preceded by an explicit user delete in UI!
   if (!isRecentExplicitDelete()) return
 
-  const path = keyToVaultPath(key)
+  const path = keyToVaultPath(key, currentSlug())
   if (!path) return
   const existing = pendingWrites.get(path)
   if (existing) {

@@ -1,3 +1,5 @@
+import { getSlug } from './storage'
+
 export const API_BASE = import.meta.env.VITE_API_URL || ''
 
 /**
@@ -262,6 +264,12 @@ export const authApi = {
     apiRequest<{ success: boolean; message: string; demoCode?: string }>('/api/auth/send-login-otp', {
       method: 'POST',
       body: { email },
+    }),
+
+  googleLogin: (data: { email: string; name?: string; image?: string; institution?: string; idToken?: string }) =>
+    apiRequest<LoginAuthResponse>('/api/auth/google', {
+      method: 'POST',
+      body: data,
     }),
 
   emailLogin: (data: { email: string; code?: string; verified?: boolean; institution?: string }) =>
@@ -680,9 +688,12 @@ export interface ClassesResponse {
 
 export const classesApi = {
   get: (schoolIdOrSlug?: string, session?: string) => {
-    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const slug = schoolIdOrSlug || getSlug() || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || sessionStorage.getItem('edutech_viewing_id') || sessionStorage.getItem('edutech_school_id')) : undefined)
     const params = new URLSearchParams()
-    if (slug) params.set('slug', slug)
+    if (slug) {
+      params.set('slug', slug)
+      params.set('schoolId', slug)
+    }
     if (session) params.set('session', session)
     const q = params.toString() ? `?${params.toString()}` : ''
     return apiRequest<ClassesResponse>(`/api/classes${q}`)
@@ -696,11 +707,12 @@ export const classesApi = {
     currentSession?: string
     schoolId?: string
   }) => {
-    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const fallbackSlug = data.schoolId || getSlug() || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || sessionStorage.getItem('edutech_viewing_id') || sessionStorage.getItem('edutech_school_id')) : undefined)
     const body = {
       ...data,
-      schoolId: data.schoolId || fallbackSlug || undefined,
+      schoolId: fallbackSlug || undefined,
     }
+    const params = fallbackSlug ? `?schoolId=${encodeURIComponent(fallbackSlug)}` : ''
     return apiRequest<{
       success: boolean
       classes?: any[]
@@ -709,16 +721,17 @@ export const classesApi = {
       sessionRoutines?: Record<string, any[]>
       sessions?: string[]
       currentSession?: string
-    }>('/api/classes', {
+    }>(`/api/classes${params}`, {
       method: 'PUT',
       body,
     })
   },
   updateRoutines: (routines: any[], schoolId?: string) => {
-    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
-    return apiRequest<{ success: boolean; routines?: any[] }>('/api/classes/routines', {
+    const fallbackSlug = schoolId || getSlug() || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || sessionStorage.getItem('edutech_viewing_id') || sessionStorage.getItem('edutech_school_id')) : undefined)
+    const params = fallbackSlug ? `?schoolId=${encodeURIComponent(fallbackSlug)}` : ''
+    return apiRequest<{ success: boolean; routines?: any[] }>(`/api/classes/routines${params}`, {
       method: 'PUT',
-      body: { routines, schoolId: schoolId || fallbackSlug || undefined },
+      body: { routines, schoolId: fallbackSlug || undefined },
     })
   },
 }

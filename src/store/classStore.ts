@@ -364,6 +364,7 @@ function queueServerSync(get: () => ClassState) {
         if (!anyClasses && !anyRoutines && !isRecentExplicitDelete() && !s.serverSynced) {
           return
         }
+        const effectiveSlug = getSlug() || (typeof sessionStorage !== 'undefined' ? (sessionStorage.getItem('edutech_viewing_id') || sessionStorage.getItem('edutech_school_id')) : undefined) || undefined
         await classesApi.update({
           classes: s.classes,
           routines: s.routines,
@@ -371,7 +372,7 @@ function queueServerSync(get: () => ClassState) {
           sessionRoutines: s.sessionRoutines,
           sessions: s.institution.sessions,
           currentSession: s.institution.currentSession,
-          schoolId: getSlug() || undefined,
+          schoolId: effectiveSlug,
         })
       } catch (err) {
         // Warning only
@@ -784,10 +785,28 @@ export const useClassStore = create<ClassState>()(
             const hasServerClasses = Array.isArray(res.classes) && res.classes.length > 0
             const hasServerRoutines = Array.isArray(res.routines) && res.routines.length > 0
 
+            const normalizeClassList = (list: any[]): ClassInfo[] => {
+              if (!Array.isArray(list)) return []
+              return list.map((c: any) => ({
+                ...c,
+                subjectIds: Array.isArray(c.subjectIds) ? c.subjectIds : (Array.isArray(c.subjects) ? c.subjects : []),
+                sections: Array.isArray(c.sections)
+                  ? c.sections.map((s: any) => ({
+                      ...s,
+                      subjectIds: Array.isArray(s.subjectIds) ? s.subjectIds : (Array.isArray(s.subjects) ? s.subjects : []),
+                    }))
+                  : [],
+              }))
+            }
+
             if (hasServerSessionClasses) {
               const mergedSessions = Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
               const activeSession = state.institution.currentSession || res.currentSession || currentSession
-              const mergedSessionClasses = { ...state.sessionClasses, ...res.sessionClasses }
+              const normalizedSessionClasses: Record<string, ClassInfo[]> = {}
+              for (const [sess, list] of Object.entries(res.sessionClasses || {})) {
+                normalizedSessionClasses[sess] = normalizeClassList(list)
+              }
+              const mergedSessionClasses = { ...state.sessionClasses, ...normalizedSessionClasses }
               const mergedSessionRoutines = { ...state.sessionRoutines, ...(res.sessionRoutines || {}) }
               const activeClasses = mergedSessionClasses[activeSession] || []
               const activeRoutines = mergedSessionRoutines[activeSession] || []
@@ -812,15 +831,16 @@ export const useClassStore = create<ClassState>()(
               const defaultSession = res.currentSession || res.sessions?.[0] || '2025-26'
               const activeSession = state.institution.currentSession || defaultSession
               const isCurrentSameAsServerDefault = activeSession === defaultSession
+              const normalizedServerClasses = normalizeClassList(res.classes || [])
               const newSessionClasses = {
                 ...state.sessionClasses,
-                [defaultSession]: res.classes || [],
+                [defaultSession]: normalizedServerClasses,
               }
               const newSessionRoutines = {
                 ...state.sessionRoutines,
                 [defaultSession]: res.routines || [],
               }
-              const activeClasses = isCurrentSameAsServerDefault ? (res.classes || []) : (state.sessionClasses[activeSession] || [])
+              const activeClasses = isCurrentSameAsServerDefault ? normalizedServerClasses : (state.sessionClasses[activeSession] || [])
               const activeRoutines = isCurrentSameAsServerDefault ? (res.routines || []) : (state.sessionRoutines[activeSession] || [])
               set((prev) => ({
                 classes: activeClasses,
@@ -879,7 +899,7 @@ export const useClassStore = create<ClassState>()(
         set({ syncing: true })
         try {
           const state = _get()
-          const effectiveSlug = getSlug() || undefined
+          const effectiveSlug = getSlug() || (typeof sessionStorage !== 'undefined' ? (sessionStorage.getItem('edutech_viewing_id') || sessionStorage.getItem('edutech_school_id')) : undefined) || undefined
           await classesApi.update({
             classes: state.classes,
             routines: state.routines,

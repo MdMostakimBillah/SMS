@@ -9,6 +9,19 @@ export function getSlug(): string | null {
       try { sessionStorage.setItem('edutech_inst_slug', l) } catch { /* ignore */ }
       return l
     }
+    const viewingId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null
+    if (viewingId) return viewingId
+    const schoolDomain = typeof sessionStorage !== 'undefined'
+      ? (sessionStorage.getItem('edutech_school_domain') || localStorage.getItem('edutech_school_domain'))
+      : null
+    if (schoolDomain) {
+      try { sessionStorage.setItem('edutech_inst_slug', schoolDomain) } catch { /* ignore */ }
+      return schoolDomain
+    }
+    const schoolId = typeof sessionStorage !== 'undefined'
+      ? (sessionStorage.getItem('edutech_school_id') || localStorage.getItem('edutech_school_id'))
+      : null
+    if (schoolId) return schoolId
     if (typeof window !== 'undefined' && window.location?.pathname) {
       const match = window.location.pathname.match(/^\/i\/([^/]+)/)
       if (match && match[1] && match[1] !== 'super-admin') {
@@ -18,6 +31,19 @@ export function getSlug(): string | null {
           localStorage.setItem('edutech_inst_slug', urlSlug)
         } catch { /* ignore */ }
         return urlSlug
+      }
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      const userRaw = sessionStorage.getItem('edutech_user') || localStorage.getItem('edutech_user')
+      if (userRaw) {
+        try {
+          const u = JSON.parse(userRaw)
+          const slugOrId = u?.subdomain || u?.schoolDomain || u?.schoolId
+          if (slugOrId) {
+            try { sessionStorage.setItem('edutech_inst_slug', String(slugOrId)) } catch { /* ignore */ }
+            return String(slugOrId)
+          }
+        } catch { /* ignore */ }
       }
     }
     if (typeof localStorage !== 'undefined') {

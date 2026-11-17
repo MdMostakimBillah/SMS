@@ -152,9 +152,10 @@ export default function ClassesTab({
     const secLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const nextLetter = secLetters[cls.sections.length] || 'A'
     const secId = `SEC-${classId}-${nextLetter}`
-    addSection(classId, { id: secId, name: nextLetter, seatQuantity: 40, classTeacherId: '', subjectIds: [] })
+    addSection(classId, { id: secId, name: nextLetter, seatQuantity: 40, classTeacherId: '', subjectIds: cls.subjectIds ? [...cls.subjectIds] : [] })
     flushPendingWrites()
     void flushVaultWrites()
+    void useClassStore.getState().syncToServer()
   }
 
   const handleSaveClassName = (classId: string) => {
@@ -203,7 +204,7 @@ export default function ClassesTab({
     setShowBulkTime(false); setSelectedClasses([]); setBulkMode(false)
   }
 
-  const handleBulkSubjectApply = () => {
+  const handleBulkSubjectApply = async () => {
     selectedClasses.forEach((classId) => {
       const cls = classes.find((c) => c.id === classId)
       if (!cls) return
@@ -220,11 +221,12 @@ export default function ClassesTab({
       })
     })
     flushPendingWrites()
-    void flushVaultWrites()
+    await flushVaultWrites()
+    void useClassStore.getState().syncToServer()
     setShowBulkSubject(false); setSelectedClasses([]); setBulkMode(false)
   }
 
-  const handleBulkSectionApply = () => {
+  const handleBulkSectionApply = async () => {
     selectedClasses.forEach((classId) => {
       const cls = classes.find((c) => c.id === classId)
       if (!cls) return
@@ -233,11 +235,12 @@ export default function ClassesTab({
         const idx = cls.sections.length + i
         const letter = secLetters[idx] || String(idx + 1)
         const secId = `SEC-${classId}-${letter}`
-        addSection(classId, { id: secId, name: letter, seatQuantity: bulkSeatQuantity, classTeacherId: '', subjectIds: [] })
+        addSection(classId, { id: secId, name: letter, seatQuantity: bulkSeatQuantity, classTeacherId: '', subjectIds: cls.subjectIds ? [...cls.subjectIds] : [] })
       }
     })
     flushPendingWrites()
-    void flushVaultWrites()
+    await flushVaultWrites()
+    void useClassStore.getState().syncToServer()
     setShowBulkSection(false); setSelectedClasses([]); setBulkMode(false)
   }
 

@@ -213,7 +213,7 @@ describe('classStore actions', () => {
   })
 
   it('syncFromServer updates store when server returns classes and routines', async () => {
-    const mockClasses = [{ id: 'CLS-99', name: 'Class 99', sections: [] }]
+    const mockClasses = [{ id: 'CLS-99', name: 'Class 99', sections: [], subjectIds: [] }]
     const mockRoutines = [{ classId: 'CLS-99', sectionId: 'SEC-1', periodDuration: 45, weekendDays: [5], periods: [] }]
     vi.mocked(classesApi.get).mockResolvedValueOnce({
       classes: mockClasses as any,
@@ -363,5 +363,70 @@ describe('classStore actions', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('syncToServer includes both class-level and section-level subjectIds in server payload', async () => {
+    vi.mocked(classesApi.update).mockResolvedValueOnce({ success: true })
+    useClassStore.getState().addClass({
+      id: 'CLS-SUBJ-1',
+      name: 'Class with subjects',
+      sections: [
+        {
+          id: 'SEC-CLS-SUBJ-1-A',
+          name: 'A',
+          seatQuantity: 40,
+          classTeacherId: 'TEA-1',
+          subjectIds: ['SUB-01', 'SUB-02'],
+        },
+      ],
+      subjectIds: ['SUB-01', 'SUB-02', 'SUB-03'],
+    } as any)
+
+    await useClassStore.getState().syncToServer()
+
+    expect(classesApi.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        classes: expect.arrayContaining([
+          expect.objectContaining({
+            id: 'CLS-SUBJ-1',
+            subjectIds: ['SUB-01', 'SUB-02', 'SUB-03'],
+            sections: expect.arrayContaining([
+              expect.objectContaining({
+                id: 'SEC-CLS-SUBJ-1-A',
+                subjectIds: ['SUB-01', 'SUB-02'],
+              }),
+            ]),
+          }),
+        ]),
+      })
+    )
+  })
+
+  it('syncFromServer normalizes missing or legacy subjects into subjectIds array', async () => {
+    vi.mocked(classesApi.get).mockResolvedValueOnce({
+      classes: [
+        {
+          id: 'CLS-LEGACY',
+          name: 'Legacy Class',
+          subjects: ['SUB-L1', 'SUB-L2'],
+          sections: [
+            {
+              id: 'SEC-CLS-LEGACY-A',
+              name: 'A',
+              subjects: ['SUB-L1'],
+            },
+          ],
+        },
+      ] as any,
+      routines: [],
+      sessions: ['2025-26'],
+    })
+
+    await useClassStore.getState().syncFromServer('test-slug')
+
+    const cls = useClassStore.getState().classes.find((c) => c.id === 'CLS-LEGACY')
+    expect(cls).toBeDefined()
+    expect(cls?.subjectIds).toEqual(['SUB-L1', 'SUB-L2'])
+    expect(cls?.sections[0].subjectIds).toEqual(['SUB-L1'])
   })
 })

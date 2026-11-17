@@ -2,6 +2,7 @@ import React from 'react'
 import { Clock, Trash2, Save, Plus, ChevronDown, ChevronUp, Pencil, X, BookOpen } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
+import { useClassStore } from '@/store/classStore'
 import type { Teacher, Subject } from '@/pages/teachers/types'
 import { flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
@@ -346,6 +347,7 @@ export const ClassCard = React.memo(function ClassCard({
                             updateClass(cls.id, { subjectIds: updated })
                             flushPendingWrites()
                             void flushVaultWrites()
+                            void useClassStore.getState().syncToServer()
                           }}
                           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
                           title={isBn ? 'মুছে ফেলুন' : 'Remove'}

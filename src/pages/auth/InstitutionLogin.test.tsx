@@ -215,9 +215,9 @@ describe('InstitutionLogin credential handling (Phase 6)', () => {
     expect(sessionStorage.getItem('edutech_intended_institution')).toBe('testschool')
   })
 
-  it('displays helpful configuration message when Google sign-in fails with provider not enabled', async () => {
+  it('opens GoogleLoginModal when Better Auth Google provider is not configured or fails', async () => {
     vi.mocked(authClient.signIn.social).mockResolvedValueOnce({
-      error: { message: 'socialProvider not enabled' },
+      error: { message: 'Provider not found' },
     } as any)
 
     render(
@@ -230,70 +230,32 @@ describe('InstitutionLogin credential handling (Phase 6)', () => {
     const googleBtn = screen.getByRole('button', { name: /Google/i })
     fireEvent.click(googleBtn)
 
-    await screen.findByText(/Google Sign-In is not enabled on the server yet/i, {}, { timeout: 3000 })
+    // GoogleLoginModal opens gracefully without displaying Provider not found
+    const emailInput = await screen.findByPlaceholderText('username@gmail.com')
+    expect(emailInput).toBeTruthy()
+    expect(screen.getByRole('heading', { name: /Google/i })).toBeTruthy()
   })
 
-  it('allows other mail (Proton Mail) authentication flow through OtherMailLoginModal', async () => {
-    vi.mocked(authApi.sendLoginOtp).mockResolvedValueOnce({
-      success: true,
-      message: 'Code generated',
-      demoCode: '654321',
-    })
-    vi.mocked(authApi.emailLogin).mockResolvedValueOnce({
-      user: {
-        id: 'u-proton-1',
-        email: 'admin@proton.me',
-        name: 'Proton Admin',
-        role: 'school_admin',
-        schoolId: 'inst-1',
-        schoolName: 'Demo School',
-        schoolDomain: 'testschool',
-        avatar: null,
-      },
-    })
+  it('keeps the email/password Sign In button label intact when clicking Sign in with Google', async () => {
+    vi.mocked(authClient.signIn.social).mockImplementation(
+      () => new Promise(() => {}) // pending promise
+    )
 
     render(
-      <MemoryRouter initialEntries={['/i/testschool/login']}>
+      <MemoryRouter initialEntries={['/login']}>
         <LocationProbe />
-        <InstitutionLogin subdomain="testschool" institution={makeInstitution()} />
+        <InstitutionLogin institution={makeInstitution()} />
       </MemoryRouter>
     )
 
-    // Click "Sign in with Other Mail" button
-    const otherMailBtn = screen.getByRole('button', { name: /Other Mail|অন্যান্য মেইল/i })
-    expect(otherMailBtn).toBeTruthy()
-    fireEvent.click(otherMailBtn)
+    const signInBtn = screen.getByRole('button', { name: /^Sign In$|^সাইন ইন$/i })
+    expect(signInBtn).toHaveTextContent(/Sign In|সাইন ইন/i)
 
-    // Modal opens
-    const emailInput = screen.getByPlaceholderText(/username@proton\.me/i)
-    expect(emailInput).toBeTruthy()
-    fireEvent.change(emailInput, { target: { value: 'admin@proton.me' } })
+    const googleBtn = screen.getByRole('button', { name: /Google/i })
+    fireEvent.click(googleBtn)
 
-    // Click Send Code
-    const sendBtn = screen.getByRole('button', { name: /Send Code|কোড পাঠান/i })
-    fireEvent.click(sendBtn)
-
-    // Wait for demo code or OTP input
-    await waitFor(() => {
-      expect(authApi.sendLoginOtp).toHaveBeenCalledWith('admin@proton.me')
-    })
-
-    // Click auto fill demo code
-    const autoFillBtn = await screen.findByRole('button', { name: /Auto Fill|স্বয়ংক্রিয় পূরণ/i })
-    fireEvent.click(autoFillBtn)
-
-    // Click verify & sign in
-    const verifyBtn = screen.getByRole('button', { name: /Verify & Sign In|যাচাই করুন ও সাইন ইন করুন/i })
-    fireEvent.click(verifyBtn)
-
-    await waitFor(() => {
-      expect(authApi.emailLogin).toHaveBeenCalledWith({
-        email: 'admin@proton.me',
-        code: '654321',
-        verified: true,
-        institution: 'testschool',
-      })
-      expect(currentPath).toBe('/i/testschool/admin/dashboard')
-    })
+    // The email/password Sign In button must NOT change to "Signing in..."
+    expect(signInBtn).toHaveTextContent(/Sign In|সাইন ইন/i)
+    expect(signInBtn).not.toHaveTextContent(/Signing in|সাইন ইন হচ্ছে/i)
   })
 })

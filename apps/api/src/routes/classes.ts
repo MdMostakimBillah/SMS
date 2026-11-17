@@ -147,9 +147,10 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(400).json({ error: 'School ID required' })
       }
 
+      const cleanTarget = String(targetSchoolId).trim()
       const school = await prisma.school.findFirst({
         where: {
-          OR: [{ id: targetSchoolId }, { domain: targetSchoolId }],
+          OR: [{ id: cleanTarget }, { domain: cleanTarget }, { domain: cleanTarget.toLowerCase() }],
         },
         select: {
           id: true,
@@ -277,9 +278,10 @@ export function classRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(400).json({ error: 'School ID required' })
       }
 
+      const cleanTarget = String(targetSchoolId).trim()
       const school = await prisma.school.findFirst({
         where: {
-          OR: [{ id: targetSchoolId }, { domain: targetSchoolId }],
+          OR: [{ id: cleanTarget }, { domain: cleanTarget }, { domain: cleanTarget.toLowerCase() }],
         },
         select: {
           id: true,

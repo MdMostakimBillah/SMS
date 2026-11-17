@@ -76,16 +76,29 @@ export function parseVaultKey(key: string): VaultKeyInfo | null {
 export function keyMatchesInstitution(key: string, slug: string, userId?: string | null): boolean {
   if (BLOCKED_KEYS.has(key)) return false
   if (userId && key.endsWith(`_${slug}_${userId}`)) return true
-  return key.endsWith(`_${slug}`)
+  if (key.endsWith(`_${slug}`)) return true
+  if (key === 'edutech-classes' || key === 'edutech-teachers' || key === 'edutech-admissions' || key === 'edutech-fees') {
+    return true
+  }
+  return false
 }
 
 /** localStorage key → vault file path, or null for non-institution keys. */
-export function keyToVaultPath(key: string): string | null {
+export function keyToVaultPath(key: string, fallbackSlug?: string | null): string | null {
   const info = parseVaultKey(key)
-  if (!info) return null
-  return info.userId
-    ? `${info.slug}/users/${info.userId}/${info.base}.json`
-    : `${info.slug}/${info.base}.json`
+  if (info) {
+    return info.userId
+      ? `${info.slug}/users/${info.userId}/${info.base}.json`
+      : `${info.slug}/${info.base}.json`
+  }
+  const effSlug = fallbackSlug || (typeof sessionStorage !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : null)
+  if (effSlug && (key.startsWith('edutech-') || key.startsWith('edutech_'))) {
+    const rawBase = key.replace(/^edutech[-_]/, '')
+    if (isValidSegment(rawBase) && isValidSegment(effSlug)) {
+      return `${effSlug}/${rawBase}.json`
+    }
+  }
+  return null
 }
 
 /**
@@ -676,14 +689,18 @@ export function normalizeVaultJsonForStore(
         : (parsed.sections || parsed.state?.sections || [])
       const classMap = new Map<string, any[]>()
       for (const sec of rawSections) {
-        const cId = String(sec.classId || '').trim()
+        let cId = String(sec.classId || '').trim()
+        if (!cId && sec.id) {
+          const match = String(sec.id).match(/^SEC-(CLS-[^-]+)/i)
+          if (match) cId = match[1]
+        }
         if (!classMap.has(cId)) classMap.set(cId, [])
         classMap.get(cId)!.push({
           id: String(sec.id || `SEC-${cId}-${sec.name || 'A'}`).trim(),
           name: String(sec.name || '').trim(),
           seatQuantity: Number(sec.seatQuantity) || 40,
           classTeacherId: String(sec.classTeacherId || '').trim(),
-          subjectIds: Array.isArray(sec.subjectIds) ? sec.subjectIds : [],
+          subjectIds: Array.isArray(sec.subjectIds) ? sec.subjectIds : (Array.isArray(sec.subjects) ? sec.subjects : []),
         })
       }
       const updatedClasses = (existingState.classes || []).map((c: any) => {
@@ -772,10 +789,10 @@ export function normalizeVaultJsonForStore(
                 name: String(sec.name || String.fromCharCode(65 + sIdx)).trim(),
                 seatQuantity: Number(sec.seatQuantity) || 40,
                 classTeacherId: String(sec.classTeacherId || '').trim(),
-                subjectIds: Array.isArray(sec.subjectIds) ? sec.subjectIds : [],
+                subjectIds: Array.isArray(sec.subjectIds) ? sec.subjectIds : (Array.isArray(sec.subjects) ? sec.subjects : []),
               }))
             : [],
-          subjectIds: Array.isArray(raw.subjectIds) ? raw.subjectIds : [],
+          subjectIds: Array.isArray(raw.subjectIds) ? raw.subjectIds : (Array.isArray(raw.subjects) ? raw.subjects : []),
           createdAt: raw.createdAt || today,
           updatedAt: raw.updatedAt || today,
         }
@@ -811,14 +828,14 @@ export function normalizeVaultJsonForStore(
             nameBn: String(c.nameBn || '').trim(),
             startTime: String(c.startTime || '07:30').trim(),
             endTime: String(c.endTime || '14:30').trim(),
-            subjectIds: Array.isArray(c.subjectIds) ? c.subjectIds : [],
+            subjectIds: Array.isArray(c.subjectIds) ? c.subjectIds : (Array.isArray(c.subjects) ? c.subjects : []),
             sections: Array.isArray(c.sections)
               ? c.sections.map((s: any, sIdx: number) => ({
                   id: String(s.id || `SEC-${c.id || index + 1}-${String.fromCharCode(65 + sIdx)}`).trim(),
                   name: String(s.name || String.fromCharCode(65 + sIdx)).trim(),
                   seatQuantity: Number(s.seatQuantity) || 40,
                   classTeacherId: String(s.classTeacherId || '').trim(),
-                  subjectIds: Array.isArray(s.subjectIds) ? s.subjectIds : [],
+                  subjectIds: Array.isArray(s.subjectIds) ? s.subjectIds : (Array.isArray(s.subjects) ? s.subjects : []),
                 }))
               : [],
             createdAt: c.createdAt || today,
@@ -834,11 +851,13 @@ export function normalizeVaultJsonForStore(
     }
 
     let finalClasses: any[]
-    if (mergedSessionClasses[curSession]) {
-      finalClasses = mergedSessionClasses[curSession]
+    if (parsedInner.sessionClasses && curSession in parsedInner.sessionClasses) {
+      finalClasses = mergedSessionClasses[curSession] || []
     } else if (rawClasses !== null) {
       finalClasses = normalizedClasses
       mergedSessionClasses[curSession] = finalClasses
+    } else if (mergedSessionClasses[curSession]) {
+      finalClasses = mergedSessionClasses[curSession]
     } else if (existingState.sessionClasses && curSession in existingState.sessionClasses) {
       finalClasses = existingState.sessionClasses[curSession] || []
     } else {
