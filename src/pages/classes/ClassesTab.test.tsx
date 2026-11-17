@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import ClassesTab from './ClassesTab'
 import { defaultThemeColors, defaultThemeColorsDark } from '@/store/classStore'
@@ -188,21 +188,31 @@ describe('ClassesTab Component', () => {
     expect(screen.getByText('Mathematics')).toBeInTheDocument()
     expect(screen.getByText('English')).toBeInTheDocument()
 
-    // Section card has a direct section subjects button
-    const sectionSubjectBtn = screen.getByTitle('Section Subjects')
-    expect(sectionSubjectBtn).toBeInTheDocument()
-    fireEvent.click(sectionSubjectBtn)
+    // Verify section card header does NOT have the old Section Subjects button
+    expect(screen.queryByTitle('Section Subjects')).not.toBeInTheDocument()
+
+    // Inside the collapse, Section card has an Add Subjects button
+    const addSubjectBtn = screen.getByTitle('Add Subjects')
+    expect(addSubjectBtn).toBeInTheDocument()
+    fireEvent.click(addSubjectBtn)
 
     // Modal opens specifically for Class 5 — Section A
     expect(screen.getByText('Select Subjects')).toBeInTheDocument()
     expect(screen.getByText('Class 5 — Section A')).toBeInTheDocument()
 
+    // Search subject functionality in modal
+    const modal = screen.getByText('Select Subjects').closest('.modal-content')!
+    const searchInput = within(modal).getByPlaceholderText(/Search subject name/i)
+    fireEvent.change(searchInput, { target: { value: 'Sci' } })
+    expect(within(modal).getByText('Science')).toBeInTheDocument()
+    expect(within(modal).queryByText('Mathematics')).not.toBeInTheDocument()
+
     // Select Science (SUB-03)
-    const scienceOption = screen.getByText('Science')
+    const scienceOption = within(modal).getByText('Science')
     fireEvent.click(scienceOption)
 
     // Save modal
-    const saveBtn = screen.getByText(/Save \([0-9]+\)/)
+    const saveBtn = within(modal).getByText(/Save \([0-9]+\)/)
     fireEvent.click(saveBtn)
 
     // Section should be updated with SUB-01, SUB-02, and SUB-03

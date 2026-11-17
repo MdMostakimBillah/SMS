@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
-import { BookOpen, Check, Copy, Plus, X } from 'lucide-react'
+import { BookOpen, Check, Copy, Search, X } from 'lucide-react'
 import { useNavChain } from '@/hooks/useNavChain'
 import { useNavPath } from '@/hooks/useNavPath'
 import type { Subject } from '@/pages/teachers/types'
@@ -9,7 +9,6 @@ import type { ClassInfo, ClassSection } from '@/store/classStore'
 import { useClassStore } from '@/store/classStore'
 import { flushPendingWrites } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
-import { useTeacherStore } from '@/store/teacherStore'
 
 export interface SubjectModalTarget {
   classId: string
@@ -46,7 +45,7 @@ export function SubjectSelectionModal({
   const navigate = useNavigate()
   const nav = useNavPath()
   const { pushToChain, setRedirectTimestamp } = useNavChain()
-  const [newSubName, setNewSubName] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const isSectionMode = Boolean(showSubjectModal.sectionId)
   const targetClass = classes.find((c) => c.id === showSubjectModal.classId)
@@ -55,45 +54,38 @@ export function SubjectSelectionModal({
     : undefined
 
   // Combine subjects from teacherStore with any institution-level subjects not yet in teacherStore
-  const combinedSubjects: Subject[] = [...subjects]
-  const existingNames = new Set(subjects.map((s) => s.name.trim().toLowerCase()))
-  const nowIso = new Date().toISOString()
-  for (const instSub of institutionSubjects) {
-    const trimmed = instSub.trim()
-    if (trimmed && !existingNames.has(trimmed.toLowerCase())) {
-      combinedSubjects.push({
-        id: `INST-${trimmed.toLowerCase().replace(/\s+/g, '-')}`,
-        name: trimmed,
-        nameBn: trimmed,
-        departmentId: '',
-        departmentIds: [],
-        createdAt: nowIso,
-        updatedAt: nowIso,
-      })
-      existingNames.add(trimmed.toLowerCase())
+  const combinedSubjects: Subject[] = useMemo(() => {
+    const list: Subject[] = [...subjects]
+    const existingNames = new Set(subjects.map((s) => s.name.trim().toLowerCase()))
+    const nowIso = new Date().toISOString()
+    for (const instSub of institutionSubjects) {
+      const trimmed = instSub.trim()
+      if (trimmed && !existingNames.has(trimmed.toLowerCase())) {
+        list.push({
+          id: `INST-${trimmed.toLowerCase().replace(/\s+/g, '-')}`,
+          name: trimmed,
+          nameBn: trimmed,
+          departmentId: '',
+          departmentIds: [],
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        })
+        existingNames.add(trimmed.toLowerCase())
+      }
     }
-  }
+    return list
+  }, [subjects, institutionSubjects])
 
-  const handleQuickAddSubject = () => {
-    const trimmed = newSubName.trim()
-    if (!trimmed) return
-    const id = `SUB-${Date.now().toString().slice(-6)}`
-    const now = new Date().toISOString()
-    const newSubject: Subject = {
-      id,
-      name: trimmed,
-      nameBn: trimmed,
-      departmentId: '',
-      departmentIds: [],
-      createdAt: now,
-      updatedAt: now,
-    }
-    useTeacherStore.getState().addSubject(newSubject)
-    setTempSelectedSubjects((prev) => (prev.includes(id) ? prev : [...prev, id]))
-    setNewSubName('')
-    flushPendingWrites()
-    void flushVaultWrites()
-  }
+  const filteredSubjects = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return combinedSubjects
+    return combinedSubjects.filter((sub) => {
+      const nameEn = (sub.name || '').toLowerCase()
+      const nameBn = (sub.nameBn || '').toLowerCase()
+      const code = (sub.id || '').toLowerCase()
+      return nameEn.includes(q) || nameBn.includes(q) || code.includes(q)
+    })
+  }, [combinedSubjects, searchQuery])
 
   const handleCopyFromClass = () => {
     if (!targetClass?.subjectIds?.length) return
@@ -179,7 +171,7 @@ export function SubjectSelectionModal({
           </button>
         </div>
 
-        {/* Quick actions row: copy class subjects or quick-add */}
+        {/* Quick actions row: copy class subjects and search */}
         <div style={{ padding: '10px 20px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {isSectionMode && targetClass?.subjectIds && targetClass.subjectIds.length > 0 && (
             <button
@@ -208,52 +200,54 @@ export function SubjectSelectionModal({
             </button>
           )}
 
-          {/* Quick add subject input */}
-          <div style={{ display: 'flex', gap: '6px' }}>
+          {/* Search subject input */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Search
+              size={14}
+              style={{
+                position: 'absolute',
+                left: '10px',
+                color: 'var(--text-muted)',
+                pointerEvents: 'none',
+              }}
+            />
             <input
               type="text"
-              value={newSubName}
-              onChange={(e) => setNewSubName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  handleQuickAddSubject()
-                }
-              }}
-              placeholder={isBn ? 'নতুন বিষয় লিখুন...' : 'Add new subject...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={isBn ? 'বিষয়ের নাম দিয়ে অনুসন্ধান করুন...' : 'Search subject name...'}
               style={{
-                flex: 1,
-                padding: '6px 10px',
+                width: '100%',
+                padding: '7px 28px 7px 30px',
                 borderRadius: '0.375rem',
                 border: '1px solid var(--border)',
                 background: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
-                fontSize: '0.6875rem',
+                fontSize: '0.75rem',
                 fontFamily: 'inherit',
+                outline: 'none',
               }}
             />
-            <button
-              type="button"
-              onClick={handleQuickAddSubject}
-              disabled={!newSubName.trim()}
-              style={{
-                padding: '6px 10px',
-                borderRadius: '0.375rem',
-                background: newSubName.trim() ? 'var(--teal)' : 'var(--bg-secondary)',
-                border: 'none',
-                color: newSubName.trim() ? '#fff' : 'var(--text-muted)',
-                fontSize: '0.6875rem',
-                fontWeight: 500,
-                cursor: newSubName.trim() ? 'pointer' : 'default',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontFamily: 'inherit',
-              }}
-            >
-              <Plus size={12} />
-              {isBn ? 'যোগ' : 'Add'}
-            </button>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+                title={isBn ? 'মুছুন' : 'Clear'}
+              >
+                <X size={12} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -266,8 +260,8 @@ export function SubjectSelectionModal({
               </p>
               <p style={{ margin: '0 0 1rem', fontSize: '0.6875rem' }}>
                 {isBn
-                  ? 'উপরে নতুন বিষয় লিখে যোগ করুন অথবা শিক্ষক ব্যবস্থাপনায় বিষয় তৈরি করুন'
-                  : 'Type a subject above to add, or manage subjects in Teacher Management'}
+                  ? 'বিষয় যুক্ত করতে শিক্ষক ব্যবস্থাপনায় যান'
+                  : 'Manage and create subjects in Teacher Management'}
               </p>
               <button
                 onClick={() => {
@@ -291,9 +285,32 @@ export function SubjectSelectionModal({
                 {isBn ? 'শিক্ষক ব্যবস্থাপনায় বিষয় যোগ করুন →' : 'Go to Teacher Management →'}
               </button>
             </div>
+          ) : filteredSubjects.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '1.5rem 1rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+              <Search size={28} style={{ margin: '0 auto 0.5rem', opacity: 0.3 }} />
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+                {isBn ? `"${searchQuery}" এর সাথে কোনো বিষয় মেলেনি` : `No subjects found matching "${searchQuery}"`}
+              </p>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '0.375rem',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.6875rem',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {isBn ? 'অনুসন্ধান মুছুন' : 'Clear search'}
+              </button>
+            </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-              {combinedSubjects.map((sub) => {
+              {filteredSubjects.map((sub) => {
                 const isSelected = tempSelectedSubjects.includes(sub.id)
                 return (
                   <button

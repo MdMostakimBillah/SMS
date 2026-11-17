@@ -128,61 +128,9 @@ export function SectionCard({
               )
             })()}
             {teacher && <span style={{ color: 'var(--brand)' }}>{teacher.nameEn.split(' ')[0]}</span>}
-            {sec.subjectIds && sec.subjectIds.length > 0 && (
-              <span style={{ color: 'var(--teal)', fontWeight: 500 }}>
-                {sec.subjectIds.length} {isBn ? 'বিষয়' : 'subjects'}
-              </span>
-            )}
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', flexShrink: 0 }}>
-          {canEdit('classes.classes') && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setTempSelectedSubjects(sec.subjectIds || [])
-                setShowSubjectModal({
-                  classId: cls.id,
-                  sectionId: sec.id,
-                  className: isBn ? cls.nameBn : cls.name,
-                  sectionName: sec.name,
-                })
-              }}
-              style={{
-                padding: '3px 8px',
-                borderRadius: '0.3125rem',
-                background: 'var(--teal-light)',
-                border: '1px solid var(--teal)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                color: 'var(--teal)',
-                fontSize: '0.625rem',
-                fontWeight: 600,
-                fontFamily: 'inherit',
-              }}
-              title={isBn ? 'সেকশনের বিষয় নির্বাচন' : 'Section Subjects'}
-            >
-              <BookOpen size={11} />
-              <span>{sec.subjectIds && sec.subjectIds.length > 0 ? (isBn ? 'বিষয়' : 'Subjects') : (isBn ? 'বিষয় যোগ' : 'Add Subjects')}</span>
-              {sec.subjectIds && sec.subjectIds.length > 0 && (
-                <span
-                  style={{
-                    background: 'var(--teal)',
-                    color: '#fff',
-                    borderRadius: '0.25rem',
-                    padding: '1px 4px',
-                    fontSize: '0.5625rem',
-                    fontWeight: 700,
-                    lineHeight: 1,
-                  }}
-                >
-                  {sec.subjectIds.length}
-                </span>
-              )}
-            </button>
-          )}
           <button
             onClick={(e) => {
               e.stopPropagation()
@@ -298,11 +246,48 @@ export function SectionCard({
                 gap: '0.125rem',
                 fontFamily: 'inherit',
               }}
+              title={isBn ? 'বিষয় যোগ করুন' : 'Add Subjects'}
             >
               <Plus size={9} />
               {isBn ? 'যোগ' : 'Add'}
             </button>
           )}
+        </div>
+      )}
+
+      {/* When section has no subjects yet and not editing */}
+      {canEdit('classes.classes') && !isEditing && (!sec.subjectIds || sec.subjectIds.length === 0) && (
+        <div style={{ padding: '0 12px 8px' }}>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setTempSelectedSubjects([])
+              setShowSubjectModal({
+                classId: cls.id,
+                sectionId: sec.id,
+                className: isBn ? cls.nameBn : cls.name,
+                sectionName: sec.name,
+              })
+            }}
+            style={{
+              background: 'transparent',
+              border: '1px dashed var(--teal)',
+              borderRadius: '0.375rem',
+              padding: '2px 8px',
+              fontSize: '0.625rem',
+              color: 'var(--teal)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              fontFamily: 'inherit',
+            }}
+            title={isBn ? 'বিষয় যোগ করুন' : 'Add Subjects'}
+          >
+            <Plus size={10} />
+            {isBn ? 'বিষয় যোগ করুন' : 'Add Subjects'}
+          </button>
         </div>
       )}
 
