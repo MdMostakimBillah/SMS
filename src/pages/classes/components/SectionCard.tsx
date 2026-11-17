@@ -1,4 +1,4 @@
-import { Trash2, Save, Copy, BookOpen, X, Plus } from 'lucide-react'
+import { Trash2, Save, Copy, BookOpen, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { usePermission } from '@/hooks/usePermission'
 import type { ClassInfo, ClassSection, InstitutionSettings } from '@/store/classStore'
 import { useClassStore } from '@/store/classStore'
@@ -127,7 +127,6 @@ export function SectionCard({
                 </>
               )
             })()}
-            {teacher && <span style={{ color: 'var(--brand)' }}>{teacher.nameEn.split(' ')[0]}</span>}
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', flexShrink: 0 }}>
@@ -169,129 +168,18 @@ export function SectionCard({
                 cursor: 'pointer',
                 color: 'var(--red)',
               }}
+              title={isBn ? 'সেকশন মুছুন' : 'Delete Section'}
             >
               <Trash2 size={11} />
             </button>
           )}
+          <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', marginLeft: '0.125rem' }}>
+            {isEditing ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </div>
         </div>
       </div>
 
-      {/* Section Subjects List inside collapse */}
-      {sec.subjectIds && sec.subjectIds.length > 0 && !isEditing && (
-        <div style={{ padding: '0 12px 10px', display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
-          {sec.subjectIds.map((sid: string) => {
-            const sub = subjectMap.get(sid)
-            const label = sub ? (isBn ? (sub.nameBn || sub.name) : (sub.name || sub.nameBn)) : sid
-            return (
-              <span
-                key={sid}
-                style={{
-                  padding: '2px 7px',
-                  borderRadius: '0.375rem',
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border)',
-                  fontSize: '0.625rem',
-                  fontWeight: 500,
-                  color: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                }}
-              >
-                {label}
-                {canEdit('classes.classes') && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      const updated = (sec.subjectIds || []).filter((s) => s !== sid)
-                      updateSection(cls.id, sec.id, { subjectIds: updated })
-                      flushPendingWrites()
-                      void flushVaultWrites()
-                      void useClassStore.getState().syncToServer()
-                      setSecForm((p) => ({ ...p, subjectIds: updated }))
-                    }}
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
-                    title={isBn ? 'মুছে ফেলুন' : 'Remove'}
-                  >
-                    <X size={10} />
-                  </button>
-                )}
-              </span>
-            )
-          })}
-          {canEdit('classes.classes') && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                setTempSelectedSubjects(sec.subjectIds || [])
-                setShowSubjectModal({
-                  classId: cls.id,
-                  sectionId: sec.id,
-                  className: isBn ? cls.nameBn : cls.name,
-                  sectionName: sec.name,
-                })
-              }}
-              style={{
-                background: 'transparent',
-                border: '1px dashed var(--teal)',
-                borderRadius: '0.375rem',
-                padding: '2px 6px',
-                fontSize: '0.5625rem',
-                color: 'var(--teal)',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.125rem',
-                fontFamily: 'inherit',
-              }}
-              title={isBn ? 'বিষয় যোগ করুন' : 'Add Subjects'}
-            >
-              <Plus size={9} />
-              {isBn ? 'যোগ' : 'Add'}
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* When section has no subjects yet and not editing */}
-      {canEdit('classes.classes') && !isEditing && (!sec.subjectIds || sec.subjectIds.length === 0) && (
-        <div style={{ padding: '0 12px 8px' }}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              setTempSelectedSubjects([])
-              setShowSubjectModal({
-                classId: cls.id,
-                sectionId: sec.id,
-                className: isBn ? cls.nameBn : cls.name,
-                sectionName: sec.name,
-              })
-            }}
-            style={{
-              background: 'transparent',
-              border: '1px dashed var(--teal)',
-              borderRadius: '0.375rem',
-              padding: '2px 8px',
-              fontSize: '0.625rem',
-              color: 'var(--teal)',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.25rem',
-              fontFamily: 'inherit',
-            }}
-            title={isBn ? 'বিষয় যোগ করুন' : 'Add Subjects'}
-          >
-            <Plus size={10} />
-            {isBn ? 'বিষয় যোগ করুন' : 'Add Subjects'}
-          </button>
-        </div>
-      )}
-
-      {/* Expanded edit form */}
+      {/* Expanded edit form — visible only when section card is clicked/open */}
       {isEditing && (
         <div style={{ padding: '0 12px 12px', borderTop: '1px solid var(--border)', background: 'var(--bg-primary)' }}>
           <div style={{ paddingTop: '0.625rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
@@ -326,11 +214,11 @@ export function SectionCard({
           })()}
 
           {/* Assigned subjects */}
-          {sec.subjectIds && sec.subjectIds.length > 0 && (
-            <div style={{ marginTop: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--teal-light)', border: '1px solid var(--teal-border)' }}>
-              <div style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--teal)', marginBottom: '0.375rem' }}>
-                {isBn ? 'নির্ধারিত বিষয়সমূহ' : 'Assigned Subjects'}
-              </div>
+          <div style={{ marginTop: '0.5rem', padding: '0.5rem', borderRadius: '0.5rem', background: 'var(--teal-light)', border: '1px solid var(--teal-border)' }}>
+            <div style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--teal)', marginBottom: '0.375rem' }}>
+              {isBn ? 'নির্ধারিত বিষয়সমূহ' : 'Assigned Subjects'} ({sec.subjectIds?.length || 0})
+            </div>
+            {sec.subjectIds && sec.subjectIds.length > 0 ? (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                 {sec.subjectIds.map((sid: string) => {
                   const sub = subjectMap.get(sid)
@@ -339,6 +227,7 @@ export function SectionCard({
                     <span key={sid} style={{ padding: '3px 8px', borderRadius: '0.625rem', background: 'var(--bg-primary)', border: '1px solid var(--border)', fontSize: '0.625rem', fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                       {label}
                       <button
+                        type="button"
                         onClick={() => {
                           const updated = (sec.subjectIds || []).filter((s) => s !== sid)
                           updateSection(cls.id, sec.id, { subjectIds: updated })
@@ -348,6 +237,7 @@ export function SectionCard({
                           setSecForm((p) => ({ ...p, subjectIds: updated }))
                         }}
                         style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
+                        title={isBn ? 'মুছে ফেলুন' : 'Remove'}
                       >
                         <X size={10} />
                       </button>
@@ -355,26 +245,36 @@ export function SectionCard({
                   )
                 })}
               </div>
+            ) : (
+              <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                {isBn ? 'এই সেকশনে কোনো বিষয় যুক্ত করা হয়নি।' : 'No subjects assigned to this section yet.'}
+              </div>
+            )}
+          </div>
+
+          {canEdit('classes.classes') && (
+            <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.375rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setTempSelectedSubjects(sec.subjectIds || [])
+                  setShowSubjectModal({
+                    classId: cls.id,
+                    sectionId: sec.id,
+                    className: isBn ? cls.nameBn : cls.name,
+                    sectionName: sec.name,
+                  })
+                }}
+                style={{ flex: 1, padding: '0.4375rem', borderRadius: '0.4375rem', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '0.6875rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
+                title={isBn ? 'বিষয় যোগ করুন' : 'Add Subject'}
+              >
+                <BookOpen size={11} />
+                {sec.subjectIds && sec.subjectIds.length > 0
+                  ? (isBn ? 'বিষয় পরিবর্তন / যোগ করুন' : 'Edit / Add Subjects')
+                  : (isBn ? 'বিষয় যোগ করুন' : 'Add Subject')}
+              </button>
             </div>
           )}
-
-          <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.375rem' }}>
-            <button
-              onClick={() => {
-                setTempSelectedSubjects(sec.subjectIds || [])
-                setShowSubjectModal({
-                  classId: cls.id,
-                  sectionId: sec.id,
-                  className: isBn ? cls.nameBn : cls.name,
-                  sectionName: sec.name,
-                })
-              }}
-              style={{ flex: 1, padding: '0.4375rem', borderRadius: '0.4375rem', background: 'var(--teal)', border: 'none', color: '#fff', fontSize: '0.6875rem', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
-            >
-              <BookOpen size={11} />
-              {isBn ? 'বিষয় যোগ করুন' : 'Add Subject'}
-            </button>
-          </div>
 
           {/* Save button */}
           <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.375rem' }}>

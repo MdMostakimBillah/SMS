@@ -184,15 +184,22 @@ describe('ClassesTab Component', () => {
     const classCard = screen.getByText('Class 5').closest('div[style*="cursor: pointer"]')!
     fireEvent.click(classCard)
 
-    // Inside the collapse, Section A displays its assigned subjects chips
+    // When section card is closed: verify no subjects or Add Subjects text is displayed
+    expect(screen.queryByText('Mathematics')).not.toBeInTheDocument()
+    expect(screen.queryByText('English')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Add Subject/i)).not.toBeInTheDocument()
+    expect(screen.queryByTitle('Section Subjects')).not.toBeInTheDocument()
+
+    // Expand section card by clicking on it
+    const sectionCard = screen.getByText('Section A').closest('div[style*="cursor: pointer"]')!
+    fireEvent.click(sectionCard)
+
+    // Inside the expanded section card, Section A displays its assigned subjects chips
     expect(screen.getByText('Mathematics')).toBeInTheDocument()
     expect(screen.getByText('English')).toBeInTheDocument()
 
-    // Verify section card header does NOT have the old Section Subjects button
-    expect(screen.queryByTitle('Section Subjects')).not.toBeInTheDocument()
-
-    // Inside the collapse, Section card has an Add Subjects button
-    const addSubjectBtn = screen.getByTitle('Add Subjects')
+    // Click Add Subject button inside expanded section
+    const addSubjectBtn = screen.getByRole('button', { name: /Add Subject/i })
     expect(addSubjectBtn).toBeInTheDocument()
     fireEvent.click(addSubjectBtn)
 
