@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams, Navigate } from 'react-router-dom'
+import { useNavigate, useParams, useLocation, Navigate } from 'react-router-dom'
 import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock, ChevronRight, ShieldCheck } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
@@ -30,9 +30,11 @@ export default function LoginPage() {
   const { user, login, error, clearError, isLockedOut, lockoutRemaining } = useAuth()
   const navigate = useNavigate()
   const { loginSecret } = useParams<{ loginSecret: string }>()
+  const location = useLocation()
 
-  // Strict fail-closed verification of the secret path
-  const isAllowed = isValidLoginSecret(loginSecret)
+  // Strict fail-closed verification of the secret path (param or pathname)
+  const pathCandidate = loginSecret || location.pathname.replace(/^\/+|\/+$/g, '').split('/')[0]
+  const isAllowed = isValidLoginSecret(pathCandidate)
 
   useEffect(() => {
     if (!isAllowed) {

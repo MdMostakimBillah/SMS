@@ -39,7 +39,10 @@ export function isValidLoginSecret(candidate?: string): boolean {
   if (!candidate) return false
   const active = getLoginSecret()
   const cleanCandidate = candidate.trim().replace(/^\/+|\/+$/g, '')
-  return Boolean(active && cleanCandidate && active === cleanCandidate)
+  const envVal = (import.meta.env.VITE_LOGIN_PATH || '').trim().replace(/^\/+|\/+$/g, '')
+  if (active && cleanCandidate && active === cleanCandidate) return true
+  if (envVal && cleanCandidate && envVal === cleanCandidate) return true
+  return false
 }
 
 /**

@@ -176,6 +176,16 @@ function AccountSettings({ isBn }: { isBn: boolean }) {
               ? 'এই গোপন পথে ঢুকলে সরাসরি সুপার অ্যাডমিন লগইন পেজ প্রদর্শিত হবে।'
               : 'Connecting to this secret path directly displays the Super Admin login page.'}
           </p>
+          <div className="flex justify-end pt-1">
+            <button
+              type="button"
+              onClick={() => navigate('/super-admin/admin/settings?panel=email-password&tab=login-path')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--brand)] transition-colors cursor-pointer"
+            >
+              <KeyRound size={13} />
+              <span>{isBn ? 'লগইন পাথ পরিবর্তন করুন' : 'Change Login Path'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

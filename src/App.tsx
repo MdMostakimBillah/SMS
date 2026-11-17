@@ -12,6 +12,7 @@ import { UnknownRoute } from '@/components/UnknownRoute'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
+import { LOGIN_PATH, LOGIN_ROUTE } from '@/lib/constants'
 
 const LoginPage = lazyWithRetry(() => import('@/pages/auth/LoginPage'))
 const InstitutionRegister = lazyWithRetry(() => import('@/pages/auth/InstitutionRegister'))
@@ -144,8 +145,13 @@ function AppContent() {
         </Route>
 
         <Route element={<AuthRoute />}>
-          {/* Only the active secret path serves the super-admin login form.
-              Any other login-ish URL is not a super-admin entry point. */}
+          {/* Super-admin login served on configured .env path and active secret */}
+          {LOGIN_PATH && (
+            <>
+              <Route path={LOGIN_PATH} element={<F><LoginPage /></F>} />
+              <Route path={LOGIN_ROUTE} element={<F><LoginPage /></F>} />
+            </>
+          )}
           <Route path="/:loginSecret" element={<F><LoginPage /></F>} />
           <Route path="/:loginSecret/login" element={<F><LoginPage /></F>} />
           <Route path="/super-admin/login" element={<Navigate to="/register" replace />} />
