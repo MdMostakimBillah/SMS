@@ -81,11 +81,16 @@ export function getDashboardPath(
     if (session.viewingId) return '/super-admin/viewing/admin/dashboard'
     return '/super-admin/admin/dashboard'
   }
+  const querySlug =
+    typeof window !== 'undefined' && window.location?.search
+      ? new URLSearchParams(window.location.search).get('institution')
+      : null
   const slug =
     session.slug ||
     (user as any).subdomain ||
     (user as any).schoolDomain ||
     sessionStorage.getItem('edutech_intended_institution') ||
+    querySlug ||
     sessionStorage.getItem('edutech_inst_slug') ||
     localStorage.getItem('edutech_inst_slug')
   if (slug) {

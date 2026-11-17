@@ -697,6 +697,11 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
                   callbackURL,
                 }).catch((e: unknown) => ({ error: { message: e instanceof Error ? e.message : 'Google sign-in failed' } }))
 
+                if (res && 'data' in res && res.data && 'url' in res.data && res.data.url && typeof window !== 'undefined') {
+                  window.location.href = res.data.url
+                  return
+                }
+
                 if (res?.error) {
                   const msg = String(res.error.message || '').toLowerCase()
                   if (msg.includes('provider') || msg.includes('not enabled') || msg.includes('not found')) {

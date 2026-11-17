@@ -124,13 +124,16 @@ async function resolveSession(
 
       // If user authenticated via social provider (e.g. Google) but has no Prisma User record yet:
       if (!user) {
-        // 1. Check if email belongs to an existing Teacher in the school
+        const envSuper = (process.env.SUPER_ADMIN_EMAIL || '').trim().toLowerCase()
+        const isSuperAdminEmail = Boolean(envSuper && emailLower === envSuper)
+
+        // 1. Check if email belongs to an existing Teacher in an institution
         const teacherMatch = await prisma.teacher.findFirst({
           where: { email: { equals: emailLower, mode: 'insensitive' } },
           select: { id: true, schoolId: true, nameEn: true },
         })
 
-        // 2. Check if email belongs to an existing Student
+        // 2. Check if email belongs to an existing Student in an institution
         const studentMatch = !teacherMatch
           ? await prisma.student.findFirst({
               where: { email: { equals: emailLower, mode: 'insensitive' } },
@@ -139,30 +142,56 @@ async function resolveSession(
           : null
 
         // 3. Resolve role and school
-        const resolvedRole: any = teacherMatch ? 'teacher' : studentMatch ? 'student' : 'school_admin'
-        let resolvedSchoolId = teacherMatch?.schoolId || studentMatch?.schoolId || null
-
-        if (!resolvedSchoolId) {
-          const headerSchoolId = req.headers['x-school-id'] ? String(req.headers['x-school-id']).trim() : undefined
-          const targetSchool = headerSchoolId
-            ? await prisma.school.findFirst({ where: { OR: [{ id: headerSchoolId }, { domain: headerSchoolId }] } })
-            : await prisma.school.findFirst({ orderBy: { createdAt: 'asc' } })
-          resolvedSchoolId = targetSchool?.id || null
+        if (isSuperAdminEmail) {
+          user = await prisma.user.create({
+            data: {
+              id: betterSession.user.id,
+              email: emailLower,
+              name: betterSession.user.name || 'Super Administrator',
+              role: 'super_admin',
+              schoolId: null,
+              avatar: betterSession.user.image || null,
+              passwordHash: '',
+              isActive: true,
+            },
+            select: { id: true, role: true, schoolId: true, isActive: true, avatar: true },
+          })
+        } else if (teacherMatch) {
+          user = await prisma.user.create({
+            data: {
+              id: betterSession.user.id,
+              email: emailLower,
+              name: betterSession.user.name || teacherMatch.nameEn || emailLower.split('@')[0],
+              role: 'teacher',
+              schoolId: teacherMatch.schoolId,
+              avatar: betterSession.user.image || null,
+              passwordHash: '',
+              isActive: true,
+            },
+            select: { id: true, role: true, schoolId: true, isActive: true, avatar: true },
+          })
+        } else if (studentMatch) {
+          user = await prisma.user.create({
+            data: {
+              id: betterSession.user.id,
+              email: emailLower,
+              name: betterSession.user.name || studentMatch.nameEn || emailLower.split('@')[0],
+              role: 'student',
+              schoolId: studentMatch.schoolId,
+              avatar: betterSession.user.image || null,
+              passwordHash: '',
+              isActive: true,
+            },
+            select: { id: true, role: true, schoolId: true, isActive: true, avatar: true },
+          })
+        } else {
+          // Unrecognized Google account that has not been registered or enrolled in this institution
+          return {
+            ok: false,
+            status: 403,
+            message: 'No account found matching this Google email in this institution. Please register or contact your institution administrator.',
+          }
         }
-
-        user = await prisma.user.create({
-          data: {
-            id: betterSession.user.id,
-            email: emailLower,
-            name: betterSession.user.name || teacherMatch?.nameEn || studentMatch?.nameEn || emailLower.split('@')[0],
-            role: resolvedRole,
-            schoolId: resolvedSchoolId,
-            avatar: betterSession.user.image || null,
-            passwordHash: '',
-            isActive: true,
-          },
-          select: { id: true, role: true, schoolId: true, isActive: true, avatar: true },
-        })
       } else if (!user.avatar && betterSession.user.image) {
         // Sync Google avatar if current profile has none
         await prisma.user.update({
