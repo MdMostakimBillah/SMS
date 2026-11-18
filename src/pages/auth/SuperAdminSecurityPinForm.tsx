@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { ShieldCheck, Eye, EyeOff, KeyRound, ArrowLeft, Clock, AlertTriangle } from 'lucide-react'
+import { ShieldCheck, Eye, EyeOff, KeyRound, ArrowLeft, Clock, AlertTriangle, Mail, CheckCircle2 } from 'lucide-react'
 
 export interface SuperAdminSecurityPinFormProps {
   email: string
@@ -19,7 +19,6 @@ export interface SuperAdminSecurityPinFormProps {
 export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps> = React.memo(
   function SuperAdminSecurityPinForm({
     email,
-    verificationCode,
     isBn,
     isDark,
     isLockedOut,
@@ -34,11 +33,28 @@ export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps>
     const [pin, setPin] = useState('')
     const [showPin, setShowPin] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const [resending, setResending] = useState(false)
+    const [resendCooldown, setResendCooldown] = useState(0)
+    const [resendSuccess, setResendSuccess] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
       inputRef.current?.focus()
     }, [])
+
+    useEffect(() => {
+      if (resendCooldown <= 0) return
+      const timer = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+      return () => clearInterval(timer)
+    }, [resendCooldown])
 
     const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value.replace(/\D/g, '').slice(0, 6)
@@ -59,6 +75,20 @@ export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps>
       }
     }
 
+    const handleResendClick = async () => {
+      if (!onResend || resending || resendCooldown > 0) return
+      setResending(true)
+      setResendSuccess(false)
+      try {
+        await onResend()
+        setResendSuccess(true)
+        setResendCooldown(60)
+        setTimeout(() => setResendSuccess(false), 5000)
+      } finally {
+        setResending(false)
+      }
+    }
+
     return (
       <div className="w-full space-y-4">
         {/* Security verification header badge */}
@@ -76,42 +106,49 @@ export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps>
           </div>
         </div>
 
-        {/* Neon Auth / Better Auth verification code badge */}
-        {verificationCode && (
-          <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <div className="flex items-center gap-2">
-              <span className="text-[0.75rem] font-medium">
-                {isBn ? 'নিরাপত্তা কোড (Neon Auth):' : 'Verification Code (Neon Auth):'}
-              </span>
-              <span className="font-mono font-bold tracking-widest text-[0.9375rem] text-emerald-300">
-                {verificationCode}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setPin(verificationCode)
-                clearError()
-              }}
-              className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[0.6875rem] font-medium cursor-pointer border-none transition-colors"
-            >
-              {isBn ? 'কোড বসান' : 'Use Code'}
-            </button>
+        {/* Email dispatched notice */}
+        <div
+          className={`p-3 rounded-xl flex items-start gap-2.5 ${
+            isDark
+              ? 'bg-blue-500/10 border border-blue-500/20 text-blue-300'
+              : 'bg-blue-50 border border-blue-200 text-blue-800'
+          }`}
+        >
+          <Mail size={16} className="shrink-0 mt-0.5" />
+          <div className="text-[0.75rem] leading-relaxed">
+            <p className="font-semibold">
+              {isBn
+                ? `আপনার জিমেইলে (${email}) ৬-ডিজিট ভেরিফিকেশন কোড পাঠানো হয়েছে।`
+                : `A 6-digit verification code has been sent to your Gmail (${email}).`}
+            </p>
+            <p className={`text-[0.6875rem] mt-0.5 ${isDark ? 'text-blue-300/80' : 'text-blue-700/80'}`}>
+              {isBn
+                ? 'অনুগ্রহ করে আপনার ইনবক্স অথবা স্প্যাম ফোল্ডার চেক করুন এবং কোডটি নিচে দিন।'
+                : 'Please check your inbox or spam folder and enter the code below.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Resend success notice */}
+        {resendSuccess && (
+          <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[0.75rem] flex items-center gap-2">
+            <CheckCircle2 size={14} className="shrink-0" />
+            <span>
+              {isBn
+                ? 'নতুন যাচাইকরণ কোড সফলভাবে জিমেইলে পাঠানো হয়েছে!'
+                : 'A new verification code has been sent to your Gmail!'}
+            </span>
           </div>
         )}
-
-        <p className={`text-[0.8125rem] leading-relaxed ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
-          {isBn
-            ? 'সুপার অ্যাডমিন অ্যাকাউন্টে লগইন করতে Neon Authentication সিকিউরিটি কোড যাচাই করুন।'
-            : 'Enter the Neon Authentication security verification code to complete sign-in.'}
-        </p>
 
         {/* Lockout Banner */}
         {isLockedOut && (
           <div className="px-3 py-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center gap-2">
             <Clock size={14} className="text-amber-500 shrink-0" />
             <span className="text-[0.75rem] text-amber-500 font-medium">
-              {isBn ? `অ্যাক্সেস সাময়িক স্থগিত — ${formatTime(lockoutRemaining)} পর চেষ্টা করুন` : `Locked out — Try again in ${formatTime(lockoutRemaining)}`}
+              {isBn
+                ? `অ্যাক্সেস সাময়িক স্থগিত — ${formatTime(lockoutRemaining)} পর চেষ্টা করুন`
+                : `Locked out — Try again in ${formatTime(lockoutRemaining)}`}
             </span>
           </div>
         )}
@@ -190,18 +227,17 @@ export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps>
           <div className="text-center pt-1">
             <button
               type="button"
-              onClick={async () => {
-                try {
-                  await onResend()
-                } catch {
-                  /* ignore */
-                }
-              }}
-              className={`text-[0.75rem] cursor-pointer bg-transparent border-none transition-colors underline ${
+              disabled={resending || resendCooldown > 0}
+              onClick={handleResendClick}
+              className={`text-[0.75rem] cursor-pointer bg-transparent border-none transition-colors underline disabled:no-underline disabled:opacity-50 disabled:cursor-not-allowed ${
                 isDark ? 'text-white/40 hover:text-white/70' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
               }`}
             >
-              {isBn ? 'কোড পাননি? নতুন কোড পাঠান' : "Didn't receive code? Resend Code"}
+              {resending
+                ? (isBn ? 'কোড পাঠানো হচ্ছে...' : 'Sending code...')
+                : resendCooldown > 0
+                ? (isBn ? `পুনরায় কোড পাঠান (${resendCooldown}s)` : `Resend Code (${resendCooldown}s)`)
+                : (isBn ? 'কোড পাননি? নতুন কোড পাঠান' : "Didn't receive code? Resend Code")}
             </button>
           </div>
         )}

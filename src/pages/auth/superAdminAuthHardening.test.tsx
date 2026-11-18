@@ -9,6 +9,10 @@ vi.mock('@/components/ui/BackgroundPaths', () => ({
   BackgroundPaths: () => <div data-testid="background-paths" />,
 }))
 
+vi.mock('@/lib/emailService', () => ({
+  sendVerificationCode: vi.fn().mockResolvedValue({ success: true, simulated: false }),
+}))
+
 vi.mock('@/contexts/AuthContext', async () => {
   const actual = await vi.importActual<typeof AuthContextModule>('@/contexts/AuthContext')
   return {
@@ -239,7 +243,7 @@ describe('Super Admin Login Access Hardening & Security Verification', () => {
     })
   })
 
-  it('displays Neon Auth verification code badge and allows clicking "Use Code" to auto-populate', async () => {
+  it('does NOT display verification code badge in the UI and dispatches code to email', async () => {
     mockLogin.mockResolvedValueOnce({
       requiresVerification: true,
       verificationToken: 'mock-jwt-challenge-token',
@@ -259,17 +263,17 @@ describe('Super Admin Login Access Hardening & Security Verification', () => {
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'Admin@123456' } })
     fireEvent.click(screen.getByRole('button', { name: /Sign In|Continue to Verification|লগইন করুন|পরবর্তী ধাপ/i }))
 
-    // Verification code badge displayed
+    // Step 2 is active
     await waitFor(() => {
-      expect(screen.getByText('654321')).toBeInTheDocument()
-      expect(screen.getByText(/Verification Code \(Neon Auth\)|নিরাপত্তা কোড \(Neon Auth\)/i)).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('••••••')).toBeInTheDocument()
     })
 
-    // Click "Use Code"
-    const useCodeBtn = screen.getByRole('button', { name: /Use Code|কোড বসান/i })
-    fireEvent.click(useCodeBtn)
+    // Verification code and "Use Code" button must NEVER be displayed in the UI
+    expect(screen.queryByText('654321')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Verification Code \(Neon Auth\)|নিরাপত্তা কোড \(Neon Auth\)/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Use Code|কোড বসান/i })).not.toBeInTheDocument()
 
-    const pinInput = screen.getByPlaceholderText('••••••') as HTMLInputElement
-    expect(pinInput.value).toBe('654321')
+    // Email dispatch notice is shown
+    expect(screen.getByText(/৬-ডিজিট ভেরিফিকেশন কোড পাঠানো হয়েছে|6-digit verification code has been sent/i)).toBeInTheDocument()
   })
 })

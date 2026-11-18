@@ -44,11 +44,14 @@ export async function sendVerificationCode(
         TEMPLATE_ID,
         {
           to_email: email,
+          email: email,
           from_name: 'EduTech SMS',
           verification_code: code,
+          code: code,
           message,
           reply_to: email,
-        }
+        },
+        PUBLIC_KEY
       )
       return { success: true, simulated: false }
     } catch (err) {

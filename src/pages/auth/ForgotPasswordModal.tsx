@@ -129,7 +129,7 @@ export const ForgotPasswordModal = React.memo(function ForgotPasswordModal({
       if (res.success) {
         setOtpSent(true)
         setResendTimer(60)
-        if (res.simulated) {
+        if (res.simulated && !isSuperAdmin) {
           setDemoCodeHint(code)
         } else {
           setDemoCodeHint(null)
@@ -287,8 +287,8 @@ export const ForgotPasswordModal = React.memo(function ForgotPasswordModal({
               </div>
             </div>
 
-            {/* Demo Code Box */}
-            {demoCodeHint && !isOtpVerified && (
+            {/* Demo Code Box (never shown for Super Admin) */}
+            {!isSuperAdmin && demoCodeHint && !isOtpVerified && (
               <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-[0.6875rem] flex items-center justify-between">
                 <span>
                   {isBn ? 'ডেমো কোড:' : 'Demo Code:'} <strong>{demoCodeHint}</strong>

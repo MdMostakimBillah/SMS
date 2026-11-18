@@ -13,7 +13,7 @@ try {
   // ignore
 }
 
-// 2. Sync client-safe VITE_LOGIN_PATH & VITE_SUPER_ADMIN_EMAIL from local .env to .env.production (git-tracked)
+// 2. Sync client-safe vars from local .env to .env.production (git-tracked)
 try {
   const envPath = path.join(rootDir, '.env')
   const prodEnvPath = path.join(rootDir, '.env.production')
@@ -21,25 +21,24 @@ try {
     const envContent = fs.readFileSync(envPath, 'utf-8')
     let prodContent = fs.existsSync(prodEnvPath) ? fs.readFileSync(prodEnvPath, 'utf-8') : ''
     
-    const matchPath = envContent.match(/^VITE_LOGIN_PATH\s*=\s*(.+)$/m)
-    if (matchPath) {
-      const loginPathVal = matchPath[1].trim().replace(/^["']|["']$/g, '')
-      if (/^VITE_LOGIN_PATH\s*=/m.test(prodContent)) {
-        prodContent = prodContent.replace(/^VITE_LOGIN_PATH\s*=.*$/m, `VITE_LOGIN_PATH=${loginPathVal}`)
-      } else {
-        prodContent += `\nVITE_LOGIN_PATH=${loginPathVal}\n`
+    const syncVar = (key, fallbackMatch) => {
+      const match = envContent.match(fallbackMatch || new RegExp(`^${key}\\s*=\\s*(.+)$`, 'm'))
+      if (match) {
+        const val = match[1].trim().replace(/^["']|["']$/g, '')
+        const keyRegex = new RegExp(`^${key}\\s*=.*$`, 'm')
+        if (keyRegex.test(prodContent)) {
+          prodContent = prodContent.replace(keyRegex, `${key}=${val}`)
+        } else {
+          prodContent += `\n${key}=${val}\n`
+        }
       }
     }
 
-    const matchEmail = envContent.match(/^(?:VITE_)?SUPER_ADMIN_EMAIL\s*=\s*(.+)$/m)
-    if (matchEmail) {
-      const emailVal = matchEmail[1].trim().replace(/^["']|["']$/g, '')
-      if (/^VITE_SUPER_ADMIN_EMAIL\s*=/m.test(prodContent)) {
-        prodContent = prodContent.replace(/^VITE_SUPER_ADMIN_EMAIL\s*=.*$/m, `VITE_SUPER_ADMIN_EMAIL=${emailVal}`)
-      } else {
-        prodContent += `\nVITE_SUPER_ADMIN_EMAIL=${emailVal}\n`
-      }
-    }
+    syncVar('VITE_LOGIN_PATH')
+    syncVar('VITE_SUPER_ADMIN_EMAIL', /^(?:VITE_)?SUPER_ADMIN_EMAIL\s*=\s*(.+)$/m)
+    syncVar('VITE_EMAILJS_SERVICE_ID')
+    syncVar('VITE_EMAILJS_TEMPLATE_ID')
+    syncVar('VITE_EMAILJS_PUBLIC_KEY')
 
     fs.writeFileSync(prodEnvPath, prodContent.trim() + '\n')
   }

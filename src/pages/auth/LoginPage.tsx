@@ -107,7 +107,6 @@ export default function LoginPage() {
 
   const [step, setStep] = useState<'credentials' | 'verification'>('credentials')
   const [verificationToken, setVerificationToken] = useState<string>('')
-  const [verificationCode, setVerificationCode] = useState<string>('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -144,7 +143,6 @@ export default function LoginPage() {
       if (res && 'requiresVerification' in res && res.requiresVerification) {
         setVerificationToken(res.verificationToken || '')
         const vCode = res.verificationCode || ''
-        setVerificationCode(vCode)
         setStep('verification')
         clearError()
         if (vCode) {
@@ -174,8 +172,7 @@ export default function LoginPage() {
       const res = await authApi.sendLoginOtp(email)
       const vCode = res?.code || res?.verificationCode || res?.demoCode || ''
       if (vCode) {
-        setVerificationCode(vCode)
-        sendVerificationCode(email, vCode, 'login').catch(() => {})
+        await sendVerificationCode(email, vCode, 'login')
       }
     } catch {
       // safe fallback
@@ -185,7 +182,6 @@ export default function LoginPage() {
   const handleBackToCredentials = () => {
     setStep('credentials')
     setVerificationToken('')
-    setVerificationCode('')
     clearError()
   }
 
@@ -244,7 +240,6 @@ export default function LoginPage() {
           {step === 'verification' ? (
             <SuperAdminSecurityPinForm
               email={email}
-              verificationCode={verificationCode}
               isBn={isBn}
               isDark={isDark}
               isLockedOut={isLockedOut}

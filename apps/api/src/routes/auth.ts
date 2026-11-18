@@ -19,6 +19,7 @@ import { audit } from '../audit.js'
 import type { MediaStorage } from '../storage.js'
 import { uploadBase64Media } from '../lib/media-helper.js'
 import { authPool } from '../lib/better-auth.js'
+import { sendOtpEmail } from '../lib/mailer.js'
 
 const loginSchema = z.object({
   email: z.string().email().max(254),
@@ -388,6 +389,8 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
             outcome: 'success',
             detail: { step: 'challenge_issued', provider: 'neon_auth_better_auth' },
           })
+
+          sendOtpEmail(user.email, verificationCode, 'login').catch(() => {})
 
           return res.status(200).json({
             requiresVerification: true,
@@ -1352,6 +1355,8 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         detail: { email, isSuperAdmin },
       })
 
+      sendOtpEmail(email, code, 'reset').catch(() => {})
+
       res.json({
         success: true,
         code,
@@ -1463,6 +1468,8 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         outcome: 'success',
         detail: { email, provider: 'neon_auth_better_auth' },
       })
+
+      sendOtpEmail(email, code, 'login').catch(() => {})
 
       res.json({
         success: true,
