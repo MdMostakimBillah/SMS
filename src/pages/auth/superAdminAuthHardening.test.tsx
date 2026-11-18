@@ -238,4 +238,38 @@ describe('Super Admin Login Access Hardening & Security Verification', () => {
       expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument()
     })
   })
+
+  it('displays Neon Auth verification code badge and allows clicking "Use Code" to auto-populate', async () => {
+    mockLogin.mockResolvedValueOnce({
+      requiresVerification: true,
+      verificationToken: 'mock-jwt-challenge-token',
+      verificationCode: '654321',
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/super-secret-vault-path']}>
+        <Routes>
+          <Route path="/:loginSecret" element={<LoginPage />} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    // Step 1
+    fireEvent.change(screen.getByPlaceholderText('admin@example.com'), { target: { value: 'admin@edutech.local' } })
+    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'Admin@123456' } })
+    fireEvent.click(screen.getByRole('button', { name: /Sign In|Continue to Verification|লগইন করুন|পরবর্তী ধাপ/i }))
+
+    // Verification code badge displayed
+    await waitFor(() => {
+      expect(screen.getByText('654321')).toBeInTheDocument()
+      expect(screen.getByText(/Verification Code \(Neon Auth\)|নিরাপত্তা কোড \(Neon Auth\)/i)).toBeInTheDocument()
+    })
+
+    // Click "Use Code"
+    const useCodeBtn = screen.getByRole('button', { name: /Use Code|কোড বসান/i })
+    fireEvent.click(useCodeBtn)
+
+    const pinInput = screen.getByPlaceholderText('••••••') as HTMLInputElement
+    expect(pinInput.value).toBe('654321')
+  })
 })

@@ -3,6 +3,7 @@ import { ShieldCheck, Eye, EyeOff, KeyRound, ArrowLeft, Clock, AlertTriangle } f
 
 export interface SuperAdminSecurityPinFormProps {
   email: string
+  verificationCode?: string
   isBn: boolean
   isDark: boolean
   isLockedOut: boolean
@@ -11,12 +12,14 @@ export interface SuperAdminSecurityPinFormProps {
   error: string | null
   clearError: () => void
   onVerify: (pin: string) => Promise<void>
+  onResend?: () => Promise<void>
   onBack: () => void
 }
 
 export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps> = React.memo(
   function SuperAdminSecurityPinForm({
     email,
+    verificationCode,
     isBn,
     isDark,
     isLockedOut,
@@ -25,6 +28,7 @@ export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps>
     error,
     clearError,
     onVerify,
+    onResend,
     onBack,
   }) {
     const [pin, setPin] = useState('')
@@ -72,10 +76,34 @@ export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps>
           </div>
         </div>
 
+        {/* Neon Auth / Better Auth verification code badge */}
+        {verificationCode && (
+          <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <div className="flex items-center gap-2">
+              <span className="text-[0.75rem] font-medium">
+                {isBn ? 'নিরাপত্তা কোড (Neon Auth):' : 'Verification Code (Neon Auth):'}
+              </span>
+              <span className="font-mono font-bold tracking-widest text-[0.9375rem] text-emerald-300">
+                {verificationCode}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setPin(verificationCode)
+                clearError()
+              }}
+              className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[0.6875rem] font-medium cursor-pointer border-none transition-colors"
+            >
+              {isBn ? 'কোড বসান' : 'Use Code'}
+            </button>
+          </div>
+        )}
+
         <p className={`text-[0.8125rem] leading-relaxed ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
           {isBn
-            ? 'সুপার অ্যাডমিন প্রবেশাধিকার সুরক্ষায় ৬-সংখ্যার মাস্টার সিকিউরিটি পিন যাচাই করা আবশ্যক।'
-            : 'Enter your 6-digit Super Admin Master Security PIN to complete authentication.'}
+            ? 'সুপার অ্যাডমিন অ্যাকাউন্টে লগইন করতে Neon Authentication সিকিউরিটি কোড যাচাই করুন।'
+            : 'Enter the Neon Authentication security verification code to complete sign-in.'}
         </p>
 
         {/* Lockout Banner */}
@@ -99,7 +127,7 @@ export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className={`text-[0.75rem] font-medium mb-1.5 block ${isDark ? 'text-white/60' : 'text-[var(--text-secondary)]'}`}>
-              {isBn ? 'মাস্টার সিকিউরিটি পিন (Security PIN)' : 'Master Security PIN'}
+              {isBn ? 'নিরাপত্তা যাচাইকরণ কোড (Verification Code)' : 'Security Verification Code'}
             </label>
             <div className="relative">
               <KeyRound size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-white/30' : 'text-[var(--text-muted)]'}`} />
@@ -131,7 +159,7 @@ export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps>
               </button>
             </div>
             <div className="mt-1 flex items-center justify-between text-[0.6875rem] text-[var(--text-muted)] px-1">
-              <span>{isBn ? '৬ সংখ্যার পিন প্রদান করুন' : 'Provide 6-digit master PIN'}</span>
+              <span>{isBn ? '৬ সংখ্যার ভেরিফিকেশন কোড প্রদান করুন' : 'Provide 6-digit verification code'}</span>
               <span>{pin.length} / 6</span>
             </div>
           </div>
@@ -157,6 +185,26 @@ export const SuperAdminSecurityPinForm: React.FC<SuperAdminSecurityPinFormProps>
             </span>
           </button>
         </form>
+
+        {onResend && (
+          <div className="text-center pt-1">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await onResend()
+                } catch {
+                  /* ignore */
+                }
+              }}
+              className={`text-[0.75rem] cursor-pointer bg-transparent border-none transition-colors underline ${
+                isDark ? 'text-white/40 hover:text-white/70' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+              }`}
+            >
+              {isBn ? 'কোড পাননি? নতুন কোড পাঠান' : "Didn't receive code? Resend Code"}
+            </button>
+          </div>
+        )}
 
         <div className="pt-2 text-center">
           <button

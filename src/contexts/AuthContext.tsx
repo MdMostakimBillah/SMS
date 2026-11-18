@@ -22,6 +22,7 @@ export interface LoginResult {
   user?: User
   requiresVerification?: boolean
   verificationToken?: string
+  verificationCode?: string
 }
 
 interface AuthContextType {
@@ -443,6 +444,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return {
           requiresVerification: true,
           verificationToken: res.verificationToken,
+          verificationCode: res.verificationCode || res.code,
         }
       }
 

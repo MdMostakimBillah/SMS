@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { getDashboardPath } from '@/lib/navUtils'
 import { isValidLoginSecret, setLoginSecret, verifyLoginSecretRemote } from '@/lib/loginPath'
+import { authApi } from '@/lib/api'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
 import { SuperAdminSecurityPinForm } from './SuperAdminSecurityPinForm'
@@ -105,6 +106,7 @@ export default function LoginPage() {
 
   const [step, setStep] = useState<'credentials' | 'verification'>('credentials')
   const [verificationToken, setVerificationToken] = useState<string>('')
+  const [verificationCode, setVerificationCode] = useState<string>('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -140,6 +142,7 @@ export default function LoginPage() {
       const res = await login(email, password)
       if (res && 'requiresVerification' in res && res.requiresVerification) {
         setVerificationToken(res.verificationToken || '')
+        setVerificationCode(res.verificationCode || '')
         setStep('verification')
         clearError()
       }
@@ -161,9 +164,21 @@ export default function LoginPage() {
     }
   }
 
+  const handleResendCode = async () => {
+    try {
+      const res = await authApi.sendLoginOtp(email)
+      if (res && (res.code || res.verificationCode || res.demoCode)) {
+        setVerificationCode(res.code || res.verificationCode || res.demoCode || '')
+      }
+    } catch {
+      // safe fallback
+    }
+  }
+
   const handleBackToCredentials = () => {
     setStep('credentials')
     setVerificationToken('')
+    setVerificationCode('')
     clearError()
   }
 
@@ -222,6 +237,7 @@ export default function LoginPage() {
           {step === 'verification' ? (
             <SuperAdminSecurityPinForm
               email={email}
+              verificationCode={verificationCode}
               isBn={isBn}
               isDark={isDark}
               isLockedOut={isLockedOut}
@@ -230,6 +246,7 @@ export default function LoginPage() {
               error={error}
               clearError={clearError}
               onVerify={handleVerifyPin}
+              onResend={handleResendCode}
               onBack={handleBackToCredentials}
             />
           ) : (

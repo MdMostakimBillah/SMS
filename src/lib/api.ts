@@ -148,6 +148,7 @@ export interface LoginAuthResponse {
   user?: SessionUser
   requiresVerification?: boolean
   verificationToken?: string
+  verificationCode?: string
   message?: string
   code?: string
 }
@@ -261,7 +262,7 @@ export const authApi = {
     }),
 
   sendLoginOtp: (email: string) =>
-    apiRequest<{ success: boolean; message: string; demoCode?: string }>('/api/auth/send-login-otp', {
+    apiRequest<{ success: boolean; message: string; demoCode?: string; code?: string; verificationCode?: string }>('/api/auth/send-login-otp', {
       method: 'POST',
       body: { email },
     }),

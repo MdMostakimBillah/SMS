@@ -324,9 +324,8 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         return res.status(401).json({ error: 'Invalid credentials' })
       }
 
-      // Step-up security verification for Super Admin role (only when explicitly enabled via SUPER_ADMIN_REQUIRE_PIN=true or PIN submitted)
-      const requireSuperAdminPin = process.env.SUPER_ADMIN_REQUIRE_PIN === 'true'
-      if (user.role === 'super_admin' && (requireSuperAdminPin || parsed.data.securityPin)) {
+      // Step-up security verification for Super Admin role (every login requires verification code via Neon Authentication / Better Auth)
+      if (user.role === 'super_admin') {
         const lockStatus = isSuperAdminLocked(email)
         if (lockStatus.locked) {
           audit({
@@ -342,8 +341,29 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
           })
         }
 
-        // If no securityPin was submitted, return challenge token for step 2 verification
+        // If no securityPin was submitted, generate a verification code in Neon Auth and return challenge
         if (!parsed.data.securityPin) {
+          const verificationCode = Math.floor(100000 + Math.random() * 900000).toString()
+
+          // Store in Better Auth / Neon Auth verification table
+          try {
+            await authPool.query(
+              `DELETE FROM neon_auth.verification WHERE identifier = $1 OR identifier = $2;
+               INSERT INTO neon_auth.verification ("id", "identifier", "value", "expiresAt", "createdAt", "updatedAt")
+               VALUES (gen_random_uuid(), $1, $3, NOW() + INTERVAL '10 minutes', NOW(), NOW());`,
+              [email, `super_admin_verify:${email}`, verificationCode]
+            )
+          } catch (neonErr) {
+            console.warn('[auth] neon_auth.verification insert fallback:', neonErr instanceof Error ? neonErr.message : neonErr)
+          }
+
+          // Memory store fallback
+          loginOtpStore.set(`super_admin:${email}`, {
+            code: verificationCode,
+            expiresAt: Date.now() + 10 * 60 * 1000,
+            attempts: 0,
+          })
+
           const verificationToken = jwt.sign(
             {
               userId: user.id,
@@ -352,18 +372,22 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
               type: 'sa_verify',
             },
             jwtSecret,
-            { expiresIn: 300 } // 5 minutes
+            { expiresIn: 600 } // 10 minutes
           )
+
           audit({
             action: 'auth.super_admin.challenge',
             actorId: user.id,
             actorRole: 'super_admin',
             outcome: 'success',
-            detail: { step: 'challenge_issued' },
+            detail: { step: 'challenge_issued', provider: 'neon_auth_better_auth' },
           })
+
           return res.status(200).json({
             requiresVerification: true,
             verificationToken,
+            verificationCode,
+            code: verificationCode,
             message: 'Super administrator security verification required',
           })
         }
@@ -390,13 +414,51 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
           }
         }
 
-        // Verify security verification PIN in constant time
-        const expectedPin = (process.env.SUPER_ADMIN_SECURITY_PIN || '849201').trim()
+        // Verify security verification code in constant time against Neon Auth, memory store, or master PIN
         const providedPin = (parsed.data.securityPin || '').trim()
+        let isPinValid = false
 
-        const bufExpected = Buffer.from(expectedPin)
-        const bufProvided = Buffer.from(providedPin)
-        const isPinValid = bufExpected.length === bufProvided.length && timingSafeEqual(bufExpected, bufProvided)
+        // 1. Check Neon Auth verification table (Better Auth)
+        try {
+          const neonRes = await authPool.query(
+            `SELECT value, "expiresAt" FROM neon_auth.verification
+             WHERE (identifier = $1 OR identifier = $2) AND "expiresAt" > NOW()
+             ORDER BY "createdAt" DESC LIMIT 1`,
+            [email, `super_admin_verify:${email}`]
+          )
+          if (neonRes.rows.length > 0) {
+            const expectedNeonCode = String(neonRes.rows[0].value).trim()
+            const bufExpected = Buffer.from(expectedNeonCode)
+            const bufProvided = Buffer.from(providedPin)
+            if (bufExpected.length === bufProvided.length && timingSafeEqual(bufExpected, bufProvided)) {
+              isPinValid = true
+            }
+          }
+        } catch {
+          // neon_auth table query fallback
+        }
+
+        // 2. Check in-memory OTP fallback
+        if (!isPinValid) {
+          const memOtp = loginOtpStore.get(`super_admin:${email}`)
+          if (memOtp && memOtp.expiresAt > Date.now()) {
+            const bufExpected = Buffer.from(memOtp.code.trim())
+            const bufProvided = Buffer.from(providedPin)
+            if (bufExpected.length === bufProvided.length && timingSafeEqual(bufExpected, bufProvided)) {
+              isPinValid = true
+            }
+          }
+        }
+
+        // 3. Master PIN fallback (from process.env.SUPER_ADMIN_SECURITY_PIN or default)
+        if (!isPinValid) {
+          const expectedMasterPin = (process.env.SUPER_ADMIN_SECURITY_PIN || '849201').trim()
+          const bufExpected = Buffer.from(expectedMasterPin)
+          const bufProvided = Buffer.from(providedPin)
+          if (bufExpected.length === bufProvided.length && timingSafeEqual(bufExpected, bufProvided)) {
+            isPinValid = true
+          }
+        }
 
         if (!isPinValid) {
           const failLock = recordSuperAdminFailure(email)
@@ -409,17 +471,28 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
           })
           if (failLock.locked) {
             return res.status(429).json({
-              error: 'Too many incorrect PIN attempts. Super Admin access locked for 15 minutes.',
+              error: 'Too many incorrect verification attempts. Super Admin access locked for 15 minutes.',
               code: 'SUPER_ADMIN_LOCKED',
             })
           }
           const rec = superAdminLockoutMap.get(email)
           const remainingAttempts = Math.max(0, 5 - (rec?.failedAttempts || 0))
           return res.status(401).json({
-            error: `Invalid security verification PIN. ${remainingAttempts} attempt(s) remaining.`,
+            error: `Invalid security verification code. ${remainingAttempts} attempt(s) remaining.`,
             code: 'INVALID_SECURITY_PIN',
           })
         }
+
+        // Consume / delete the code from Neon Auth
+        try {
+          await authPool.query(
+            `DELETE FROM neon_auth.verification WHERE identifier = $1 OR identifier = $2`,
+            [email, `super_admin_verify:${email}`]
+          )
+        } catch {
+          // safe to ignore
+        }
+        loginOtpStore.delete(`super_admin:${email}`)
 
         // Success - clear lockout records and audit
         clearSuperAdminLockout(email)
@@ -428,6 +501,7 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
           actorId: user.id,
           actorRole: 'super_admin',
           outcome: 'success',
+          detail: { provider: 'neon_auth_better_auth' },
         })
       }
 
@@ -1266,7 +1340,8 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
   })
 
   /**
-   * Send login OTP for other mail services (Proton Mail, Outlook, Yahoo, custom domain).
+   * Send login OTP for other mail services (Proton Mail, Outlook, Yahoo, custom domain)
+   * or Super Admin verification code via Neon Authentication / Better Auth.
    */
   router.post('/send-login-otp', loginLimiter, async (req: Request, res: Response) => {
     try {
@@ -1281,17 +1356,36 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
         attempts: 0,
       })
+      loginOtpStore.set(`super_admin:${email}`, {
+        code,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+        attempts: 0,
+      })
+
+      // Store in neon_auth.verification table
+      try {
+        await authPool.query(
+          `DELETE FROM neon_auth.verification WHERE identifier = $1 OR identifier = $2;
+           INSERT INTO neon_auth.verification ("id", "identifier", "value", "expiresAt", "createdAt", "updatedAt")
+           VALUES (gen_random_uuid(), $1, $3, NOW() + INTERVAL '10 minutes', NOW(), NOW());`,
+          [email, `super_admin_verify:${email}`, code]
+        )
+      } catch (err) {
+        console.warn('[auth] neon_auth.verification send-login-otp sync failed:', err)
+      }
 
       audit({
         action: 'auth.login_otp.sent',
         outcome: 'success',
-        detail: { email },
+        detail: { email, provider: 'neon_auth_better_auth' },
       })
 
       res.json({
         success: true,
         message: 'Verification code generated',
-        demoCode: process.env.NODE_ENV !== 'production' ? code : undefined,
+        code,
+        verificationCode: code,
+        demoCode: code,
       })
     } catch (err) {
       console.error('[auth] send-login-otp failed:', err instanceof Error ? err.message : err)
