@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   getLoginSecret,
   setLoginSecret,
@@ -7,12 +7,15 @@ import {
   getLoginRoute,
   getSecretPath,
   isValidLoginSecret,
+  verifyLoginSecretRemote,
   DEFAULT_LOGIN_SECRET,
 } from './loginPath'
+import { authApi } from './api'
 
 describe('loginPath helpers', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.restoreAllMocks()
   })
 
   it('normalizes secret and strips leading/trailing slashes', () => {
@@ -48,5 +51,41 @@ describe('loginPath helpers', () => {
     expect(isValidLoginSecret('wrong-token')).toBe(false)
     expect(isValidLoginSecret('')).toBe(false)
     expect(isValidLoginSecret(undefined)).toBe(false)
+  })
+
+  describe('verifyLoginSecretRemote', () => {
+    it('returns true immediately for local match without remote call', async () => {
+      setLoginSecret('my-local-secret')
+      const spy = vi.spyOn(authApi, 'verifyLoginPath')
+
+      const result = await verifyLoginSecretRemote('my-local-secret')
+      expect(result).toBe(true)
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    it('verifies against remote API and caches in localStorage when valid', async () => {
+      const spy = vi.spyOn(authApi, 'verifyLoginPath').mockResolvedValueOnce({ valid: true } as any)
+
+      const result = await verifyLoginSecretRemote('remote-secret-key-123')
+      expect(result).toBe(true)
+      expect(spy).toHaveBeenCalledWith('remote-secret-key-123')
+      expect(getLoginSecret()).toBe('remote-secret-key-123')
+    })
+
+    it('returns false when remote API reports invalid', async () => {
+      const spy = vi.spyOn(authApi, 'verifyLoginPath').mockResolvedValueOnce({ valid: false } as any)
+
+      const result = await verifyLoginSecretRemote('wrong-remote-key')
+      expect(result).toBe(false)
+      expect(spy).toHaveBeenCalledWith('wrong-remote-key')
+      expect(getLoginSecret()).not.toBe('wrong-remote-key')
+    })
+
+    it('returns false for empty or undefined candidate without API call', async () => {
+      const spy = vi.spyOn(authApi, 'verifyLoginPath')
+      expect(await verifyLoginSecretRemote('')).toBe(false)
+      expect(await verifyLoginSecretRemote(undefined)).toBe(false)
+      expect(spy).not.toHaveBeenCalled()
+    })
   })
 })

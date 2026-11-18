@@ -297,6 +297,26 @@ export const authApi = {
       body: data,
     }),
 
+  verifyLoginPath: (path: string) =>
+    apiRequest<{ valid: boolean }>('/api/auth/verify-login-path', {
+      method: 'POST',
+      body: { path },
+    }),
+
+  getSuperAdminLoginPath: () =>
+    apiRequest<{ loginPath: string; defaultPath: string }>('/api/auth/super-admin-login-path'),
+
+  updateSuperAdminLoginPath: (loginPath: string) =>
+    apiRequest<{ success: boolean; loginPath: string }>('/api/auth/super-admin-login-path', {
+      method: 'PUT',
+      body: { loginPath },
+    }),
+
+  resetSuperAdminLoginPath: () =>
+    apiRequest<{ success: boolean; loginPath: string }>('/api/auth/super-admin-login-path', {
+      method: 'DELETE',
+    }),
+
   updateCredentials: (data: {
     email?: string
     password?: string

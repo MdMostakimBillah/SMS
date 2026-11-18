@@ -53,6 +53,13 @@ export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> 
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "billing_cycle" TEXT DEFAULT 'monthly';
       END $$;
 
+      -- System configuration key-value storage (for dynamic login path, etc.)
+      CREATE TABLE IF NOT EXISTS "system_config" (
+        "key" TEXT PRIMARY KEY,
+        "value" TEXT NOT NULL,
+        "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
       -- Better Auth schema & tables for Google OAuth & social authentication
       CREATE SCHEMA IF NOT EXISTS neon_auth;
 

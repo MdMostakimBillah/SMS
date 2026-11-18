@@ -5,7 +5,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { getDashboardPath } from '@/lib/navUtils'
-import { isValidLoginSecret, setLoginSecret } from '@/lib/loginPath'
+import { isValidLoginSecret, setLoginSecret, verifyLoginSecretRemote } from '@/lib/loginPath'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
 import { SuperAdminSecurityPinForm } from './SuperAdminSecurityPinForm'
@@ -33,20 +33,71 @@ export default function LoginPage() {
   const location = useLocation()
 
   // Strict fail-closed verification of the secret path (param or pathname)
-  const pathCandidate = loginSecret || location.pathname.replace(/^\/+|\/+$/g, '').split('/')[0]
-  const isAllowed = isValidLoginSecret(pathCandidate)
+  const pathCandidate = (loginSecret || location.pathname.replace(/^\/+|\/+$/g, '').split('/')[0] || '').trim()
+
+  const [isAllowed, setIsAllowed] = useState<boolean>(() => isValidLoginSecret(pathCandidate))
+  const [isChecking, setIsChecking] = useState<boolean>(() => !isValidLoginSecret(pathCandidate))
 
   useEffect(() => {
-    if (!isAllowed) {
-      navigate('/register', { replace: true })
-    } else if (pathCandidate) {
+    let active = true
+
+    // Fast synchronous check
+    if (isValidLoginSecret(pathCandidate)) {
+      setIsAllowed(true)
+      setIsChecking(false)
       setLoginSecret(pathCandidate)
+      return
     }
-  }, [isAllowed, pathCandidate, navigate])
+
+    if (!pathCandidate) {
+      setIsAllowed(false)
+      setIsChecking(false)
+      navigate('/register', { replace: true })
+      return
+    }
+
+    // Dynamic database check
+    setIsChecking(true)
+    verifyLoginSecretRemote(pathCandidate)
+      .then((valid) => {
+        if (!active) return
+        if (valid) {
+          setIsAllowed(true)
+          setLoginSecret(pathCandidate)
+        } else {
+          setIsAllowed(false)
+          navigate('/register', { replace: true })
+        }
+      })
+      .catch(() => {
+        if (!active) return
+        setIsAllowed(false)
+        navigate('/register', { replace: true })
+      })
+      .finally(() => {
+        if (active) setIsChecking(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [pathCandidate, navigate])
 
   useEffect(() => {
-    if (user) navigate(getDashboardPath(user), { replace: true })
-  }, [user, navigate])
+    if (user && isAllowed) navigate(getDashboardPath(user), { replace: true })
+  }, [user, isAllowed, navigate])
+
+  if (isChecking) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center bg-[var(--bg-main)]">
+        <BackgroundPaths />
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <BrandLogo size="lg" />
+          <div className="w-6 h-6 border-2 border-[var(--brand)] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
 
   if (!isAllowed) {
     return <Navigate to="/register" replace />

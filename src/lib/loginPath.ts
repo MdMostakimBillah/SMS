@@ -1,3 +1,5 @@
+import { authApi } from './api'
+
 /**
  * Runtime super-admin login path management.
  *
@@ -42,6 +44,32 @@ export function isValidLoginSecret(candidate?: string): boolean {
   const envVal = (import.meta.env.VITE_LOGIN_PATH || '').trim().replace(/^\/+|\/+$/g, '')
   if (active && cleanCandidate && active === cleanCandidate) return true
   if (envVal && cleanCandidate && envVal === cleanCandidate) return true
+  return false
+}
+
+/**
+ * Asynchronously verifies whether an incoming candidate path matches the active login path.
+ * Checks local fast-path first. If not matched, checks backend database via `/api/auth/verify-login-path`.
+ * If verified remotely, persists to localStorage so subsequent local checks succeed immediately.
+ */
+export async function verifyLoginSecretRemote(candidate?: string): Promise<boolean> {
+  if (!candidate) return false
+  const cleanCandidate = candidate.trim().replace(/^\/+|\/+$/g, '')
+  if (!cleanCandidate) return false
+
+  if (isValidLoginSecret(cleanCandidate)) {
+    return true
+  }
+
+  try {
+    const res = await authApi.verifyLoginPath(cleanCandidate)
+    if (res?.valid) {
+      setLoginSecret(cleanCandidate)
+      return true
+    }
+  } catch {
+    // network failure or offline
+  }
   return false
 }
 

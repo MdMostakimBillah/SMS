@@ -133,6 +133,50 @@ interface LoginOtpEntry {
 }
 const loginOtpStore = new Map<string, LoginOtpEntry>()
 
+const verifyLoginPathSchema = z.object({
+  path: z.string().min(1).max(128),
+})
+
+const updateLoginPathSchema = z.object({
+  loginPath: z
+    .string()
+    .min(4, 'Path must be at least 4 characters')
+    .max(100, 'Path cannot exceed 100 characters')
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Only letters, numbers, hyphens, and underscores are allowed'),
+})
+
+const RESERVED_LOGIN_PATHS = new Set([
+  'api',
+  'register',
+  'dashboard',
+  'i',
+  'super-admin',
+  'health',
+  'login',
+  'admin',
+  'superadmin',
+])
+
+function getFallbackLoginPath(): string {
+  const envVal = (process.env.VITE_LOGIN_PATH || process.env.SUPER_ADMIN_LOGIN_PATH || '9nw7G8o0P6DSl064W159').trim()
+  return envVal.replace(/^\/+|\/+$/g, '') || '9nw7G8o0P6DSl064W159'
+}
+
+async function getActiveSuperAdminLoginPath(prisma: PrismaClient): Promise<string> {
+  try {
+    const config = await prisma.systemConfig.findUnique({
+      where: { key: 'super_admin_login_path' },
+    })
+    if (config?.value) {
+      const clean = config.value.trim().replace(/^\/+|\/+$/g, '')
+      if (clean) return clean
+    }
+  } catch (err) {
+    console.warn('[auth] Failed to read super_admin_login_path from system_config:', err)
+  }
+  return getFallbackLoginPath()
+}
+
 const ARGON2_OPTIONS = {
   algorithm: 2, // Argon2id
   memoryCost: 64 * 1024, // 64 MB
@@ -223,6 +267,41 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
     res.cookie(SESSION_COOKIE, token, buildCookieOptions(true, secure))
     res.cookie(CSRF_COOKIE, randomBytes(32).toString('hex'), buildCookieOptions(false, secure))
   }
+
+  const verifyPathLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 30, // 30 attempts per minute per IP
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { valid: false, error: 'Too many requests' },
+  })
+
+  /**
+   * Verify super-admin secret login path candidate dynamically against database and fallback env.
+   * Fail-closed: returns { valid: boolean }, never leaks the actual secret.
+   */
+  router.post('/verify-login-path', verifyPathLimiter, async (req: Request, res: Response) => {
+    try {
+      const parsed = verifyLoginPathSchema.safeParse(req.body)
+      if (!parsed.success) {
+        return res.json({ valid: false })
+      }
+      const candidate = parsed.data.path.trim().replace(/^\/+|\/+$/g, '')
+      if (!candidate) {
+        return res.json({ valid: false })
+      }
+
+      const activeDbPath = await getActiveSuperAdminLoginPath(prisma)
+      const fallbackPath = getFallbackLoginPath()
+
+      // Valid if it matches active DB path or fallback env recovery path
+      const valid = candidate === activeDbPath || candidate === fallbackPath
+      res.json({ valid })
+    } catch (err) {
+      console.error('[auth] verify-login-path error:', err)
+      res.status(500).json({ valid: false, error: 'Internal server error' })
+    }
+  })
 
   /** Login — server-authoritative. Never reveals whether the account exists. */
   router.post('/login', requireTrustedOrigin(corsOrigin), loginLimiter, async (req: Request, res: Response) => {
@@ -935,6 +1014,95 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
       res.status(500).json({ error: 'Internal server error' })
     }
   })
+
+  // Get active super admin login path (protected: super_admin only)
+  router.get(
+    '/super-admin-login-path',
+    requireAuth(prisma, jwtSecret),
+    requireRole('super_admin'),
+    async (req: AuthenticatedRequest, res: Response) => {
+      try {
+        const activePath = await getActiveSuperAdminLoginPath(prisma)
+        const fallbackPath = getFallbackLoginPath()
+        audit({
+          action: 'auth.super_admin.login_path_read',
+          actorId: req.userId,
+          actorRole: req.userRole,
+          outcome: 'success',
+        })
+        res.json({ loginPath: activePath, defaultPath: fallbackPath })
+      } catch (err) {
+        console.error('[auth] get super-admin-login-path error:', err)
+        res.status(500).json({ error: 'Internal server error' })
+      }
+    }
+  )
+
+  // Update super admin login path dynamically in PostgreSQL database (protected: super_admin only)
+  router.put(
+    '/super-admin-login-path',
+    requireAuth(prisma, jwtSecret),
+    requireRole('super_admin'),
+    async (req: AuthenticatedRequest, res: Response) => {
+      try {
+        const parsed = updateLoginPathSchema.safeParse(req.body)
+        if (!parsed.success) {
+          return res.status(400).json({ error: 'Validation failed', details: parsed.error.errors })
+        }
+        const clean = parsed.data.loginPath.trim().replace(/^\/+|\/+$/g, '')
+        if (RESERVED_LOGIN_PATHS.has(clean.toLowerCase())) {
+          return res.status(400).json({ error: `Path "${clean}" is a reserved system path` })
+        }
+
+        await prisma.systemConfig.upsert({
+          where: { key: 'super_admin_login_path' },
+          update: { value: clean },
+          create: { key: 'super_admin_login_path', value: clean },
+        })
+
+        audit({
+          action: 'auth.super_admin.login_path_update',
+          actorId: req.userId,
+          actorRole: req.userRole,
+          outcome: 'success',
+          detail: { newPath: clean },
+        })
+
+        res.json({ success: true, loginPath: clean })
+      } catch (err) {
+        console.error('[auth] update super-admin-login-path error:', err)
+        res.status(500).json({ error: 'Internal server error' })
+      }
+    }
+  )
+
+  // Reset super admin login path to default (protected: super_admin only)
+  router.delete(
+    '/super-admin-login-path',
+    requireAuth(prisma, jwtSecret),
+    requireRole('super_admin'),
+    async (req: AuthenticatedRequest, res: Response) => {
+      try {
+        await prisma.systemConfig.deleteMany({
+          where: { key: 'super_admin_login_path' },
+        })
+
+        const fallback = getFallbackLoginPath()
+
+        audit({
+          action: 'auth.super_admin.login_path_reset',
+          actorId: req.userId,
+          actorRole: req.userRole,
+          outcome: 'success',
+        })
+
+        res.json({ success: true, loginPath: fallback })
+      } catch (err) {
+        console.error('[auth] reset super-admin-login-path error:', err)
+        res.status(500).json({ error: 'Internal server error' })
+      }
+    }
+  )
 
   // Update authenticated user's credentials (email and/or password)
   router.put('/credentials', requireAuth(prisma, jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
