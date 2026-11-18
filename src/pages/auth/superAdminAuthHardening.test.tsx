@@ -65,7 +65,7 @@ describe('Super Admin Login Access Hardening & Security Verification', () => {
     expect(screen.getByPlaceholderText('admin@example.com')).toBeInTheDocument()
   })
 
-  it('redirects away to /register when accessing with an invalid secret path (fail closed)', () => {
+  it('redirects away to /register when accessing with an invalid secret path (fail closed)', async () => {
     render(
       <MemoryRouter initialEntries={['/unauthorized-access-attempt']}>
         <Routes>
@@ -76,7 +76,9 @@ describe('Super Admin Login Access Hardening & Security Verification', () => {
     )
 
     expect(screen.queryByText(/Super Admin Login/i)).not.toBeInTheDocument()
-    expect(screen.getByText('Register Redirect Target')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Register Redirect Target')).toBeInTheDocument()
+    })
   })
 
   it('transitions to Step 2 Security Verification when credentials require PIN challenge', async () => {
@@ -95,7 +97,7 @@ describe('Super Admin Login Access Hardening & Security Verification', () => {
 
     const emailInput = screen.getByPlaceholderText('admin@example.com')
     const passwordInput = screen.getByPlaceholderText('••••••••')
-    const submitBtn = screen.getByRole('button', { name: /Continue to Verification|পরবর্তী ধাপ/i })
+    const submitBtn = screen.getByRole('button', { name: /Sign In|Continue to Verification|লগইন করুন|পরবর্তী ধাপ/i })
 
     fireEvent.change(emailInput, { target: { value: 'admin@edutech.local' } })
     fireEvent.change(passwordInput, { target: { value: 'Admin@123456' } })
@@ -137,7 +139,7 @@ describe('Super Admin Login Access Hardening & Security Verification', () => {
     // Step 1
     fireEvent.change(screen.getByPlaceholderText('admin@example.com'), { target: { value: 'admin@edutech.local' } })
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'Admin@123456' } })
-    fireEvent.click(screen.getByRole('button', { name: /Continue to Verification|পরবর্তী ধাপ/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Sign In|Continue to Verification|লগইন করুন|পরবর্তী ধাপ/i }))
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('••••••')).toBeInTheDocument()
@@ -179,7 +181,7 @@ describe('Super Admin Login Access Hardening & Security Verification', () => {
     // Step 1
     fireEvent.change(screen.getByPlaceholderText('admin@example.com'), { target: { value: 'admin@edutech.local' } })
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'Admin@123456' } })
-    fireEvent.click(screen.getByRole('button', { name: /Continue to Verification|পরবর্তী ধাপ/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Sign In|Continue to Verification|লগইন করুন|পরবর্তী ধাপ/i }))
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('••••••')).toBeInTheDocument()
@@ -220,7 +222,7 @@ describe('Super Admin Login Access Hardening & Security Verification', () => {
     // Step 1
     fireEvent.change(screen.getByPlaceholderText('admin@example.com'), { target: { value: 'admin@edutech.local' } })
     fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'Admin@123456' } })
-    fireEvent.click(screen.getByRole('button', { name: /Continue to Verification|পরবর্তী ধাপ/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Sign In|Continue to Verification|লগইন করুন|পরবর্তী ধাপ/i }))
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText('••••••')).toBeInTheDocument()

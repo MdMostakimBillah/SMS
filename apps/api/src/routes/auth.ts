@@ -324,8 +324,9 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         return res.status(401).json({ error: 'Invalid credentials' })
       }
 
-      // Taft Hardening: Step-up security verification for Super Admin role
-      if (user.role === 'super_admin') {
+      // Step-up security verification for Super Admin role (only when explicitly enabled via SUPER_ADMIN_REQUIRE_PIN=true or PIN submitted)
+      const requireSuperAdminPin = process.env.SUPER_ADMIN_REQUIRE_PIN === 'true'
+      if (user.role === 'super_admin' && (requireSuperAdminPin || parsed.data.securityPin)) {
         const lockStatus = isSuperAdminLocked(email)
         if (lockStatus.locked) {
           audit({

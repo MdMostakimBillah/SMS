@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation, Navigate } from 'react-router-dom'
-import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock, ChevronRight, ShieldCheck } from 'lucide-react'
+import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock, ChevronRight } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
@@ -210,12 +210,6 @@ export default function LoginPage() {
       <div className={`flex-1 flex items-center justify-center px-6 py-12 ${isDark ? 'bg-[#0a0a0f]' : 'bg-[#f0f2f8]'}`}>
         <div className="w-full max-w-[24rem] relative">
 
-          {/* Hardened portal badge */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[0.6875rem] font-medium w-fit mb-4">
-            <ShieldCheck size={13} />
-            <span>{isBn ? 'নিরাপদ হার্ডেনড প্রবেশদ্বার' : 'Hardened Admin Portal'}</span>
-          </div>
-
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <BrandLogo size={64} className="mx-auto mb-4" />
@@ -240,7 +234,7 @@ export default function LoginPage() {
             />
           ) : (
             <>
-              <div className="mb-6">
+              <div className="mb-6 text-center">
                 <h2 className={`text-[1.5rem] font-bold mb-2 ${isDark ? 'text-white' : 'text-[var(--text-primary)]'}`}>
                   {isBn ? 'সুপার অ্যাডমিন লগইন' : 'Super Admin Login'}
                 </h2>
@@ -308,19 +302,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Forgot password */}
-                <div className="text-right -mt-1">
-                  <button
-                    type="button"
-                    onClick={() => setForgotModalOpen(true)}
-                    className={`text-[0.6875rem] cursor-pointer bg-transparent border-none hover:underline transition-colors ${
-                      isDark ? 'text-white/40 hover:text-white/70' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
-                    }`}
-                  >
-                    {isBn ? 'পাসওয়ার্ড মনে নেই?' : 'Forgot password?'}
-                  </button>
-                </div>
-
                 {/* Submit */}
                 <button type="submit" disabled={!canSubmit}
                   className="w-full h-11 rounded-xl text-[0.875rem] font-semibold border-none cursor-pointer flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -331,9 +312,22 @@ export default function LoginPage() {
                   {!isLockedOut && !submitting && <LogIn size={16} />}
                   {isLockedOut && <Clock size={16} />}
                   {isLockedOut ? (isBn ? `লকড আউট — ${formatTime(lockoutRemaining)}` : `Locked out — ${formatTime(lockoutRemaining)}`)
-                    : submitting ? (isBn ? 'যাচাই করা হচ্ছে...' : 'Verifying...')
-                    : (isBn ? 'পরবর্তী ধাপ (যাচাইকরণ)' : 'Continue to Verification')}
+                    : submitting ? (isBn ? 'প্রবেশ করা হচ্ছে...' : 'Signing in...')
+                    : (isBn ? 'লগইন করুন' : 'Sign In')}
                 </button>
+
+                {/* Forgot password - below submit button */}
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setForgotModalOpen(true)}
+                    className={`text-[0.75rem] cursor-pointer bg-transparent border-none hover:underline transition-colors ${
+                      isDark ? 'text-white/40 hover:text-white/70' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
+                    }`}
+                  >
+                    {isBn ? 'পাসওয়ার্ড মনে নেই?' : 'Forgot password?'}
+                  </button>
+                </div>
               </form>
             </>
           )}
