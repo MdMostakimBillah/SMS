@@ -324,6 +324,12 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         return res.status(401).json({ error: 'Invalid credentials' })
       }
 
+      // If user is super_admin, verify email matches SUPER_ADMIN_EMAIL from .env if configured
+      const envSuperAdminEmail = (process.env.SUPER_ADMIN_EMAIL || '').trim().toLowerCase()
+      if (user.role === 'super_admin' && envSuperAdminEmail && user.email.toLowerCase() !== envSuperAdminEmail) {
+        return res.status(401).json({ error: 'Invalid credentials' })
+      }
+
       // Step-up security verification for Super Admin role (every login requires verification code via Neon Authentication / Better Auth)
       if (user.role === 'super_admin') {
         const lockStatus = isSuperAdminLocked(email)
@@ -1288,6 +1294,76 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
     }
   })
 
+  /**
+   * Send reset password OTP.
+   * If isSuperAdmin is specified, verifies that the email matches SUPER_ADMIN_EMAIL from .env.
+   */
+  router.post('/send-reset-otp', loginLimiter, async (req: Request, res: Response) => {
+    try {
+      const email = req.body?.email ? String(req.body.email).trim().toLowerCase() : ''
+      const isSuperAdmin = Boolean(req.body?.isSuperAdmin)
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ error: 'Valid email address is required' })
+      }
+
+      const envSuper = (process.env.SUPER_ADMIN_EMAIL || '').trim().toLowerCase()
+      if (isSuperAdmin) {
+        if (!envSuper || email !== envSuper) {
+          return res.status(400).json({
+            error: 'Email does not match the super admin email configured in .env',
+          })
+        }
+        const user = await prisma.user.findFirst({
+          where: { email, role: 'super_admin', isActive: true },
+        })
+        if (!user) {
+          return res.status(404).json({ error: 'Super Admin account not found' })
+        }
+      } else {
+        const user = await prisma.user.findUnique({ where: { email } })
+        if (!user || !user.isActive) {
+          return res.status(404).json({ error: 'Account not found' })
+        }
+      }
+
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
+      loginOtpStore.set(`reset:${email}`, {
+        code,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+        attempts: 0,
+      })
+
+      // Store in neon_auth.verification table
+      try {
+        await authPool.query(
+          `DELETE FROM neon_auth.verification WHERE identifier = $1;
+           INSERT INTO neon_auth.verification ("id", "identifier", "value", "expiresAt", "createdAt", "updatedAt")
+           VALUES (gen_random_uuid(), $1, $2, NOW() + INTERVAL '10 minutes', NOW(), NOW());`,
+          [`reset:${email}`, code]
+        )
+      } catch (err) {
+        console.warn('[auth] neon_auth.verification send-reset-otp fallback:', err)
+      }
+
+      audit({
+        action: 'auth.password_reset_otp.sent',
+        outcome: 'success',
+        detail: { email, isSuperAdmin },
+      })
+
+      res.json({
+        success: true,
+        code,
+        demoCode: code,
+        message: 'Verification code generated',
+      })
+    } catch (err) {
+      console.error('[auth] send-reset-otp failed:', err instanceof Error ? err.message : err)
+      res.status(500).json({ error: 'Failed to generate verification code' })
+    }
+  })
+
   // Reset password via verified email (for users who forgot their password)
   router.post('/reset-password', loginLimiter, async (req: Request, res: Response) => {
     try {
@@ -1307,6 +1383,14 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
 
       if (!user || !user.isActive) {
         return res.status(404).json({ error: 'No active account found with this email' })
+      }
+
+      // If super_admin, verify email matches SUPER_ADMIN_EMAIL from .env
+      if (user.role === 'super_admin') {
+        const envSuper = (process.env.SUPER_ADMIN_EMAIL || '').trim().toLowerCase()
+        if (envSuper && targetEmail !== envSuper) {
+          return res.status(403).json({ error: 'Cannot reset super admin password for unlisted email' })
+        }
       }
 
       const newHash = await hash(newPassword, ARGON2_OPTIONS)

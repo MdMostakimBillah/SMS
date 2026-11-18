@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, useLocation, Navigate } from 'react-router-dom'
-import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock, ChevronRight } from 'lucide-react'
+import { LogIn, Eye, EyeOff, Mail, Lock, X, Clock } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { getDashboardPath } from '@/lib/navUtils'
 import { isValidLoginSecret, setLoginSecret, verifyLoginSecretRemote } from '@/lib/loginPath'
 import { authApi } from '@/lib/api'
+import { sendVerificationCode } from '@/lib/emailService'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
 import { SuperAdminSecurityPinForm } from './SuperAdminSecurityPinForm'
@@ -142,9 +143,13 @@ export default function LoginPage() {
       const res = await login(email, password)
       if (res && 'requiresVerification' in res && res.requiresVerification) {
         setVerificationToken(res.verificationToken || '')
-        setVerificationCode(res.verificationCode || '')
+        const vCode = res.verificationCode || ''
+        setVerificationCode(vCode)
         setStep('verification')
         clearError()
+        if (vCode) {
+          sendVerificationCode(email, vCode, 'login').catch(() => {})
+        }
       }
     } catch {
       // error is handled in AuthContext
@@ -167,8 +172,10 @@ export default function LoginPage() {
   const handleResendCode = async () => {
     try {
       const res = await authApi.sendLoginOtp(email)
-      if (res && (res.code || res.verificationCode || res.demoCode)) {
-        setVerificationCode(res.code || res.verificationCode || res.demoCode || '')
+      const vCode = res?.code || res?.verificationCode || res?.demoCode || ''
+      if (vCode) {
+        setVerificationCode(vCode)
+        sendVerificationCode(email, vCode, 'login').catch(() => {})
       }
     } catch {
       // safe fallback
@@ -349,14 +356,6 @@ export default function LoginPage() {
             </>
           )}
 
-          <div className="mt-6 text-center">
-            <button onClick={() => navigate('/register')}
-              className={`text-[0.75rem] cursor-pointer bg-transparent border-none transition-colors ${isDark ? 'text-white/30 hover:text-white/50' : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'}`}>
-              {isBn ? 'নতুন অ্যাকাউন্ট তৈরি করুন' : 'Create new account'}
-              <ChevronRight size={12} className="inline ml-1" />
-            </button>
-          </div>
-
           <div className="mt-4 text-center">
             <div className={`flex items-center justify-center gap-2 text-[0.6875rem] ${isDark ? 'text-white/20' : 'text-[var(--text-muted)]'}`}>
               <Lock size={11} />
@@ -369,6 +368,7 @@ export default function LoginPage() {
             onClose={() => setForgotModalOpen(false)}
             isBn={isBn}
             isDark={isDark}
+            isSuperAdmin={true}
           />
 
         </div>

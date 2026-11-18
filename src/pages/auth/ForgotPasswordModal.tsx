@@ -10,6 +10,7 @@ interface Props {
   isBn: boolean
   brandColor?: string
   isDark?: boolean
+  isSuperAdmin?: boolean
 }
 
 export const ForgotPasswordModal = React.memo(function ForgotPasswordModal({
@@ -18,6 +19,7 @@ export const ForgotPasswordModal = React.memo(function ForgotPasswordModal({
   isBn,
   brandColor = 'var(--brand)',
   isDark = false,
+  isSuperAdmin = false,
 }: Props) {
   const [email, setEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -88,27 +90,59 @@ export const ForgotPasswordModal = React.memo(function ForgotPasswordModal({
       return
     }
 
+    const envSuperEmail = (import.meta.env.VITE_SUPER_ADMIN_EMAIL || '').trim().toLowerCase()
+    if (isSuperAdmin && envSuperEmail && trimmed !== envSuperEmail) {
+      setError(
+        isBn
+          ? 'এই ইমেইলটি .env ফাইলের সুপার অ্যাডমিন ইমেইলের সাথে মিলছে না'
+          : 'Email must match the super admin email configured in .env'
+      )
+      return
+    }
+
     setSendingOtp(true)
     setError('')
 
-    const code = Array.from({ length: 6 }, () => '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 36)]).join('')
-    setOtpCode(code)
-
-    const res = await sendVerificationCode(trimmed, code, 'password_change')
-    setSendingOtp(false)
-
-    if (res.success) {
-      setOtpSent(true)
-      setResendTimer(60)
-      if (res.simulated) {
-        setDemoCodeHint(code)
-      } else {
-        setDemoCodeHint(null)
+    try {
+      let code = ''
+      try {
+        const otpRes = await authApi.sendResetOtp({ email: trimmed, isSuperAdmin })
+        code = otpRes.code || otpRes.demoCode || ''
+      } catch (err: unknown) {
+        if (isSuperAdmin) {
+          setSendingOtp(false)
+          const msg = err instanceof Error ? err.message : null
+          setError(msg || (isBn ? 'কোড পাঠানো সম্ভব হয়নি' : 'Failed to send verification code'))
+          return
+        }
+        code = Array.from({ length: 6 }, () => '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 36)]).join('')
       }
-      setError('')
-    } else {
-      setOtpSent(false)
-      setError(res.error || (isBn ? 'কোড পাঠানো সম্ভব হয়নি' : 'Failed to send verification code'))
+
+      if (!code) {
+        code = Array.from({ length: 6 }, () => '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 36)]).join('')
+      }
+      setOtpCode(code)
+
+      const res = await sendVerificationCode(trimmed, code, 'password_change')
+      setSendingOtp(false)
+
+      if (res.success) {
+        setOtpSent(true)
+        setResendTimer(60)
+        if (res.simulated) {
+          setDemoCodeHint(code)
+        } else {
+          setDemoCodeHint(null)
+        }
+        setError('')
+      } else {
+        setOtpSent(false)
+        setError(res.error || (isBn ? 'কোড পাঠানো সম্ভব হয়নি' : 'Failed to send verification code'))
+      }
+    } catch (err: unknown) {
+      setSendingOtp(false)
+      const msg = err instanceof Error ? err.message : null
+      setError(msg || (isBn ? 'কোড পাঠানো সম্ভব হয়নি' : 'Failed to send verification code'))
     }
   }
 

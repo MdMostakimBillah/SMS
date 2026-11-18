@@ -19,7 +19,7 @@ function initEmailJS() {
 export async function sendVerificationCode(
   email: string,
   code: string,
-  purpose: 'registration' | 'email_change' | 'password_change' = 'registration'
+  purpose: 'registration' | 'email_change' | 'password_change' | 'login' = 'registration'
 ): Promise<{ success: boolean; simulated: boolean; error?: string }> {
   // Missing config → intentional demo mode (show code on screen)
   if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
@@ -31,6 +31,8 @@ export async function sendVerificationCode(
     message = `Your verification code to update your EduTech SMS email address is ${code}. This code expires in 10 minutes.`
   } else if (purpose === 'password_change') {
     message = `Your verification code to change your EduTech SMS password is ${code}. This code expires in 10 minutes.`
+  } else if (purpose === 'login') {
+    message = `Your Super Admin login verification code for EduTech SMS is ${code}. This code expires in 10 minutes.`
   }
 
   // Retry up to 3 times with increasing delay

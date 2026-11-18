@@ -267,6 +267,12 @@ export const authApi = {
       body: { email },
     }),
 
+  sendResetOtp: (data: { email: string; isSuperAdmin?: boolean }) =>
+    apiRequest<{ success: boolean; message: string; demoCode?: string; code?: string }>('/api/auth/send-reset-otp', {
+      method: 'POST',
+      body: data,
+    }),
+
 
   emailLogin: (data: { email: string; code?: string; verified?: boolean; institution?: string }) =>
     apiRequest<LoginAuthResponse>('/api/auth/email-login', {
