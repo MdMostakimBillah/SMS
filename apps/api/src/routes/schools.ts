@@ -4,6 +4,8 @@ import { requireAuth, optionalAuth, type AuthenticatedRequest } from '../middlew
 import { requireRole } from '../middleware/rbac.js'
 import type { MediaStorage } from '../storage.js'
 import { uploadBase64Media, deletePreviousMedia } from '../lib/media-helper.js'
+import { audit } from '../audit.js'
+import { authPool } from '../lib/better-auth.js'
 
 export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: MediaStorage | null) {
   const router = Router()
@@ -486,24 +488,34 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
   })
 
   /**
-   * Super Admin only: Delete a school.
-   * Safety guard: Institutions with a super_admin user cannot be deleted.
+   * Super Admin only: Delete any school.
+   * Unlinks any super_admin users linked to this school so platform super admins
+   * are preserved and never locked out. Permanently deletes school records,
+   * associated non-super_admin accounts, sessions, and storage objects.
    */
   router.delete('/:id', requireAuth(prisma, jwtSecret), requireRole('super_admin'), async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const id = req.params.id as string
-
-      // Prevent deletion of institutions linked to super_admin users
-      const hasSuperAdmin = await prisma.user.findFirst({
-        where: { schoolId: id, role: 'super_admin' },
-      })
-      if (hasSuperAdmin) {
-        return res.status(403).json({ error: 'Super Admin institution cannot be deleted' })
+      const rawTarget = req.params.id as string
+      if (!rawTarget) {
+        return res.status(400).json({ error: 'School ID or domain is required' })
       }
+      const target = rawTarget.trim()
 
-      // Delete all stored media objects for this school in R2 storage
+      const school = await prisma.school.findFirst({
+        where: {
+          OR: [{ id: target }, { domain: target.toLowerCase() }],
+        },
+        select: { id: true, name: true, domain: true },
+      })
+
+      if (!school) {
+        return res.status(404).json({ error: 'Institution not found' })
+      }
+      const schoolId = school.id
+
+      // Delete all stored media objects for this school in storage (R2/S3/local)
       const mediaList = await prisma.mediaObject.findMany({
-        where: { schoolId: id },
+        where: { schoolId },
       }).catch(() => [])
 
       if (storage && mediaList.length > 0) {
@@ -512,25 +524,90 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         }
       }
 
+      // Collect non-super_admin users to clean up from neon_auth if present
+      const nonSuperAdminUsers = await prisma.user.findMany({
+        where: { schoolId, role: { not: 'super_admin' } },
+        select: { id: true, email: true },
+      }).catch(() => [])
+
       await prisma.$transaction(async (tx) => {
-        // Cascade delete users and media belonging to this school (except super_admin)
-        await tx.mediaObject.deleteMany({
-          where: { schoolId: id },
+        // 1. Unlink any super_admin users from this school so platform super admins
+        //    are preserved and never lose access or get deleted
+        await tx.user.updateMany({
+          where: { schoolId, role: 'super_admin' },
+          data: { schoolId: null },
         })
+
+        // 2. Cascade delete school records
+        await tx.mediaObject.deleteMany({
+          where: { schoolId },
+        })
+        await tx.notice.deleteMany({
+          where: { schoolId },
+        })
+        await tx.noticeCategory.deleteMany({
+          where: { schoolId },
+        })
+        await tx.student.deleteMany({
+          where: { schoolId },
+        })
+        await tx.teacher.deleteMany({
+          where: { schoolId },
+        })
+        await tx.subject.deleteMany({
+          where: { schoolId },
+        })
+        await tx.department.deleteMany({
+          where: { schoolId },
+        })
+        await tx.designation.deleteMany({
+          where: { schoolId },
+        })
+
+        // 3. Delete sessions and accounts of non-super_admin users belonging to this school
         await tx.session.deleteMany({
-          where: { user: { schoolId: id, role: { not: 'super_admin' } } },
+          where: { user: { schoolId, role: { not: 'super_admin' } } },
         })
         await tx.user.deleteMany({
-          where: { schoolId: id, role: { not: 'super_admin' } },
+          where: { schoolId, role: { not: 'super_admin' } },
         })
+
+        // 4. Finally delete the school itself
         await tx.school.delete({
-          where: { id },
+          where: { id: schoolId },
         })
       })
-      res.json({ success: true })
+
+      // Clean up neon_auth users if neon_auth exists
+      if (nonSuperAdminUsers.length > 0) {
+        const userIds = nonSuperAdminUsers.map((u) => u.id)
+        const userEmails = nonSuperAdminUsers.map((u) => u.email)
+        try {
+          await authPool.query(
+            `DELETE FROM neon_auth.user WHERE id = ANY($1::uuid[]) OR email = ANY($2::text[])`,
+            [userIds, userEmails]
+          )
+        } catch {
+          // neon_auth schema may not exist in test/local environments
+        }
+      }
+
+      // Audit the deletion
+      audit({
+        action: 'school.delete',
+        actorId: req.userId,
+        actorRole: req.userRole,
+        schoolId,
+        resourceId: schoolId,
+        outcome: 'success',
+        detail: { schoolName: school.name, domain: school.domain || null },
+      })
+
+      res.json({ success: true, id: schoolId, name: school.name })
     } catch (err) {
-      console.error('[schools] delete failed:', err instanceof Error ? err.message : err)
-      res.status(500).json({ error: 'Internal server error' })
+      console.error('[schools] delete failed:', err instanceof Error ? err.stack || err.message : err)
+      const details = err instanceof Error ? err.message : undefined
+      res.status(500).json({ error: 'Internal server error', ...(details ? { details } : {}) })
     }
   })
 

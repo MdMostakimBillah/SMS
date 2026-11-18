@@ -385,5 +385,59 @@ describe('School Branding & Institution Tab API', () => {
       const found = res.body.find((s: any) => s.id === schoolId)
       expect(found).toBeDefined()
     })
+
+    it('super admin can delete any institution, unlinking super admin and removing all school data', async () => {
+      // Create a temporary school linked to this super admin
+      const tempSchool = await prisma.school.create({
+        data: {
+          name: 'Deletable School',
+          domain: 'deletable-test-school',
+        },
+      })
+
+      // Link superAdmin to this temp school
+      await prisma.user.update({
+        where: { id: superAdminUserId },
+        data: { schoolId: tempSchool.id },
+      })
+
+      // Create a teacher and a student under this school
+      await prisma.teacher.create({
+        data: {
+          schoolId: tempSchool.id,
+          nameEn: 'Temporary Teacher',
+        },
+      })
+      await prisma.student.create({
+        data: {
+          schoolId: tempSchool.id,
+          nameEn: 'Temporary Student',
+        },
+      })
+
+      // Execute DELETE /api/schools/:id as super admin
+      const delRes = await request(app)
+        .delete(`/api/schools/${tempSchool.id}`)
+        .set('Cookie', cookieHeader(superAdminJar))
+        .set('x-csrf-token', csrfToken(superAdminJar))
+
+      expect(delRes.status).toBe(200)
+      expect(delRes.body.success).toBe(true)
+      expect(delRes.body.id).toBe(tempSchool.id)
+
+      // Ensure school is deleted
+      const checkSchool = await prisma.school.findUnique({ where: { id: tempSchool.id } })
+      expect(checkSchool).toBeNull()
+
+      // Ensure child records are deleted
+      const checkTeachers = await prisma.teacher.findMany({ where: { schoolId: tempSchool.id } })
+      expect(checkTeachers.length).toBe(0)
+
+      // Ensure super admin was NOT deleted, but unlinked (schoolId === null)
+      const checkSa = await prisma.user.findUnique({ where: { id: superAdminUserId } })
+      expect(checkSa).not.toBeNull()
+      expect(checkSa?.schoolId).toBeNull()
+      expect(checkSa?.role).toBe('super_admin')
+    })
   })
 })

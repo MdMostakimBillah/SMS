@@ -105,7 +105,6 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
   const status = statusConfig(inst.status, isBn)
   const isExpired = inst.expiresAt ? new Date(inst.expiresAt).getTime() < Date.now() : false
   const daysRemaining = inst.expiresAt ? Math.ceil((new Date(inst.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
-  const isSuperAdminSchool = inst.email === 'admin@edutech.local' || inst.slug === 'main' || inst.slug === 'superadmin' || inst.slug === 'edutech' || inst.id === 'b903f56f-2a26-411f-81f4-d7f0122bdc52'
 
   return (
     <div
@@ -282,31 +281,28 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
             >
               {inst.status === 'active' ? <><Pause size={13} /></> : <><CheckCircle size={13} /></>}
             </button>
-            {isSuperAdminSchool ? (
-              <div
-                className="flex items-center justify-center px-3 py-2.5 rounded-xl text-[0.75rem] bg-gray-500/10 text-gray-400 cursor-not-allowed"
-                title={isBn ? 'সুপার অ্যাডমিন ডিলিট করা সম্ভব নয়' : 'Super Admin institution cannot be deleted'}
-              >
-                <Lock size={13} />
-              </div>
-            ) : (
-              <button
-                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-red-500/10 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer border-none"
-                onClick={async (e) => {
-                  e.stopPropagation()
-                  if (confirm(isBn ? 'আপনি কি এই প্রতিষ্ঠানটি মুছে ফেলতে চান?' : 'Are you sure you want to delete this institution?')) {
+            <button
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-red-500/10 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer border-none"
+              title={isBn ? 'প্রতিষ্ঠান মুছুন' : 'Delete Institution'}
+              onClick={async (e) => {
+                e.stopPropagation()
+                const displayName = (isBn ? inst.nameBn : inst.name) || inst.name || inst.slug
+                const confirmMsg = isBn
+                  ? `আপনি কি নিশ্চিত যে "${displayName}" প্রতিষ্ঠানটি সম্পূর্ণরূপে মুছে ফেলতে চান? এর সকল ডেটা স্থায়ীভাবে মুছে যাবে।`
+                  : `Are you sure you want to permanently delete "${displayName}"? All associated data will be removed.`
+                if (window.confirm(confirmMsg)) {
+                  try {
+                    await authApi.deleteSchool(inst.id)
                     useSuperAdminStore.getState().deleteInstitution(inst.id)
-                    try {
-                      await authApi.deleteSchool(inst.id)
-                    } catch {
-                      /* ignore backend error */
-                    }
+                  } catch (err: unknown) {
+                    const message = (err instanceof Error ? err.message : null) || (isBn ? 'প্রতিষ্ঠান মুছে ফেলতে ব্যর্থ হয়েছে' : 'Failed to delete institution')
+                    alert(message)
                   }
-                }}
-              >
-                <Trash2 size={13} />
-              </button>
-            )}
+                }
+              }}
+            >
+              <Trash2 size={13} />
+            </button>
           </div>
         </div>
       )}
