@@ -154,7 +154,33 @@ export function vaultPathToKey(
       base === 'monthly_salary_configs' ||
       base === 'hr_recommendations'
     ) storeBase = 'hr'
-    else if (base === 'exams' || base === 'exam_configs' || base === 'subject_mark_configs' || base === 'student_marks' || base === 'exam_routines' || base === 'marksheet_configs') storeBase = 'exams'
+    else if (
+      base === 'exams' ||
+      base === 'exam_configs' ||
+      base === 'subject_mark_configs' ||
+      base === 'student_marks' ||
+      base === 'exam_routines' ||
+      base === 'exam_rooms' ||
+      base === 'rooms' ||
+      base === 'exam_seat_plans' ||
+      base === 'seat_plans' ||
+      base === 'exam_invigilators' ||
+      base === 'invigilators' ||
+      base === 'exam_attendances' ||
+      base === 'attendances' ||
+      base === 'marksheet_configs' ||
+      base === 'grade_scales' ||
+      base === 'student_promotions' ||
+      base === 'promotions' ||
+      base === 'cumulative_sheets' ||
+      base === 'mark_adjustments' ||
+      base === 'omr_templates' ||
+      base === 'omr_configs' ||
+      base === 'extra_marks' ||
+      base === 'extra_mark_types' ||
+      base === 'working_days' ||
+      base === 'general_abilities'
+    ) storeBase = 'exams'
     else if (base === 'syllabus' || base === 'syllabi') storeBase = 'syllabus'
     else if (base === 'assignments' || base === 'assignment' || base === 'submissions') storeBase = 'assignments'
     else if (base === 'online' || base === 'online_classes' || base === 'online-classes') storeBase = 'online'
@@ -1814,6 +1840,118 @@ export function normalizeVaultJsonForStore(
         state: {
           ...existingState,
           routines: rawRoutines,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isRoomsOnly =
+      filePath?.includes('exam_rooms') || filePath?.includes('rooms.json') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].roomNo !== undefined && parsed[0].capacity !== undefined)
+    if (isRoomsOnly) {
+      const rawRooms = Array.isArray(parsed) ? parsed : (parsed.rooms || parsed.state?.rooms || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          rooms: rawRooms,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isSeatPlansOnly =
+      filePath?.includes('exam_seat_plans') || filePath?.includes('seat_plans') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].seatNo !== undefined && parsed[0].roomId !== undefined)
+    if (isSeatPlansOnly) {
+      const rawSeatPlans = Array.isArray(parsed) ? parsed : (parsed.seatPlans || parsed.state?.seatPlans || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          seatPlans: rawSeatPlans,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isGradeScalesOnly =
+      filePath?.includes('grade_scales') ||
+      (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0].grades))
+    if (isGradeScalesOnly) {
+      const rawScales = Array.isArray(parsed) ? parsed : (parsed.gradeScales || parsed.state?.gradeScales || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          gradeScales: rawScales,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isMarksheetsOnly =
+      filePath?.includes('marksheet_configs') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].headSubjectId !== undefined)
+    if (isMarksheetsOnly) {
+      const rawConfigs = Array.isArray(parsed) ? parsed : (parsed.marksheetConfigs || parsed.state?.marksheetConfigs || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          marksheetConfigs: rawConfigs,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isPromotionsOnly =
+      filePath?.includes('student_promotions') || filePath?.includes('promotions') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].fromClass !== undefined && parsed[0].toClass !== undefined)
+    if (isPromotionsOnly) {
+      const rawPromotions = Array.isArray(parsed) ? parsed : (parsed.promotions || parsed.state?.promotions || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          promotions: rawPromotions,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isCumulativeSheetsOnly =
+      filePath?.includes('cumulative_sheets') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].examIds !== undefined)
+    if (isCumulativeSheetsOnly) {
+      const rawSheets = Array.isArray(parsed) ? parsed : (parsed.cumulativeSheets || parsed.state?.cumulativeSheets || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          cumulativeSheets: rawSheets,
+          serverSynced: true,
+          syncing: false,
+        },
+        version: existingVersion,
+      })
+    }
+
+    const isMarkAdjustmentsOnly =
+      filePath?.includes('mark_adjustments') ||
+      (Array.isArray(parsed) && parsed.length > 0 && parsed[0].adjustmentMarks !== undefined)
+    if (isMarkAdjustmentsOnly) {
+      const rawAdjustments = Array.isArray(parsed) ? parsed : (parsed.markAdjustments || parsed.state?.markAdjustments || [])
+      return JSON.stringify({
+        state: {
+          ...existingState,
+          markAdjustments: rawAdjustments,
           serverSynced: true,
           syncing: false,
         },

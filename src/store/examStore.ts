@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug } from '@/lib/storage'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
-import { isLocalComputerMode } from '@/lib/storageMode'
 import { examsApi } from '@/lib/api'
 
 // ─── Types ───
@@ -505,7 +504,6 @@ interface ExamState {
 let serverSyncTimer: any = null
 function queueServerSync(get: () => ExamState) {
   try {
-    if (isLocalComputerMode()) return
     const state = get()
     if (
       !state.serverSynced &&
@@ -592,6 +590,57 @@ function queueServerSync(get: () => ExamState) {
   }
 }
 
+function mergeExamList<T extends { id: string }>(remote: T[] | undefined, local: T[] | undefined): T[] {
+  if (!Array.isArray(remote) || remote.length === 0) return Array.isArray(local) ? local : []
+  if (!Array.isArray(local) || local.length === 0) return remote
+  const map = new Map<string, T>()
+  for (const item of local) {
+    if (item && item.id) map.set(item.id, item)
+  }
+  for (const item of remote) {
+    if (item && item.id) map.set(item.id, item)
+  }
+  return Array.from(map.values())
+}
+
+function mergeMarks(remote: StudentMark[] | undefined, local: StudentMark[] | undefined): StudentMark[] {
+  if (!Array.isArray(remote) || remote.length === 0) return Array.isArray(local) ? local : []
+  if (!Array.isArray(local) || local.length === 0) return remote
+  const map = new Map<string, StudentMark>()
+  for (const m of local) {
+    if (m) {
+      const k = m.id || `${m.examId}_${m.studentId}_${m.subjectId}`
+      map.set(k, m)
+    }
+  }
+  for (const m of remote) {
+    if (m) {
+      const k = m.id || `${m.examId}_${m.studentId}_${m.subjectId}`
+      map.set(k, m)
+    }
+  }
+  return Array.from(map.values())
+}
+
+function mergeSubMarkConfigs(remote: SubjectMarkConfig[] | undefined, local: SubjectMarkConfig[] | undefined): SubjectMarkConfig[] {
+  if (!Array.isArray(remote) || remote.length === 0) return Array.isArray(local) ? local : []
+  if (!Array.isArray(local) || local.length === 0) return remote
+  const map = new Map<string, SubjectMarkConfig>()
+  for (const s of local) {
+    if (s) {
+      const k = s.id || `${s.examId}_${s.classId}_${s.subjectId}`
+      map.set(k, s)
+    }
+  }
+  for (const s of remote) {
+    if (s) {
+      const k = s.id || `${s.examId}_${s.classId}_${s.subjectId}`
+      map.set(k, s)
+    }
+  }
+  return Array.from(map.values())
+}
+
 function onStateMutated(get: () => ExamState) {
   queueServerSync(get)
 }
@@ -625,10 +674,6 @@ export const useExamStore = create<ExamState>()(
       syncError: null,
 
       syncFromServer: async (slugOrId?: string) => {
-        if (isLocalComputerMode()) {
-          set({ serverSynced: true, syncing: false, syncError: null })
-          return
-        }
         const effectiveSlug = slugOrId || getSlug() || undefined
         set({ syncing: true, syncError: null })
         try {
@@ -659,26 +704,26 @@ export const useExamStore = create<ExamState>()(
             const state = get()
             if (hasAny) {
               set({
-                examConfigs: res.examConfigs || [],
-                subjectMarkConfigs: res.subjectMarkConfigs || [],
-                studentMarks: res.studentMarks || [],
-                routines: res.routines || [],
-                rooms: res.rooms || [],
-                seatPlans: res.seatPlans || [],
-                invigilators: res.invigilators || [],
-                attendances: res.attendances || [],
-                markAdjustments: res.markAdjustments || [],
-                omrConfigs: res.omrConfigs || [],
-                omrTemplates: res.omrTemplates || [],
-                extraMarks: res.extraMarks || [],
-                extraMarkTypes: res.extraMarkTypes || [],
-                marksheetConfigs: res.marksheetConfigs || [],
-                generalAbilities: res.generalAbilities || [],
-                gradeScales: res.gradeScales || [],
-                workingDays: res.workingDays || [],
-                promotions: res.promotions || [],
-                cumulativeSheets: res.cumulativeSheets || [],
-                marksEntryStatuses: res.marksEntryStatuses || [],
+                examConfigs: mergeExamList(res.examConfigs, state.examConfigs),
+                subjectMarkConfigs: mergeSubMarkConfigs(res.subjectMarkConfigs, state.subjectMarkConfigs),
+                studentMarks: mergeMarks(res.studentMarks, state.studentMarks),
+                routines: mergeExamList(res.routines, state.routines),
+                rooms: mergeExamList(res.rooms, state.rooms),
+                seatPlans: mergeExamList(res.seatPlans, state.seatPlans),
+                invigilators: mergeExamList(res.invigilators, state.invigilators),
+                attendances: mergeExamList(res.attendances, state.attendances),
+                markAdjustments: mergeExamList(res.markAdjustments, state.markAdjustments),
+                omrConfigs: mergeExamList(res.omrConfigs, state.omrConfigs),
+                omrTemplates: mergeExamList(res.omrTemplates, state.omrTemplates),
+                extraMarks: mergeExamList(res.extraMarks, state.extraMarks),
+                extraMarkTypes: mergeExamList(res.extraMarkTypes, state.extraMarkTypes),
+                marksheetConfigs: mergeExamList(res.marksheetConfigs, state.marksheetConfigs),
+                generalAbilities: mergeExamList(res.generalAbilities, state.generalAbilities),
+                gradeScales: mergeExamList(res.gradeScales, state.gradeScales),
+                workingDays: mergeExamList(res.workingDays, state.workingDays),
+                promotions: mergeExamList(res.promotions, state.promotions),
+                cumulativeSheets: mergeExamList(res.cumulativeSheets, state.cumulativeSheets),
+                marksEntryStatuses: mergeExamList(res.marksEntryStatuses, state.marksEntryStatuses),
                 serverSynced: true,
                 syncing: false,
                 syncError: null,
@@ -741,7 +786,6 @@ export const useExamStore = create<ExamState>()(
       },
 
       syncToServer: async () => {
-        if (isLocalComputerMode()) return
         const s = get()
         set({ syncing: true, syncError: null })
         try {

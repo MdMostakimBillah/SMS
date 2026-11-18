@@ -1428,6 +1428,102 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
         await writeVaultFile(`${slug}/subject_mark_configs.json`, smcPretty)
         await writeVaultFile('subject_mark_configs.json', smcPretty)
       }
+
+      // 5. exam_rooms.json
+      const rooms = state.rooms ?? []
+      if (rooms.length > 0 || isRecentExplicitDelete()) {
+        const rmPretty = JSON.stringify(rooms, null, 2)
+        await writeVaultFile(`${slug}/exam_rooms.json`, rmPretty)
+        await writeVaultFile('exam_rooms.json', rmPretty)
+      }
+
+      // 6. exam_seat_plans.json
+      const seatPlans = state.seatPlans ?? []
+      if (seatPlans.length > 0 || isRecentExplicitDelete()) {
+        const spPretty = JSON.stringify(seatPlans, null, 2)
+        await writeVaultFile(`${slug}/exam_seat_plans.json`, spPretty)
+        await writeVaultFile('exam_seat_plans.json', spPretty)
+      }
+
+      // 7. exam_invigilators.json
+      const invigilators = state.invigilators ?? []
+      if (invigilators.length > 0 || isRecentExplicitDelete()) {
+        const invPretty = JSON.stringify(invigilators, null, 2)
+        await writeVaultFile(`${slug}/exam_invigilators.json`, invPretty)
+        await writeVaultFile('exam_invigilators.json', invPretty)
+      }
+
+      // 8. exam_attendances.json
+      const attendances = state.attendances ?? []
+      if (attendances.length > 0 || isRecentExplicitDelete()) {
+        const attPretty = JSON.stringify(attendances, null, 2)
+        await writeVaultFile(`${slug}/exam_attendances.json`, attPretty)
+        await writeVaultFile('exam_attendances.json', attPretty)
+      }
+
+      // 9. marksheet_configs.json
+      const marksheetConfigs = state.marksheetConfigs ?? []
+      if (marksheetConfigs.length > 0 || isRecentExplicitDelete()) {
+        const mcPretty = JSON.stringify(marksheetConfigs, null, 2)
+        await writeVaultFile(`${slug}/marksheet_configs.json`, mcPretty)
+        await writeVaultFile('marksheet_configs.json', mcPretty)
+      }
+
+      // 10. grade_scales.json
+      const gradeScales = state.gradeScales ?? []
+      if (gradeScales.length > 0 || isRecentExplicitDelete()) {
+        const gsPretty = JSON.stringify(gradeScales, null, 2)
+        await writeVaultFile(`${slug}/grade_scales.json`, gsPretty)
+        await writeVaultFile('grade_scales.json', gsPretty)
+      }
+
+      // 11. student_promotions.json
+      const promotions = state.promotions ?? []
+      if (promotions.length > 0 || isRecentExplicitDelete()) {
+        const pPretty = JSON.stringify(promotions, null, 2)
+        await writeVaultFile(`${slug}/student_promotions.json`, pPretty)
+        await writeVaultFile('student_promotions.json', pPretty)
+      }
+
+      // 12. cumulative_sheets.json
+      const cumulativeSheets = state.cumulativeSheets ?? []
+      if (cumulativeSheets.length > 0 || isRecentExplicitDelete()) {
+        const csPretty = JSON.stringify(cumulativeSheets, null, 2)
+        await writeVaultFile(`${slug}/cumulative_sheets.json`, csPretty)
+        await writeVaultFile('cumulative_sheets.json', csPretty)
+      }
+
+      // 13. mark_adjustments.json
+      const markAdjustments = state.markAdjustments ?? []
+      if (markAdjustments.length > 0 || isRecentExplicitDelete()) {
+        const maPretty = JSON.stringify(markAdjustments, null, 2)
+        await writeVaultFile(`${slug}/mark_adjustments.json`, maPretty)
+        await writeVaultFile('mark_adjustments.json', maPretty)
+      }
+
+      // 14. omr_templates.json
+      const omrTemplates = state.omrTemplates ?? []
+      if (omrTemplates.length > 0 || isRecentExplicitDelete()) {
+        const otPretty = JSON.stringify(omrTemplates, null, 2)
+        await writeVaultFile(`${slug}/omr_templates.json`, otPretty)
+        await writeVaultFile('omr_templates.json', otPretty)
+      }
+
+      // 15. omr_configs.json
+      const omrConfigs = state.omrConfigs ?? []
+      if (omrConfigs.length > 0 || isRecentExplicitDelete()) {
+        const ocPretty = JSON.stringify(omrConfigs, null, 2)
+        await writeVaultFile(`${slug}/omr_configs.json`, ocPretty)
+        await writeVaultFile('omr_configs.json', ocPretty)
+      }
+
+      // 16. extra_marks.json
+      const extraMarks = state.extraMarks ?? []
+      if (extraMarks.length > 0 || isRecentExplicitDelete()) {
+        const emPretty = JSON.stringify(extraMarks, null, 2)
+        await writeVaultFile(`${slug}/extra_marks.json`, emPretty)
+        await writeVaultFile('extra_marks.json', emPretty)
+      }
     } catch { /* ignore */ }
   }
 

@@ -301,15 +301,16 @@ describe('PUT /api/exams', () => {
     expect(parsed.examConfigs[0].name).toBe('Super Admin Override Exam')
   })
 
-  it('handles local_computer storageMode without overwriting database records', async () => {
+  it('persists examination data to database even in local_computer storageMode for dual persistence', async () => {
     const payload = {
       examConfigs: [{ id: 'EXAM-LOCAL', name: 'Local Exam' }],
     }
     const res = await put(jars.super!, `/api/exams?schoolId=${schoolLocalId}`, payload)
     expect(res.status).toBe(200)
-    expect(res.body.message).toContain('Local computer storage')
+    expect(res.body.success).toBe(true)
 
     const saved = await prisma.school.findUnique({ where: { id: schoolLocalId } })
-    expect(saved?.examsData).toBe('{}')
+    const parsed = JSON.parse(saved?.examsData || '{}')
+    expect(parsed.examConfigs[0].name).toBe('Local Exam')
   })
 })

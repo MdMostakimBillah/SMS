@@ -130,9 +130,9 @@ describe('ExamDashboard integration', () => {
     expect(syncSpy).toHaveBeenCalled()
   })
 
-  it('bypasses remote sync when local_computer mode is active', async () => {
+  it('connects to remote database sync even when local_computer mode is active for dual persistence', async () => {
     localStorage.setItem('edutech_storage_mode', 'local_computer')
-    const getSpy = vi.spyOn(examsApi, 'get')
+    const getSpy = vi.spyOn(examsApi, 'get').mockResolvedValue({} as any)
 
     render(
       <TestWrapper>
@@ -147,6 +147,6 @@ describe('ExamDashboard integration', () => {
       { timeout: 2000 }
     )
 
-    expect(getSpy).not.toHaveBeenCalled()
+    expect(getSpy).toHaveBeenCalled()
   })
 })

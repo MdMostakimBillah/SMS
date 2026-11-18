@@ -27,32 +27,6 @@ export function examsRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(403).json({ error: 'Forbidden: cross-tenant access denied' })
       }
 
-      if (school.storageMode === 'local_computer') {
-        return res.json({
-          storageMode: 'local_computer',
-          examConfigs: [],
-          subjectMarkConfigs: [],
-          studentMarks: [],
-          routines: [],
-          rooms: [],
-          seatPlans: [],
-          invigilators: [],
-          attendances: [],
-          omrConfigs: [],
-          extraMarks: [],
-          extraMarkTypes: [],
-          marksheetConfigs: [],
-          generalAbilities: [],
-          gradeScales: [],
-          workingDays: [],
-          promotions: [],
-          cumulativeSheets: [],
-          marksEntryStatuses: [],
-          omrTemplates: [],
-          markAdjustments: [],
-        })
-      }
-
       let parsedExams: any = {}
       try {
         if ((school as any).examsData) {
@@ -65,6 +39,7 @@ export function examsRouter(prisma: PrismaClient, jwtSecret: string) {
       }
 
       res.json({
+        storageMode: school.storageMode,
         examConfigs: Array.isArray(parsedExams?.examConfigs) ? parsedExams.examConfigs : [],
         subjectMarkConfigs: Array.isArray(parsedExams?.subjectMarkConfigs) ? parsedExams.subjectMarkConfigs : [],
         studentMarks: Array.isArray(parsedExams?.studentMarks) ? parsedExams.studentMarks : [],
@@ -129,33 +104,6 @@ export function examsRouter(prisma: PrismaClient, jwtSecret: string) {
 
       if (req.userRole !== 'super_admin' && req.schoolId !== school.id) {
         return res.status(403).json({ error: 'Forbidden' })
-      }
-
-      if (school.storageMode === 'local_computer') {
-        return res.json({
-          success: true,
-          message: 'Local computer storage: Examination records stored locally on PC.',
-          examConfigs: [],
-          subjectMarkConfigs: [],
-          studentMarks: [],
-          routines: [],
-          rooms: [],
-          seatPlans: [],
-          invigilators: [],
-          attendances: [],
-          omrConfigs: [],
-          extraMarks: [],
-          extraMarkTypes: [],
-          marksheetConfigs: [],
-          generalAbilities: [],
-          gradeScales: [],
-          workingDays: [],
-          promotions: [],
-          cumulativeSheets: [],
-          marksEntryStatuses: [],
-          omrTemplates: [],
-          markAdjustments: [],
-        })
       }
 
       let existingExams: any = {}

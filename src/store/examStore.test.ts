@@ -653,13 +653,16 @@ describe('examStore - server sync and offline tolerance', () => {
     expect(useExamStore.getState().serverSynced).toBe(true)
   })
 
-  it('bypasses remote sync when local_computer mode is enabled', async () => {
+  it('in local_computer mode, syncFromServer and syncToServer still sync to database for dual persistence', async () => {
     localStorage.setItem('edutech_storage_mode', 'local_computer')
-    const getSpy = vi.spyOn(examsApi, 'get')
+    const getSpy = vi.spyOn(examsApi, 'get').mockResolvedValue({} as any)
+    const updateSpy = vi.spyOn(examsApi, 'update').mockResolvedValue({} as any)
 
     await useExamStore.getState().syncFromServer('test-school')
-    expect(getSpy).not.toHaveBeenCalled()
-    expect(useExamStore.getState().serverSynced).toBe(true)
+    expect(getSpy).toHaveBeenCalledWith('test-school')
+
+    await useExamStore.getState().syncToServer()
+    expect(updateSpy).toHaveBeenCalled()
   })
 
   it('syncToServer pushes exam state to backend', async () => {
