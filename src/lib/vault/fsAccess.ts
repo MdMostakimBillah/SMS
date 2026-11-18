@@ -230,7 +230,7 @@ export async function deleteTextFile(
     for (const segment of segments) {
       dir = await dir.getDirectoryHandle(segment)
     }
-    if (dir.removeEntry) await dir.removeEntry(filename)
+    if (dir.removeEntry) await dir.removeEntry(filename, { recursive: true })
   } catch {
     /* file may not exist — nothing to delete */
   }

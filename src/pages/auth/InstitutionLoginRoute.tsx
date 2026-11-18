@@ -6,6 +6,7 @@ import { clearSlug } from '@/lib/storage'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
 import { authApi } from '@/lib/api'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
+import NotFoundPage from '@/pages/NotFound'
 
 const InstitutionLogin = lazyWithRetry(() => import('@/pages/auth/InstitutionLogin'))
 
@@ -22,77 +23,85 @@ export default function InstitutionLoginRoute() {
   }, [slug, storeInstitutions])
 
   const [loadingSchool, setLoadingSchool] = useState(!institution && !!slug)
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     let mounted = true
-    if (slug && !institution) {
-      setLoadingSchool(true)
-      authApi
-        .getPublicSchool(slug)
-        .then((res) => {
-          if (!mounted) return
-          if (res?.school) {
-            const s = res.school
-            const domainSlug = s.slug || s.domain || slug
-            const pkg = PACKAGES.find((p) => p.name.toLowerCase() === (s.package || 'basic').toLowerCase()) || PACKAGES[0]
-            const inst: Institution = {
-              id: s.id || `INST-${domainSlug}`,
-              name: s.name,
-              nameBn: s.nameBn || s.name,
-              email: s.email || '',
-              phone: s.phone || '',
-              address: s.address || '',
-              addressBn: s.addressBn || s.address || '',
-              eiin: s.eiin || '',
-              website: s.website || `smsappbd.vercel.app/i/${domainSlug}`,
-              subdomain: domainSlug,
-              slug: domainSlug,
-              status: (s.status as any) || 'active',
-              package: pkg,
-              createdAt: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-              lastLogin: '-',
-              logo: s.logo || '',
-              banner: s.banner || '',
-              brandColor: s.brandColor || '#6366f1',
-              brandName: s.brandName || s.name,
-              motto: s.motto || '',
-              mottoBn: s.mottoBn || '',
-              startTime: s.startTime || '07:30',
-              endTime: s.endTime || '14:30',
-              optionalSubjects: [],
-              sessions: s.sessions ? (typeof s.sessions === 'string' ? JSON.parse(s.sessions) : s.sessions) : ['2025-26'],
-              accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
-              language: 'en',
-              theme: 'light',
-            }
-            useSuperAdminStore.getState().addInstitution(inst)
-          }
-        })
-        .catch(() => {
-          /* school not found in db */
-        })
-        .finally(() => {
-          if (mounted) setLoadingSchool(false)
-        })
-    } else {
+    if (!slug) {
       setLoadingSchool(false)
+      setNotFound(true)
+      return
     }
+
+    setLoadingSchool(true)
+    authApi
+      .getPublicSchool(slug)
+      .then((res) => {
+        if (!mounted) return
+        if (res?.school) {
+          const s = res.school
+          const domainSlug = s.slug || s.domain || slug
+          const pkg = PACKAGES.find((p) => p.name.toLowerCase() === (s.package || 'basic').toLowerCase()) || PACKAGES[0]
+          const inst: Institution = {
+            id: s.id || `INST-${domainSlug}`,
+            name: s.name,
+            nameBn: s.nameBn || s.name,
+            email: s.email || '',
+            phone: s.phone || '',
+            address: s.address || '',
+            addressBn: s.addressBn || s.address || '',
+            eiin: s.eiin || '',
+            website: s.website || `smsappbd.vercel.app/i/${domainSlug}`,
+            subdomain: domainSlug,
+            slug: domainSlug,
+            status: (s.status as any) || 'active',
+            package: pkg,
+            createdAt: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+            lastLogin: '-',
+            logo: s.logo || '',
+            banner: s.banner || '',
+            brandColor: s.brandColor || '#6366f1',
+            brandName: s.brandName || s.name,
+            motto: s.motto || '',
+            mottoBn: s.mottoBn || '',
+            startTime: s.startTime || '07:30',
+            endTime: s.endTime || '14:30',
+            optionalSubjects: [],
+            sessions: s.sessions ? (typeof s.sessions === 'string' ? JSON.parse(s.sessions) : s.sessions) : ['2025-26'],
+            accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
+            language: 'en',
+            theme: 'light',
+          }
+          useSuperAdminStore.getState().addInstitution(inst)
+          setNotFound(false)
+        } else {
+          useSuperAdminStore.getState().deleteInstitution(slug)
+          setNotFound(true)
+        }
+      })
+      .catch((err: any) => {
+        if (!mounted) return
+        if (err?.status === 404 || err?.message?.toLowerCase().includes('not found')) {
+          useSuperAdminStore.getState().deleteInstitution(slug)
+          setNotFound(true)
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoadingSchool(false)
+      })
+
     return () => {
       mounted = false
     }
-  }, [slug, institution])
+  }, [slug])
 
-  if (loadingSchool && !institution) {
+  if (loadingSchool && !institution && !notFound) {
     return <BrandLoadingScreen />
   }
 
-  // Institution not found
-  if (slug && !institution) {
-    return (
-      <Suspense fallback={<BrandLoadingScreen />}>
-        <InstitutionLogin subdomain={slug} />
-      </Suspense>
-    )
+  // Institution not found or removed — path is removed
+  if (notFound || (!loadingSchool && !institution)) {
+    return <NotFoundPage />
   }
 
   // Suspended or inactive — force logout and show suspended screen

@@ -10,7 +10,8 @@ import {
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useClassStore, generateLightColors, generateDarkColors } from '@/store/classStore'
 import { useAuth } from '@/contexts/AuthContext'
-import { setSlug } from '@/lib/storage'
+import { setSlug, purgeInstitutionStorage } from '@/lib/storage'
+import { deleteVaultPath } from '@/lib/vault/vault'
 import { authApi, resolveMediaUrl } from '@/lib/api'
 import { LicenseModal } from './modals/LicenseModal'
 
@@ -294,6 +295,21 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
                   try {
                     await authApi.deleteSchool(inst.id)
                     useSuperAdminStore.getState().deleteInstitution(inst.id)
+                    if (inst.slug) useSuperAdminStore.getState().deleteInstitution(inst.slug)
+                    if (inst.subdomain) useSuperAdminStore.getState().deleteInstitution(inst.subdomain)
+
+                    // Purge browser storage & cached institution data
+                    purgeInstitutionStorage(inst.id)
+                    if (inst.slug) purgeInstitutionStorage(inst.slug)
+                    if (inst.subdomain) purgeInstitutionStorage(inst.subdomain)
+
+                    // Stop viewing if super admin was viewing this institution
+                    if (useSuperAdminStore.getState().viewingInstitutionId === inst.id) {
+                      useSuperAdminStore.getState().stopViewing()
+                    }
+
+                    // Remove local PC vault directory if present
+                    if (inst.slug) void deleteVaultPath(inst.slug).catch(() => {})
                   } catch (err: unknown) {
                     const message = (err instanceof Error ? err.message : null) || (isBn ? 'প্রতিষ্ঠান মুছে ফেলতে ব্যর্থ হয়েছে' : 'Failed to delete institution')
                     alert(message)

@@ -1714,6 +1714,23 @@ async function handleStoreRemove(key: string): Promise<void> {
   await deleteTextFile(handle, path)
 }
 
+/**
+ * Delete a file or directory from the vault permanently (e.g. when an institution is removed).
+ */
+export async function deleteVaultPath(path: string): Promise<void> {
+  const activeHandle = handle || (await loadVaultHandle())
+  if (!activeHandle || !path) return
+  const cleanPath = path.replace(/^\/+|\/+$/g, '')
+  for (const k of Array.from(knownVaultFiles)) {
+    if (k === cleanPath || k.startsWith(`${cleanPath}/`)) {
+      knownVaultFiles.delete(k)
+      fileContentCache.delete(k)
+      fileMtimeCache.delete(k)
+    }
+  }
+  await deleteTextFile(activeHandle, cleanPath)
+}
+
 let activeFlushPromise: Promise<void> | null = null
 
 /** Write all debounced changes immediately (call on page hide). */

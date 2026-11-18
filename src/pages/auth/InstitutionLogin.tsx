@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Mail, Lock, Eye, EyeOff, LogIn, X, Clock } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, LogIn, X, Clock } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useBn } from '@/hooks/useBn'
 import { useAppStore } from '@/store/appStore'
@@ -16,6 +16,7 @@ import { applyThemeColors } from '@/hooks/useThemeColors'
 import { presets } from '@/components/shared/ColorSettings'
 import { getVaultStatus, vaultReconnect } from '@/lib/vault/vault'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
+import NotFoundPage from '@/pages/NotFound'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -315,19 +316,7 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
   }
 
   if (!institution) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: isDark ? '#0a0a0f' : '#f0f2f8' }}>
-        <div className="text-center">
-          <Building2 size={48} className="text-[var(--text-muted)] mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-[var(--text-primary)] mb-2">
-            {isBn ? 'প্রতিষ্ঠান পাওয়া যায়নি' : 'Institution Not Found'}
-          </h1>
-          <p className="text-sm text-[var(--text-muted)]">
-            {isBn ? 'এই সাবডোমেইনে কোনো প্রতিষ্ঠান নেই' : 'No institution found for this URL'}
-          </p>
-        </div>
-      </div>
-    )
+    return <NotFoundPage />
   }
 
   if (institution.status === 'suspended') {

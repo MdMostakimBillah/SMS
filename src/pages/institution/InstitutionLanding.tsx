@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  Building2, Users, BarChart3, Zap,
+  Users, BarChart3, Zap,
   ChevronRight, Lock, LogIn,
 } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
@@ -10,6 +10,7 @@ import { useSuperAdminStore, PACKAGES, type Institution } from '@/store/superAdm
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { authApi, resolveMediaUrl } from '@/lib/api'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
+import NotFoundPage from '@/pages/NotFound'
 
 function getInitialTheme(): 'light' | 'dark' {
   try {
@@ -21,7 +22,10 @@ function getInitialTheme(): 'light' | 'dark' {
       if (t === 'dark') return 'dark'
     }
   } catch { /* ignore */ }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return 'light'
 }
 
 export default function InstitutionLanding() {
@@ -37,65 +41,77 @@ export default function InstitutionLanding() {
   }, [slug, institutions])
 
   const [loadingSchool, setLoadingSchool] = useState(!institution && !!slug)
+  const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
     let mounted = true
-    if (slug && !institution) {
-      setLoadingSchool(true)
-      authApi
-        .getPublicSchool(slug)
-        .then((res) => {
-          if (!mounted) return
-          if (res?.school) {
-            const s = res.school
-            const domainSlug = s.slug || s.domain || slug
-            const pkg = PACKAGES.find((p) => p.name.toLowerCase() === (s.package || 'basic').toLowerCase()) || PACKAGES[0]
-            const inst: Institution = {
-              id: s.id || `INST-${domainSlug}`,
-              name: s.name,
-              nameBn: s.nameBn || s.name,
-              email: s.email || '',
-              phone: s.phone || '',
-              address: s.address || '',
-              addressBn: s.address || '',
-              eiin: '',
-              website: `smsappbd.vercel.app/i/${domainSlug}`,
-              subdomain: domainSlug,
-              slug: domainSlug,
-              status: (s.status as any) || 'active',
-              package: pkg,
-              createdAt: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-              lastLogin: '-',
-              logo: s.logo || '',
-              banner: '',
-              brandColor: s.brandColor || '#6366f1',
-              brandName: s.brandName || s.name,
-              motto: '',
-              mottoBn: '',
-              startTime: s.startTime || '07:30',
-              endTime: s.endTime || '14:30',
-              optionalSubjects: [],
-              sessions: ['2025-26'],
-              accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
-              language: 'en',
-              theme: 'light',
-            }
-            useSuperAdminStore.getState().addInstitution(inst)
-          }
-        })
-        .catch(() => {
-          /* school not found */
-        })
-        .finally(() => {
-          if (mounted) setLoadingSchool(false)
-        })
-    } else {
+    if (!slug) {
       setLoadingSchool(false)
+      setNotFound(true)
+      return
     }
+
+    setLoadingSchool(true)
+    authApi
+      .getPublicSchool(slug)
+      .then((res) => {
+        if (!mounted) return
+        if (res?.school) {
+          const s = res.school
+          const domainSlug = s.slug || s.domain || slug
+          const pkg = PACKAGES.find((p) => p.name.toLowerCase() === (s.package || 'basic').toLowerCase()) || PACKAGES[0]
+          const inst: Institution = {
+            id: s.id || `INST-${domainSlug}`,
+            name: s.name,
+            nameBn: s.nameBn || s.name,
+            email: s.email || '',
+            phone: s.phone || '',
+            address: s.address || '',
+            addressBn: s.address || '',
+            eiin: '',
+            website: `smsappbd.vercel.app/i/${domainSlug}`,
+            subdomain: domainSlug,
+            slug: domainSlug,
+            status: (s.status as any) || 'active',
+            package: pkg,
+            createdAt: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+            lastLogin: '-',
+            logo: s.logo || '',
+            banner: '',
+            brandColor: s.brandColor || '#6366f1',
+            brandName: s.brandName || s.name,
+            motto: '',
+            mottoBn: '',
+            startTime: s.startTime || '07:30',
+            endTime: s.endTime || '14:30',
+            optionalSubjects: [],
+            sessions: ['2025-26'],
+            accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
+            language: 'en',
+            theme: 'light',
+          }
+          useSuperAdminStore.getState().addInstitution(inst)
+          setNotFound(false)
+        } else {
+          useSuperAdminStore.getState().deleteInstitution(slug)
+          setNotFound(true)
+        }
+      })
+      .catch((err: any) => {
+        if (!mounted) return
+        if (err?.status === 404 || err?.message?.toLowerCase().includes('not found')) {
+          useSuperAdminStore.getState().deleteInstitution(slug)
+          setNotFound(true)
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoadingSchool(false)
+      })
+
     return () => {
       mounted = false
     }
-  }, [slug, institution])
+  }, [slug])
 
   const toggleTheme = () => {
     const next = isDark ? 'light' : 'dark'
@@ -136,24 +152,13 @@ export default function InstitutionLanding() {
     }
   }, [institution, isBn])
 
-  if (loadingSchool && !institution) {
+  if (loadingSchool && !institution && !notFound) {
     return <BrandLoadingScreen />
   }
 
-  if (!institution) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: isDark ? '#0a0a0f' : '#f0f2f8' }}>
-        <div className="text-center">
-          <Building2 size={48} className="text-[var(--text-muted)] mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-[var(--text-primary)] mb-2">
-            {isBn ? 'প্রতিষ্ঠান পাওয়া যায়নি' : 'Institution Not Found'}
-          </h1>
-          <p className="text-sm text-[var(--text-muted)]">
-            {isBn ? 'এই ঠিকানায় কোনো প্রতিষ্ঠান নেই' : 'No institution found at this URL'}
-          </p>
-        </div>
-      </div>
-    )
+  // If institution was deleted or not found, remove path and show 404
+  if (notFound || !institution) {
+    return <NotFoundPage />
   }
 
   const brandColor = institution.brandColor || '#6366f1'

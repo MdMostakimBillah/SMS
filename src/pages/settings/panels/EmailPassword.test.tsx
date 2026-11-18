@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import { EmailPasswordPanel } from './EmailPassword'
 import * as api from '@/lib/api'
 import * as emailService from '@/lib/emailService'
@@ -29,7 +30,7 @@ describe('EmailPasswordPanel', () => {
   })
 
   it('renders with Email and Password tabs', () => {
-    render(<EmailPasswordPanel isBn={false} onBack={vi.fn()} />)
+    render(<BrowserRouter><EmailPasswordPanel isBn={false} onBack={vi.fn()} /></BrowserRouter>)
 
     expect(screen.getByText('Change Email')).toBeInTheDocument()
     expect(screen.getByText('Change Password')).toBeInTheDocument()
@@ -38,7 +39,7 @@ describe('EmailPasswordPanel', () => {
   })
 
   it('allows switching to Change Password tab and changing password with previous password', async () => {
-    render(<EmailPasswordPanel isBn={false} onBack={vi.fn()} />)
+    render(<BrowserRouter><EmailPasswordPanel isBn={false} onBack={vi.fn()} /></BrowserRouter>)
 
     // Switch to password tab
     fireEvent.click(screen.getByText('Change Password'))
@@ -81,7 +82,7 @@ describe('EmailPasswordPanel', () => {
   })
 
   it('shows error when new passwords do not match', async () => {
-    render(<EmailPasswordPanel isBn={false} onBack={vi.fn()} />)
+    render(<BrowserRouter><EmailPasswordPanel isBn={false} onBack={vi.fn()} /></BrowserRouter>)
 
     fireEvent.click(screen.getByText('Change Password'))
 
@@ -101,7 +102,7 @@ describe('EmailPasswordPanel', () => {
   })
 
   it('supports email verification code flow to change email', async () => {
-    render(<EmailPasswordPanel isBn={false} onBack={vi.fn()} />)
+    render(<BrowserRouter><EmailPasswordPanel isBn={false} onBack={vi.fn()} /></BrowserRouter>)
 
     const newEmailInput = screen.getByPlaceholderText('new-email@example.com')
     fireEvent.change(newEmailInput, { target: { value: 'updated@test.com' } })
@@ -148,7 +149,7 @@ describe('EmailPasswordPanel', () => {
   })
 
   it('supports changing email using email verification without providing current password', async () => {
-    render(<EmailPasswordPanel isBn={false} onBack={vi.fn()} />)
+    render(<BrowserRouter><EmailPasswordPanel isBn={false} onBack={vi.fn()} /></BrowserRouter>)
 
     const newEmailInput = screen.getByPlaceholderText('new-email@example.com')
     fireEvent.change(newEmailInput, { target: { value: 'no-password@test.com' } })
@@ -183,7 +184,7 @@ describe('EmailPasswordPanel', () => {
   })
 
   it('supports changing password using email verification flow and sends password to email', async () => {
-    render(<EmailPasswordPanel isBn={false} onBack={vi.fn()} />)
+    render(<BrowserRouter><EmailPasswordPanel isBn={false} onBack={vi.fn()} /></BrowserRouter>)
 
     // Switch to password tab
     fireEvent.click(screen.getByText('Change Password'))

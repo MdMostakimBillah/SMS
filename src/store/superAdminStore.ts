@@ -296,11 +296,20 @@ export const useSuperAdminStore = create<SuperAdminState>()(
           ),
         })),
       addInstitution: (inst) =>
-        set((state) => ({ institutions: [...state.institutions, inst] })),
-      setInstitutions: (institutions) => set({ institutions }),
-      deleteInstitution: (id) =>
         set((state) => ({
-          institutions: state.institutions.filter((i) => i.id !== id),
+          institutions: [
+            ...state.institutions.filter(
+              (i) => i.id !== inst.id && i.slug !== inst.slug && i.subdomain !== inst.subdomain
+            ),
+            inst,
+          ],
+        })),
+      setInstitutions: (institutions) => set({ institutions }),
+      deleteInstitution: (idOrSlug) =>
+        set((state) => ({
+          institutions: state.institutions.filter(
+            (i) => i.id !== idOrSlug && i.slug !== idOrSlug && i.subdomain !== idOrSlug
+          ),
         })),
       toggleStatus: (id) =>
         set((state) => ({

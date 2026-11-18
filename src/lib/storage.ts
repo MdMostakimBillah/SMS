@@ -227,6 +227,28 @@ export function clearSlug(): void {
 }
 
 /**
+ * Completely purge an institution's stored namespace and cached files.
+ * Invoked when an institution is deleted by a super admin.
+ */
+export function purgeInstitutionStorage(slugOrId: string): void {
+  if (!slugOrId) return
+  const current = getSlug()
+  if (current === slugOrId) {
+    clearSlug()
+  }
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i)
+      if (k && (k.endsWith(`_${slugOrId}`) || k.includes(`_${slugOrId}_`) || k.includes(`_${slugOrId}`))) {
+        localStorage.removeItem(k)
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
  * Run `fn` with the storage namespace pointed at `slug`, then put it back.
  *
  * Needed when seeding an institution that has just been created: its data has
