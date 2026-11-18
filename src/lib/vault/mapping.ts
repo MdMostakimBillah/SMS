@@ -144,15 +144,24 @@ export function vaultPathToKey(
     else if (
       base === 'hr' ||
       base === 'hr_increments' ||
+      base === 'increments' ||
       base === 'hr_bonuses' ||
+      base === 'bonuses' ||
       base === 'hr_promotions' ||
+      base === 'promotions' ||
       base === 'hr_funds' ||
+      base === 'funds' ||
       base === 'hr_facilities' ||
+      base === 'facilities' ||
       base === 'hr_teacher_facilities' ||
       base === 'teacher_facilities' ||
       base === 'hr_salary_configs' ||
       base === 'monthly_salary_configs' ||
-      base === 'hr_recommendations'
+      base === 'salary_configs' ||
+      base === 'payroll' ||
+      base === 'payroll_configs' ||
+      base === 'hr_recommendations' ||
+      base === 'recommendations'
     ) storeBase = 'hr'
     else if (
       base === 'exams' ||
@@ -380,6 +389,10 @@ export function normalizeVaultJsonForStore(
   existingRaw?: string | null,
   filePath?: string
 ): string {
+  if (existingRaw && !filePath && typeof existingRaw === 'string' && existingRaw.endsWith('.json')) {
+    filePath = existingRaw
+    existingRaw = null
+  }
   let parsed: any
   try {
     parsed = JSON.parse(text)
@@ -1613,7 +1626,7 @@ export function normalizeVaultJsonForStore(
     const existingVersion = existing.version || 1
 
     const isFacilitiesOnly =
-      filePath?.includes('facilities') ||
+      (filePath?.includes('facilities') && !filePath?.includes('teacher_facilities')) ||
       (Array.isArray(parsed) && parsed.length > 0 && parsed[0].defaultAmount !== undefined)
     if (isFacilitiesOnly) {
       const rawFacilities = Array.isArray(parsed) ? parsed : (parsed.facilities || parsed.state?.facilities || [])
@@ -1717,6 +1730,7 @@ export function normalizeVaultJsonForStore(
     const isSalaryConfigsOnly =
       filePath?.includes('salary_configs') ||
       filePath?.includes('monthly_salary_configs') ||
+      filePath?.includes('payroll') ||
       (Array.isArray(parsed) &&
         parsed.length > 0 &&
         parsed[0].month !== undefined &&

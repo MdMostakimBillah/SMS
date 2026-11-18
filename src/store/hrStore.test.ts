@@ -170,17 +170,31 @@ describe('hrStore', () => {
     expect(state.serverSynced).toBe(true)
   })
 
-  it('skips server sync in local_computer mode', async () => {
+  it('syncs with server even in local_computer mode for dual persistence', async () => {
     sessionStorage.setItem('edutech_storage_mode', 'local_computer')
-    const getSpy = vi.spyOn(hrApi, 'get')
-    const updateSpy = vi.spyOn(hrApi, 'update')
+    const getSpy = vi.spyOn(hrApi, 'get').mockResolvedValue({
+      increments: [],
+      bonuses: [],
+      promotions: [],
+      funds: [],
+      facilities: [],
+      teacherFacilities: [],
+      monthlySalaryConfigs: [],
+      recommendations: [],
+      homeworkRecords: [],
+      dailyReports: [],
+    })
+    const updateSpy = vi.spyOn(hrApi, 'update').mockResolvedValue({ success: true })
 
     await useHRStore.getState().syncFromServer('local-school')
-    expect(getSpy).not.toHaveBeenCalled()
+    expect(getSpy).toHaveBeenCalledWith('local-school')
     expect(useHRStore.getState().serverSynced).toBe(true)
 
+    useHRStore.setState({
+      increments: [{ id: 'INC-1', teacherId: 'T-1', type: 'annual', amount: 1000, percentage: 5, reason: '', date: '' }],
+    })
     await useHRStore.getState().syncToServer()
-    expect(updateSpy).not.toHaveBeenCalled()
+    expect(updateSpy).toHaveBeenCalled()
 
     sessionStorage.removeItem('edutech_storage_mode')
   })
@@ -216,6 +230,11 @@ describe('hrStore', () => {
     expect(vaultPathToKey('hr_promotions.json', { slug: 'school' })).toBe('edutech-hr_school')
     expect(vaultPathToKey('hr_funds.json', { slug: 'school' })).toBe('edutech-hr_school')
     expect(vaultPathToKey('hr_facilities.json', { slug: 'school' })).toBe('edutech-hr_school')
+    expect(vaultPathToKey('facilities.json', { slug: 'school' })).toBe('edutech-hr_school')
+    expect(vaultPathToKey('teacher_facilities.json', { slug: 'school' })).toBe('edutech-hr_school')
+    expect(vaultPathToKey('monthly_salary_configs.json', { slug: 'school' })).toBe('edutech-hr_school')
+    expect(vaultPathToKey('salary_configs.json', { slug: 'school' })).toBe('edutech-hr_school')
+    expect(vaultPathToKey('payroll.json', { slug: 'school' })).toBe('edutech-hr_school')
     expect(vaultPathToKey('school/hr.json', { slug: 'school' })).toBe('edutech-hr_school')
   })
 

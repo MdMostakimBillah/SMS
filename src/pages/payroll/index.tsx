@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   TrendingUp,
   TrendingDown,
@@ -63,6 +63,12 @@ export default function PayrollPage() {
   const [showPdfModal, setShowPdfModal] = useState(false)
   const [pdfMode, setPdfMode] = useState<'single' | 'batch'>('batch')
   const [pdfEmployee, setPdfEmployee] = useState<SalarySlipEmployee | null>(null)
+
+  useEffect(() => {
+    void useTeacherStore.getState().syncFromServer().catch(() => {})
+    void useHRStore.getState().syncFromServer().catch(() => {})
+  }, [])
+
   const monthSelected = month !== ''
   const MONTHS = [
     { key: '01', bn: 'জানুয়ারি', en: 'January' },
@@ -521,7 +527,7 @@ export default function PayrollPage() {
             </select>
           </div>
 
-          {(!serverSynced && !isLocalComputerMode()) || (syncing && teachers.length === 0) ? (
+          {((!serverSynced && !isLocalComputerMode()) || syncing) && teachers.length === 0 ? (
             <SkeletonTable rows={8} columns={7} />
           ) : (
           <div className={`${card} p-0 overflow-hidden`}>

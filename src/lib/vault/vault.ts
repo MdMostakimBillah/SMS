@@ -1324,68 +1324,88 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       const parsed = JSON.parse(rawJson)
       const state = parsed?.state ?? parsed
 
-      // 1. hr_facilities.json
+      // 1. hr_facilities.json / facilities.json
       const facilities = state.facilities ?? []
       if (facilities.length > 0 || isRecentExplicitDelete()) {
         const fPretty = JSON.stringify(facilities, null, 2)
         await writeVaultFile(`${slug}/hr_facilities.json`, fPretty)
         await writeVaultFile('hr_facilities.json', fPretty)
+        await writeVaultFile(`${slug}/facilities.json`, fPretty)
+        await writeVaultFile('facilities.json', fPretty)
       }
 
-      // 2. hr_increments.json
+      // 2. hr_increments.json / increments.json
       const increments = state.increments ?? []
       if (increments.length > 0 || isRecentExplicitDelete()) {
         const iPretty = JSON.stringify(increments, null, 2)
         await writeVaultFile(`${slug}/hr_increments.json`, iPretty)
         await writeVaultFile('hr_increments.json', iPretty)
+        await writeVaultFile(`${slug}/increments.json`, iPretty)
+        await writeVaultFile('increments.json', iPretty)
       }
 
-      // 3. hr_bonuses.json
+      // 3. hr_bonuses.json / bonuses.json
       const bonuses = state.bonuses ?? []
       if (bonuses.length > 0 || isRecentExplicitDelete()) {
         const bPretty = JSON.stringify(bonuses, null, 2)
         await writeVaultFile(`${slug}/hr_bonuses.json`, bPretty)
         await writeVaultFile('hr_bonuses.json', bPretty)
+        await writeVaultFile(`${slug}/bonuses.json`, bPretty)
+        await writeVaultFile('bonuses.json', bPretty)
       }
 
-      // 4. hr_promotions.json
+      // 4. hr_promotions.json / promotions.json
       const promotions = state.promotions ?? []
       if (promotions.length > 0 || isRecentExplicitDelete()) {
         const pPretty = JSON.stringify(promotions, null, 2)
         await writeVaultFile(`${slug}/hr_promotions.json`, pPretty)
         await writeVaultFile('hr_promotions.json', pPretty)
+        await writeVaultFile(`${slug}/promotions.json`, pPretty)
+        await writeVaultFile('promotions.json', pPretty)
       }
 
-      // 5. hr_funds.json
+      // 5. hr_funds.json / funds.json
       const funds = state.funds ?? []
       if (funds.length > 0 || isRecentExplicitDelete()) {
         const fPretty = JSON.stringify(funds, null, 2)
         await writeVaultFile(`${slug}/hr_funds.json`, fPretty)
         await writeVaultFile('hr_funds.json', fPretty)
+        await writeVaultFile(`${slug}/funds.json`, fPretty)
+        await writeVaultFile('funds.json', fPretty)
       }
 
-      // 6. hr_teacher_facilities.json
+      // 6. hr_teacher_facilities.json / teacher_facilities.json
       const teacherFacilities = state.teacherFacilities ?? []
       if (teacherFacilities.length > 0 || isRecentExplicitDelete()) {
         const tfPretty = JSON.stringify(teacherFacilities, null, 2)
         await writeVaultFile(`${slug}/hr_teacher_facilities.json`, tfPretty)
         await writeVaultFile('hr_teacher_facilities.json', tfPretty)
+        await writeVaultFile(`${slug}/teacher_facilities.json`, tfPretty)
+        await writeVaultFile('teacher_facilities.json', tfPretty)
       }
 
-      // 7. hr_salary_configs.json
+      // 7. hr_salary_configs.json / monthly_salary_configs.json / salary_configs.json / payroll.json
       const monthlySalaryConfigs = state.monthlySalaryConfigs ?? []
       if (monthlySalaryConfigs.length > 0 || isRecentExplicitDelete()) {
         const scPretty = JSON.stringify(monthlySalaryConfigs, null, 2)
         await writeVaultFile(`${slug}/hr_salary_configs.json`, scPretty)
         await writeVaultFile('hr_salary_configs.json', scPretty)
+        await writeVaultFile(`${slug}/monthly_salary_configs.json`, scPretty)
+        await writeVaultFile('monthly_salary_configs.json', scPretty)
+        await writeVaultFile(`${slug}/salary_configs.json`, scPretty)
+        await writeVaultFile('salary_configs.json', scPretty)
+        await writeVaultFile(`${slug}/payroll.json`, scPretty)
+        await writeVaultFile('payroll.json', scPretty)
       }
 
-      // 8. hr_recommendations.json
+      // 8. hr_recommendations.json / recommendations.json
       const recommendations = state.recommendations ?? []
       if (recommendations.length > 0 || isRecentExplicitDelete()) {
         const rPretty = JSON.stringify(recommendations, null, 2)
         await writeVaultFile(`${slug}/hr_recommendations.json`, rPretty)
         await writeVaultFile('hr_recommendations.json', rPretty)
+        await writeVaultFile(`${slug}/recommendations.json`, rPretty)
+        await writeVaultFile('recommendations.json', rPretty)
       }
     } catch { /* ignore */ }
   }

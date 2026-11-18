@@ -40,6 +40,7 @@ export function hrRouter(prisma: PrismaClient, jwtSecret: string) {
       }
 
       res.json({
+        storageMode: school.storageMode,
         increments: Array.isArray(parsedHR?.increments) ? parsedHR.increments : [],
         bonuses: Array.isArray(parsedHR?.bonuses) ? parsedHR.bonuses : [],
         promotions: Array.isArray(parsedHR?.promotions) ? parsedHR.promotions : [],
@@ -96,23 +97,6 @@ export function hrRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(403).json({ error: 'Forbidden' })
       }
 
-      if (school.storageMode === 'local_computer') {
-        return res.json({
-          success: true,
-          message: 'Local computer storage: HR records stored locally on PC.',
-          increments: [],
-          bonuses: [],
-          promotions: [],
-          funds: [],
-          homeworkRecords: [],
-          dailyReports: [],
-          recommendations: [],
-          monthlySalaryConfigs: [],
-          facilities: [],
-          teacherFacilities: [],
-        })
-      }
-
       let existingHR: any = {}
       try {
         if ((school as any).hrData) {
@@ -151,6 +135,7 @@ export function hrRouter(prisma: PrismaClient, jwtSecret: string) {
 
       res.json({
         success: true,
+        storageMode: school.storageMode,
         ...updatedHR,
       })
     } catch (err) {

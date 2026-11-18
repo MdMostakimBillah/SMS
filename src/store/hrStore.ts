@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug, flushPendingWrites } from '@/lib/storage'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { flushVaultWrites } from '@/lib/vault/vault'
-import { isLocalComputerMode } from '@/lib/storageMode'
 import { hrApi } from '@/lib/api'
 
 export interface IncrementRecord {
@@ -158,10 +157,66 @@ interface HRState {
   upsertTeacherFacilities: (tfs: TeacherFacility[]) => void
 }
 
+function mergeHRList<T extends { id?: string }>(remote: T[] | undefined, local: T[] | undefined): T[] {
+  if (!Array.isArray(remote) || remote.length === 0) return Array.isArray(local) ? local : []
+  if (!Array.isArray(local) || local.length === 0) return remote
+  const map = new Map<string, T>()
+  for (const item of local) {
+    if (item && item.id) map.set(item.id, item)
+  }
+  for (const item of remote) {
+    if (item && item.id) map.set(item.id, item)
+  }
+  return Array.from(map.values())
+}
+
+function mergeMonthlySalaryConfigs(
+  remote: MonthlySalaryConfig[] | undefined,
+  local: MonthlySalaryConfig[] | undefined
+): MonthlySalaryConfig[] {
+  if (!Array.isArray(remote) || remote.length === 0) return Array.isArray(local) ? local : []
+  if (!Array.isArray(local) || local.length === 0) return remote
+  const map = new Map<string, MonthlySalaryConfig>()
+  for (const item of local) {
+    if (item) {
+      const key = item.id || `${item.teacherId}_${item.month}`
+      map.set(key, item)
+    }
+  }
+  for (const item of remote) {
+    if (item) {
+      const key = item.id || `${item.teacherId}_${item.month}`
+      map.set(key, item)
+    }
+  }
+  return Array.from(map.values())
+}
+
+function mergeTeacherFacilities(
+  remote: TeacherFacility[] | undefined,
+  local: TeacherFacility[] | undefined
+): TeacherFacility[] {
+  if (!Array.isArray(remote) || remote.length === 0) return Array.isArray(local) ? local : []
+  if (!Array.isArray(local) || local.length === 0) return remote
+  const map = new Map<string, TeacherFacility>()
+  for (const item of local) {
+    if (item) {
+      const key = item.id || `${item.teacherId}_${item.facilityId}`
+      map.set(key, item)
+    }
+  }
+  for (const item of remote) {
+    if (item) {
+      const key = item.id || `${item.teacherId}_${item.facilityId}`
+      map.set(key, item)
+    }
+  }
+  return Array.from(map.values())
+}
+
 let serverSyncTimer: any = null
 function queueServerSync(get: () => HRState) {
   try {
-    if (isLocalComputerMode()) return
     const state = get()
     if (
       !state.serverSynced &&
@@ -239,10 +294,6 @@ export const useHRStore = create<HRState>()(
       syncError: null,
 
       syncFromServer: async (slugOrId?: string) => {
-        if (isLocalComputerMode()) {
-          set({ serverSynced: true, syncing: false, syncError: null })
-          return
-        }
         const effectiveSlug = slugOrId || getSlug() || undefined
         set({ syncing: true, syncError: null })
         try {
@@ -263,16 +314,16 @@ export const useHRStore = create<HRState>()(
             const state = get()
             if (hasAny) {
               set({
-                increments: res.increments || [],
-                bonuses: res.bonuses || [],
-                promotions: res.promotions || [],
-                funds: res.funds || [],
-                homeworkRecords: res.homeworkRecords || [],
-                dailyReports: res.dailyReports || [],
-                recommendations: res.recommendations || [],
-                monthlySalaryConfigs: res.monthlySalaryConfigs || [],
-                facilities: res.facilities || [],
-                teacherFacilities: res.teacherFacilities || [],
+                increments: mergeHRList(res.increments, state.increments),
+                bonuses: mergeHRList(res.bonuses, state.bonuses),
+                promotions: mergeHRList(res.promotions, state.promotions),
+                funds: mergeHRList(res.funds, state.funds),
+                homeworkRecords: mergeHRList(res.homeworkRecords, state.homeworkRecords),
+                dailyReports: mergeHRList(res.dailyReports, state.dailyReports),
+                recommendations: mergeHRList(res.recommendations, state.recommendations),
+                monthlySalaryConfigs: mergeMonthlySalaryConfigs(res.monthlySalaryConfigs, state.monthlySalaryConfigs),
+                facilities: mergeHRList(res.facilities, state.facilities),
+                teacherFacilities: mergeTeacherFacilities(res.teacherFacilities, state.teacherFacilities),
                 serverSynced: true,
                 syncing: false,
                 syncError: null,
@@ -315,7 +366,6 @@ export const useHRStore = create<HRState>()(
       },
 
       syncToServer: async () => {
-        if (isLocalComputerMode()) return
         const s = get()
         set({ syncing: true, syncError: null })
         try {
