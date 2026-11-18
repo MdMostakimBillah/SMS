@@ -7,7 +7,7 @@
 
 export interface SMSGatewayOptions {
   providerName: string
-  providerType: 'sim_gateway' | 'http_api' | 'greenweb' | 'bulksmsbd' | 'custom'
+  providerType: 'sim_gateway' | 'http_api' | 'greenweb' | 'bulksmsbd' | 'onnorokom' | 'sslwireless' | 'custom'
   apiUrl?: string
   apiKey?: string
   senderId?: string
@@ -99,6 +99,38 @@ export async function dispatchSMS(params: SendSMSParams): Promise<SendSMSResult>
         })
         res = await fetch(`${gateway.apiUrl}?${query.toString()}`, {
           method: 'GET',
+          signal: controller.signal,
+        })
+      } else if (gateway.providerType === 'onnorokom') {
+        // Onnorokom SMS format
+        const query = new URLSearchParams({
+          userName: gateway.username || '',
+          userPassword: gateway.password || gateway.apiKey || '',
+          mobileNumber: normalizedPhone,
+          smsText: message,
+          type: 'TEXT',
+          maskName: gateway.senderId || '',
+          campaignName: 'EduTech',
+        })
+        res = await fetch(`${gateway.apiUrl}?${query.toString()}`, {
+          method: 'GET',
+          signal: controller.signal,
+        })
+      } else if (gateway.providerType === 'sslwireless') {
+        // SSL Wireless (SMS Plus) format
+        res = await fetch(gateway.apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(gateway.apiKey ? { Authorization: `Bearer ${gateway.apiKey}` } : {}),
+          },
+          body: JSON.stringify({
+            api_token: gateway.apiKey,
+            sid: gateway.senderId || 'EduTech',
+            msisdn: normalizedPhone,
+            sms: message,
+            csms_id: messageId,
+          }),
           signal: controller.signal,
         })
       } else {

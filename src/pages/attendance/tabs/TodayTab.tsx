@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 import {
   Briefcase,
   Calendar,
@@ -15,9 +15,13 @@ import {
   User,
   Users,
   XCircle,
+  Smartphone,
 } from 'lucide-react'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { usePermission } from '@/hooks/usePermission'
+import { useClassStore } from '@/store/classStore'
+import { useSmsStore } from '@/store/smsStore'
+import { sendTemplateSMS } from '@/store/messageStore'
 import type { AttendanceStatus } from '@/store/teacherStore'
 import type { StatusFilter } from '../helpers'
 
@@ -84,9 +88,71 @@ export const TodayTab = React.memo(function TodayTab({
   onToggleStatus,
 }: TodayTabProps) {
   const { canCreate } = usePermission()
+  const institution = useClassStore((s) => s.institution)
   const filterTabsRef = useRef<HTMLDivElement>(null)
   const filterTabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const [sliderStyle, setSliderStyle] = useState({ left: '0px', width: '0px', background: 'var(--brand)' })
+
+  const handleSendAbsentSms = useCallback(() => {
+    const absentStudentsWithPhones = todayFiltered
+      .filter((p) => p.type === 'student' && p.attStatus === 'absent')
+      .map((p) => {
+        const st = filteredStudents.find((s) => s.id === p.id)
+        return {
+          ...p,
+          phone: st?.phone || st?.guardianPhone || '',
+          class: st?.class || '',
+          roll: st?.roll || '',
+        }
+      })
+      .filter((s) => s.phone)
+
+    if (absentStudentsWithPhones.length === 0) {
+      alert(
+        isBn
+          ? 'আজকের জন্য কোনো অনুপস্থিত শিক্ষার্থীর ফোন নম্বর পাওয়া যায়নি'
+          : 'No absent students with phone numbers found for today'
+      )
+      return
+    }
+
+    const instId = (institution as any)?.id || institution?.eiin || 'inst-default'
+    const instName = institution?.name || 'Institution'
+    const bal = useSmsStore.getState().getInstitutionBalance(instId)
+
+    if (bal.remaining < absentStudentsWithPhones.length) {
+      alert(
+        isBn
+          ? `অপর্যাপ্ত SMS ব্যালেন্স! প্রয়োজন ${absentStudentsWithPhones.length} টি SMS, কিন্তু অবশিষ্ট আছে ${bal.remaining} টি। সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।`
+          : `Insufficient SMS balance! Need ${absentStudentsWithPhones.length} SMS, but only ${bal.remaining} remaining. Please contact Super Admin.`
+      )
+      return
+    }
+
+    const confirmMsg = isBn
+      ? `আপনি কি ${absentStudentsWithPhones.length} জন অনুপস্থিত শিক্ষার্থীর অভিভাবককে এসএমএস সতর্কবার্তা পাঠাতে চান? (ব্যালেন্স থেকে ${absentStudentsWithPhones.length} টি SMS কর্তন হবে)`
+      : `Send absent SMS alert to ${absentStudentsWithPhones.length} student guardian(s)? (${absentStudentsWithPhones.length} SMS will be deducted from balance)`
+
+    if (!window.confirm(confirmMsg)) return
+
+    for (const st of absentStudentsWithPhones) {
+      sendTemplateSMS({
+        studentId: st.id,
+        studentName: isBn ? st.nameBn || st.nameEn : st.nameEn,
+        phoneNumber: st.phone,
+        subject: `Attendance Alert: Absent Today - ${instName}`,
+        body: `Dear guardian, your child ${st.nameEn} (Class: ${st.class}, Roll: ${st.roll || '-'}) is marked ABSENT today (${date}). If this is unexpected, please contact the school. - ${instName}`,
+        institutionId: instId,
+        institutionName: instName,
+      })
+    }
+
+    alert(
+      isBn
+        ? `${absentStudentsWithPhones.length} টি অনুপস্থিতির এসএমএস সফলভাবে পাঠানো হয়েছে!`
+        : `Absent alert sent to ${absentStudentsWithPhones.length} student guardian(s) successfully!`
+    )
+  }, [todayFiltered, filteredStudents, isBn, institution, date])
 
   useEffect(() => {
     const el = filterTabRefs.current[statusFilter]
@@ -144,13 +210,27 @@ export const TodayTab = React.memo(function TodayTab({
           />
           <div className="flex-1" />
           {canCreate('attendance.today') && (
-            <button
-              onClick={() => setShowMarkAll(true)}
-              className="flex items-center gap-[0.3125rem] px-3.5 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
-            >
-              <CheckCircle size={13} />
-              {isBn ? 'সবাইকে উপস্থিত করুন' : 'Mark All Present'}
-            </button>
+            <div className="flex items-center gap-2">
+              {stats.absent > 0 && (
+                <button
+                  type="button"
+                  onClick={handleSendAbsentSms}
+                  className="flex items-center gap-[0.3125rem] px-3 py-[0.4375rem] rounded-lg bg-[var(--red-light)] border border-[var(--red)] text-[var(--red)] text-xs cursor-pointer font-medium hover:opacity-90 transition-all"
+                  title={isBn ? 'অনুপস্থিত শিক্ষার্থীদের অভিভাবকদের এসএমএস পাঠান' : 'Send SMS alert to absent students guardians'}
+                >
+                  <Smartphone size={13} />
+                  <span>{isBn ? 'অনুপস্থিতদের SMS' : 'Absent SMS'}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowMarkAll(true)}
+                className="flex items-center gap-[0.3125rem] px-3.5 py-[0.4375rem] rounded-lg bg-[var(--green-light)] border border-[var(--green)] text-[var(--green)] text-xs cursor-pointer font-medium"
+              >
+                <CheckCircle size={13} />
+                {isBn ? 'সবাইকে উপস্থিত করুন' : 'Mark All Present'}
+              </button>
+            </div>
           )}
         </div>
         {/* Status filter buttons */}

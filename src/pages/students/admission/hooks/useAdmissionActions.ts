@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
 import { XLSX } from '@/lib/excelExport'
-import { logger } from '@/lib/logger'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
+import { sendTemplateSMS } from '@/store/messageStore'
 import { generateListPDF } from '../listPdfTemplate'
 import { printRawHTML } from '@/lib/pdf'
 import { formatGender } from '@/lib/gender'
@@ -17,17 +17,41 @@ export function useAdmissionActions() {
   const handleApprove = useCallback(
     (student: StudentAdmission, sms: boolean, billingDate: string) => {
       approveStudent(student.id, billingDate)
-      if (sms) logger.sms(student.phone, `আপনার ভর্তি অনুমোদিত হয়েছে! আইডি: ${student.id} — Sunrise Academy`)
+      if (sms && student.phone) {
+        const instId = (institution as any)?.id || institution?.eiin || 'inst-default'
+        const instName = institution.name || 'Institution'
+        sendTemplateSMS({
+          studentId: student.id,
+          studentName: student.nameEn || student.nameBn,
+          phoneNumber: student.phone,
+          subject: `Admission Approved - ${instName}`,
+          body: `Dear guardian/student, your admission has been approved! Student ID: ${student.id}, Class: ${student.class}. Welcome to ${instName}.`,
+          institutionId: instId,
+          institutionName: instName,
+        })
+      }
     },
-    [approveStudent]
+    [approveStudent, institution]
   )
 
   const handleReject = useCallback(
     (student: StudentAdmission, sms: boolean) => {
       rejectStudent(student.id)
-      if (sms) logger.sms(student.phone, `আপনার ভর্তি আবেদন প্রত্যাখ্যাত হয়েছে। আইডি: ${student.id}`)
+      if (sms && student.phone) {
+        const instId = (institution as any)?.id || institution?.eiin || 'inst-default'
+        const instName = institution.name || 'Institution'
+        sendTemplateSMS({
+          studentId: student.id,
+          studentName: student.nameEn || student.nameBn,
+          phoneNumber: student.phone,
+          subject: `Admission Update - ${instName}`,
+          body: `Dear guardian/student, your admission application (ID: ${student.id}) could not be accepted at this time. Thank you. - ${instName}`,
+          institutionId: instId,
+          institutionName: instName,
+        })
+      }
     },
-    [rejectStudent]
+    [rejectStudent, institution]
   )
 
   const exportExcel = useCallback(

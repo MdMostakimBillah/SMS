@@ -534,10 +534,12 @@ export default function SMSPage({ isBn }: Props) {
                     onChange={(e) => setGwForm({ ...gwForm, providerType: e.target.value as any })}
                     className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none"
                   >
-                    <option value="sim_gateway">SIM SMS Gateway (Local HTTP Server)</option>
-                    <option value="http_api">Standard REST HTTP API (POST JSON)</option>
+                    <option value="sim_gateway">SIM SMS Gateway (Local HTTP Server / GSM)</option>
                     <option value="greenweb">Greenweb Bangladesh API</option>
                     <option value="bulksmsbd">BulkSMSBD API</option>
+                    <option value="onnorokom">Onnorokom SMS API (Bangladesh)</option>
+                    <option value="sslwireless">SSL Wireless SMS Plus (Bangladesh)</option>
+                    <option value="http_api">Standard REST HTTP API (POST JSON)</option>
                     <option value="custom">Custom Webhook Endpoint</option>
                   </select>
                 </div>
@@ -770,6 +772,28 @@ export default function SMSPage({ isBn }: Props) {
                   className="w-full px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.8125rem] text-[var(--text-primary)] outline-none"
                   required
                 />
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {[
+                    'SIM SMS Gateway (GP/Robi)',
+                    'Greenweb BD',
+                    'BulkSMSBD',
+                    'Onnorokom SMS',
+                    'SSL Wireless',
+                  ].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setBuyProvider(p)}
+                      className={`text-[0.625rem] px-2 py-0.5 rounded-md border cursor-pointer transition-colors ${
+                        buyProvider === p
+                          ? 'bg-[var(--brand)] text-white border-[var(--brand)]'
+                          : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
