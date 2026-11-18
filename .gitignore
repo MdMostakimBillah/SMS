@@ -37,6 +37,7 @@ apps/face-service/__pycache__
 !.env.example
 !.env.selfhost.example
 !apps/api/.env.example
+!.env.production
 *.env
 staging.env
 

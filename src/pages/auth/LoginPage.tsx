@@ -5,7 +5,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { getDashboardPath } from '@/lib/navUtils'
-import { isValidLoginSecret } from '@/lib/loginPath'
+import { isValidLoginSecret, setLoginSecret } from '@/lib/loginPath'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { ForgotPasswordModal } from './ForgotPasswordModal'
 import { SuperAdminSecurityPinForm } from './SuperAdminSecurityPinForm'
@@ -39,8 +39,10 @@ export default function LoginPage() {
   useEffect(() => {
     if (!isAllowed) {
       navigate('/register', { replace: true })
+    } else if (pathCandidate) {
+      setLoginSecret(pathCandidate)
     }
-  }, [isAllowed, navigate])
+  }, [isAllowed, pathCandidate, navigate])
 
   useEffect(() => {
     if (user) navigate(getDashboardPath(user), { replace: true })
