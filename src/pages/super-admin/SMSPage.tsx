@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import {
   MessageSquare, Plus, ShoppingCart, RefreshCw, Server, Send,
   Building2, Search, CheckCircle, AlertTriangle, XCircle,
@@ -53,6 +54,68 @@ export default function SMSPage({ isBn }: Props) {
   const [testMsg, setTestMsg] = useState('EduTech test SMS: SIM gateway connectivity verified.')
   const [testSending, setTestSending] = useState(false)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
+
+  const buyModalRef = useRef<HTMLDivElement>(null)
+  const allocModalRef = useRef<HTMLDivElement>(null)
+
+  // Lock body scroll and close on Escape key when modal is open
+  useEffect(() => {
+    if (!showBuyModal && !showAllocateModal) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showBuyModal) setShowBuyModal(false)
+        if (showAllocateModal) setShowAllocateModal(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showBuyModal, showAllocateModal])
+
+  // Focus the primary input when modal opens
+  useEffect(() => {
+    if (showBuyModal && buyModalRef.current) {
+      const el = buyModalRef.current.querySelector<HTMLElement>('input, button, select')
+      el?.focus()
+    }
+  }, [showBuyModal])
+
+  useEffect(() => {
+    if (showAllocateModal && allocModalRef.current) {
+      const el = allocModalRef.current.querySelector<HTMLElement>('select, input, button')
+      el?.focus()
+    }
+  }, [showAllocateModal])
+
+  // Trap keyboard focus inside modal dialog
+  const handleModalTrap = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab') return
+    const container = e.currentTarget
+    const focusables = container.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    if (!focusables || focusables.length === 0) return
+    const first = focusables[0]
+    const last = focusables[focusables.length - 1]
+
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+  }, [])
 
   const availableMaster = masterPool.totalPurchased - masterPool.totalAllocated
 
@@ -740,21 +803,37 @@ export default function SMSPage({ isBn }: Props) {
       )}
 
       {/* MODAL 1: Buy SMS Pool Modal */}
-      {showBuyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glass rounded-3xl max-w-lg w-full p-6 border border-[var(--border)] shadow-2xl space-y-4">
+      {showBuyModal && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[99999] w-screen h-screen min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowBuyModal(false)
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="buy-sms-title"
+        >
+          <div
+            ref={buyModalRef}
+            onKeyDown={handleModalTrap}
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-3xl max-w-lg w-full p-6 border border-[var(--border)] shadow-2xl space-y-4 my-auto relative z-10 animate-in zoom-in-95 duration-200"
+            style={{ background: 'var(--bg-primary, #1e1e2d)' }}
+          >
             <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-cyan-500/10 text-cyan-500">
                   <ShoppingCart size={18} />
                 </div>
-                <h3 className="text-[1rem] font-bold text-[var(--text-primary)]">
+                <h3 id="buy-sms-title" className="text-[1rem] font-bold text-[var(--text-primary)]">
                   {isBn ? 'সিম প্রোভাইডার থেকে এসএমএস ক্রয়' : 'Purchase SMS from SIM Provider'}
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setShowBuyModal(false)}
-                className="w-8 h-8 rounded-lg hover:bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-muted)] border-none bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded-lg hover:bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] border-none bg-transparent cursor-pointer transition-colors"
+                title={isBn ? 'বন্ধ করুন' : 'Close'}
               >
                 ✕
               </button>
@@ -863,25 +942,42 @@ export default function SMSPage({ isBn }: Props) {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL 2: Allocate SMS to Institution Modal */}
-      {showAllocateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="glass rounded-3xl max-w-lg w-full p-6 border border-[var(--border)] shadow-2xl space-y-4">
+      {showAllocateModal && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[99999] w-screen h-screen min-h-[100dvh] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAllocateModal(false)
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="alloc-sms-title"
+        >
+          <div
+            ref={allocModalRef}
+            onKeyDown={handleModalTrap}
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-3xl max-w-lg w-full p-6 border border-[var(--border)] shadow-2xl space-y-4 my-auto relative z-10 animate-in zoom-in-95 duration-200"
+            style={{ background: 'var(--bg-primary, #1e1e2d)' }}
+          >
             <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-500/10 text-indigo-500">
                   <Building2 size={18} />
                 </div>
-                <h3 className="text-[1rem] font-bold text-[var(--text-primary)]">
+                <h3 id="alloc-sms-title" className="text-[1rem] font-bold text-[var(--text-primary)]">
                   {isBn ? 'প্রতিষ্ঠানে এসএমএস ক্রেডিট বরাদ্দ' : 'Allocate SMS Credits to Institution'}
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setShowAllocateModal(false)}
-                className="w-8 h-8 rounded-lg hover:bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-muted)] border-none bg-transparent cursor-pointer"
+                className="w-8 h-8 rounded-lg hover:bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] border-none bg-transparent cursor-pointer transition-colors"
+                title={isBn ? 'বন্ধ করুন' : 'Close'}
               >
                 ✕
               </button>
@@ -985,7 +1081,8 @@ export default function SMSPage({ isBn }: Props) {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
