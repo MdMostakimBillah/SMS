@@ -26,7 +26,15 @@ describe('ExpensesManagementPage', () => {
     sessionStorage.clear()
     useExpenseStore.setState({
       categories: [
-        ...PREDEFINED_CATEGORIES,
+        {
+          id: 'EXP-CAT-001',
+          name: 'Salary',
+          nameBn: 'বেতন',
+          icon: 'wallet',
+          isSystem: false,
+          isActive: true,
+          createdAt: '2026-11-01',
+        },
         {
           id: 'EXP-CAT-CUSTOM',
           name: 'Annual Sports Day',

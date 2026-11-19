@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { expensesApi } from '@/lib/api'
@@ -32,16 +33,18 @@ export interface ExpenseEntry {
   isActive: boolean
 }
 
-export const PREDEFINED_CATEGORIES: ExpenseCategory[] = [
-  { id: 'EXP-CAT-001', name: 'Salary', nameBn: 'বেতন', icon: 'wallet', isSystem: true, isActive: true, createdAt: '2025-01-01' },
-  { id: 'EXP-CAT-002', name: 'Rent', nameBn: 'ভাড়া', icon: 'home', isSystem: true, isActive: true, createdAt: '2025-01-01' },
-  { id: 'EXP-CAT-003', name: 'Utilities', nameBn: 'ইউটিলিটি', icon: 'zap', isSystem: true, isActive: true, createdAt: '2025-01-01' },
-  { id: 'EXP-CAT-004', name: 'Maintenance', nameBn: 'রক্ষণাবেক্ষণ', icon: 'wrench', isSystem: true, isActive: true, createdAt: '2025-01-01' },
-  { id: 'EXP-CAT-005', name: 'Office Supplies', nameBn: 'অফিস সাপ্লাই', icon: 'paperclip', isSystem: true, isActive: true, createdAt: '2025-01-01' },
-  { id: 'EXP-CAT-006', name: 'Equipment', nameBn: 'সরঞ্জাম', icon: 'package', isSystem: true, isActive: true, createdAt: '2025-01-01' },
-  { id: 'EXP-CAT-007', name: 'Transport', nameBn: 'পরিবহন', icon: 'truck', isSystem: true, isActive: true, createdAt: '2025-01-01' },
-  { id: 'EXP-CAT-008', name: 'Others', nameBn: 'অন্যান্য', icon: 'tag', isSystem: true, isActive: true, createdAt: '2025-01-01' },
-]
+export const PREDEFINED_CATEGORIES: ExpenseCategory[] = []
+
+export const LEGACY_DEFAULT_CAT_IDS = new Set([
+  'EXP-CAT-001',
+  'EXP-CAT-002',
+  'EXP-CAT-003',
+  'EXP-CAT-004',
+  'EXP-CAT-005',
+  'EXP-CAT-006',
+  'EXP-CAT-007',
+  'EXP-CAT-008',
+])
 
 export const PAYMENT_METHODS = [
   { value: 'cash', label: 'Cash', labelBn: 'নগদ' },
@@ -117,13 +120,15 @@ function queueServerSync(get: () => ExpenseState) {
 }
 
 function onStateMutated(get: () => ExpenseState) {
+  flushPendingWrites()
+  void flushVaultWrites()
   queueServerSync(get)
 }
 
 export const useExpenseStore = create<ExpenseState>()(
   persist(
     (set, get) => ({
-      categories: PREDEFINED_CATEGORIES,
+      categories: [],
       expenses: [],
 
       serverSynced: false,
@@ -146,9 +151,7 @@ export const useExpenseStore = create<ExpenseState>()(
             if (hasCats || hasExps) {
               const categories = hasCats
                 ? res.categories!
-                : state.categories.length > 0
-                ? state.categories
-                : [...PREDEFINED_CATEGORIES]
+                : (state.categories || [])
               set({
                 categories,
                 expenses: res.expenses || [],
@@ -228,13 +231,30 @@ export const useExpenseStore = create<ExpenseState>()(
         onStateMutated(get)
       },
     }),
-    { name: 'edutech-expenses', storage: createNamespacedStorage('edutech-expenses'), version: 1 }
+    {
+      name: 'edutech-expenses',
+      storage: createNamespacedStorage('edutech-expenses'),
+      version: 2,
+      migrate: (persistedState: any) => {
+        if (!persistedState) return persistedState
+        const existingExpenses = Array.isArray(persistedState.expenses) ? persistedState.expenses : []
+        const usedCatIds = new Set(existingExpenses.map((e: any) => e.categoryId))
+        const cleanedCategories = (Array.isArray(persistedState.categories) ? persistedState.categories : [])
+          .filter((c: any) => !LEGACY_DEFAULT_CAT_IDS.has(c.id) || usedCatIds.has(c.id))
+          .map((c: any) => ({ ...c, isSystem: false }))
+        return {
+          ...persistedState,
+          categories: cleanedCategories,
+          expenses: existingExpenses,
+        }
+      },
+    }
   )
 )
 
 registerStoreReset(() => {
   useExpenseStore.setState({
-    categories: [...PREDEFINED_CATEGORIES],
+    categories: [],
     expenses: [],
     serverSynced: false,
     syncing: false,
@@ -251,13 +271,15 @@ registerStoreLoad(() => {
       const parsed = JSON.parse(raw)
       if (parsed.state) {
         const state = parsed.state
-        const existingIds = (state.categories || []).map((c: ExpenseCategory) => c.id)
-        const missing = PREDEFINED_CATEGORIES.filter((c) => !existingIds.includes(c.id))
-        const categories = [...(state.categories || []), ...missing]
+        const existingExpenses = Array.isArray(state.expenses) ? state.expenses : []
+        const usedCatIds = new Set(existingExpenses.map((e: any) => e.categoryId))
+        const cleanedCategories = (Array.isArray(state.categories) ? state.categories : [])
+          .filter((c: ExpenseCategory) => !LEGACY_DEFAULT_CAT_IDS.has(c.id) || usedCatIds.has(c.id))
+          .map((c: ExpenseCategory) => ({ ...c, isSystem: false }))
         useExpenseStore.setState({
           ...state,
-          categories: categories.length > 0 ? categories : [...PREDEFINED_CATEGORIES],
-          expenses: Array.isArray(state.expenses) ? state.expenses : [],
+          categories: cleanedCategories,
+          expenses: existingExpenses,
         })
       }
     }

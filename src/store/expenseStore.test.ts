@@ -42,6 +42,68 @@ describe('expenseStore', () => {
     expect(useExpenseStore.getState().categories.some((c) => c.id === 'EXP-CAT-TEST')).toBe(false)
   })
 
+  it('starts with empty default categories and resets to empty', () => {
+    expect(PREDEFINED_CATEGORIES).toEqual([])
+    expect(useExpenseStore.getState().categories).toEqual([])
+
+    useExpenseStore.getState().addCategory({
+      id: 'EXP-CUSTOM-1',
+      name: 'Custom Fee',
+      nameBn: 'কাস্টম ফি',
+      icon: 'tag',
+      isSystem: false,
+      isActive: true,
+      createdAt: '2026-11-06',
+    })
+    expect(useExpenseStore.getState().categories).toHaveLength(1)
+
+    useExpenseStore.getState().deleteCategory('EXP-CUSTOM-1')
+    expect(useExpenseStore.getState().categories).toHaveLength(0)
+  })
+
+  it('allows deleting categories that have isSystem: true', () => {
+    useExpenseStore.setState({
+      categories: [
+        {
+          id: 'EXP-CAT-001',
+          name: 'Salary',
+          nameBn: 'বেতন ও ভাতা',
+          icon: 'wallet',
+          isSystem: true,
+          isActive: true,
+          createdAt: '2026-11-06',
+        },
+      ],
+      expenses: [],
+    })
+    expect(useExpenseStore.getState().categories).toHaveLength(1)
+
+    useExpenseStore.getState().deleteCategory('EXP-CAT-001')
+    expect(useExpenseStore.getState().categories).toHaveLength(0)
+  })
+
+  it('migrates legacy default categories by removing unused ones', () => {
+    const migrate = (useExpenseStore.persist as any).getOptions().migrate
+    const oldState = {
+      categories: [
+        { id: 'EXP-CAT-001', name: 'Salary', isSystem: true },
+        { id: 'EXP-CAT-002', name: 'Rent', isSystem: true },
+        { id: 'EXP-CUSTOM', name: 'Hostel', isSystem: false },
+      ],
+      expenses: [
+        { id: 'EXP-1', categoryId: 'EXP-CAT-001', amount: 1000 },
+      ],
+    }
+
+    const migrated = migrate(oldState, 1)
+    // EXP-CAT-001 is kept because it's used by EXP-1 (with isSystem changed to false)
+    // EXP-CAT-002 is removed because it's an unused legacy default category
+    // EXP-CUSTOM is kept
+    expect(migrated.categories).toHaveLength(2)
+    expect(migrated.categories.map((c: any) => c.id)).toEqual(['EXP-CAT-001', 'EXP-CUSTOM'])
+    expect(migrated.categories.every((c: any) => c.isSystem === false)).toBe(true)
+  })
+
   it('adds, updates, toggles, and deletes expense entries', () => {
     const entry = {
       id: 'EXP-TEST-001',
