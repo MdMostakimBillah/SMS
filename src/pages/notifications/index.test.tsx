@@ -189,7 +189,7 @@ describe('NotificationsPage', () => {
     expect(screen.getByText('Class 10 Routine Published')).toBeTruthy()
   })
 
-  it('opens compose modal and sends new notification', async () => {
+  it('does not render create notification button for institute accounts', async () => {
     render(
       <MemoryRouter initialEntries={['/i/school-test/admin/notifications']}>
         <AuthContext.Provider value={mockAuthAdmin}>
@@ -204,10 +204,49 @@ describe('NotificationsPage', () => {
       await new Promise((r) => setTimeout(r, 450))
     })
 
-    const newBtn = screen.getByText('New Notification')
-    fireEvent.click(newBtn)
+    expect(screen.queryByText('Create Notification')).toBeNull()
+    expect(screen.queryByText('New Notification')).toBeNull()
+  })
+
+  it('allows super admin to compose and broadcast notification to all institutes', async () => {
+    const mockAuthSuperAdmin = {
+      user: {
+        id: 'super-admin-1',
+        name: 'Super Admin',
+        email: 'superadmin@edutech.pro.bd',
+        role: 'super_admin',
+      },
+      token: 'mock-token',
+      login: async () => {},
+      logout: () => {},
+      register: async () => {},
+      isLoading: false,
+      error: null,
+      isAuthenticated: true,
+      checkAuth: async () => {},
+    } as any
+
+    vi.spyOn(notificationsApi, 'broadcast').mockResolvedValue({ success: true, count: 5 } as any)
+
+    render(
+      <MemoryRouter initialEntries={['/super-admin/admin/notifications']}>
+        <AuthContext.Provider value={mockAuthSuperAdmin}>
+          <Routes>
+            <Route path="*" element={<NotificationsPage />} />
+          </Routes>
+        </AuthContext.Provider>
+      </MemoryRouter>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450))
+    })
+
+    const createBtn = screen.getByText('Create Notification')
+    fireEvent.click(createBtn)
 
     expect(screen.getByText('Compose Notification')).toBeTruthy()
+    expect(screen.getByText(/Broadcast to all institutions/i)).toBeTruthy()
 
     const titleInput = screen.getByPlaceholderText('e.g. System Update / Payment Reminder')
     const msgTextarea = screen.getByPlaceholderText('Enter detailed notification content...')
@@ -216,8 +255,11 @@ describe('NotificationsPage', () => {
     fireEvent.change(msgTextarea, { target: { value: 'School will remain closed from Dec 20.' } })
 
     const sendBtn = screen.getByText('Send Notification')
-    fireEvent.click(sendBtn)
+    await act(async () => {
+      fireEvent.click(sendBtn)
+    })
 
     expect(useNotificationStore.getState().notifications.some((n) => n.title === 'Winter Vacation Announcement')).toBe(true)
+    expect(notificationsApi.broadcast).toHaveBeenCalled()
   })
 })

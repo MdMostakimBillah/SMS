@@ -58,7 +58,17 @@ export default function SuperAdminPage() {
     return <Navigate to="/register" replace />
   }
 
-  const goTo = (id: string) => navigate(SUPER_ADMIN_REVERSE_MAP[id])
+  if (currentPage === 'notices') {
+    return <Navigate to="/super-admin/admin/notifications" replace />
+  }
+
+  const goTo = (id: string) => {
+    if (id === 'notices') {
+      navigate('/super-admin/admin/notifications')
+      return
+    }
+    navigate(SUPER_ADMIN_REVERSE_MAP[id])
+  }
 
   return (
     <div ref={containerRef} className="space-y-5">

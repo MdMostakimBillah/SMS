@@ -51,7 +51,7 @@ const CATEGORY_CONFIG: Record<NotificationCategory, { label: string; labelBn: st
 
 export default function NotificationsPage() {
   const bn = useBn()
-  const { canDelete, canEdit, canCreate } = usePermission()
+  const { canDelete, canEdit } = usePermission()
   const { isMobile } = useWindowSize()
   const navigate = useNavigate()
   const location = useLocation()
@@ -61,6 +61,7 @@ export default function NotificationsPage() {
 
   const isSuperAdmin = user?.role === 'super_admin'
   const isViewing = isSuperAdmin && !!viewingInstitutionId
+  const canCreateNotification = isSuperAdmin && !isViewing
   const viewingRole = isViewing ? (location.pathname.split('/')[3] || 'admin') : undefined
   const navBase = isViewing
     ? getSuperAdminViewNavBase(user, viewingRole)
@@ -192,7 +193,7 @@ export default function NotificationsPage() {
           setViewNotification(null)
         }}
         onEdit={
-          canEdit('notifications')
+          canCreateNotification
             ? (item) => {
                 setViewNotification(null)
                 setEditingNotification(item)
@@ -251,7 +252,7 @@ export default function NotificationsPage() {
             </button>
           )}
 
-          {canCreate('notifications') && (
+          {canCreateNotification && (
             <button
               onClick={() => {
                 setEditingNotification(null)
@@ -261,7 +262,7 @@ export default function NotificationsPage() {
               style={{ background: 'var(--brand)' }}
             >
               <Plus size={16} />
-              {isSuperAdmin ? (bn ? 'সম্প্রচার নোটিফিকেশন' : 'Broadcast Update') : (bn ? 'নতুন নোটিফিকেশন' : 'New Notification')}
+              {bn ? 'নতুন নোটিফিকেশন' : 'Create Notification'}
             </button>
           )}
         </div>
@@ -439,7 +440,7 @@ export default function NotificationsPage() {
       )}
 
       {/* Compose / Edit Modal */}
-      {showCompose && (
+      {showCompose && canCreateNotification && (
         <NotificationModal
           existing={editingNotification}
           onSaved={() => {

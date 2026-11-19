@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom'
 import { Bell, X, Info, CheckCircle, AlertTriangle, XCircle, Link as LinkIcon, Send, Radio, Sparkles, CreditCard, GraduationCap, Megaphone } from 'lucide-react'
 import { useNotificationStore, notificationId, type Notification, type NotificationType, type NotificationCategory } from '@/store/notificationStore'
 import { useAuth } from '@/contexts/AuthContext'
-import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 const inputCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'
 const textareaCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 resize-none'
@@ -43,18 +42,16 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
   const { user } = useAuth()
   const isSuperAdmin = user?.role === 'super_admin'
 
-  const addNotification = useNotificationStore((s) => s.addNotification)
   const updateNotification = useNotificationStore((s) => s.updateNotification)
   const broadcastNotification = useNotificationStore((s) => s.broadcastNotification)
 
-  const [category, setCategory] = useState<NotificationCategory>(existing?.category || (isSuperAdmin ? 'system' : 'general'))
+  const [category, setCategory] = useState<NotificationCategory>(existing?.category || 'system')
   const [type, setType] = useState<NotificationType>(existing?.type || 'info')
   const [title, setTitle] = useState(existing?.title || '')
   const [titleBn, setTitleBn] = useState(existing?.titleBn || '')
   const [message, setMessage] = useState(existing?.message || '')
   const [messageBn, setMessageBn] = useState(existing?.messageBn || '')
   const [link, setLink] = useState(existing?.link || '')
-  const [broadcastToAll, setBroadcastToAll] = useState(isSuperAdmin)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
@@ -64,6 +61,10 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
+
+  if (!isSuperAdmin) {
+    return null
+  }
 
   const validate = () => {
     const errs: Record<string, boolean> = {}
@@ -80,7 +81,8 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
     const primaryMessage = message.trim() || messageBn.trim()
     const primaryMessageBn = messageBn.trim() || primaryMessage
     const cleanLink = link.trim() || undefined
-    const senderName = isSuperAdmin ? 'Super Admin (EduTech)' : (user?.name || 'Institution Admin')
+    const senderName = 'Super Admin (EduTech)'
+    const senderRole = 'super_admin'
 
     if (existing) {
       updateNotification(existing.id, {
@@ -104,16 +106,12 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
         read: false,
         link: cleanLink,
         sender: senderName,
-        senderRole: user?.role || 'admin',
-        broadcastToAll: isSuperAdmin && broadcastToAll,
+        senderRole,
+        broadcastToAll: true,
         createdAt: new Date().toISOString(),
       }
 
-      if (isSuperAdmin && broadcastToAll) {
-        await broadcastNotification(newNotif)
-      } else {
-        addNotification(newNotif)
-      }
+      await broadcastNotification(newNotif)
     }
     onSaved()
   }
@@ -137,9 +135,7 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
                   : (bn ? 'নতুন নোটিফিকেশন প্রেরণ' : 'Compose Notification')}
               </h3>
               <p className="text-[0.6875rem] text-[var(--text-muted)] m-0">
-                {isSuperAdmin
-                  ? (bn ? 'সকল প্রতিষ্ঠানে সফটওয়্যার ও সিস্টেম আপডেট সম্প্রচার করুন' : 'Broadcast software update & announcements to institutions')
-                  : (bn ? 'প্রতিষ্ঠানের সদস্যদের জন্য নোটিফিকেশন তৈরি করুন' : 'Send announcement or alert to institution members')}
+                {bn ? 'সকল প্রতিষ্ঠানে সফটওয়্যার ও সিস্টেম আপডেট সম্প্রচার করুন' : 'Broadcast software update & announcements to all institutions'}
               </p>
             </div>
           </div>
@@ -153,21 +149,23 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-          {/* Super Admin Broadcast Option */}
-          {isSuperAdmin && !existing && (
+          {/* Super Admin Broadcast Notice */}
+          {!existing && (
             <div className="p-3 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <Radio size={16} className="text-[var(--brand)] shrink-0" />
                 <div>
                   <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                    {bn ? 'সকল প্রতিষ্ঠানে সম্প্রচার করুন' : 'Broadcast to all institutions'}
+                    {bn ? 'সকল প্রতিষ্ঠানে সম্প্রচার' : 'Broadcast to all institutions'}
                   </div>
                   <div className="text-[0.6875rem] text-[var(--text-muted)]">
                     {bn ? 'সিস্টেম বা সফটওয়্যার আপডেট নোটিফিকেশন সব স্কুলের ড্যাশবোর্ডে যাবে' : 'Every active school will receive this notification immediately'}
                   </div>
                 </div>
               </div>
-              <ModernCheckbox checked={broadcastToAll} onChange={() => setBroadcastToAll(!broadcastToAll)} />
+              <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded-full bg-[var(--brand)] text-white shrink-0">
+                {bn ? 'সকল প্রতিষ্ঠান' : 'All Institutes'}
+              </span>
             </div>
           )}
 

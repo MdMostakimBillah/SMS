@@ -18,7 +18,7 @@ export const SUPER_ADMIN_ROUTES: SuperAdminRoute[] = [
   { id: 'sms', path: '/super-admin/sms', label: 'SMS', labelBn: 'SMS', icon: 'message-square', color: '#06b6d4', desc: 'SIM Provider & Distribution', descBn: 'প্রোভাইডার ও বিতরণ', functional: true },
   { id: 'database', path: '/super-admin/database', label: 'Database', labelBn: 'ডাটাবেজ', icon: 'database', color: '#22c55e', desc: 'Backup', descBn: 'ব্যাকআপ', functional: false },
   { id: 'add-school', path: '/super-admin/add-school', label: 'Add School', labelBn: 'নতুন স্কুল', icon: 'crown', color: '#3b82f6', desc: 'Register', descBn: 'যোগ', functional: true },
-  { id: 'notices', path: '/super-admin/notices', label: 'Notices', labelBn: 'নোটিশ', icon: 'bell', color: '#f97316', desc: 'System', descBn: 'বার্তা', functional: false },
+  { id: 'notices', path: '/super-admin/admin/notifications', label: 'Notifications', labelBn: 'নোটিফিকেশন', icon: 'bell', color: '#f97316', desc: 'Broadcast to all institutions', descBn: 'সকল প্রতিষ্ঠানে বার্তা ও আপডেট', functional: true },
   { id: 'status', path: '/super-admin/status', label: 'Status', labelBn: 'স্ট্যাটাস', icon: 'globe', color: '#10b981', desc: 'App', descBn: 'সিস্টেম', functional: false },
   { id: 'payments', path: '/super-admin/payments', label: 'Payments', labelBn: 'পেমেন্ট', icon: 'file-text', color: '#a855f7', desc: 'Institution', descBn: 'প্রতিষ্ঠান', functional: false },
 ]

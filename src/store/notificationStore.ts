@@ -204,17 +204,46 @@ export const useNotificationStore = create<NotificationState>()(
         // 2. Broadcast to all known school storage in localStorage
         try {
           if (typeof window !== 'undefined') {
-            const rawInsts = localStorage.getItem('edutech-institutions')
-            let instList: any[] = []
-            if (rawInsts) {
-              try {
+            const slugs = new Set<string>()
+
+            // A. Check edutech_super_admin institutions
+            try {
+              const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
+              if (rawSuperAdmin) {
+                const parsed = JSON.parse(rawSuperAdmin)
+                const instList = parsed.state?.institutions || []
+                for (const inst of instList) {
+                  const s = inst.slug || inst.id || inst.subdomain
+                  if (s) slugs.add(s)
+                }
+              }
+            } catch { /* ignore */ }
+
+            // B. Check edutech-institutions
+            try {
+              const rawInsts = localStorage.getItem('edutech-institutions')
+              if (rawInsts) {
                 const parsed = JSON.parse(rawInsts)
-                instList = Array.isArray(parsed) ? parsed : (parsed.state?.institutions || [])
-              } catch { /* ignore */ }
+                const instList = Array.isArray(parsed) ? parsed : (parsed.state?.institutions || [])
+                for (const inst of instList) {
+                  const s = inst.slug || inst.id
+                  if (s) slugs.add(s)
+                }
+              }
+            } catch { /* ignore */ }
+
+            // C. Discover all existing notification stores in localStorage
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i)
+              if (k && k.startsWith('edutech-notifications_')) {
+                const s = k.replace('edutech-notifications_', '')
+                if (s) slugs.add(s)
+              }
             }
-            for (const inst of instList) {
-              const slug = inst.slug || inst.id
-              if (!slug) continue
+
+            // Distribute to all discovered school stores
+            for (const slug of slugs) {
+              if (slug === 'super-admin') continue
               const key = `edutech-notifications_${slug}`
               try {
                 const raw = localStorage.getItem(key)
