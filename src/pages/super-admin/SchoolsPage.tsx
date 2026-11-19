@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Building2, Search, Filter, ChevronDown, ChevronUp,
   Users, GraduationCap, Calendar, Mail, Phone, Globe,
-  MapPin, CheckCircle, XCircle, Pause, Clock,
+  MapPin, CheckCircle, XCircle, Pause, Clock, Crown,
   CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check, Plus, HardDrive,
   Cloud, Laptop, Server, Database,
 } from 'lucide-react'
@@ -106,12 +106,20 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
   const status = statusConfig(inst.status, isBn)
   const isExpired = inst.expiresAt ? new Date(inst.expiresAt).getTime() < Date.now() : false
   const daysRemaining = inst.expiresAt ? Math.ceil((new Date(inst.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
+  const isSystemAccount =
+    inst.slug === 'edutech' ||
+    inst.subdomain === 'edutech' ||
+    inst.id === 'edutech' ||
+    (inst as any).domain === 'edutech' ||
+    inst.name.toLowerCase().includes('edutech platform')
 
   return (
     <div
       className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
         isSelected
           ? 'border-[var(--brand)] shadow-lg shadow-[var(--brand)]/10'
+          : isSystemAccount
+          ? 'border-indigo-500/40 bg-gradient-to-r from-indigo-500/[0.04] to-transparent shadow-sm'
           : 'border-[var(--border)] hover:border-[var(--border-2)] hover:shadow-md'
       } bg-[var(--bg-primary)]`}
     >
@@ -125,6 +133,12 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
             <span className="text-[0.875rem] font-semibold text-[var(--text-primary)] truncate">
               {isBn ? inst.nameBn : inst.name}
             </span>
+            {isSystemAccount && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.625rem] font-bold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shrink-0">
+                <Crown size={11} className="text-amber-400" />
+                {isBn ? 'সুপার অ্যাডমিন প্ল্যাটফর্ম' : 'Super Admin Platform'}
+              </span>
+            )}
             <span
               className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold shrink-0"
               style={{ color: status.color, background: status.bg }}
@@ -262,66 +276,82 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
               <Shield size={13} className="text-[var(--brand)]" />
               {isBn ? 'লাইসেন্স' : 'License'}
             </button>
-            <button
-              className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold transition-all cursor-pointer border-none ${
-                inst.status === 'active'
-                  ? 'bg-red-500/10 text-red-500 hover:bg-red-500/15'
-                  : 'bg-green-500/10 text-green-500 hover:bg-green-500/15'
-              }`}
-              onClick={async (e) => {
-                e.stopPropagation()
-                const nextStatus = inst.status === 'active' ? 'suspended' : 'active'
-                useSuperAdminStore.getState().toggleStatus(inst.id)
-                try {
-                  await authApi.updateSchool(inst.id, { status: nextStatus })
-                } catch {
-                  /* ignore */
-                }
-              }}
-              title={inst.status === 'active' ? (isBn ? 'বন্ধ করুন' : 'Suspend') : (isBn ? 'সক্রিয় করুন' : 'Activate')}
-            >
-              {inst.status === 'active' ? <><Pause size={13} /></> : <><CheckCircle size={13} /></>}
-            </button>
-            <button
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-red-500/10 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer border-none"
-              title={isBn ? 'প্রতিষ্ঠান মুছুন' : 'Delete Institution'}
-              onClick={async (e) => {
-                e.stopPropagation()
-                const displayName = (isBn ? inst.nameBn : inst.name) || inst.name || inst.slug
-                const confirmMsg = isBn
-                  ? `আপনি কি নিশ্চিত যে "${displayName}" প্রতিষ্ঠানটি সম্পূর্ণরূপে মুছে ফেলতে চান? এর সকল ডেটা স্থায়ীভাবে মুছে যাবে।`
-                  : `Are you sure you want to permanently delete "${displayName}"? All associated data will be removed.`
-                if (window.confirm(confirmMsg)) {
+            {!isSystemAccount && (
+              <button
+                className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold transition-all cursor-pointer border-none ${
+                  inst.status === 'active'
+                    ? 'bg-red-500/10 text-red-500 hover:bg-red-500/15'
+                    : 'bg-green-500/10 text-green-500 hover:bg-green-500/15'
+                }`}
+                onClick={async (e) => {
+                  e.stopPropagation()
+                  const nextStatus = inst.status === 'active' ? 'suspended' : 'active'
+                  useSuperAdminStore.getState().toggleStatus(inst.id)
                   try {
-                    await authApi.deleteSchool(inst.id)
-                    useSuperAdminStore.getState().deleteInstitution(inst.id)
-                    if (inst.slug) useSuperAdminStore.getState().deleteInstitution(inst.slug)
-                    if (inst.subdomain) useSuperAdminStore.getState().deleteInstitution(inst.subdomain)
-
-                    // Purge browser storage & cached institution data
-                    purgeInstitutionStorage(inst.id)
-                    if (inst.slug) purgeInstitutionStorage(inst.slug)
-                    if (inst.subdomain) purgeInstitutionStorage(inst.subdomain)
-
-                    // Stop viewing if super admin was viewing this institution
-                    if (useSuperAdminStore.getState().viewingInstitutionId === inst.id) {
-                      useSuperAdminStore.getState().stopViewing()
-                    }
-
-                    // Always clear slug to ensure super admin is disconnected from institution namespace
-                    clearSlug()
-
-                    // Remove local PC vault directory if present
-                    if (inst.slug) void deleteVaultPath(inst.slug).catch(() => {})
-                  } catch (err: unknown) {
-                    const message = (err instanceof Error ? err.message : null) || (isBn ? 'প্রতিষ্ঠান মুছে ফেলতে ব্যর্থ হয়েছে' : 'Failed to delete institution')
-                    alert(message)
+                    await authApi.updateSchool(inst.id, { status: nextStatus })
+                  } catch {
+                    /* ignore */
                   }
-                }
-              }}
-            >
-              <Trash2 size={13} />
-            </button>
+                }}
+                title={inst.status === 'active' ? (isBn ? 'বন্ধ করুন' : 'Suspend') : (isBn ? 'সক্রিয় করুন' : 'Activate')}
+              >
+                {inst.status === 'active' ? <><Pause size={13} /></> : <><CheckCircle size={13} /></>}
+              </button>
+            )}
+            {isSystemAccount ? (
+              <div
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-not-allowed select-none"
+                title={isBn ? 'সুপার অ্যাডমিন প্ল্যাটফর্ম অ্যাকাউন্ট স্থায়ীভাবে সংরক্ষিত, এটি মোছা যাবে না' : 'Super Admin platform account is permanently protected and cannot be deleted'}
+              >
+                <Shield size={13} className="text-emerald-400" />
+                <span>{isBn ? 'সুরক্ষিত অ্যাকাউন্ট' : 'Protected Account'}</span>
+              </div>
+            ) : (
+              <button
+                className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-red-500/10 text-red-500 hover:bg-red-500/15 transition-all cursor-pointer border-none"
+                title={isBn ? 'প্রতিষ্ঠান মুছুন' : 'Delete Institution'}
+                onClick={async (e) => {
+                  e.stopPropagation()
+                  if (isSystemAccount) {
+                    alert(isBn ? 'সুপার অ্যাডমিন প্ল্যাটফর্ম অ্যাকাউন্ট মোছা যাবে না।' : 'Super Admin platform account cannot be deleted.')
+                    return
+                  }
+                  const displayName = (isBn ? inst.nameBn : inst.name) || inst.name || inst.slug
+                  const confirmMsg = isBn
+                    ? `আপনি কি নিশ্চিত যে "${displayName}" প্রতিষ্ঠানটি সম্পূর্ণরূপে মুছে ফেলতে চান? এর সকল ডেটা স্থায়ীভাবে মুছে যাবে।`
+                    : `Are you sure you want to permanently delete "${displayName}"? All associated data will be removed.`
+                  if (window.confirm(confirmMsg)) {
+                    try {
+                      await authApi.deleteSchool(inst.id)
+                      useSuperAdminStore.getState().deleteInstitution(inst.id)
+                      if (inst.slug) useSuperAdminStore.getState().deleteInstitution(inst.slug)
+                      if (inst.subdomain) useSuperAdminStore.getState().deleteInstitution(inst.subdomain)
+
+                      // Purge browser storage & cached institution data
+                      purgeInstitutionStorage(inst.id)
+                      if (inst.slug) purgeInstitutionStorage(inst.slug)
+                      if (inst.subdomain) purgeInstitutionStorage(inst.subdomain)
+
+                      // Stop viewing if super admin was viewing this institution
+                      if (useSuperAdminStore.getState().viewingInstitutionId === inst.id) {
+                        useSuperAdminStore.getState().stopViewing()
+                      }
+
+                      // Always clear slug to ensure super admin is disconnected from institution namespace
+                      clearSlug()
+
+                      // Remove local PC vault directory if present
+                      if (inst.slug) void deleteVaultPath(inst.slug).catch(() => {})
+                    } catch (err: unknown) {
+                      const message = (err instanceof Error ? err.message : null) || (isBn ? 'প্রতিষ্ঠান মুছে ফেলতে ব্যর্থ হয়েছে' : 'Failed to delete institution')
+                      alert(message)
+                    }
+                  }
+                }}
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -524,6 +554,16 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
     return true
   })
 
+  const sortedInstitutions = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const aSys = a.slug === 'edutech' || a.subdomain === 'edutech' || a.id === 'edutech' || a.name.toLowerCase().includes('edutech platform')
+      const bSys = b.slug === 'edutech' || b.subdomain === 'edutech' || b.id === 'edutech' || b.name.toLowerCase().includes('edutech platform')
+      if (aSys && !bSys) return -1
+      if (!aSys && bSys) return 1
+      return 0
+    })
+  }, [filtered])
+
   const totalStudents = institutions.reduce((sum, i) => sum + i.package.maxStudents, 0)
   const activeCount = institutions.filter((i) => i.status === 'active').length
   const totalRevenue = institutions.reduce((sum, i) => sum + i.package.price, 0)
@@ -625,13 +665,13 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
             <InstitutionCardSkeleton />
             <InstitutionCardSkeleton />
           </>
-        ) : filtered.length === 0 ? (
+        ) : sortedInstitutions.length === 0 ? (
           <div className="text-center py-12 text-[var(--text-muted)]">
             <Building2 size={32} className="mx-auto mb-3 opacity-40" />
             <div className="text-[0.875rem]">{isBn ? 'কোনো প্রতিষ্ঠান পাওয়া যায়নি' : 'No institutions found'}</div>
           </div>
         ) : (
-          filtered.map((inst) => (
+          sortedInstitutions.map((inst) => (
             <InstitutionCard
               key={inst.id}
               inst={inst}

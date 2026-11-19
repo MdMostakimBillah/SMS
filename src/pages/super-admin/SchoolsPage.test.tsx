@@ -68,20 +68,20 @@ describe('SchoolsPage storage size badge and super admin display', () => {
     expect(screen.getByText('Local PC')).toBeInTheDocument()
   })
 
-  it('allows super admin to delete any institution directly', async () => {
+  it('allows super admin to delete any customer institution directly', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
 
     useSuperAdminStore.setState({
       institutions: [
         {
           id: 'b903f56f-2a26-411f-81f4-d7f0122bdc52',
-          name: 'Main Super Admin School',
-          nameBn: 'মূল স্কুল',
-          email: 'admin@edutech.local',
+          name: 'Customer Model School',
+          nameBn: 'কাস্টমার স্কুল',
+          email: 'customer@school.local',
           phone: '01711000000',
           address: 'Dhaka',
-          subdomain: 'main',
-          slug: 'main',
+          subdomain: 'customer-school',
+          slug: 'customer-school',
           status: 'active',
           package: PACKAGES[0],
           storageMode: 'cloud',
@@ -117,5 +117,53 @@ describe('SchoolsPage storage size badge and super admin display', () => {
       expect(authApi.deleteSchool).toHaveBeenCalledWith('b903f56f-2a26-411f-81f4-d7f0122bdc52')
       expect(useSuperAdminStore.getState().institutions).toHaveLength(0)
     })
+  })
+
+  it('super admin cannot delete the super admin platform account and protected badge is shown', async () => {
+    useSuperAdminStore.setState({
+      institutions: [
+        {
+          id: 'edutech-platform-id',
+          name: 'EduTech Platform',
+          nameBn: 'এডুটেক প্ল্যাটফর্ম',
+          email: 'admin@edutech.pro.bd',
+          phone: '01700000000',
+          address: 'Dhaka',
+          subdomain: 'edutech',
+          slug: 'edutech',
+          status: 'active',
+          package: PACKAGES[0],
+          storageMode: 'cloud',
+          storageBytes: 2048,
+          mediaCount: 2,
+          createdAt: '2026-01-01',
+          lastLogin: 'Just now',
+          logo: '',
+          banner: '',
+          brandColor: '#6366f1',
+        },
+      ],
+      selectedId: 'edutech-platform-id',
+      searchQuery: '',
+      statusFilter: 'all',
+      packageFilter: 'all',
+    })
+
+    render(
+      <BrowserRouter>
+        <SchoolsPage />
+      </BrowserRouter>
+    )
+
+    // Check that Super Admin Platform badge is displayed
+    expect(screen.getByText('Super Admin Platform')).toBeInTheDocument()
+
+    // Check that Protected Account badge is displayed instead of Delete button
+    expect(screen.getByText('Protected Account')).toBeInTheDocument()
+    expect(screen.queryByTitle('Delete Institution')).not.toBeInTheDocument()
+
+    // Calling delete on store must not delete it
+    useSuperAdminStore.getState().deleteInstitution('edutech-platform-id')
+    expect(useSuperAdminStore.getState().institutions).toHaveLength(1)
   })
 })

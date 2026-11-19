@@ -307,17 +307,32 @@ export const useSuperAdminStore = create<SuperAdminState>()(
       setInstitutions: (institutions) => set({ institutions }),
       deleteInstitution: (idOrSlug) =>
         set((state) => ({
-          institutions: state.institutions.filter(
-            (i) => i.id !== idOrSlug && i.slug !== idOrSlug && i.subdomain !== idOrSlug
-          ),
+          institutions: state.institutions.filter((i) => {
+            const isProtected =
+              i.slug === 'edutech' ||
+              i.subdomain === 'edutech' ||
+              i.id === 'edutech' ||
+              i.name.toLowerCase().includes('edutech platform')
+            if (isProtected && (i.id === idOrSlug || i.slug === idOrSlug || i.subdomain === idOrSlug)) {
+              return true
+            }
+            return i.id !== idOrSlug && i.slug !== idOrSlug && i.subdomain !== idOrSlug
+          }),
         })),
       toggleStatus: (id) =>
         set((state) => ({
-          institutions: state.institutions.map((i) =>
-            i.id === id
-              ? { ...i, status: i.status === 'active' ? 'suspended' : 'active' }
-              : i
-          ),
+          institutions: state.institutions.map((i) => {
+            if (i.id === id) {
+              const isProtected =
+                i.slug === 'edutech' ||
+                i.subdomain === 'edutech' ||
+                i.id === 'edutech' ||
+                i.name.toLowerCase().includes('edutech platform')
+              if (isProtected) return i
+              return { ...i, status: i.status === 'active' ? 'suspended' : 'active' }
+            }
+            return i
+          }),
         })),
       addPackage: (pkg) =>
         set((state) => {

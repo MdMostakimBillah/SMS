@@ -66,9 +66,38 @@ async function ensureSuperAdmin(prisma: PrismaClient) {
   }
 }
 
+async function ensureSuperAdminPlatformSchool(prisma: PrismaClient) {
+  try {
+    const existing = await prisma.school.findFirst({
+      where: { OR: [{ domain: 'edutech' }, { domain: 'main' }] },
+    })
+    if (!existing) {
+      await prisma.school.create({
+        data: {
+          name: 'EduTech Platform',
+          nameBn: 'এডুটেক প্ল্যাটফর্ম',
+          domain: 'edutech',
+          brandName: 'EduTech',
+          brandColor: '#6366f1',
+          status: 'active',
+          plan: 'enterprise',
+          paymentStatus: 'paid',
+          billingCycle: 'lifetime',
+          motto: 'Empowering Education with Intelligent Management',
+          mottoBn: 'স্মার্ট ও আধুনিক শিক্ষাব্যবস্থাপনা',
+        },
+      })
+      console.log(`[bootstrap] Default EduTech Platform account verified/created.`)
+    }
+  } catch (err) {
+    console.error('[bootstrap] Failed to verify EduTech platform school:', err instanceof Error ? err.message : err)
+  }
+}
+
 const prisma = new PrismaClient()
 await ensureDatabaseSchema(prisma)
 void ensureSuperAdmin(prisma)
+void ensureSuperAdminPlatformSchool(prisma)
 
 // Neon Database Heartbeat Keep-Alive:
 // Prevents Neon serverless compute from auto-suspending after 5 minutes of inactivity.

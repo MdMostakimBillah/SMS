@@ -309,6 +309,8 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         },
         select: {
           id: true,
+          name: true,
+          domain: true,
           storageMode: true,
           logo: true,
           banner: true,
@@ -426,6 +428,17 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
 
       // Privileged license/subscription fields: super_admin only
       if (req.userRole === 'super_admin') {
+        const domainLower = (existingSchool.domain || '').toLowerCase().trim()
+        const isSystemAccount =
+          domainLower === 'edutech' ||
+          domainLower === 'main' ||
+          existingSchool.name.toLowerCase().includes('edutech platform')
+        if (isSystemAccount && status && status !== 'active') {
+          return res.status(403).json({
+            error: 'Super Admin platform account must remain active and cannot be suspended',
+            code: 'SYSTEM_ACCOUNT_PROTECTED',
+          })
+        }
         if (status !== undefined) dataToUpdate.status = String(status)
         if (plan !== undefined) dataToUpdate.plan = String(plan)
         if (expiresAt !== undefined) {
@@ -512,6 +525,19 @@ export function schoolRouter(prisma: PrismaClient, jwtSecret: string, storage?: 
         return res.status(404).json({ error: 'Institution not found' })
       }
       const schoolId = school.id
+
+      // Super Admin platform account cannot be deleted
+      const domainLower = (school.domain || '').toLowerCase().trim()
+      const isSystemAccount =
+        domainLower === 'edutech' ||
+        domainLower === 'main' ||
+        school.name.toLowerCase().includes('edutech platform')
+      if (isSystemAccount) {
+        return res.status(403).json({
+          error: 'Super Admin platform account is permanently protected and cannot be deleted',
+          code: 'SYSTEM_ACCOUNT_PROTECTED',
+        })
+      }
 
       // Delete all stored media objects for this school in storage (R2/S3/local)
       const mediaList = await prisma.mediaObject.findMany({
