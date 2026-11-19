@@ -294,7 +294,7 @@ export const useNotificationStore = create<NotificationState>()(
             sender: 'EduTech Billing & Finance',
             senderRole: 'super_admin',
             read: false,
-            link: '/settings',
+            link: '/settings?panel=subscription-payment',
             createdAt: now.toISOString(),
           })
         }

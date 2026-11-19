@@ -20,7 +20,7 @@ export const SUPER_ADMIN_ROUTES: SuperAdminRoute[] = [
   { id: 'add-school', path: '/super-admin/add-school', label: 'Add School', labelBn: 'নতুন স্কুল', icon: 'crown', color: '#3b82f6', desc: 'Register', descBn: 'যোগ', functional: true },
   { id: 'notices', path: '/super-admin/admin/notifications', label: 'Notifications', labelBn: 'নোটিফিকেশন', icon: 'bell', color: '#f97316', desc: 'Broadcast to all institutions', descBn: 'সকল প্রতিষ্ঠানে বার্তা ও আপডেট', functional: true },
   { id: 'status', path: '/super-admin/status', label: 'Status', labelBn: 'স্ট্যাটাস', icon: 'globe', color: '#10b981', desc: 'App', descBn: 'সিস্টেম', functional: false },
-  { id: 'payments', path: '/super-admin/payments', label: 'Payments', labelBn: 'পেমেন্ট', icon: 'file-text', color: '#a855f7', desc: 'Institution', descBn: 'প্রতিষ্ঠান', functional: false },
+  { id: 'payments', path: '/super-admin/payments', label: 'Payments', labelBn: 'পেমেন্ট ও বিলিং', icon: 'credit-card', color: '#D12053', desc: 'bKash Received & Approvals', descBn: 'প্রতিষ্ঠানসমূহের বিকাশ পেমেন্ট', functional: true },
 ]
 
 export const SUPER_ADMIN_PATH_MAP: Record<string, string> = {

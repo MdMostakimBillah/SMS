@@ -61,6 +61,7 @@ const AccountingReportPage = lazyWithRetry(() => import('@/pages/accounting-repo
 const MessagesPage = lazyWithRetry(() => import('@/pages/messages'))
 const NoticeBoardPage = lazyWithRetry(() => import('@/pages/notice'))
 const NotificationsPage = lazyWithRetry(() => import('@/pages/notifications'))
+const SuperAdminPaymentsPage = lazyWithRetry(() => import('@/pages/super-admin/PaymentsPage'))
 const SettingsPage = lazyWithRetry(() => import('@/pages/settings'))
 
 function P({ name }: { name: string }) {
@@ -215,6 +216,7 @@ function AppContent() {
             <Route path="/super-admin/admin/messages" element={<F><MessagesPage /></F>} />
             <Route path="/super-admin/admin/notice" element={<F><NoticeBoardPage /></F>} />
             <Route path="/super-admin/admin/notifications" element={<F><NotificationsPage /></F>} />
+            <Route path="/super-admin/admin/payments" element={<F><SuperAdminPaymentsPage isBn={false} /></F>} />
             <Route path="/super-admin/admin/parent-portal" element={<P name="Parent Portal" />} />
             <Route path="/super-admin/admin/student-portal" element={<P name="Student Portal" />} />
             <Route path="/super-admin/admin/analytics" element={<P name="Analytics" />} />

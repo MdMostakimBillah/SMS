@@ -15,6 +15,7 @@ import SchoolsPage from './SchoolsPage'
 import CreateSchool from './CreateSchool'
 import SMSPage from './SMSPage'
 import PackagesPage from './PackagesPage'
+import PaymentsPage from './PaymentsPage'
 
 const iconMap: Record<string, React.ReactNode> = {
   lock: <Lock size={20} />,
@@ -128,7 +129,9 @@ export default function SuperAdminPage() {
 
       {currentPage === 'subscriptions' && <PackagesPage isBn={isBn} />}
 
-      {currentPage !== 'home' && currentPage !== 'account' && currentPage !== 'schools' && currentPage !== 'add-school' && currentPage !== 'sms' && currentPage !== 'subscriptions' && (() => {
+      {currentPage === 'payments' && <PaymentsPage isBn={isBn} />}
+
+      {currentPage !== 'home' && currentPage !== 'account' && currentPage !== 'schools' && currentPage !== 'add-school' && currentPage !== 'sms' && currentPage !== 'subscriptions' && currentPage !== 'payments' && (() => {
         const route = SUPER_ADMIN_ROUTES.find((r) => r.id === currentPage)
         if (!route) return null
         return <Placeholder title={isBn ? route.labelBn : route.label} icon={iconMapLg[route.icon]} color={route.color} isBn={isBn} />

@@ -987,6 +987,67 @@ export const notificationsApi = {
   },
 }
 
+export interface BkashConfig {
+  number: string
+  type: 'personal' | 'merchant' | 'agent'
+  qrCodeUrl?: string
+  instructions: string
+  instructionsBn: string
+  active: boolean
+}
+
+export interface InstitutionPayment {
+  id: string
+  schoolId: string
+  schoolName: string
+  schoolSlug: string
+  eiin?: string
+  packageName: string
+  amount: number
+  months: number
+  senderBkashNumber: string
+  trxId: string
+  paymentMethod: 'bkash'
+  status: 'pending' | 'approved' | 'rejected'
+  submittedAt: string
+  reviewedAt?: string
+  reviewedBy?: string
+  rejectionReason?: string
+  notes?: string
+}
+
+export const institutionPaymentsApi = {
+  getConfig: () => apiRequest<{ config: BkashConfig }>('/api/institution-payments/config'),
+  updateConfig: (config: Partial<BkashConfig>) =>
+    apiRequest<{ success: boolean; config: BkashConfig }>('/api/institution-payments/config', {
+      method: 'PUT',
+      body: config,
+    }),
+  getAll: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<{ payments: InstitutionPayment[] }>(`/api/institution-payments${q}`)
+  },
+  submit: (data: Partial<InstitutionPayment>) =>
+    apiRequest<{ success: boolean; payment: InstitutionPayment }>('/api/institution-payments', {
+      method: 'POST',
+      body: data,
+    }),
+  approve: (id: string) =>
+    apiRequest<{ success: boolean; payment: InstitutionPayment; school?: any }>(
+      `/api/institution-payments/${encodeURIComponent(id)}/approve`,
+      { method: 'POST' }
+    ),
+  reject: (id: string, reason: string) =>
+    apiRequest<{ success: boolean; payment: InstitutionPayment }>(
+      `/api/institution-payments/${encodeURIComponent(id)}/reject`,
+      {
+        method: 'POST',
+        body: { reason },
+      }
+    ),
+}
+
 export interface HRResponse {
   increments?: any[]
   bonuses?: any[]
