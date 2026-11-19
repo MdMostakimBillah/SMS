@@ -8,9 +8,6 @@ import {
   Moon,
   Monitor,
   Clock,
-  GraduationCap,
-  Wallet,
-  CreditCard,
   Settings,
   LogOut,
   HelpCircle,
@@ -23,7 +20,12 @@ import {
   Menu,
   Maximize,
   Minimize,
+  Info,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
 } from 'lucide-react'
+import { useNotificationStore } from '@/store/notificationStore'
 import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -38,47 +40,21 @@ import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
 import type { Theme, Language } from '@/types'
 
-const demoNotifications = [
-  {
-    id: 1,
-    icon: <GraduationCap size={13} />,
-    iconBg: 'var(--teal-light)',
-    iconColor: 'var(--teal)',
-    titleEn: 'New Student Admission',
-    titleBn: 'নতুন ছাত্র ভর্তি',
-    descEn: 'Fatima Ahmed admitted to Class 5-A',
-    descBn: 'ফাতিমা আহমেদ শ্রেণি ৫-এ ভর্তি হয়েছে',
-    time: '5 min ago',
-    timeBn: '৫ মিনিট আগে',
-    unread: true,
-  },
-  {
-    id: 2,
-    icon: <Wallet size={13} />,
-    iconBg: 'var(--green-light)',
-    iconColor: 'var(--green)',
-    titleEn: 'Salary Disbursed',
-    titleBn: 'বেতন প্রদান',
-    descEn: 'May 2026 salary processed',
-    descBn: 'মে ২০২৬ বেতন প্রক্রিয়া করা হয়েছে',
-    time: '1 hour ago',
-    timeBn: '১ ঘণ্টা আগে',
-    unread: true,
-  },
-  {
-    id: 3,
-    icon: <CreditCard size={13} />,
-    iconBg: 'var(--red-light)',
-    iconColor: 'var(--red)',
-    titleEn: 'Fee Due Reminder',
-    titleBn: 'ফি বকেয়',
-    descEn: '12 students have pending fees',
-    descBn: '১২ জনের বকেয় আছে',
-    time: '2 hours ago',
-    timeBn: '২ ঘণ্টা আগে',
-    unread: true,
-  },
-]
+const NOTIF_ICONS: Record<string, { icon: React.ReactNode; bg: string; color: string }> = {
+  info: { icon: <Info size={13} />, bg: 'color-mix(in srgb, var(--brand) 12%, transparent)', color: 'var(--brand)' },
+  success: { icon: <CheckCircle size={13} />, bg: 'var(--green-light)', color: 'var(--green)' },
+  warning: { icon: <AlertTriangle size={13} />, bg: 'var(--orange-light)', color: 'var(--orange)' },
+  error: { icon: <XCircle size={13} />, bg: 'var(--red-light)', color: 'var(--red)' },
+}
+
+function getTopbarTimeAgo(dateStr: string, isBn: boolean): string {
+  if (!dateStr) return isBn ? 'এইমাত্র' : 'Just now'
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+  if (diff < 60) return isBn ? 'এইমাত্র' : 'Just now'
+  if (diff < 3600) return isBn ? `${Math.floor(diff / 60)} মি. আগে` : `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return isBn ? `${Math.floor(diff / 3600)} ঘণ্টা আগে` : `${Math.floor(diff / 3600)}h ago`
+  return isBn ? `${Math.floor(diff / 86400)} দিন আগে` : `${Math.floor(diff / 86400)}d ago`
+}
 
 const THEME_OPTIONS: { value: Theme; labelKey: TranslationKey; icon: React.ReactNode }[] = [
   { value: 'light', labelKey: 'theme_light', icon: <Sun size={13} /> },
@@ -212,7 +188,10 @@ export default React.memo(function Topbar() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  const unreadNotifs = demoNotifications.filter((n) => n.unread).length
+  const notifications = useNotificationStore((s) => s.notifications)
+  const markRead = useNotificationStore((s) => s.markRead)
+  const markAllRead = useNotificationStore((s) => s.markAllRead)
+  const unreadNotifs = notifications.filter((n) => !n.read).length
   const unreadMsgs = demoMessages.reduce((sum, m) => sum + m.unread, 0)
   const panelStyle: React.CSSProperties = {
     position: 'absolute',
@@ -442,95 +421,155 @@ export default React.memo(function Topbar() {
                 >
                   {isBn ? 'নোটিফিকেশন' : 'Notifications'}
                 </span>
-                <span
-                  style={{
-                    fontSize: '0.6875rem',
-                    color: 'var(--brand)',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                  }}
-                >
-                  {isBn ? 'সব পড়ুন' : 'Mark all'}
-                </span>
-              </div>
-              <div style={{ overflowY: 'auto', maxHeight: '20.625rem' }}>
-                {demoNotifications.map((n) => (
-                  <div
-                    key={n.id}
+                {unreadNotifs > 0 && (
+                  <span
+                    onClick={() => markAllRead()}
                     style={{
-                      ...panelItem,
-                      background: n.unread ? 'var(--brand-light)' : 'transparent',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!n.unread) e.currentTarget.style.background = 'var(--bg-secondary)'
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!n.unread) e.currentTarget.style.background = 'transparent'
+                      fontSize: '0.6875rem',
+                      color: 'var(--brand)',
+                      cursor: 'pointer',
+                      fontWeight: 500,
                     }}
                   >
-                    <div
-                      style={{
-                        width: '1.875rem',
-                        height: '1.875rem',
-                        borderRadius: '0.5rem',
-                        background: n.iconBg,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        color: n.iconColor,
-                      }}
-                    >
-                      {n.icon}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          color: 'var(--text-primary)',
-                          marginBottom: '0.125rem',
-                        }}
-                      >
-                        {isBn ? n.titleBn : n.titleEn}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.6875rem',
-                          color: 'var(--text-secondary)',
-                          lineHeight: 1.4,
-                          marginBottom: '0.125rem',
-                        }}
-                      >
-                        {isBn ? n.descBn : n.descEn}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.625rem',
-                          color: 'var(--text-muted)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                        }}
-                      >
-                        <Clock size={10} />
-                        {isBn ? n.timeBn : n.time}
-                      </div>
-                    </div>
-                    {n.unread && (
-                      <div
-                        style={{
-                          width: '0.375rem',
-                          height: '0.375rem',
-                          borderRadius: '50%',
-                          background: 'var(--brand)',
-                          flexShrink: 0,
-                          marginTop: '0.25rem',
-                        }}
-                      />
-                    )}
+                    {isBn ? 'সব পড়ুন' : 'Mark all read'}
+                  </span>
+                )}
+              </div>
+              <div style={{ overflowY: 'auto', maxHeight: '18.75rem' }}>
+                {notifications.length === 0 ? (
+                  <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                    {isBn ? 'কোনো নোটিফিকেশন নেই' : 'No notifications'}
                   </div>
-                ))}
+                ) : (
+                  notifications.slice(0, 10).map((n) => {
+                    const cfg = NOTIF_ICONS[n.type] || NOTIF_ICONS.info
+                    const titleText = (isBn ? n.titleBn || n.title : n.title || n.titleBn) || ''
+                    const msgText = (isBn ? n.messageBn || n.message : n.message || n.messageBn) || ''
+                    const timeText = getTopbarTimeAgo(n.createdAt, isBn)
+
+                    return (
+                      <div
+                        key={n.id}
+                        onClick={() => {
+                          if (!n.read) markRead(n.id)
+                          setNotifOpen(false)
+                          if (n.link) {
+                            if (n.link.startsWith('/')) {
+                              if (navBase && !n.link.startsWith(navBase) && !n.link.startsWith('/i/') && !n.link.startsWith('/super-admin/')) {
+                                navigate(`${navBase}${n.link}`)
+                              } else {
+                                navigate(n.link)
+                              }
+                            } else {
+                              navigate(n.link)
+                            }
+                          } else {
+                            navigate(`${navBase}/notifications`)
+                          }
+                        }}
+                        style={{
+                          ...panelItem,
+                          background: !n.read ? 'color-mix(in srgb, var(--brand) 8%, transparent)' : 'transparent',
+                          cursor: 'pointer',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (n.read) e.currentTarget.style.background = 'var(--bg-secondary)'
+                        }}
+                        onMouseLeave={(e) => {
+                          if (n.read) e.currentTarget.style.background = 'transparent'
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '1.875rem',
+                            height: '1.875rem',
+                            borderRadius: '0.5rem',
+                            background: cfg.bg,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            color: cfg.color,
+                          }}
+                        >
+                          {cfg.icon}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: !n.read ? 600 : 500,
+                              color: 'var(--text-primary)',
+                              marginBottom: '0.125rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {titleText}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '0.6875rem',
+                              color: 'var(--text-secondary)',
+                              lineHeight: 1.3,
+                              marginBottom: '0.125rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                            }}
+                          >
+                            {msgText}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: '0.625rem',
+                              color: 'var(--text-muted)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                            }}
+                          >
+                            <Clock size={10} />
+                            {timeText}
+                          </div>
+                        </div>
+                        {!n.read && (
+                          <div
+                            style={{
+                              width: '0.375rem',
+                              height: '0.375rem',
+                              borderRadius: '50%',
+                              background: 'var(--brand)',
+                              flexShrink: 0,
+                              marginTop: '0.25rem',
+                            }}
+                          />
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+              <div
+                onClick={() => {
+                  setNotifOpen(false)
+                  navigate(`${navBase}/notifications`)
+                }}
+                style={{
+                  padding: '0.625rem',
+                  textAlign: 'center',
+                  borderTop: '1px solid var(--border)',
+                  background: 'var(--bg-secondary)',
+                  color: 'var(--brand)',
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {isBn ? 'সকল নোটিফিকেশন দেখুন →' : 'View all notifications →'}
               </div>
             </div>
           )}

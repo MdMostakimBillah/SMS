@@ -193,6 +193,7 @@ export function vaultPathToKey(
     else if (base === 'syllabus' || base === 'syllabi') storeBase = 'syllabus'
     else if (base === 'assignments' || base === 'assignment' || base === 'submissions') storeBase = 'assignments'
     else if (base === 'online' || base === 'online_classes' || base === 'online-classes') storeBase = 'online'
+    else if (base === 'notifications' || base === 'notification_entries') storeBase = 'notifications'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }
@@ -2225,6 +2226,34 @@ export function normalizeVaultJsonForStore(
       syncError: null,
     }
     return JSON.stringify({ state: finalState, version: existingVersion || 1 })
+  }
+
+  if (key.includes('notifications')) {
+    const inner = (parsed && typeof parsed === 'object' && parsed.state) ? parsed.state : parsed
+    const rawNotifications = Array.isArray(inner)
+      ? inner
+      : (Array.isArray(inner?.notifications) ? inner.notifications : [])
+
+    const normalized = rawNotifications.map((n: any, idx: number) => ({
+      id: String(n.id || `NTF-${Date.now()}-${idx}`).trim(),
+      title: String(n.title || '').trim(),
+      titleBn: String(n.titleBn || n.title || '').trim(),
+      message: String(n.message || '').trim(),
+      messageBn: String(n.messageBn || n.message || '').trim(),
+      type: ['info', 'warning', 'success', 'error'].includes(n.type) ? n.type : 'info',
+      read: Boolean(n.read),
+      link: n.link ? String(n.link) : undefined,
+      createdAt: String(n.createdAt || new Date().toISOString()),
+    }))
+
+    const finalState = {
+      ...existingState,
+      notifications: normalized,
+      serverSynced: true,
+      syncing: false,
+      syncError: null,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion || 2 })
   }
 
   // Fallback generic handler: ensure state wrapper exists

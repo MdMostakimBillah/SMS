@@ -954,6 +954,33 @@ export const expensesApi = {
   },
 }
 
+export interface NotificationsResponse {
+  storageMode?: string
+  notifications?: any[]
+}
+
+export const notificationsApi = {
+  get: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<NotificationsResponse>(`/api/notifications${q}`)
+  },
+  update: (data: {
+    notifications?: any[]
+    schoolId?: string
+  }) => {
+    const fallbackSlug = typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined
+    const body = {
+      ...data,
+      schoolId: data.schoolId || fallbackSlug || undefined,
+    }
+    return apiRequest<{ success: boolean; count?: number } & NotificationsResponse>('/api/notifications', {
+      method: 'PUT',
+      body,
+    })
+  },
+}
+
 export interface HRResponse {
   increments?: any[]
   bonuses?: any[]

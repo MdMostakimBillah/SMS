@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
+import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { notificationsApi } from '@/lib/api'
 
 export type NotificationType = 'info' | 'warning' | 'success' | 'error'
 
@@ -22,104 +26,212 @@ export function notificationId(): string {
   return `NTF-${Date.now()}-${counter}`
 }
 
-const SEED_NOTIFICATIONS: Notification[] = [
-  {
-    id: 'NTF-SEED-001',
-    title: 'Exam Results Published',
-    titleBn: 'পরীক্ষার ফলাফল প্রকাশিত',
-    message: 'The mid-term exam results for Class 10 have been published. Check the exam dashboard for details.',
-    messageBn: 'দশম শ্রেণির মধ্যবর্তী পরীক্ষার ফলাফল প্রকাশিত হয়েছে। বিস্তারিত জানতে পরীক্ষার ড্যাশবোর্ড দেখুন।',
-    type: 'success',
-    read: false,
-    link: '/exams',
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: 'NTF-SEED-002',
-    title: 'Fee Payment Overdue',
-    titleBn: 'বেতন পরিশোধের মেয়াদ শেষ',
-    message: 'You have 3 pending fee payments. Please clear them before the due date.',
-    messageBn: 'আপনার ৩টি বকেয়া ফি পরিশোধ বাকি আছে। দয়া করে নির্ধারিত তারিখের মধ্যে পরিশোধ করুন।',
-    type: 'warning',
-    read: false,
-    link: '/finance',
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-  },
-  {
-    id: 'NTF-SEED-003',
-    title: 'New Admission Registered',
-    titleBn: 'নতুন ভর্তি নিবন্ধিত',
-    message: 'A new student "Kabir Ahmed" has been admitted to Class 8, Section A.',
-    messageBn: 'একজন নতুন শিক্ষার্থী "কাবির আহমেদ" অষ্টম শ্রেণি, বিভাগ ক-এ ভর্তি হয়েছে।',
-    type: 'info',
-    read: false,
-    link: '/students',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'NTF-SEED-004',
-    title: 'System Maintenance',
-    titleBn: 'সিস্টেম রক্ষণাবেক্ষণ',
-    message: 'Scheduled maintenance on Sunday 2:00 AM - 4:00 AM. The system may be temporarily unavailable.',
-    messageBn: 'রবিবার রাত ২টা - ৪টা নির্ধারিত রক্ষণাবেক্ষণ। সিস্টেম সাময়িকভাবে অনুপলব্ধ থাকতে পারে।',
-    type: 'warning',
-    read: true,
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-  },
-  {
-    id: 'NTF-SEED-005',
-    title: 'Backup Completed',
-    titleBn: 'ব্যাকআপ সম্পন্ন',
-    message: 'Daily database backup completed successfully.',
-    messageBn: 'দৈনিক ডাটাবেস ব্যাকআপ সফলভাবে সম্পন্ন হয়েছে।',
-    type: 'success',
-    read: true,
-    createdAt: new Date(Date.now() - 604800000).toISOString(),
-  },
-  {
-    id: 'NTF-SEED-006',
-    title: 'Attendance Alert',
-    titleBn: 'উপস্থিতি সতর্কতা',
-    message: 'Class 9 Section B had 15% absence today. Please review attendance records.',
-    messageBn: 'নবম শ্রেণি বিভাগ খ-তে আজ ১৫% অনুপস্থিতি ছিল। অনুগ্রহ করে উপস্থিতি রেকর্ড পর্যালোচনা করুন।',
-    type: 'error',
-    read: false,
-    link: '/attendance',
-    createdAt: new Date(Date.now() - 43200000).toISOString(),
-  },
-]
+export const SEED_NOTIFICATIONS: Notification[] = []
+
+export const LEGACY_SEED_NOTIFICATION_IDS = new Set([
+  'NTF-SEED-001',
+  'NTF-SEED-002',
+  'NTF-SEED-003',
+  'NTF-SEED-004',
+  'NTF-SEED-005',
+  'NTF-SEED-006',
+])
 
 interface NotificationState {
   notifications: Notification[]
+
+  serverSynced: boolean
+  syncing: boolean
+  syncError: string | null
+
+  syncFromServer: (slugOrId?: string) => Promise<void>
+  syncToServer: () => Promise<void>
+
   addNotification: (n: Notification) => void
+  updateNotification: (id: string, updates: Partial<Notification>) => void
   markRead: (id: string) => void
+  markUnread: (id: string) => void
   markAllRead: () => void
   deleteNotification: (id: string) => void
   clearAll: () => void
 }
 
+let serverSyncTimer: any = null
+function queueServerSync(get: () => NotificationState) {
+  try {
+    if (typeof window === 'undefined') return
+    if (isLocalComputerMode()) return
+    const token = localStorage.getItem('edutech_auth_token') || sessionStorage.getItem('edutech_auth_token')
+    if (!token) return
+    if (serverSyncTimer) clearTimeout(serverSyncTimer)
+    serverSyncTimer = setTimeout(async () => {
+      try {
+        const s = get()
+        if (s.notifications.length === 0 && !isRecentExplicitDelete()) {
+          return
+        }
+        await notificationsApi.update({
+          notifications: s.notifications,
+        })
+      } catch {
+        // Warning only
+      }
+    }, 400)
+  } catch {
+    /* ignore */
+  }
+}
+
+function onStateMutated(get: () => NotificationState) {
+  flushPendingWrites()
+  void flushVaultWrites()
+  queueServerSync(get)
+}
+
 export const useNotificationStore = create<NotificationState>()(
   persist(
-    (set) => ({
-      notifications: SEED_NOTIFICATIONS,
+    (set, get) => ({
+      notifications: [],
 
-      addNotification: (n) => set((state) => ({ notifications: [n, ...state.notifications] })),
-      markRead: (id) =>
-        set((state) => ({ notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) })),
-      markAllRead: () =>
-        set((state) => ({ notifications: state.notifications.map((n) => ({ ...n, read: true })) })),
-      deleteNotification: (id) =>
-        set((state) => ({ notifications: state.notifications.filter((n) => n.id !== id) })),
-      clearAll: () => set({ notifications: [] }),
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
+
+      syncFromServer: async (slugOrId?: string) => {
+        if (isLocalComputerMode()) {
+          set({ serverSynced: true, syncing: false })
+          return
+        }
+        set({ syncing: true, syncError: null })
+        try {
+          const res = await notificationsApi.get(slugOrId)
+          if (res) {
+            const hasNotifs = Array.isArray(res.notifications) && res.notifications.length > 0
+            const state = get()
+
+            if (hasNotifs) {
+              set({
+                notifications: res.notifications!,
+                serverSynced: true,
+                syncing: false,
+                syncError: null,
+              })
+            } else if (state.notifications.length > 0) {
+              await notificationsApi.update({
+                notifications: state.notifications,
+                schoolId: slugOrId,
+              })
+              set({ serverSynced: true, syncing: false, syncError: null })
+            } else {
+              set({ serverSynced: true, syncing: false, syncError: null })
+            }
+          } else {
+            set({ serverSynced: true, syncing: false, syncError: null })
+          }
+        } catch (err: any) {
+          set({ syncing: false, syncError: err?.message || 'Failed to sync notifications' })
+        }
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        set({ syncing: true, syncError: null })
+        try {
+          const state = get()
+          await notificationsApi.update({
+            notifications: state.notifications,
+          })
+          set({ syncing: false, serverSynced: true, syncError: null })
+        } catch (err: any) {
+          set({ syncing: false, syncError: err?.message || 'Failed to push notifications' })
+        }
+      },
+
+      addNotification: (n) => {
+        set((state) => ({ notifications: [n, ...state.notifications] }))
+        onStateMutated(get)
+      },
+      updateNotification: (id, updates) => {
+        set((state) => ({
+          notifications: state.notifications.map((n) => (n.id === id ? { ...n, ...updates } : n)),
+        }))
+        onStateMutated(get)
+      },
+      markRead: (id) => {
+        set((state) => ({
+          notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
+        }))
+        onStateMutated(get)
+      },
+      markUnread: (id) => {
+        set((state) => ({
+          notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: false } : n)),
+        }))
+        onStateMutated(get)
+      },
+      markAllRead: () => {
+        set((state) => ({
+          notifications: state.notifications.map((n) => ({ ...n, read: true })),
+        }))
+        onStateMutated(get)
+      },
+      deleteNotification: (id) => {
+        markExplicitUserDelete()
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+        }))
+        onStateMutated(get)
+      },
+      clearAll: () => {
+        markExplicitUserDelete()
+        set({ notifications: [] })
+        onStateMutated(get)
+      },
     }),
     {
       name: 'edutech-notifications',
       storage: createNamespacedStorage('edutech-notifications'),
-      version: 1,
+      version: 2,
+      migrate: (persistedState: any) => {
+        if (!persistedState) return persistedState
+        const list = Array.isArray(persistedState.notifications) ? persistedState.notifications : []
+        const cleaned = list.filter((n: any) => !LEGACY_SEED_NOTIFICATION_IDS.has(n.id))
+        return {
+          ...persistedState,
+          notifications: cleaned,
+        }
+      },
     }
   )
 )
 
 registerStoreReset(() => {
-  useNotificationStore.setState({ notifications: [] })
+  useNotificationStore.setState({
+    notifications: [],
+    serverSynced: false,
+    syncing: false,
+    syncError: null,
+  })
+})
+
+registerStoreLoad(() => {
+  const slug = sessionStorage.getItem('edutech_inst_slug')
+  if (!slug) return
+  try {
+    const raw = localStorage.getItem(`edutech-notifications_${slug}`)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed.state) {
+        const state = parsed.state
+        const list = Array.isArray(state.notifications) ? state.notifications : []
+        const cleaned = list.filter((n: Notification) => !LEGACY_SEED_NOTIFICATION_IDS.has(n.id))
+        useNotificationStore.setState({
+          ...state,
+          notifications: cleaned,
+        })
+      }
+    }
+  } catch {
+    /* ignore */
+  }
 })

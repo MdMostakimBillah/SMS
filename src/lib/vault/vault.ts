@@ -884,7 +884,7 @@ async function hydrateFromVault(): Promise<number> {
   }
 
   // Load primary store files first so individual slice files cleanly overlay on top
-  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json', 'transport.json', 'hostel.json', 'others-income.json', 'expenses.json', 'assignments.json'])
+  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json', 'transport.json', 'hostel.json', 'others-income.json', 'expenses.json', 'assignments.json', 'notifications.json'])
   const sortedEntries = Array.from(jsonGroups.entries()).sort(([slotA], [slotB]) => {
     const isPriA = PRIMARY_SLOTS.has(slotA) ? 0 : 1
     const isPriB = PRIMARY_SLOTS.has(slotB) ? 0 : 1
@@ -1313,6 +1313,21 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
         const ePretty = JSON.stringify(expenses, null, 2)
         await writeVaultFile(`${slug}/expense_entries.json`, ePretty)
         await writeVaultFile('expense_entries.json', ePretty)
+      }
+    } catch { /* ignore */ }
+  }
+
+  if (path === `${slug}/notifications.json`) {
+    await writeVaultFile('notifications.json', prettifyJson(rawJson))
+
+    try {
+      const parsed = JSON.parse(rawJson)
+      const state = parsed?.state ?? parsed
+      const notifications = state.notifications ?? []
+      if (notifications.length > 0 || isRecentExplicitDelete()) {
+        const nPretty = JSON.stringify(notifications, null, 2)
+        await writeVaultFile(`${slug}/notifications.json`, nPretty)
+        await writeVaultFile('notifications.json', nPretty)
       }
     } catch { /* ignore */ }
   }

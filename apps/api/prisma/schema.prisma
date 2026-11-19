@@ -58,6 +58,7 @@ model School {
   attendanceData String? @default("{}") @map("attendance_data")
   devicesData String? @default("{}") @map("devices_data")
   libraryData String? @default("{}") @map("library_data")
+  notificationsData String? @default("[]") @map("notifications_data")
   status      String   @default("active")
   plan        String   @default("basic")
   expiresAt   DateTime? @map("expires_at")
