@@ -24,6 +24,9 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
+  Sparkles,
+  CreditCard,
+  GraduationCap,
 } from 'lucide-react'
 import { useNotificationStore } from '@/store/notificationStore'
 import { useAppStore } from '@/store/appStore'
@@ -45,6 +48,9 @@ const NOTIF_ICONS: Record<string, { icon: React.ReactNode; bg: string; color: st
   success: { icon: <CheckCircle size={13} />, bg: 'var(--green-light)', color: 'var(--green)' },
   warning: { icon: <AlertTriangle size={13} />, bg: 'var(--orange-light)', color: 'var(--orange)' },
   error: { icon: <XCircle size={13} />, bg: 'var(--red-light)', color: 'var(--red)' },
+  system: { icon: <Sparkles size={13} />, bg: 'var(--teal-light)', color: 'var(--teal)' },
+  billing: { icon: <CreditCard size={13} />, bg: 'var(--amber-light)', color: 'var(--amber)' },
+  academic: { icon: <GraduationCap size={13} />, bg: 'color-mix(in srgb, var(--brand) 12%, transparent)', color: 'var(--brand)' },
 }
 
 function getTopbarTimeAgo(dateStr: string, isBn: boolean): string {
@@ -191,6 +197,12 @@ export default React.memo(function Topbar() {
   const notifications = useNotificationStore((s) => s.notifications)
   const markRead = useNotificationStore((s) => s.markRead)
   const markAllRead = useNotificationStore((s) => s.markAllRead)
+  const checkAndGenerateSystemNotifications = useNotificationStore((s) => s.checkAndGenerateSystemNotifications)
+
+  useEffect(() => {
+    checkAndGenerateSystemNotifications()
+  }, [checkAndGenerateSystemNotifications])
+
   const unreadNotifs = notifications.filter((n) => !n.read).length
   const unreadMsgs = demoMessages.reduce((sum, m) => sum + m.unread, 0)
   const panelStyle: React.CSSProperties = {
@@ -442,7 +454,7 @@ export default React.memo(function Topbar() {
                   </div>
                 ) : (
                   notifications.slice(0, 10).map((n) => {
-                    const cfg = NOTIF_ICONS[n.type] || NOTIF_ICONS.info
+                    const cfg = (n.category && NOTIF_ICONS[n.category]) || NOTIF_ICONS[n.type] || NOTIF_ICONS.info
                     const titleText = (isBn ? n.titleBn || n.title : n.title || n.titleBn) || ''
                     const msgText = (isBn ? n.messageBn || n.message : n.message || n.messageBn) || ''
                     const timeText = getTopbarTimeAgo(n.createdAt, isBn)
@@ -495,18 +507,36 @@ export default React.memo(function Topbar() {
                           {cfg.icon}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              fontSize: '0.75rem',
-                              fontWeight: !n.read ? 600 : 500,
-                              color: 'var(--text-primary)',
-                              marginBottom: '0.125rem',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {titleText}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.125rem' }}>
+                            <div
+                              style={{
+                                fontSize: '0.75rem',
+                                fontWeight: !n.read ? 600 : 500,
+                                color: 'var(--text-primary)',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                flex: 1,
+                              }}
+                            >
+                              {titleText}
+                            </div>
+                            {n.category && (
+                              <span
+                                style={{
+                                  fontSize: '0.5625rem',
+                                  fontWeight: 600,
+                                  padding: '1px 4px',
+                                  borderRadius: '4px',
+                                  background: cfg.bg,
+                                  color: cfg.color,
+                                  textTransform: 'uppercase',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {n.category}
+                              </span>
+                            )}
                           </div>
                           <div
                             style={{

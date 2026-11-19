@@ -979,6 +979,12 @@ export const notificationsApi = {
       body,
     })
   },
+  broadcast: (notification: any) => {
+    return apiRequest<{ success: boolean; notification?: any; schoolsCount?: number }>('/api/notifications/broadcast', {
+      method: 'POST',
+      body: { notification },
+    })
+  },
 }
 
 export interface HRResponse {

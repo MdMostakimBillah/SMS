@@ -126,5 +126,73 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
+  /**
+   * POST /api/notifications/broadcast
+   * Broadcast a system/update notification to all active institutions (super_admin only).
+   */
+  router.post('/broadcast', requireAuth(prisma, jwtSecret), async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      if (req.userRole !== 'super_admin') {
+        return res.status(403).json({ error: 'Only super admin can broadcast notifications to all institutions' })
+      }
+
+      const raw = req.body.notification ?? req.body
+      if (!raw || (!raw.title && !raw.titleBn)) {
+        return res.status(400).json({ error: 'Notification title is required' })
+      }
+
+      const newNotif = {
+        id: raw.id || `NTF-SYS-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        title: raw.title || raw.titleBn,
+        titleBn: raw.titleBn || raw.title,
+        message: raw.message || raw.messageBn || '',
+        messageBn: raw.messageBn || raw.message || '',
+        type: raw.type || 'info',
+        category: raw.category || 'system',
+        link: raw.link || undefined,
+        sender: raw.sender || 'Super Admin',
+        senderRole: 'super_admin',
+        read: false,
+        createdAt: raw.createdAt || new Date().toISOString(),
+      }
+
+      const schools = await prisma.school.findMany({
+        where: { status: 'active' },
+        select: { id: true, storageMode: true, notificationsData: true },
+      })
+
+      let broadcastedCount = 0
+      for (const s of schools) {
+        if (s.storageMode === 'local_computer') continue
+
+        let existing: any[] = []
+        try {
+          if (s.notificationsData) {
+            const parsed = typeof s.notificationsData === 'string' ? JSON.parse(s.notificationsData) : s.notificationsData
+            existing = Array.isArray(parsed) ? parsed : (Array.isArray(parsed?.notifications) ? parsed.notifications : [])
+          }
+        } catch {
+          existing = []
+        }
+
+        const merged = [newNotif, ...existing.filter((item: any) => item.id !== newNotif.id)]
+        await prisma.school.update({
+          where: { id: s.id },
+          data: { notificationsData: JSON.stringify(merged) },
+        })
+        broadcastedCount++
+      }
+
+      res.json({
+        success: true,
+        notification: newNotif,
+        schoolsCount: broadcastedCount,
+      })
+    } catch (err) {
+      console.error('[notifications] broadcast failed:', err instanceof Error ? err.message : err)
+      res.status(500).json({ error: 'Internal server error' })
+    }
+  })
+
   return router
 }

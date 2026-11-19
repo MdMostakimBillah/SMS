@@ -7,6 +7,7 @@ import { isLocalComputerMode } from '@/lib/storageMode'
 import { notificationsApi } from '@/lib/api'
 
 export type NotificationType = 'info' | 'warning' | 'success' | 'error'
+export type NotificationCategory = 'system' | 'billing' | 'academic' | 'general'
 
 export interface Notification {
   id: string
@@ -15,8 +16,12 @@ export interface Notification {
   message: string
   messageBn: string
   type: NotificationType
+  category?: NotificationCategory
   read: boolean
   link?: string
+  sender?: string
+  senderRole?: string
+  broadcastToAll?: boolean
   createdAt: string
 }
 
@@ -54,6 +59,9 @@ interface NotificationState {
   markAllRead: () => void
   deleteNotification: (id: string) => void
   clearAll: () => void
+
+  broadcastNotification: (n: Notification) => Promise<void>
+  checkAndGenerateSystemNotifications: (slug?: string) => void
 }
 
 let serverSyncTimer: any = null
@@ -186,6 +194,107 @@ export const useNotificationStore = create<NotificationState>()(
         markExplicitUserDelete()
         set({ notifications: [] })
         onStateMutated(get)
+      },
+
+      broadcastNotification: async (n) => {
+        // 1. Add locally
+        set((state) => ({ notifications: [n, ...state.notifications] }))
+        onStateMutated(get)
+
+        // 2. Broadcast to all known school storage in localStorage
+        try {
+          if (typeof window !== 'undefined') {
+            const rawInsts = localStorage.getItem('edutech-institutions')
+            let instList: any[] = []
+            if (rawInsts) {
+              try {
+                const parsed = JSON.parse(rawInsts)
+                instList = Array.isArray(parsed) ? parsed : (parsed.state?.institutions || [])
+              } catch { /* ignore */ }
+            }
+            for (const inst of instList) {
+              const slug = inst.slug || inst.id
+              if (!slug) continue
+              const key = `edutech-notifications_${slug}`
+              try {
+                const raw = localStorage.getItem(key)
+                let existingState: any = { notifications: [] }
+                if (raw) {
+                  const p = JSON.parse(raw)
+                  existingState = p.state || existingState
+                }
+                const currentNotifs = Array.isArray(existingState.notifications) ? existingState.notifications : []
+                const merged = [n, ...currentNotifs.filter((item: any) => item.id !== n.id)]
+                localStorage.setItem(key, JSON.stringify({ state: { ...existingState, notifications: merged }, version: 2 }))
+              } catch { /* ignore */ }
+            }
+          }
+        } catch { /* ignore */ }
+
+        // 3. Server API broadcast
+        try {
+          await notificationsApi.broadcast(n)
+        } catch { /* ignore */ }
+      },
+
+      checkAndGenerateSystemNotifications: (slugOrId?: string) => {
+        const slug = slugOrId || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+        if (!slug || slug === 'super-admin') return
+
+        const state = get()
+        const now = new Date()
+        const year = now.getFullYear()
+        const month = now.getMonth() + 1
+        const monthStr = `${year}-${String(month).padStart(2, '0')}`
+
+        // 1. Monthly subscription payment reminder
+        const billingNotifId = `NTF-BILLING-${monthStr}-${slug}`
+        const alreadyHasBilling = state.notifications.some((n) => n.id === billingNotifId)
+
+        const toAdd: Notification[] = []
+
+        if (!alreadyHasBilling) {
+          toAdd.push({
+            id: billingNotifId,
+            title: 'Monthly Subscription Payment Reminder',
+            titleBn: 'মাসিক সাবস্ক্রিপশন ফি পরিশোধের তাগিদ',
+            message: `Your institution's software subscription payment for ${monthStr} is scheduled. Please ensure prompt clearance to keep all services running smoothly.`,
+            messageBn: `${monthStr} মাসের জন্য আপনার প্রতিষ্ঠানের সফটওয়্যার সাবস্ক্রিপশন ফি পরিশোধের সময় হয়েছে। নিরবচ্ছিন্ন সেবার জন্য অনুগ্রহ করে পরিশোধ সম্পন্ন করুন।`,
+            type: 'warning',
+            category: 'billing',
+            sender: 'EduTech Billing & Finance',
+            senderRole: 'super_admin',
+            read: false,
+            link: '/settings',
+            createdAt: now.toISOString(),
+          })
+        }
+
+        // 2. System update announcement
+        const systemUpdateId = 'NTF-SYS-UPDATE-V24'
+        const alreadyHasSystemUpdate = state.notifications.some((n) => n.id === systemUpdateId)
+
+        if (!alreadyHasSystemUpdate) {
+          toAdd.push({
+            id: systemUpdateId,
+            title: 'Software System Update: Version 2.4 Released',
+            titleBn: 'সফটওয়্যার সিস্টেম আপডেট: সংস্করণ ২.৪ চালু হয়েছে',
+            message: 'Super Admin has deployed system updates: Enhanced communications, automatic monthly billing reminders, and local PC storage synchronization.',
+            messageBn: 'সুপার অ্যাডমিন নতুন সিস্টেম আপডেট প্রয়োগ করেছেন: আধুনিক যোগাযোগ কেন্দ্র, স্বয়ংক্রিয় মাসিক বিলিং সতর্কতা এবং লোকাল পিসি স্টোরেজ সিঙ্ক।',
+            type: 'info',
+            category: 'system',
+            sender: 'Super Admin (EduTech Core)',
+            senderRole: 'super_admin',
+            read: false,
+            link: '/dashboard',
+            createdAt: new Date(now.getTime() - 3600000).toISOString(),
+          })
+        }
+
+        if (toAdd.length > 0) {
+          set((s) => ({ notifications: [...toAdd, ...s.notifications] }))
+          onStateMutated(get)
+        }
       },
     }),
     {

@@ -1,24 +1,52 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Bell, CheckCircle, AlertTriangle, Info, XCircle, Trash2, CheckCheck, Plus, Search, Eye, EyeOff, Edit3 } from 'lucide-react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import {
+  Bell,
+  Search,
+  Plus,
+  Trash2,
+  CheckCheck,
+  ArrowLeft,
+  Clock,
+  Sparkles,
+  CreditCard,
+  GraduationCap,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  Edit3,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  XCircle,
+} from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useNotificationStore, type Notification, type NotificationType } from '@/store/notificationStore'
+import { useNotificationStore, type Notification, type NotificationType, type NotificationCategory } from '@/store/notificationStore'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { getNavBase, getSuperAdminViewNavBase } from '@/lib/navUtils'
+import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { NotificationModal } from './modals/NotificationModal'
-import { NotificationDetailModal } from './modals/NotificationDetailModal'
 
-const TYPE_CONFIG: Record<NotificationType, { icon: typeof Bell; color: string; bg: string; border: string; label: string; labelBn: string }> = {
-  info: { icon: Info, color: 'var(--brand)', bg: 'color-mix(in srgb, var(--brand) 12%, transparent)', border: 'var(--brand)', label: 'Info', labelBn: 'তথ্য' },
-  success: { icon: CheckCircle, color: 'var(--green)', bg: 'var(--green-light)', border: 'var(--green)', label: 'Success', labelBn: 'সফল' },
-  warning: { icon: AlertTriangle, color: 'var(--orange)', bg: 'var(--orange-light)', border: 'var(--orange)', label: 'Warning', labelBn: 'সতর্কতা' },
-  error: { icon: XCircle, color: 'var(--red)', bg: 'var(--red-light)', border: 'var(--red)', label: 'Alert', labelBn: 'জরুরি' },
+const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
+
+const TYPE_CONFIG: Record<NotificationType, { icon: typeof Info; color: string; bg: string; label: string; labelBn: string }> = {
+  info: { icon: Info, color: 'var(--brand)', bg: 'color-mix(in srgb, var(--brand) 12%, transparent)', label: 'Info', labelBn: 'তথ্য' },
+  success: { icon: CheckCircle2, color: 'var(--green)', bg: 'var(--green-light)', label: 'Success', labelBn: 'সফল' },
+  warning: { icon: AlertTriangle, color: 'var(--orange)', bg: 'var(--orange-light)', label: 'Warning', labelBn: 'সতর্কতা' },
+  error: { icon: XCircle, color: 'var(--red)', bg: 'var(--red-light)', label: 'Alert', labelBn: 'জরুরি' },
+}
+
+const CATEGORY_CONFIG: Record<NotificationCategory, { label: string; labelBn: string; color: string }> = {
+  system: { label: 'System Update', labelBn: 'সিস্টেম আপডেট', color: 'var(--teal)' },
+  billing: { label: 'Monthly Payment & Billing', labelBn: 'পেমেন্ট ও বিলিং', color: 'var(--amber)' },
+  academic: { label: 'Academic', labelBn: 'একাডেমিক', color: 'var(--brand)' },
+  general: { label: 'General', labelBn: 'সাধারণ', color: 'var(--text-muted)' },
 }
 
 export default function NotificationsPage() {
@@ -47,55 +75,83 @@ export default function NotificationsPage() {
   const deleteNotification = useNotificationStore((s) => s.deleteNotification)
   const clearAll = useNotificationStore((s) => s.clearAll)
   const syncFromServer = useNotificationStore((s) => s.syncFromServer)
+  const checkAndGenerateSystemNotifications = useNotificationStore((s) => s.checkAndGenerateSystemNotifications)
 
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filterType, setFilterType] = useState<string>('')
-  const [filterRead, setFilterRead] = useState<'all' | 'read' | 'unread'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'system' | 'billing' | 'academic' | 'unread'>('all')
+  const [search, setSearch] = useState('')
+  const [viewNotification, setViewNotification] = useState<Notification | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-
-  // Modals state
-  const [composeModalOpen, setComposeModalOpen] = useState(false)
+  const [showCompose, setShowCompose] = useState(false)
   const [editingNotification, setEditingNotification] = useState<Notification | null>(null)
-  const [detailModalNotification, setDetailModalNotification] = useState<Notification | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Pagination
   const [page, setPage] = useState(1)
-  const [perPage, setPerPage] = useState(12)
+  const [perPage, setPerPage] = useState(15)
+
+  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
+  const sliderRef = useRef<HTMLDivElement>(null)
+  useTabSlider({ activeTab, tabRefs, sliderRef })
 
   useEffect(() => {
     const slug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || undefined
     void syncFromServer(slug)
+    checkAndGenerateSystemNotifications(slug)
     const t = setTimeout(() => setIsLoading(false), 400)
     return () => clearTimeout(t)
-  }, [syncFromServer])
+  }, [syncFromServer, checkAndGenerateSystemNotifications])
+
+  // Unread counts
+  const unreadTotal = useMemo(() => notifications.filter((n) => !n.read).length, [notifications])
+  const unreadSystem = useMemo(() => notifications.filter((n) => !n.read && n.category === 'system').length, [notifications])
+  const unreadBilling = useMemo(() => notifications.filter((n) => !n.read && n.category === 'billing').length, [notifications])
+  const unreadAcademic = useMemo(() => notifications.filter((n) => !n.read && (n.category === 'academic' || (!n.category && n.type !== 'error'))).length, [notifications])
+
+  const tabs = [
+    { key: 'all', label: bn ? 'সকল নোটিফিকেশন' : 'All', icon: Bell, count: unreadTotal },
+    { key: 'system', label: bn ? 'সফটওয়্যার ও সিস্টেম আপডেট' : 'Software & Updates', icon: Sparkles, count: unreadSystem },
+    { key: 'billing', label: bn ? 'মাসিক পেমেন্ট ও বিলিং' : 'Monthly Payment & Billing', icon: CreditCard, count: unreadBilling },
+    { key: 'academic', label: bn ? 'একাডেমিক ও কার্যক্রম' : 'Academic & Operations', icon: GraduationCap, count: unreadAcademic },
+    { key: 'unread', label: bn ? 'অপঠিত' : 'Unread', icon: Clock, count: unreadTotal },
+  ]
 
   const filtered = useMemo(() => {
     let list = [...notifications]
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim()
-      list = list.filter((n) =>
-        (n.title && n.title.toLowerCase().includes(q)) ||
-        (n.titleBn && n.titleBn.includes(q)) ||
-        (n.message && n.message.toLowerCase().includes(q)) ||
-        (n.messageBn && n.messageBn.includes(q))
+
+    // Tab filter
+    if (activeTab === 'system') {
+      list = list.filter((n) => n.category === 'system')
+    } else if (activeTab === 'billing') {
+      list = list.filter((n) => n.category === 'billing')
+    } else if (activeTab === 'academic') {
+      list = list.filter((n) => n.category === 'academic' || (!n.category && n.category !== 'system' && n.category !== 'billing'))
+    } else if (activeTab === 'unread') {
+      list = list.filter((n) => !n.read)
+    }
+
+    // Search filter
+    if (search.trim()) {
+      const q = search.toLowerCase().trim()
+      list = list.filter(
+        (n) =>
+          (n.title && n.title.toLowerCase().includes(q)) ||
+          (n.titleBn && n.titleBn.includes(q)) ||
+          (n.message && n.message.toLowerCase().includes(q)) ||
+          (n.messageBn && n.messageBn.includes(q)) ||
+          (n.sender && n.sender.toLowerCase().includes(q))
       )
     }
-    if (filterType) list = list.filter((n) => n.type === filterType)
-    if (filterRead === 'read') list = list.filter((n) => n.read)
-    if (filterRead === 'unread') list = list.filter((n) => !n.read)
+
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [notifications, searchQuery, filterType, filterRead])
+  }, [notifications, activeTab, search])
 
   useEffect(() => {
     setPage(1)
-  }, [searchQuery, filterType, filterRead, perPage])
+  }, [search, activeTab, perPage])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
-
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications])
 
   const handleNavigateToLink = (linkStr: string) => {
     if (linkStr.startsWith('/')) {
@@ -109,13 +165,45 @@ export default function NotificationsPage() {
     }
   }
 
-  const handleClick = (n: Notification) => {
+  const handleCardClick = (n: Notification) => {
     if (!n.read) markRead(n.id)
     if (n.link) {
       handleNavigateToLink(n.link)
     } else {
-      setDetailModalNotification(n)
+      setViewNotification(n)
     }
+  }
+
+  if (viewNotification) {
+    return (
+      <NotificationDetail
+        notification={viewNotification}
+        onBack={() => {
+          setViewNotification(null)
+          if (!viewNotification.read) markRead(viewNotification.id)
+        }}
+        onToggleRead={(id) => {
+          if (viewNotification.read) markUnread(id)
+          else markRead(id)
+          setViewNotification((prev) => (prev ? { ...prev, read: !prev.read } : null))
+        }}
+        onDelete={(id) => {
+          deleteNotification(id)
+          setViewNotification(null)
+        }}
+        onEdit={
+          canEdit('notifications')
+            ? (item) => {
+                setViewNotification(null)
+                setEditingNotification(item)
+                setShowCompose(true)
+              }
+            : undefined
+        }
+        onNavigate={(link) => handleNavigateToLink(link)}
+        bn={bn}
+      />
+    )
   }
 
   if (isLoading) {
@@ -123,50 +211,30 @@ export default function NotificationsPage() {
       <div className="p-4 space-y-4">
         <div className="skeleton h-8 w-48 rounded-lg" />
         <div className="skeleton h-10 w-full rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}</div>
+        <div className="space-y-2">{[1, 2, 3, 4].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}</div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex-1 min-w-[12.5rem]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[var(--brand)]/10 text-[var(--brand)] shrink-0">
-              <Bell size={18} />
-            </div>
-            <div>
-              <h1 className={`font-semibold text-[var(--text-primary)] m-0 ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
-                {bn ? 'নোটিফিকেশন' : 'Notifications'}
-              </h1>
-              <p className="text-[0.8125rem] text-[var(--text-muted)] mt-0.5 mb-0">
-                {bn ? `মোট: ${notifications.length}টি` : `Total: ${notifications.length}`}
-                {unreadCount > 0 && ` · ${unreadCount} ${bn ? 'টি নতুন' : 'unread'}`}
-              </p>
-            </div>
-          </div>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="flex-1">
+          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
+            {bn ? 'নোটিফিকেশন ও ঘোষণা' : 'Notifications & Announcements'}
+          </h1>
+          <p className="text-[0.8125rem] text-[var(--text-muted)] mt-0.5">
+            {bn ? `মোট: ${notifications.length}টি নোটিফিকেশন` : `Total: ${notifications.length} notifications`}
+            {unreadTotal > 0 && ` · ${unreadTotal} ${bn ? 'টি অপঠিত' : 'unread'}`}
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {canCreate('notifications') && (
-            <button
-              onClick={() => {
-                setEditingNotification(null)
-                setComposeModalOpen(true)
-              }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[0.75rem] font-semibold bg-[var(--brand)] text-white hover:opacity-90 transition-opacity cursor-pointer border-none shadow-sm"
-            >
-              <Plus size={14} />
-              {bn ? 'নতুন নোটিফিকেশন' : 'Add Notification'}
-            </button>
-          )}
-
-          {unreadCount > 0 && canEdit('notifications') && (
+        <div className="flex items-center gap-2">
+          {unreadTotal > 0 && canEdit('notifications') && (
             <button
               onClick={() => markAllRead()}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.75rem] font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-transparent"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-transparent"
             >
               <CheckCheck size={14} />
               {bn ? 'সব পড়া হয়েছে' : 'Mark All Read'}
@@ -176,148 +244,166 @@ export default function NotificationsPage() {
           {notifications.length > 0 && canDelete('notifications') && (
             <button
               onClick={() => setShowClearConfirm(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.75rem] font-medium border border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white transition-colors cursor-pointer bg-transparent"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white transition-colors cursor-pointer bg-transparent"
             >
               <Trash2 size={14} />
               {bn ? 'সব মুছুন' : 'Clear All'}
             </button>
           )}
-        </div>
-      </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex items-center gap-2.5 flex-wrap">
-        <div className="relative flex-1 min-w-[15rem]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={bn ? 'নোটিফিকেশন খুঁজুন...' : 'Search notifications...'}
-            className="w-full pl-9 pr-3.5 py-2 rounded-xl text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/10 transition-all placeholder:text-[var(--text-muted)]"
-          />
-        </div>
-
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="px-3 py-2 rounded-xl text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2394a3b8%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E')]"
-        >
-          <option value="">{bn ? 'সকল ধরন' : 'All Types'}</option>
-          <option value="info">{bn ? 'তথ্য' : 'Info'}</option>
-          <option value="success">{bn ? 'সফল' : 'Success'}</option>
-          <option value="warning">{bn ? 'সতর্কতা' : 'Warning'}</option>
-          <option value="error">{bn ? 'জরুরি / ত্রুটি' : 'Alert / Error'}</option>
-        </select>
-
-        <select
-          value={filterRead}
-          onChange={(e) => setFilterRead(e.target.value as 'all' | 'read' | 'unread')}
-          className="px-3 py-2 rounded-xl text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer appearance-none pr-7 bg-no-repeat bg-[right_0.5rem_center] bg-[length:0.75rem] bg-[url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2394a3b8%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27m6 9 6 6 6-6%27/%3E%3C/svg%3E')]"
-        >
-          <option value="all">{bn ? 'সব' : 'All Status'}</option>
-          <option value="unread">{bn ? 'অপঠিত' : 'Unread'}</option>
-          <option value="read">{bn ? 'পঠিত' : 'Read'}</option>
-        </select>
-      </div>
-
-      {/* Notification List */}
-      {filtered.length === 0 ? (
-        <div className="col-span-full text-center py-16 px-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="w-16 h-16 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3 text-[var(--text-muted)]">
-            <Bell size={28} className="opacity-40" />
-          </div>
-          <h3 className="text-[0.9375rem] font-semibold text-[var(--text-primary)] m-0 mb-1">
-            {searchQuery || filterType || filterRead !== 'all'
-              ? (bn ? 'কোনো নোটিফিকেশন মেলেনি' : 'No matching notifications')
-              : (bn ? 'কোনো নোটিফিকেশন নেই' : 'No notifications yet')}
-          </h3>
-          <p className="text-[0.75rem] text-[var(--text-muted)] m-0 max-w-sm mx-auto">
-            {searchQuery || filterType || filterRead !== 'all'
-              ? (bn ? 'অনুগ্রহ করে ভিন্ন ফিল্টার বা অনুসন্ধান শব্দ ব্যবহার করুন।' : 'Try adjusting your search query or filter options.')
-              : (bn ? 'নতুন নোটিফিকেশন তৈরি হলে এখানে প্রদর্শিত হবে।' : 'New announcements and notifications will appear here.')}
-          </p>
-          {canCreate('notifications') && !searchQuery && !filterType && filterRead === 'all' && (
+          {canCreate('notifications') && (
             <button
               onClick={() => {
                 setEditingNotification(null)
-                setComposeModalOpen(true)
+                setShowCompose(true)
               }}
-              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[0.75rem] font-semibold bg-[var(--brand)] text-white hover:opacity-90 transition-opacity cursor-pointer border-none shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-[0.8125rem] font-medium text-white transition-colors cursor-pointer border-none shadow-sm"
+              style={{ background: 'var(--brand)' }}
             >
-              <Plus size={14} />
-              {bn ? 'প্রথম নোটিফিকেশন তৈরি করুন' : 'Create First Notification'}
+              <Plus size={16} />
+              {isSuperAdmin ? (bn ? 'সম্প্রচার নোটিফিকেশন' : 'Broadcast Update') : (bn ? 'নতুন নোটিফিকেশন' : 'New Notification')}
             </button>
           )}
         </div>
+      </div>
+
+      {/* Tabs with Slider */}
+      <div className="relative mb-4">
+        <div ref={sliderRef} className="absolute bottom-0 h-[2px] bg-[var(--brand)] transition-all duration-200 rounded-full" style={{ zIndex: 1 }} />
+        <div className="flex gap-1 border-b border-[var(--border)] overflow-x-auto no-scrollbar">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              ref={(el) => { if (el) tabRefs.current.set(tab.key, el) }}
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-[0.8125rem] font-medium transition-colors relative shrink-0 cursor-pointer border-none bg-transparent ${
+                activeTab === tab.key ? 'text-[var(--brand)] font-semibold' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <tab.icon size={15} />
+              {tab.label}
+              {tab.count > 0 && (
+                <span className="ml-1 px-1.5 py-0 rounded-full text-[0.625rem] font-bold text-white" style={{ background: 'var(--brand)' }}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative mb-4">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={bn ? 'নোটিফিকেশন বা বার্তা খুঁজুন...' : 'Search notifications, updates, or billing alerts...'}
+          className={inputCls + ' w-full pl-9'}
+        />
+      </div>
+
+      {/* Notification List (Message Page Style) */}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
+          <Bell size={48} className="mb-3 opacity-30" />
+          <p className="text-[0.9375rem] font-medium">
+            {search
+              ? (bn ? 'কোনো নোটিফিকেশন মেলেনি' : 'No notifications found')
+              : activeTab === 'system'
+                ? (bn ? 'কোনো সফটওয়্যার আপডেট নোটিফিকেশন নেই' : 'No system update notifications')
+                : activeTab === 'billing'
+                  ? (bn ? 'কোনো মাসিক পেমেন্ট বা বিলিং নোটিফিকেশন নেই' : 'No payment or billing alerts')
+                  : activeTab === 'unread'
+                    ? (bn ? 'সব নোটিফিকেশন পড়া হয়েছে' : 'All notifications have been read')
+                    : (bn ? 'কোনো নোটিফিকেশন নেই' : 'No notifications available')}
+          </p>
+          {!search && (
+            <p className="text-[0.75rem] mt-1 text-[var(--text-muted)]">
+              {bn ? 'নতুন কোনো সিস্টেম বা বিলিং আপডেট আসলে এখানে প্রদর্শিত হবে' : 'New system announcements and alerts will appear here'}
+            </p>
+          )}
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-2">
           {paginated.map((n) => {
-            const config = TYPE_CONFIG[n.type] || TYPE_CONFIG.info
-            const Icon = config.icon
-            const timeAgo = getTimeAgo(n.createdAt, bn)
-            const isUnread = !n.read
+            const typeConf = TYPE_CONFIG[n.type] || TYPE_CONFIG.info
+            const catConf = CATEGORY_CONFIG[n.category || 'general'] || CATEGORY_CONFIG.general
+            const senderName = n.sender || (n.category === 'system' ? 'Super Admin' : n.category === 'billing' ? 'Billing Dept' : 'Admin')
             const displayTitle = (bn ? n.titleBn || n.title : n.title || n.titleBn) || ''
             const displayMessage = (bn ? n.messageBn || n.message : n.message || n.messageBn) || ''
+            const formattedTime = getTimeAgo(n.createdAt, bn)
 
             return (
               <div
                 key={n.id}
-                onClick={() => handleClick(n)}
-                className={`group relative flex items-start gap-3 p-4 rounded-xl border transition-all cursor-pointer bg-[var(--bg-primary)] ${
-                  isUnread
-                    ? 'border-[var(--brand)]/40 shadow-sm'
-                    : 'border-[var(--border)] hover:border-[var(--brand)]'
+                onClick={() => handleCardClick(n)}
+                className={`group flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
+                  !n.read
+                    ? 'border-[var(--brand)] bg-[var(--bg-secondary)] shadow-sm hover:border-[var(--brand)]'
+                    : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/60 hover:bg-[var(--bg-secondary)]'
                 }`}
               >
-                <div className="mt-0.5 p-2 rounded-lg shrink-0" style={{ background: config.bg, color: config.color }}>
-                  <Icon size={18} />
-                </div>
-                <div className="flex-1 min-w-0 pr-16">
-                  <div className="flex items-center gap-2">
-                    <h3 className={`text-[0.8125rem] text-[var(--text-primary)] truncate m-0 ${isUnread ? 'font-semibold' : 'font-medium'}`}>
-                      {displayTitle}
-                    </h3>
-                    {isUnread && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--brand)' }} />}
-                  </div>
-                  <p className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5 line-clamp-2 m-0">
-                    {displayMessage}
-                  </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[0.625rem] text-[var(--text-muted)] block">{timeAgo}</span>
-                    <span className="text-[0.625rem] font-semibold px-1.5 py-0.2 rounded uppercase" style={{ background: config.bg, color: config.color }}>
-                      {bn ? config.labelBn : config.label}
-                    </span>
-                  </div>
+                {/* Avatar Icon */}
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-xs"
+                  style={{ background: typeConf.bg, color: typeConf.color }}
+                >
+                  <typeConf.icon size={17} />
                 </div>
 
-                {/* Card Actions */}
-                <div className="flex items-center gap-1 shrink-0 absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[0.8125rem] ${!n.read ? 'font-bold' : 'font-medium'} text-[var(--text-primary)] truncate`}>
+                      {senderName}
+                    </span>
+                    {!n.read && <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'var(--brand)' }} />}
+
+                    {/* Category Badge */}
+                    <span
+                      className="inline-flex items-center gap-1 text-[0.625rem] font-semibold px-2 py-0.5 rounded-md"
+                      style={{ background: `${catConf.color}18`, color: catConf.color }}
+                    >
+                      {bn ? catConf.labelBn : catConf.label}
+                    </span>
+
+                    {/* Alert Type Badge */}
+                    <span
+                      className="inline-flex items-center text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                      style={{ background: typeConf.bg, color: typeConf.color }}
+                    >
+                      {bn ? typeConf.labelBn : typeConf.label}
+                    </span>
+
+                    <span className="text-[0.6875rem] text-[var(--text-muted)] ml-auto shrink-0 flex items-center gap-1">
+                      <Clock size={11} />
+                      {formattedTime}
+                    </span>
+                  </div>
+
+                  <p className={`text-[0.8125rem] ${!n.read ? 'font-semibold text-[var(--text-primary)]' : 'font-medium text-[var(--text-primary)]'} truncate mt-1 mb-0`}>
+                    {displayTitle}
+                  </p>
+
+                  <p className="text-[0.75rem] text-[var(--text-secondary)] line-clamp-2 mt-0.5 mb-0">
+                    {displayMessage}
+                  </p>
+                </div>
+
+                {/* Hover Action Buttons */}
+                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
                       if (n.read) markUnread(n.id)
                       else markRead(n.id)
                     }}
-                    className="p-1 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-[var(--border)] text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors cursor-pointer border-none bg-transparent"
                     title={n.read ? (bn ? 'অপঠিত করুন' : 'Mark unread') : (bn ? 'পঠিত করুন' : 'Mark read')}
                   >
-                    {n.read ? <EyeOff size={13} /> : <Eye size={13} />}
+                    {n.read ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
-
-                  {canEdit('notifications') && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditingNotification(n)
-                        setComposeModalOpen(true)
-                      }}
-                      className="p-1 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors"
-                      title={bn ? 'সম্পাদনা' : 'Edit'}
-                    >
-                      <Edit3 size={13} />
-                    </button>
-                  )}
 
                   {canDelete('notifications') && (
                     <button
@@ -325,10 +411,10 @@ export default function NotificationsPage() {
                         e.stopPropagation()
                         setDeleteTarget(n.id)
                       }}
-                      className="p-1 rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-red-500 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-[var(--border)] text-[var(--text-muted)] hover:text-red-500 transition-colors cursor-pointer border-none bg-transparent"
                       title={bn ? 'মুছুন' : 'Delete'}
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={14} />
                     </button>
                   )}
                 </div>
@@ -340,55 +426,35 @@ export default function NotificationsPage() {
 
       {/* Pagination Controls */}
       {filtered.length > perPage && (
-        <PaginationControls
-          page={page}
-          setPage={setPage}
-          perPage={perPage}
-          setPerPage={setPerPage}
-          total={filtered.length}
-          totalPages={totalPages}
-        />
+        <div className="mt-4">
+          <PaginationControls
+            page={page}
+            setPage={setPage}
+            perPage={perPage}
+            setPerPage={setPerPage}
+            total={filtered.length}
+            totalPages={totalPages}
+          />
+        </div>
       )}
 
-      {/* Modals */}
-      {composeModalOpen && (
+      {/* Compose / Edit Modal */}
+      {showCompose && (
         <NotificationModal
           existing={editingNotification}
           onSaved={() => {
-            setComposeModalOpen(false)
+            setShowCompose(false)
             setEditingNotification(null)
           }}
           onClose={() => {
-            setComposeModalOpen(false)
+            setShowCompose(false)
             setEditingNotification(null)
           }}
           bn={bn}
         />
       )}
 
-      {detailModalNotification && (
-        <NotificationDetailModal
-          notification={detailModalNotification}
-          onClose={() => setDetailModalNotification(null)}
-          onToggleRead={(id) => {
-            if (detailModalNotification.read) markUnread(id)
-            else markRead(id)
-            setDetailModalNotification((prev) => prev ? { ...prev, read: !prev.read } : null)
-          }}
-          onDelete={(id) => {
-            deleteNotification(id)
-            setDetailModalNotification(null)
-          }}
-          onEdit={canEdit('notifications') ? (item) => {
-            setDetailModalNotification(null)
-            setEditingNotification(item)
-            setComposeModalOpen(true)
-          } : undefined}
-          onNavigate={(link) => handleNavigateToLink(link)}
-          bn={bn}
-        />
-      )}
-
+      {/* Delete Single Confirmation Dialog */}
       {deleteTarget && (
         <DeleteConfirmDialog
           onConfirm={() => {
@@ -402,6 +468,7 @@ export default function NotificationsPage() {
         />
       )}
 
+      {/* Clear All Confirmation Dialog */}
       {showClearConfirm && (
         <DeleteConfirmDialog
           onConfirm={() => {
@@ -410,10 +477,158 @@ export default function NotificationsPage() {
           }}
           onCancel={() => setShowClearConfirm(false)}
           title={bn ? 'সব নোটিফিকেশন মুছুন' : 'Clear All Notifications'}
-          message={bn ? 'আপনি কি নিশ্চিত সব নোটিফিকেশন মুছে ফেলতে চান?' : 'Are you sure you want to clear all notifications?'}
+          message={bn ? 'আপনি কি নিশ্চিত সব নোটিফিকেশন স্থায়ীভাবে মুছে ফেলতে চান?' : 'Are you sure you want to clear all notifications?'}
           isBn={bn}
         />
       )}
+    </div>
+  )
+}
+
+function NotificationDetail({
+  notification,
+  onBack,
+  onToggleRead,
+  onDelete,
+  onEdit,
+  onNavigate,
+  bn,
+}: {
+  notification: Notification
+  onBack: () => void
+  onToggleRead: (id: string) => void
+  onDelete: (id: string) => void
+  onEdit?: (item: Notification) => void
+  onNavigate?: (link: string) => void
+  bn: boolean
+}) {
+  const typeConf = TYPE_CONFIG[notification.type] || TYPE_CONFIG.info
+  const catConf = CATEGORY_CONFIG[notification.category || 'general'] || CATEGORY_CONFIG.general
+  const senderDisplayName = notification.sender || (notification.category === 'system' ? 'Super Admin' : 'Admin')
+  const displayTitle = (bn ? notification.titleBn || notification.title : notification.title || notification.titleBn) || ''
+  const displayMessage = (bn ? notification.messageBn || notification.message : notification.message || notification.messageBn) || ''
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-4">
+      {/* Top Bar with Back Button */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onBack}
+          className="p-2 rounded-xl hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer border-none bg-transparent"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+              style={{ background: `${catConf.color}18`, color: catConf.color }}
+            >
+              {bn ? catConf.labelBn : catConf.label}
+            </span>
+            <span
+              className="text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+              style={{ background: typeConf.bg, color: typeConf.color }}
+            >
+              {bn ? typeConf.labelBn : typeConf.label}
+            </span>
+          </div>
+          <h1 className="font-bold text-[1.125rem] text-[var(--text-primary)] mt-1 truncate m-0">
+            {displayTitle}
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => onToggleRead(notification.id)}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[var(--border)] text-[0.75rem] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-transparent"
+          >
+            {notification.read ? <EyeOff size={13} /> : <Eye size={13} />}
+            {notification.read ? (bn ? 'অপঠিত করুন' : 'Mark Unread') : (bn ? 'পঠিত করুন' : 'Mark Read')}
+          </button>
+
+          {onEdit && (
+            <button
+              onClick={() => onEdit(notification)}
+              className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors cursor-pointer bg-transparent"
+              title={bn ? 'সম্পাদনা' : 'Edit'}
+            >
+              <Edit3 size={15} />
+            </button>
+          )}
+
+          <button
+            onClick={() => onDelete(notification.id)}
+            className="p-1.5 rounded-lg border border-[var(--red)]/30 text-[var(--red)] hover:bg-[var(--red-light)] transition-colors cursor-pointer bg-transparent"
+            title={bn ? 'মুছুন' : 'Delete'}
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      </div>
+
+      {/* Sender Header Card */}
+      <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0 shadow-sm"
+            style={{ background: typeConf.color }}
+          >
+            <typeConf.icon size={20} />
+          </div>
+          <div>
+            <div className="text-[0.875rem] font-bold text-[var(--text-primary)]">
+              {senderDisplayName}
+            </div>
+            <div className="text-[0.6875rem] text-[var(--text-muted)] flex items-center gap-1 mt-0.5">
+              <Clock size={11} />
+              <span>
+                {new Date(notification.createdAt).toLocaleString(bn ? 'bn-BD' : 'en-GB', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {notification.broadcastToAll && (
+          <span className="text-[0.6875rem] font-semibold text-[var(--teal)] bg-[var(--teal-light)] px-2.5 py-1 rounded-full flex items-center gap-1">
+            <Sparkles size={12} />
+            {bn ? 'সকল প্রতিষ্ঠানে সম্প্রচারিত' : 'Broadcast to all institutions'}
+          </span>
+        )}
+      </div>
+
+      {/* Message Body Card */}
+      <div className="p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xs space-y-4">
+        {notification.titleBn && notification.title && notification.titleBn !== notification.title && (
+          <p className="text-[0.75rem] text-[var(--text-muted)] m-0">
+            {bn ? notification.title : notification.titleBn}
+          </p>
+        )}
+
+        <div className="text-[0.875rem] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
+          {displayMessage}
+        </div>
+
+        {notification.link && (
+          <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between gap-3">
+            <div className="text-[0.75rem] text-[var(--text-muted)] font-mono">
+              {notification.link}
+            </div>
+            {onNavigate && (
+              <button
+                onClick={() => onNavigate(notification.link!)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold hover:opacity-90 transition-opacity cursor-pointer border-none shadow-sm"
+              >
+                <ExternalLink size={13} />
+                {bn ? 'পেজে যান' : 'Go to Page'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

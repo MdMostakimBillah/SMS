@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Bell, X, Info, CheckCircle, AlertTriangle, XCircle, Link as LinkIcon, Send } from 'lucide-react'
-import { useNotificationStore, notificationId, type Notification, type NotificationType } from '@/store/notificationStore'
+import { Bell, X, Info, CheckCircle, AlertTriangle, XCircle, Link as LinkIcon, Send, Radio, Sparkles, CreditCard, GraduationCap, Megaphone } from 'lucide-react'
+import { useNotificationStore, notificationId, type Notification, type NotificationType, type NotificationCategory } from '@/store/notificationStore'
+import { useAuth } from '@/contexts/AuthContext'
+import ModernCheckbox from '@/components/ui/ModernCheckbox'
 
 const inputCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'
 const textareaCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 resize-none'
 const labelCls = 'block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.03em] mb-[5px]'
+
+const CATEGORY_OPTIONS: { value: NotificationCategory; label: string; labelBn: string; icon: typeof Sparkles }[] = [
+  { value: 'system', label: 'System & Software Update', labelBn: 'সফটওয়্যার ও সিস্টেম আপডেট', icon: Sparkles },
+  { value: 'billing', label: 'Payment & Billing', labelBn: 'পেমেন্ট ও বিলিং', icon: CreditCard },
+  { value: 'academic', label: 'Academic & Operations', labelBn: 'একাডেমিক ও কার্যক্রম', icon: GraduationCap },
+  { value: 'general', label: 'General Announcement', labelBn: 'সাধারণ ঘোষণা', icon: Megaphone },
+]
 
 const TYPE_OPTIONS: { value: NotificationType; label: string; labelBn: string; icon: typeof Info; color: string; bg: string }[] = [
   { value: 'info', label: 'Info', labelBn: 'তথ্য', icon: Info, color: 'var(--brand)', bg: 'color-mix(in srgb, var(--brand) 12%, transparent)' },
@@ -15,12 +24,12 @@ const TYPE_OPTIONS: { value: NotificationType; label: string; labelBn: string; i
 ]
 
 const QUICK_LINKS = [
+  { label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', path: '/dashboard' },
   { label: 'Exams', labelBn: 'পরীক্ষা', path: '/exams' },
   { label: 'Finance', labelBn: 'অর্থ', path: '/finance' },
+  { label: 'Settings', labelBn: 'সেটিংস', path: '/settings' },
   { label: 'Attendance', labelBn: 'উপস্থিতি', path: '/attendance' },
-  { label: 'Notice Board', labelBn: 'নোটিশ বোর্ড', path: '/notice' },
-  { label: 'Students', labelBn: 'শিক্ষার্থী', path: '/students' },
-  { label: 'Syllabus', labelBn: 'পাঠ্যক্রম', path: '/syllabus' },
+  { label: 'Notice Board', labelBn: 'নোটিশ', path: '/notice' },
 ]
 
 interface Props {
@@ -31,15 +40,21 @@ interface Props {
 }
 
 export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
+  const { user } = useAuth()
+  const isSuperAdmin = user?.role === 'super_admin'
+
   const addNotification = useNotificationStore((s) => s.addNotification)
   const updateNotification = useNotificationStore((s) => s.updateNotification)
+  const broadcastNotification = useNotificationStore((s) => s.broadcastNotification)
 
+  const [category, setCategory] = useState<NotificationCategory>(existing?.category || (isSuperAdmin ? 'system' : 'general'))
+  const [type, setType] = useState<NotificationType>(existing?.type || 'info')
   const [title, setTitle] = useState(existing?.title || '')
   const [titleBn, setTitleBn] = useState(existing?.titleBn || '')
   const [message, setMessage] = useState(existing?.message || '')
   const [messageBn, setMessageBn] = useState(existing?.messageBn || '')
-  const [type, setType] = useState<NotificationType>(existing?.type || 'info')
   const [link, setLink] = useState(existing?.link || '')
+  const [broadcastToAll, setBroadcastToAll] = useState(isSuperAdmin)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
@@ -58,13 +73,14 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
     return Object.keys(errs).length === 0
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return
     const primaryTitle = title.trim() || titleBn.trim()
     const primaryTitleBn = titleBn.trim() || primaryTitle
     const primaryMessage = message.trim() || messageBn.trim()
     const primaryMessageBn = messageBn.trim() || primaryMessage
     const cleanLink = link.trim() || undefined
+    const senderName = isSuperAdmin ? 'Super Admin (EduTech)' : (user?.name || 'Institution Admin')
 
     if (existing) {
       updateNotification(existing.id, {
@@ -73,20 +89,31 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
         message: primaryMessage,
         messageBn: primaryMessageBn,
         type,
+        category,
         link: cleanLink,
       })
     } else {
-      addNotification({
+      const newNotif: Notification = {
         id: notificationId(),
         title: primaryTitle,
         titleBn: primaryTitleBn,
         message: primaryMessage,
         messageBn: primaryMessageBn,
         type,
+        category,
         read: false,
         link: cleanLink,
+        sender: senderName,
+        senderRole: user?.role || 'admin',
+        broadcastToAll: isSuperAdmin && broadcastToAll,
         createdAt: new Date().toISOString(),
-      })
+      }
+
+      if (isSuperAdmin && broadcastToAll) {
+        await broadcastNotification(newNotif)
+      } else {
+        addNotification(newNotif)
+      }
     }
     onSaved()
   }
@@ -94,7 +121,7 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
   return createPortal(
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="bg-[var(--bg-primary)] rounded-2xl w-[32.5rem] max-w-[95vw] max-h-[90vh] flex flex-col shadow-2xl border border-[var(--border)] overflow-hidden"
+        className="bg-[var(--bg-primary)] rounded-2xl w-[35rem] max-w-[95vw] max-h-[90vh] flex flex-col shadow-2xl border border-[var(--border)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -107,10 +134,12 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
               <h3 className="text-[0.9375rem] font-bold text-[var(--text-primary)] m-0">
                 {existing
                   ? (bn ? 'নোটিফিকেশন সম্পাদনা' : 'Edit Notification')
-                  : (bn ? 'নতুন নোটিফিকেশন তৈরি' : 'Create Notification')}
+                  : (bn ? 'নতুন নোটিফিকেশন প্রেরণ' : 'Compose Notification')}
               </h3>
               <p className="text-[0.6875rem] text-[var(--text-muted)] m-0">
-                {bn ? 'সকল সদস্যের কাছে বার্তা সম্প্রচার করুন' : 'Broadcast announcement to institution members'}
+                {isSuperAdmin
+                  ? (bn ? 'সকল প্রতিষ্ঠানে সফটওয়্যার ও সিস্টেম আপডেট সম্প্রচার করুন' : 'Broadcast software update & announcements to institutions')
+                  : (bn ? 'প্রতিষ্ঠানের সদস্যদের জন্য নোটিফিকেশন তৈরি করুন' : 'Send announcement or alert to institution members')}
               </p>
             </div>
           </div>
@@ -124,9 +153,53 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          {/* Super Admin Broadcast Option */}
+          {isSuperAdmin && !existing && (
+            <div className="p-3 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <Radio size={16} className="text-[var(--brand)] shrink-0" />
+                <div>
+                  <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                    {bn ? 'সকল প্রতিষ্ঠানে সম্প্রচার করুন' : 'Broadcast to all institutions'}
+                  </div>
+                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                    {bn ? 'সিস্টেম বা সফটওয়্যার আপডেট নোটিফিকেশন সব স্কুলের ড্যাশবোর্ডে যাবে' : 'Every active school will receive this notification immediately'}
+                  </div>
+                </div>
+              </div>
+              <ModernCheckbox checked={broadcastToAll} onChange={() => setBroadcastToAll(!broadcastToAll)} />
+            </div>
+          )}
+
+          {/* Category Selector */}
+          <div>
+            <label className={labelCls}>{bn ? 'বিভাগ / ক্যাটাগরি' : 'Notification Category'}</label>
+            <div className="grid grid-cols-2 gap-2">
+              {CATEGORY_OPTIONS.map((c) => {
+                const Icon = c.icon
+                const isSelected = category === c.value
+                return (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setCategory(c.value)}
+                    className={`flex items-center gap-2 p-2 rounded-xl border transition-all cursor-pointer text-left ${
+                      isSelected
+                        ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)] font-semibold'
+                        : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    <span className="text-[0.75rem] truncate">{bn ? c.labelBn : c.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {/* Notification Type Selector */}
           <div>
-            <label className={labelCls}>{bn ? 'ধরন নির্বাচন করুন' : 'Notification Type'}</label>
+            <label className={labelCls}>{bn ? 'ধরন' : 'Alert Level'}</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {TYPE_OPTIONS.map((opt) => {
                 const Icon = opt.icon
@@ -142,10 +215,10 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
                         : 'border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)]/40'
                     }`}
                   >
-                    <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ background: opt.bg, color: opt.color }}>
-                      <Icon size={14} />
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: opt.bg, color: opt.color }}>
+                      <Icon size={12} />
                     </div>
-                    <span className={`text-[0.75rem] font-medium ${isSelected ? 'text-[var(--text-primary)] font-semibold' : 'text-[var(--text-secondary)]'}`}>
+                    <span className={`text-[0.75rem] ${isSelected ? 'text-[var(--text-primary)] font-semibold' : 'text-[var(--text-secondary)] font-medium'}`}>
                       {bn ? opt.labelBn : opt.label}
                     </span>
                   </button>
@@ -165,7 +238,7 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Exam Results Published"
+                placeholder="e.g. System Update / Payment Reminder"
                 className={`${inputCls} ${errors.title ? 'border-[var(--red)] ring-1 ring-[var(--red)]/20' : ''}`}
               />
             </div>
@@ -175,7 +248,7 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
                 type="text"
                 value={titleBn}
                 onChange={(e) => setTitleBn(e.target.value)}
-                placeholder="যেমন: পরীক্ষার ফলাফল প্রকাশিত"
+                placeholder="যেমন: সফটওয়্যার আপডেট / পেমেন্ট তাগিদ"
                 className={inputCls}
               />
             </div>
@@ -192,7 +265,7 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
                 rows={3}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Enter detailed notification message..."
+                placeholder="Enter detailed notification content..."
                 className={`${textareaCls} ${errors.message ? 'border-[var(--red)] ring-1 ring-[var(--red)]/20' : ''}`}
               />
             </div>
@@ -202,7 +275,7 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
                 rows={3}
                 value={messageBn}
                 onChange={(e) => setMessageBn(e.target.value)}
-                placeholder="বিস্তারিত নোটিফিকেশন বার্তা লিখুন..."
+                placeholder="বিস্তারিত বার্তা লিখুন..."
                 className={textareaCls}
               />
             </div>
@@ -220,12 +293,12 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
               type="text"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              placeholder="e.g. /exams, /finance, /attendance"
+              placeholder="e.g. /dashboard, /settings, /finance"
               className={inputCls}
             />
             {/* Quick Suggestions */}
             <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-              <span className="text-[0.6875rem] text-[var(--text-muted)] mr-1">{bn ? 'দ্রুত নির্বাচন:' : 'Quick:'}</span>
+              <span className="text-[0.6875rem] text-[var(--text-muted)] mr-1">{bn ? 'দ্রুত লিংক:' : 'Quick:'}</span>
               {QUICK_LINKS.map((ql) => (
                 <button
                   key={ql.path}
