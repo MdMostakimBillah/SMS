@@ -25,7 +25,7 @@ const createSubjectSchema = z.object({
 const updateSubjectSchema = createSubjectSchema.partial()
 
 const READ_ROLES = ['school_admin', 'hr_admin', 'teacher', 'super_admin']
-const WRITE_ROLES = ['school_admin', 'hr_admin']
+const WRITE_ROLES = ['school_admin', 'hr_admin', 'super_admin']
 
 export function subjectRouter(prisma: PrismaClient, jwtSecret: string) {
   const router = Router()
@@ -62,7 +62,21 @@ export function subjectRouter(prisma: PrismaClient, jwtSecret: string) {
 
   router.post('/', auth, requireRole(...WRITE_ROLES), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = req.schoolId as string
+      let schoolId = req.schoolId as string
+      if (req.userRole === 'super_admin') {
+        schoolId = (req.body.schoolId as string) || (req.headers['x-school-id'] as string) || req.schoolId || ''
+        if (!schoolId) {
+          const platform = await prisma.school.findFirst({
+            where: { domain: { in: ['edutech', 'main'] } },
+            select: { id: true },
+          })
+          schoolId = platform?.id || ''
+        }
+      }
+      if (!schoolId) {
+        return res.status(400).json({ error: 'School ID required' })
+      }
+
       const body = createSubjectSchema.parse(req.body)
 
       const subject = await prisma.subject.create({
@@ -89,7 +103,6 @@ export function subjectRouter(prisma: PrismaClient, jwtSecret: string) {
 
   router.put('/:id', auth, requireRole(...WRITE_ROLES), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = req.schoolId as string
       const id = req.params.id as string
 
       const body = updateSubjectSchema.parse(req.body)
@@ -100,19 +113,33 @@ export function subjectRouter(prisma: PrismaClient, jwtSecret: string) {
       if (body.departmentIds !== undefined) data.departmentIds = body.departmentIds
 
       if (Object.keys(data).length > 0) {
-        const { count } = await prisma.subject.updateMany({ where: { id, schoolId }, data })
+        let count = 0
+        if (req.userRole === 'super_admin') {
+          const where = req.schoolId ? { id, schoolId: req.schoolId } : { id }
+          const updateRes = await prisma.subject.updateMany({ where, data })
+          count = updateRes.count
+          if (count === 0) {
+            const fallback = await prisma.subject.updateMany({ where: { id }, data })
+            count = fallback.count
+          }
+        } else {
+          const updateRes = await prisma.subject.updateMany({ where: { id, schoolId: req.schoolId as string }, data })
+          count = updateRes.count
+        }
         if (count === 0) {
-          audit({ action: 'subject.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+          audit({ action: 'subject.update', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'not_found' })
           return res.status(404).json({ error: 'Subject not found' })
         }
       }
 
-      const subject = await prisma.subject.findFirst({ where: { id, schoolId } })
+      const subject = req.userRole === 'super_admin'
+        ? await prisma.subject.findUnique({ where: { id } })
+        : await prisma.subject.findFirst({ where: { id, schoolId: req.schoolId as string } })
       if (!subject) {
-        audit({ action: 'subject.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        audit({ action: 'subject.update', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'not_found' })
         return res.status(404).json({ error: 'Subject not found' })
       }
-      audit({ action: 'subject.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
+      audit({ action: 'subject.update', actorId: req.userId, actorRole: req.userRole, schoolId: subject.schoolId, resourceId: id, outcome: 'success' })
       res.json(subject)
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -127,15 +154,27 @@ export function subjectRouter(prisma: PrismaClient, jwtSecret: string) {
 
   router.delete('/:id', auth, requireRole(...WRITE_ROLES), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = req.schoolId as string
       const id = req.params.id as string
 
-      const { count } = await prisma.subject.deleteMany({ where: { id, schoolId } })
+      let count = 0
+      if (req.userRole === 'super_admin') {
+        const where = req.schoolId ? { id, schoolId: req.schoolId } : { id }
+        const delRes = await prisma.subject.deleteMany({ where })
+        count = delRes.count
+        if (count === 0) {
+          const fallback = await prisma.subject.deleteMany({ where: { id } })
+          count = fallback.count
+        }
+      } else {
+        const delRes = await prisma.subject.deleteMany({ where: { id, schoolId: req.schoolId as string } })
+        count = delRes.count
+      }
+
       if (count === 0) {
-        audit({ action: 'subject.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        audit({ action: 'subject.delete', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'not_found' })
         return res.status(404).json({ error: 'Subject not found' })
       }
-      audit({ action: 'subject.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
+      audit({ action: 'subject.delete', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'success' })
       res.json({ success: true })
     } catch {
       res.status(500).json({ error: 'Internal server error' })

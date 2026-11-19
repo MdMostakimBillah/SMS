@@ -152,7 +152,7 @@ describe('department RBAC — denied operations', () => {
     expect(await prisma.department.findUnique({ where: { id: deptAId } })).not.toBeNull()
   })
 
-  it('superadmin has global read but no write (explicit policy); NULL-school admin denied', async () => {
+  it('superadmin has global read and write privileges; NULL-school admin denied', async () => {
     const superJar = jars.super!
 
     const all = await get(superJar, '/api/departments')
@@ -167,10 +167,11 @@ describe('department RBAC — denied operations', () => {
     expect(filteredIds).toContain(deptAId)
     expect(filteredIds).not.toContain(deptBId)
 
-    expect((await post(superJar, '/api/departments', { name: 'SuperWrite Dept' })).status).toBe(403)
-    expect((await put(superJar, `/api/departments/${deptAId}`, { head: 'SuperWrite' })).status).toBe(403)
-    expect((await del(superJar, `/api/departments/${deptAId}`)).status).toBe(403)
-    expect(await prisma.department.findUnique({ where: { id: deptAId } })).not.toBeNull()
+    const superCreate = await post(superJar, '/api/departments', { name: 'SuperWrite Dept', schoolId: schoolAId })
+    expect(superCreate.status).toBe(201)
+    const superDeptId = superCreate.body.id
+    expect((await put(superJar, `/api/departments/${superDeptId}`, { head: 'SuperWrite' })).status).toBe(200)
+    expect((await del(superJar, `/api/departments/${superDeptId}`)).status).toBe(200)
 
     expect((await get(jars.orphan!, '/api/departments')).status).toBe(403)
     expect((await post(jars.orphan!, '/api/departments', { name: 'Orphan Dept' })).status).toBe(403)

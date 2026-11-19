@@ -81,14 +81,24 @@ async function resolveSession(
           const user = session.user
           if (user && user.isActive) {
             let resolvedSchoolId = user.schoolId
-            if (user.role === 'super_admin' && req.headers['x-school-id']) {
-              const headerSchoolId = String(req.headers['x-school-id']).trim()
-              const targetSchool = await prisma.school.findFirst({
-                where: { OR: [{ id: headerSchoolId }, { domain: headerSchoolId }] },
-                select: { id: true },
-              })
-              if (targetSchool) {
-                resolvedSchoolId = targetSchool.id
+            if (user.role === 'super_admin') {
+              if (req.headers['x-school-id']) {
+                const headerSchoolId = String(req.headers['x-school-id']).trim()
+                const targetSchool = await prisma.school.findFirst({
+                  where: { OR: [{ id: headerSchoolId }, { domain: headerSchoolId }] },
+                  select: { id: true },
+                })
+                if (targetSchool) {
+                  resolvedSchoolId = targetSchool.id
+                }
+              } else if (!resolvedSchoolId) {
+                const platform = await prisma.school.findFirst({
+                  where: { domain: { in: ['edutech', 'main'] } },
+                  select: { id: true },
+                })
+                if (platform) {
+                  resolvedSchoolId = platform.id
+                }
               }
             }
 
@@ -124,14 +134,24 @@ async function resolveSession(
 
       if (user && user.isActive) {
         let resolvedSchoolId = user.schoolId
-        if (user.role === 'super_admin' && req.headers['x-school-id']) {
-          const headerSchoolId = String(req.headers['x-school-id']).trim()
-          const targetSchool = await prisma.school.findFirst({
-            where: { OR: [{ id: headerSchoolId }, { domain: headerSchoolId }] },
-            select: { id: true },
-          })
-          if (targetSchool) {
-            resolvedSchoolId = targetSchool.id
+        if (user.role === 'super_admin') {
+          if (req.headers['x-school-id']) {
+            const headerSchoolId = String(req.headers['x-school-id']).trim()
+            const targetSchool = await prisma.school.findFirst({
+              where: { OR: [{ id: headerSchoolId }, { domain: headerSchoolId }] },
+              select: { id: true },
+            })
+            if (targetSchool) {
+              resolvedSchoolId = targetSchool.id
+            }
+          } else if (!resolvedSchoolId) {
+            const platform = await prisma.school.findFirst({
+              where: { domain: { in: ['edutech', 'main'] } },
+              select: { id: true },
+            })
+            if (platform) {
+              resolvedSchoolId = platform.id
+            }
           }
         }
 

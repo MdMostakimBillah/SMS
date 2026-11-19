@@ -130,7 +130,7 @@ export function mediaRouter(prisma: PrismaClient, jwtSecret: string, storage: Me
   router.post(
     '/upload',
     auth,
-    requireRole('school_admin', 'hr_admin'),
+    requireRole('school_admin', 'hr_admin', 'super_admin'),
     requireSchool,
     requireStorage,
     async (req: AuthenticatedRequest, res: Response) => {
@@ -322,14 +322,16 @@ export function mediaRouter(prisma: PrismaClient, jwtSecret: string, storage: Me
     }
   })
 
-  router.delete('/:id', auth, requireRole('school_admin', 'hr_admin'), requireSchool, requireStorage, async (req: AuthenticatedRequest, res: Response) => {
+  router.delete('/:id', auth, requireRole('school_admin', 'hr_admin', 'super_admin'), requireSchool, requireStorage, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const schoolId = req.schoolId as string
       const id = req.params.id as string
 
-      const row = await prisma.mediaObject.findFirst({ where: { id, schoolId, deletedAt: null } })
+      let row = req.userRole === 'super_admin'
+        ? await prisma.mediaObject.findFirst({ where: { id, deletedAt: null } })
+        : await prisma.mediaObject.findFirst({ where: { id, schoolId, deletedAt: null } })
       if (!row) {
-        audit({ action: 'media.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        audit({ action: 'media.delete', actorId: req.userId, actorRole: req.userRole, schoolId: schoolId || 'all', resourceId: id, outcome: 'not_found' })
         return res.status(404).json({ error: 'Media not found' })
       }
 

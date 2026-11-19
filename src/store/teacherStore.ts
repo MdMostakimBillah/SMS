@@ -168,30 +168,21 @@ export const useTeacherStore = create<TeacherState>()(
             const prev = get()
             let attendance = prev.attendance
 
-            // Safe sync: if server returned teachers, use them. If server returned empty,
-            // keep local teachers (never wipe existing teachers when server is empty)!
-            const finalTeachers = serverTeachers.length > 0 ? serverTeachers : (prev.teachers.length > 0 ? prev.teachers : [])
-            const finalDepartments = serverDepts.length > 0 ? serverDepts : prev.departments
+            // Server-authoritative data: replace with server rows
+            const finalTeachers = serverTeachers
+            const finalDepartments = serverDepts
 
-            // Safe merge for subjects: local subjects are merged with database subjects
-            const serverSubMap = new Map(serverSubjects.map((s) => [s.id, s]))
-            const mergedSubjects = [...serverSubjects]
-            for (const ls of prev.subjects) {
-              if (!serverSubMap.has(ls.id) && !mergedSubjects.some((s) => s.name.toLowerCase() === ls.name.toLowerCase())) {
-                mergedSubjects.push(ls)
-              }
-            }
-            const finalSubjects = mergedSubjects.length > 0 ? mergedSubjects : prev.subjects
+            // Subjects: server-authoritative + un-synced local drafts (e.g. SUB- / local- prefix)
+            const localDraftSubjects = prev.subjects.filter(
+              (s) => (s.id.startsWith('local-') || s.id.startsWith('SUB-')) && !serverSubjects.some((ss) => ss.id === s.id)
+            )
+            const finalSubjects = [...serverSubjects, ...localDraftSubjects]
 
-            // Safe merge for designations: NEVER reset user designations automatically!
-            const serverDesMap = new Map(serverDesignations.map((d) => [d.id, d]))
-            const mergedDes = [...serverDesignations]
-            for (const ld of prev.designations) {
-              if (!serverDesMap.has(ld.id) && !mergedDes.some((d) => d.name.toLowerCase() === ld.name.toLowerCase())) {
-                mergedDes.push(ld)
-              }
-            }
-            const finalDesignations = mergedDes.length > 0 ? mergedDes : prev.designations
+            // Designations: server-authoritative + un-synced local drafts (e.g. DES- / local- prefix)
+            const localDraftDesignations = prev.designations.filter(
+              (d) => (d.id.startsWith('local-') || d.id.startsWith('DES-')) && !serverDesignations.some((sd) => sd.id === d.id)
+            )
+            const finalDesignations = [...serverDesignations, ...localDraftDesignations]
 
             // One-time legacy backup — only on the first successful sync of a
             // store that has never been server-synced (serverSynced persists),

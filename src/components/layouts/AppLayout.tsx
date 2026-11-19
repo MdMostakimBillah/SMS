@@ -107,6 +107,13 @@ export default function AppLayout() {
             useFeeStore.getState().syncFromServer(targetSlug).catch(() => {})
           }
         }).catch(() => {})
+      } else {
+        const platformSlug = user.schoolDomain || user.school?.domain || 'edutech'
+        const syncKey = `platform:${platformSlug}`
+        if (lastSyncedKeyRef.current !== syncKey) {
+          lastSyncedKeyRef.current = syncKey
+          setSlug(platformSlug)
+        }
       }
       return
     }

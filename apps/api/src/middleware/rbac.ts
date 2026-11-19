@@ -32,11 +32,14 @@ export function requireRole(...allowed: string[]) {
 }
 
 /**
- * Tenant guard for school-scoped routes (mount only where super_admin is NOT
- * part of the route's role policy). A school-scoped role without a school
+ * Tenant guard for school-scoped routes. A school-scoped role without a school
  * assignment is denied: `schoolId=NULL` never implies access.
+ * Super admin bypasses this check since they possess global platform authority.
  */
 export function requireSchool(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+  if (req.userRole === 'super_admin') {
+    return next()
+  }
   if (!req.schoolId) {
     return res.status(403).json({ error: 'No tenant context' })
   }
@@ -47,7 +50,7 @@ export type TenantReadScope = { ok: true; where: { schoolId?: string } } | { ok:
 
 /**
  * Resolves the tenant scope for reads from trusted session state only:
- * - super_admin: global read; an optional `?schoolId` narrows it.
+ * - super_admin: scoped to `req.schoolId` if bound, or explicit `?schoolId`, or global if none.
  * - school-scoped roles: forced to the session's own school — any `?schoolId`
  *   from the client is ignored, and a NULL schoolId is denied (403).
  *
@@ -55,7 +58,14 @@ export type TenantReadScope = { ok: true; where: { schoolId?: string } } | { ok:
  */
 export function resolveTenantReadScope(req: AuthenticatedRequest, requested?: string): TenantReadScope {
   if (req.userRole === 'super_admin') {
-    return { ok: true, where: requested ? { schoolId: requested } : {} }
+    if (requested) {
+      if (requested === 'all') return { ok: true, where: {} }
+      return { ok: true, where: { schoolId: requested } }
+    }
+    if (req.schoolId) {
+      return { ok: true, where: { schoolId: req.schoolId } }
+    }
+    return { ok: true, where: {} }
   }
   if (!req.schoolId) return { ok: false }
   return { ok: true, where: { schoolId: req.schoolId } }

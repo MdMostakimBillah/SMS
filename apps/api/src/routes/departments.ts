@@ -38,7 +38,7 @@ const updateDepartmentSchema = createDepartmentSchema.partial()
 
 /** Same approved policy as teachers: READ = school_admin + hr_admin + super_admin (read-only). */
 const READ_ROLES = ['school_admin', 'hr_admin', 'super_admin']
-const WRITE_ROLES = ['school_admin', 'hr_admin']
+const WRITE_ROLES = ['school_admin', 'hr_admin', 'super_admin']
 
 export function departmentRouter(prisma: PrismaClient, jwtSecret: string) {
   const router = Router()
@@ -76,7 +76,21 @@ export function departmentRouter(prisma: PrismaClient, jwtSecret: string) {
 
   router.post('/', auth, requireRole(...WRITE_ROLES), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = req.schoolId as string // trusted session state — never the body
+      let schoolId = req.schoolId as string
+      if (req.userRole === 'super_admin') {
+        schoolId = (req.body.schoolId as string) || (req.headers['x-school-id'] as string) || req.schoolId || ''
+        if (!schoolId) {
+          const platform = await prisma.school.findFirst({
+            where: { domain: { in: ['edutech', 'main'] } },
+            select: { id: true },
+          })
+          schoolId = platform?.id || ''
+        }
+      }
+      if (!schoolId) {
+        return res.status(400).json({ error: 'School ID required' })
+      }
+
       const school = await prisma.school.findUnique({
         where: { id: schoolId },
         select: { storageMode: true },
@@ -111,7 +125,6 @@ export function departmentRouter(prisma: PrismaClient, jwtSecret: string) {
 
   router.put('/:id', auth, requireRole(...WRITE_ROLES), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = req.schoolId as string
       const id = req.params.id as string
 
       const body = updateDepartmentSchema.parse(req.body)
@@ -121,20 +134,33 @@ export function departmentRouter(prisma: PrismaClient, jwtSecret: string) {
       if (body.head !== undefined) data.head = body.head
 
       if (Object.keys(data).length > 0) {
-        // Atomic tenant-scoped write (same TOCTOU-closing pattern as teachers).
-        const { count } = await prisma.department.updateMany({ where: { id, schoolId }, data })
+        let count = 0
+        if (req.userRole === 'super_admin') {
+          const where = req.schoolId ? { id, schoolId: req.schoolId } : { id }
+          const updateRes = await prisma.department.updateMany({ where, data })
+          count = updateRes.count
+          if (count === 0) {
+            const fallback = await prisma.department.updateMany({ where: { id }, data })
+            count = fallback.count
+          }
+        } else {
+          const updateRes = await prisma.department.updateMany({ where: { id, schoolId: req.schoolId as string }, data })
+          count = updateRes.count
+        }
         if (count === 0) {
-          audit({ action: 'department.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+          audit({ action: 'department.update', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'not_found' })
           return res.status(404).json({ error: 'Department not found' })
         }
       }
 
-      const department = await prisma.department.findFirst({ where: { id, schoolId } })
+      const department = req.userRole === 'super_admin'
+        ? await prisma.department.findUnique({ where: { id } })
+        : await prisma.department.findFirst({ where: { id, schoolId: req.schoolId as string } })
       if (!department) {
-        audit({ action: 'department.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        audit({ action: 'department.update', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'not_found' })
         return res.status(404).json({ error: 'Department not found' })
       }
-      audit({ action: 'department.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
+      audit({ action: 'department.update', actorId: req.userId, actorRole: req.userRole, schoolId: department.schoolId, resourceId: id, outcome: 'success' })
       res.json(department)
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -149,17 +175,27 @@ export function departmentRouter(prisma: PrismaClient, jwtSecret: string) {
 
   router.delete('/:id', auth, requireRole(...WRITE_ROLES), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = req.schoolId as string
       const id = req.params.id as string
 
-      // `departmentId` on teachers/subjects is a soft reference (no FK), so a
-      // plain tenant-scoped delete matches the previous local semantics.
-      const { count } = await prisma.department.deleteMany({ where: { id, schoolId } })
+      let count = 0
+      if (req.userRole === 'super_admin') {
+        const where = req.schoolId ? { id, schoolId: req.schoolId } : { id }
+        const delRes = await prisma.department.deleteMany({ where })
+        count = delRes.count
+        if (count === 0) {
+          const fallback = await prisma.department.deleteMany({ where: { id } })
+          count = fallback.count
+        }
+      } else {
+        const delRes = await prisma.department.deleteMany({ where: { id, schoolId: req.schoolId as string } })
+        count = delRes.count
+      }
+
       if (count === 0) {
-        audit({ action: 'department.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        audit({ action: 'department.delete', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'not_found' })
         return res.status(404).json({ error: 'Department not found' })
       }
-      audit({ action: 'department.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
+      audit({ action: 'department.delete', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'success' })
       res.json({ success: true })
     } catch {
       res.status(500).json({ error: 'Internal server error' })

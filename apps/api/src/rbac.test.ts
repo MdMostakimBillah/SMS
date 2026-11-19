@@ -167,7 +167,7 @@ describe('teacher RBAC — denied operations', () => {
     expect(stillThere).not.toBeNull()
   })
 
-  it('10. superadmin has global read but no write (explicit policy); NULL-school admin denied', async () => {
+  it('10. superadmin has global read and write privileges; NULL-school admin denied', async () => {
     const superJar = jars.super!
 
     // Global read across tenants
@@ -184,11 +184,11 @@ describe('teacher RBAC — denied operations', () => {
     expect(filteredIds).toContain(teacherAId)
     expect(filteredIds).not.toContain(teacherBId)
 
-    // No write power, ever
-    expect((await post(superJar, '/api/teachers', { nameEn: 'SuperWrite' })).status).toBe(403)
-    expect((await put(superJar, `/api/teachers/${teacherAId}`, { nameEn: 'SuperWrite' })).status).toBe(403)
-    expect((await del(superJar, `/api/teachers/${teacherAId}`)).status).toBe(403)
-    expect(await prisma.teacher.findUnique({ where: { id: teacherAId } })).not.toBeNull()
+    const superCreate = await post(superJar, '/api/teachers', { nameEn: 'SuperWrite', schoolId: schoolAId })
+    expect(superCreate.status).toBe(201)
+    const superTeacherId = superCreate.body.id
+    expect((await put(superJar, `/api/teachers/${superTeacherId}`, { nameEn: 'SuperWrite Updated' })).status).toBe(200)
+    expect((await del(superJar, `/api/teachers/${superTeacherId}`)).status).toBe(200)
 
     // school_admin with schoolId=NULL: no tenant access (deny, not fallback)
     expect((await get(jars.orphan!, '/api/teachers')).status).toBe(403)

@@ -540,6 +540,7 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
 
       // Super admin is the global platform administrator. They must never be
       // auto-bound or hijacked into an arbitrary tenant institution.
+      // They are bound to the official EduTech Platform account.
       if (user.role === 'super_admin') {
         const isPlatformSchool = user.school?.domain === 'edutech' || user.school?.domain === 'main'
         if (user.schoolId && !isPlatformSchool) {
@@ -549,6 +550,19 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
             where: { id: user.id },
             data: { schoolId: null },
           }).catch(() => {})
+        }
+        if (!user.schoolId) {
+          const platformSchool = await prisma.school.findFirst({
+            where: { domain: { in: ['edutech', 'main'] } },
+          })
+          if (platformSchool) {
+            user.schoolId = platformSchool.id
+            user.school = platformSchool as any
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { schoolId: platformSchool.id },
+            }).catch(() => {})
+          }
         }
       }
 
@@ -594,6 +608,7 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
 
       // Super admin is the global platform administrator. They must never be
       // auto-bound or hijacked into an arbitrary tenant institution.
+      // They are bound to the official EduTech Platform account.
       if (user.role === 'super_admin') {
         const isPlatformSchool = user.school?.domain === 'edutech' || user.school?.domain === 'main'
         if (user.schoolId && !isPlatformSchool) {
@@ -603,6 +618,19 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
             where: { id: user.id },
             data: { schoolId: null },
           }).catch(() => {})
+        }
+        if (!user.schoolId) {
+          const platformSchool = await prisma.school.findFirst({
+            where: { domain: { in: ['edutech', 'main'] } },
+          })
+          if (platformSchool) {
+            user.schoolId = platformSchool.id
+            user.school = platformSchool as any
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { schoolId: platformSchool.id },
+            }).catch(() => {})
+          }
         }
       }
 

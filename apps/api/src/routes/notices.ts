@@ -103,7 +103,7 @@ export function noticeRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  router.post('/', auth, requireRole('school_admin', 'hr_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
+  router.post('/', auth, requireRole('school_admin', 'hr_admin', 'super_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const schoolId = req.schoolId as string // trusted session state — never the body
       const body = createNoticeSchema.parse(req.body)
@@ -137,7 +137,7 @@ export function noticeRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  router.put('/:id', auth, requireRole('school_admin', 'hr_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
+  router.put('/:id', auth, requireRole('school_admin', 'hr_admin', 'super_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const schoolId = req.schoolId as string
       const id = req.params.id as string
@@ -183,7 +183,7 @@ export function noticeRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  router.delete('/:id', auth, requireRole('school_admin', 'hr_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
+  router.delete('/:id', auth, requireRole('school_admin', 'hr_admin', 'super_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const schoolId = req.schoolId as string
       const id = req.params.id as string
@@ -208,7 +208,7 @@ export function noticeRouter(prisma: PrismaClient, jwtSecret: string) {
    * skipped and reported; duplicates inside one batch are reported as
    * conflicts. Nothing is ever overwritten — existing server data always wins.
    */
-  router.post('/import', auth, requireRole('school_admin', 'hr_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
+  router.post('/import', auth, requireRole('school_admin', 'hr_admin', 'super_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const schoolId = req.schoolId as string
       const parsed = importSchema.parse(req.body)
@@ -302,7 +302,7 @@ export function noticeRouter(prisma: PrismaClient, jwtSecret: string) {
     }
   })
 
-  router.post('/categories', auth, requireRole('school_admin', 'hr_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
+  router.post('/categories', auth, requireRole('school_admin', 'hr_admin', 'super_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const schoolId = req.schoolId as string
       const body = createCategorySchema.parse(req.body)
@@ -323,7 +323,7 @@ export function noticeRouter(prisma: PrismaClient, jwtSecret: string) {
 
   // Deleting a category reassigns its notices to 'General' in one transaction —
   // same semantics as the legacy local store's removeCategory.
-  router.delete('/categories/:name', auth, requireRole('school_admin', 'hr_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
+  router.delete('/categories/:name', auth, requireRole('school_admin', 'hr_admin', 'super_admin'), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const schoolId = req.schoolId as string
       const name = decodeURIComponent(req.params.name as string)

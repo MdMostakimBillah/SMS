@@ -82,7 +82,7 @@ const updateTeacherSchema = createTeacherSchema.partial()
  *   from create/update/delete; unknown roles are denied by requireRole.
  */
 const READ_ROLES = ['school_admin', 'hr_admin', 'super_admin']
-const WRITE_ROLES = ['school_admin', 'hr_admin']
+const WRITE_ROLES = ['school_admin', 'hr_admin', 'super_admin']
 
 /** departmentId must exist inside the caller's own school (blocks cross-tenant references). */
 async function resolveDepartmentForSchool(
@@ -200,7 +200,20 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
 
   router.post('/', auth, requireRole(...WRITE_ROLES), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = req.schoolId as string // trusted session state — never the body
+      let schoolId = req.schoolId as string
+      if (req.userRole === 'super_admin') {
+        schoolId = (req.body.schoolId as string) || (req.headers['x-school-id'] as string) || req.schoolId || ''
+        if (!schoolId) {
+          const platform = await prisma.school.findFirst({
+            where: { domain: { in: ['edutech', 'main'] } },
+            select: { id: true },
+          })
+          schoolId = platform?.id || ''
+        }
+      }
+      if (!schoolId) {
+        return res.status(400).json({ error: 'School ID required' })
+      }
       const body = createTeacherSchema.parse(req.body)
 
       let resolvedDeptId = body.departmentId ?? null
@@ -369,17 +382,34 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
       if (body.expertSubjects !== undefined) data.expertSubjects = body.expertSubjects
       if (body.applySalaryRule !== undefined) data.applySalaryRule = body.applySalaryRule
 
-      const { count } = await prisma.teacher.updateMany({
-        where: { id, schoolId },
-        data,
-      })
-      if (count === 0) {
-        audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
-        return res.status(404).json({ error: 'Teacher not found' })
+      if (Object.keys(data).length > 0) {
+        let count = 0
+        if (req.userRole === 'super_admin') {
+          const where = req.schoolId ? { id, schoolId: req.schoolId } : { id }
+          const updateRes = await prisma.teacher.updateMany({ where, data })
+          count = updateRes.count
+          if (count === 0) {
+            const fallback = await prisma.teacher.updateMany({ where: { id }, data })
+            count = fallback.count
+          }
+        } else {
+          const updateRes = await prisma.teacher.updateMany({ where: { id, schoolId }, data })
+          count = updateRes.count
+        }
+        if (count === 0) {
+          audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'not_found' })
+          return res.status(404).json({ error: 'Teacher not found' })
+        }
       }
 
-      const teacher = await prisma.teacher.findFirst({ where: { id, schoolId } })
-      audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
+      const teacher = req.userRole === 'super_admin'
+        ? await prisma.teacher.findUnique({ where: { id } })
+        : await prisma.teacher.findFirst({ where: { id, schoolId } })
+      if (!teacher) {
+        audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'not_found' })
+        return res.status(404).json({ error: 'Teacher not found' })
+      }
+      audit({ action: 'teacher.update', actorId: req.userId, actorRole: req.userRole, schoolId: teacher.schoolId, resourceId: id, outcome: 'success' })
       res.json(teacher)
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -394,16 +424,27 @@ export function teacherRouter(prisma: PrismaClient, jwtSecret: string) {
 
   router.delete('/:id', auth, requireRole(...WRITE_ROLES), requireSchool, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const schoolId = req.schoolId as string
       const id = req.params.id as string
 
-      // Atomic tenant-scoped delete (see PUT). Cross-tenant IDs -> 404.
-      const { count } = await prisma.teacher.deleteMany({ where: { id, schoolId } })
+      let count = 0
+      if (req.userRole === 'super_admin') {
+        const where = req.schoolId ? { id, schoolId: req.schoolId } : { id }
+        const delRes = await prisma.teacher.deleteMany({ where })
+        count = delRes.count
+        if (count === 0) {
+          const fallback = await prisma.teacher.deleteMany({ where: { id } })
+          count = fallback.count
+        }
+      } else {
+        const delRes = await prisma.teacher.deleteMany({ where: { id, schoolId: req.schoolId as string } })
+        count = delRes.count
+      }
+
       if (count === 0) {
-        audit({ action: 'teacher.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'not_found' })
+        audit({ action: 'teacher.delete', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'not_found' })
         return res.status(404).json({ error: 'Teacher not found' })
       }
-      audit({ action: 'teacher.delete', actorId: req.userId, actorRole: req.userRole, schoolId, resourceId: id, outcome: 'success' })
+      audit({ action: 'teacher.delete', actorId: req.userId, actorRole: req.userRole, schoolId: req.schoolId || 'all', resourceId: id, outcome: 'success' })
       res.json({ success: true })
     } catch {
       res.status(500).json({ error: 'Internal server error' })
