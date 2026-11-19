@@ -72,3 +72,7 @@ export function isRecentExplicitDelete(windowMs = 8000): boolean {
   return Date.now() - lastExplicitDeleteAt < windowMs
 }
 
+export function resetExplicitDeleteForTests(): void {
+  lastExplicitDeleteAt = 0
+}
+

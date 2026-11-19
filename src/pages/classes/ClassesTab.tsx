@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
-import { CalendarDays, Download, Plus } from 'lucide-react'
+import { CalendarDays, Download, Plus, X } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import { type ClassSection, type ClassInfo, type InstitutionSettings, useClassStore } from '@/store/classStore'
 import { flushPendingWrites } from '@/lib/storage'
@@ -254,9 +254,38 @@ export default function ClassesTab({
         <div className="flex-1" />
         <div className="flex items-center gap-1.5 flex-wrap">
           {institution.sessions.filter((s) => s !== institution.currentSession).map((s) => (
-            <button key={s} onClick={() => switchSession(s)} className="text-[0.625rem] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] cursor-pointer font-[inherit] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all">
-              {isBn ? 'পরিবর্তন' : 'Switch to'} {s}
-            </button>
+            <span
+              key={s}
+              className="inline-flex items-center gap-1 text-[0.625rem] py-1 px-2 rounded border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--brand)] transition-all"
+            >
+              <button
+                type="button"
+                onClick={() => switchSession(s)}
+                className="bg-transparent border-none p-0 text-inherit cursor-pointer font-[inherit] hover:text-[var(--brand)]"
+              >
+                {isBn ? 'পরিবর্তন' : 'Switch to'} {s}
+              </button>
+              {institution.sessions.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      confirm(
+                        isBn
+                          ? `"${s}" সেশন মুছে ফেলতে চান? এই সেশনের সব ক্লাস ও রুটিন মুছে যাবে।`
+                          : `Delete session "${s}"? All classes and routines for this session will be removed.`
+                      )
+                    ) {
+                      useClassStore.getState().removeSession(s)
+                    }
+                  }}
+                  className="p-0 border-none bg-transparent text-[var(--text-muted)] hover:text-[var(--red)] cursor-pointer flex items-center"
+                  title={isBn ? 'সেশন মুছুন' : 'Delete session'}
+                >
+                  <X size={10} />
+                </button>
+              )}
+            </span>
           ))}
           <button
             type="button"

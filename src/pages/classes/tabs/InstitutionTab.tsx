@@ -523,21 +523,52 @@ export default React.memo(function InstitutionTab({
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-[var(--border)]">
                       {institution.sessions.map((s: string) => (
-                        <button
+                        <span
                           key={s}
-                          type="button"
-                          onClick={() => {
-                            switchSession(s)
-                            setInstForm((p: any) => ({ ...p, currentSession: s }))
-                          }}
-                          className={`text-[0.625rem] py-0.5 px-2 rounded cursor-pointer font-[inherit] transition-all ${
+                          className={`inline-flex items-center gap-1 text-[0.625rem] py-0.5 px-2 rounded font-[inherit] transition-all ${
                             s === institution.currentSession
-                              ? 'bg-[var(--brand)] text-white font-semibold border-none shadow-xs'
+                              ? 'bg-[var(--brand)] text-white font-semibold shadow-xs'
                               : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)] hover:border-[var(--brand)] hover:text-[var(--brand)]'
                           }`}
                         >
-                          {s}
-                        </button>
+                          <span
+                            onClick={() => {
+                              switchSession(s)
+                              setInstForm((p: any) => ({ ...p, currentSession: s }))
+                            }}
+                            className="cursor-pointer"
+                          >
+                            {s}
+                          </span>
+                          {canEdit('classes.institution') && institution.sessions.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                if (
+                                  confirm(
+                                    isBn
+                                      ? `"${s}" সেশন মুছে ফেলতে চান? এই সেশনের সব ক্লাস ও রুটিন মুছে যাবে।`
+                                      : `Delete session "${s}"? All classes and routines for this session will be removed.`
+                                  )
+                                ) {
+                                  removeSession(s)
+                                  setInstForm((p: any) => {
+                                    const newSessions = (p.sessions || []).filter((x: string) => x !== s)
+                                    const newCurrent = p.currentSession === s ? newSessions[0] || '' : p.currentSession
+                                    return { ...p, sessions: newSessions, currentSession: newCurrent }
+                                  })
+                                }
+                              }}
+                              className={`p-0 rounded-full border-none cursor-pointer flex items-center justify-center w-[0.75rem] h-[0.75rem] transition-all ${
+                                s === institution.currentSession ? 'bg-white/30 text-white hover:bg-white/50' : 'text-[var(--text-muted)] hover:text-[var(--red)]'
+                              }`}
+                              title={isBn ? 'সেশন মুছুন' : 'Delete session'}
+                            >
+                              <X size={8} />
+                            </button>
+                          )}
+                        </span>
                       ))}
 
                       {canEdit('classes.institution') && (

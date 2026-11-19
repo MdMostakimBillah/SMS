@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { useClassStore } from '@/store/classStore'
-import { Calendar, Check, Plus } from 'lucide-react'
+import { Calendar, Check, Plus, Trash2 } from 'lucide-react'
 
 interface Props {
   isBn: boolean
@@ -12,6 +12,7 @@ export function SessionManagementPanel({ isBn, onBack }: Props) {
   const institution = useClassStore((s) => s.institution)
   const switchSession = useClassStore((s) => s.switchSession)
   const addSession = useClassStore((s) => s.addSession)
+  const removeSession = useClassStore((s) => s.removeSession)
   const [newSession, setNewSession] = useState('')
 
   const handleAdd = () => {
@@ -20,6 +21,18 @@ export function SessionManagementPanel({ isBn, onBack }: Props) {
     addSession(trimmed)
     switchSession(trimmed)
     setNewSession('')
+  }
+
+  const handleDelete = (s: string) => {
+    if (
+      confirm(
+        isBn
+          ? `"${s}" সেশন মুছে ফেলতে চান? এই সেশনের সব ক্লাস ও রুটিন মুছে যাবে।`
+          : `Delete session "${s}"? All classes and routines for this session will be removed.`
+      )
+    ) {
+      removeSession(s)
+    }
   }
 
   return (
@@ -49,16 +62,31 @@ export function SessionManagementPanel({ isBn, onBack }: Props) {
           </label>
           <div className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border)] divide-y divide-[var(--border)]">
             {institution.sessions.map((s) => (
-              <button
+              <div
                 key={s}
-                onClick={() => switchSession(s)}
-                className={`w-full flex items-center justify-between px-4 py-3 cursor-pointer bg-transparent border-none text-left transition-colors hover:bg-[var(--bg-primary)] ${
-                  s === institution.currentSession ? 'text-[var(--brand)]' : 'text-[var(--text-primary)]'
-                }`}
+                className="w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-[var(--bg-primary)] group"
               >
-                <span className="text-[0.8125rem] font-medium">{s}</span>
-                {s === institution.currentSession && <Check size={16} className="text-[var(--brand)]" />}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => switchSession(s)}
+                  className={`flex-1 flex items-center gap-2 cursor-pointer bg-transparent border-none text-left font-[inherit] ${
+                    s === institution.currentSession ? 'text-[var(--brand)] font-semibold' : 'text-[var(--text-primary)]'
+                  }`}
+                >
+                  <span className="text-[0.8125rem] font-medium">{s}</span>
+                  {s === institution.currentSession && <Check size={16} className="text-[var(--brand)]" />}
+                </button>
+                {institution.sessions.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(s)}
+                    className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--red)] hover:bg-[var(--red-light)] cursor-pointer bg-transparent border-none transition-colors"
+                    title={isBn ? `"${s}" সেশন মুছুন` : `Delete session "${s}"`}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </div>

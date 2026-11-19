@@ -780,26 +780,43 @@ export function normalizeVaultJsonForStore(
 
     if (isInst) {
       const inst = parsed.state?.institution || parsed.institution || parsed
-      const newCurrentSession = existingState.institution?.currentSession || inst.currentSession || '2025-26'
+      const instSessions = Array.isArray(inst.sessions) && inst.sessions.length > 0
+        ? inst.sessions
+        : (existingState.institution?.sessions || [])
+      const newCurrentSession = (inst.currentSession && instSessions.includes(inst.currentSession))
+        ? inst.currentSession
+        : (existingState.institution?.currentSession && instSessions.includes(existingState.institution.currentSession))
+          ? existingState.institution.currentSession
+          : (instSessions[0] || '2025-26')
       const targetClasses =
         existingState.sessionClasses?.[newCurrentSession] ||
         (newCurrentSession === existingState.institution?.currentSession ? (existingState.classes || []) : [])
       const targetRoutines =
         existingState.sessionRoutines?.[newCurrentSession] ||
         (newCurrentSession === existingState.institution?.currentSession ? (existingState.routines || []) : [])
-      const mergedSessions = Array.from(new Set([
-        ...(existingState.institution?.sessions || []),
-        ...(inst.sessions || []),
-        newCurrentSession,
-      ])).filter(Boolean)
+
+      const cleanSessionClasses = { ...(existingState.sessionClasses || {}) }
+      const cleanSessionRoutines = { ...(existingState.sessionRoutines || {}) }
+      if (Array.isArray(inst.sessions) && inst.sessions.length > 0) {
+        const allowedSessions = new Set(instSessions)
+        for (const s of Object.keys(cleanSessionClasses)) {
+          if (!allowedSessions.has(s)) delete cleanSessionClasses[s]
+        }
+        for (const s of Object.keys(cleanSessionRoutines)) {
+          if (!allowedSessions.has(s)) delete cleanSessionRoutines[s]
+        }
+      }
+
       const finalState = {
         ...existingState,
         classes: targetClasses,
         routines: targetRoutines,
+        sessionClasses: cleanSessionClasses,
+        sessionRoutines: cleanSessionRoutines,
         institution: {
           ...existingState.institution,
           ...inst,
-          sessions: mergedSessions,
+          sessions: instSessions,
           currentSession: newCurrentSession,
         },
         serverSynced: true,
@@ -862,17 +879,26 @@ export function normalizeVaultJsonForStore(
     }
 
     const parsedInner = parsed.state || (typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
-    const curSession =
-      (parsedInner.institution && parsedInner.institution.currentSession) ||
-      existingState.institution?.currentSession ||
-      '2025-26'
+    const parsedSessions = Array.isArray(parsedInner.institution?.sessions) && parsedInner.institution.sessions.length > 0
+      ? parsedInner.institution.sessions
+      : (Array.isArray(parsedInner.sessions) && parsedInner.sessions.length > 0 ? parsedInner.sessions : null)
 
-    const mergedSessionClasses: Record<string, any[]> = {
-      ...(existingState.sessionClasses || {}),
-    }
+    const finalSessions = parsedSessions || (existingState.institution?.sessions && existingState.institution.sessions.length > 0 ? existingState.institution.sessions : ['2025-26'])
+    const allowedSessions = new Set(finalSessions)
+
+    const curSession =
+      (parsedInner.institution?.currentSession && allowedSessions.has(parsedInner.institution.currentSession))
+        ? parsedInner.institution.currentSession
+        : (parsedInner.currentSession && allowedSessions.has(parsedInner.currentSession))
+          ? parsedInner.currentSession
+          : (existingState.institution?.currentSession && allowedSessions.has(existingState.institution.currentSession))
+            ? existingState.institution.currentSession
+            : (finalSessions[0] || '2025-26')
+
+    const mergedSessionClasses: Record<string, any[]> = {}
     if (parsedInner.sessionClasses) {
       for (const [sess, list] of Object.entries(parsedInner.sessionClasses)) {
-        if (Array.isArray(list)) {
+        if (allowedSessions.has(sess) && Array.isArray(list)) {
           mergedSessionClasses[sess] = list.map((c: any, index: number) => ({
             id: c.id !== undefined && c.id !== null ? c.id : `CLS-${String(index + 1).padStart(2, '0')}`,
             name: String(c.name || '').trim(),
@@ -895,10 +921,24 @@ export function normalizeVaultJsonForStore(
         }
       }
     }
+    for (const [sess, list] of Object.entries(existingState.sessionClasses || {})) {
+      if (allowedSessions.has(sess) && !mergedSessionClasses[sess]) {
+        mergedSessionClasses[sess] = Array.isArray(list) ? list : []
+      }
+    }
 
-    const mergedSessionRoutines: Record<string, any[]> = {
-      ...(existingState.sessionRoutines || {}),
-      ...(parsedInner.sessionRoutines || {}),
+    const mergedSessionRoutines: Record<string, any[]> = {}
+    if (parsedInner.sessionRoutines) {
+      for (const [sess, list] of Object.entries(parsedInner.sessionRoutines)) {
+        if (allowedSessions.has(sess) && Array.isArray(list)) {
+          mergedSessionRoutines[sess] = list
+        }
+      }
+    }
+    for (const [sess, list] of Object.entries(existingState.sessionRoutines || {})) {
+      if (allowedSessions.has(sess) && !mergedSessionRoutines[sess]) {
+        mergedSessionRoutines[sess] = Array.isArray(list) ? list : []
+      }
     }
 
     let finalClasses: any[]
@@ -929,19 +969,13 @@ export function normalizeVaultJsonForStore(
       mergedSessionRoutines[curSession] = finalRoutines
     }
 
-    const mergedSessions = Array.from(new Set([
-      ...(existingState.institution?.sessions || []),
-      ...(parsedInner.institution?.sessions || []),
-      curSession,
-    ])).filter(Boolean)
-
     const finalState = {
       ...existingState,
       ...parsedInner,
       institution: {
         ...(existingState.institution || {}),
         ...(parsedInner.institution || {}),
-        sessions: mergedSessions,
+        sessions: finalSessions,
         currentSession: curSession,
       },
       classes: finalClasses,

@@ -174,6 +174,37 @@ export function mapSchoolToInstitutionSettings(school: any, current?: Institutio
         ? school.storageMode
         : current?.storageMode || 'cloud')
 
+  let schoolSessions: string[] | null = null
+  if (school.sessions) {
+    try {
+      const parsed = typeof school.sessions === 'string' ? JSON.parse(school.sessions) : school.sessions
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        schoolSessions = parsed.filter(Boolean)
+      }
+    } catch {
+      schoolSessions = null
+    }
+  }
+
+  let resolvedSessions: string[]
+  if (isRecentExplicitDelete()) {
+    resolvedSessions = current?.sessions && current.sessions.length > 0
+      ? current.sessions
+      : (schoolSessions && schoolSessions.length > 0 ? schoolSessions : ['2025-26'])
+  } else if (schoolSessions && schoolSessions.length > 0) {
+    resolvedSessions = schoolSessions
+  } else if (current?.sessions && current.sessions.length > 0) {
+    resolvedSessions = current.sessions
+  } else {
+    resolvedSessions = ['2025-26']
+  }
+
+  const resolvedCurrentSession = (current?.currentSession && resolvedSessions.includes(current.currentSession))
+    ? current.currentSession
+    : (school?.currentSession && resolvedSessions.includes(school.currentSession))
+      ? school.currentSession
+      : (resolvedSessions[0] || '2025-26')
+
   return {
     name: school.name || current?.name || '',
     nameBn: school.nameBn || current?.nameBn || school.name || '',
@@ -203,12 +234,8 @@ export function mapSchoolToInstitutionSettings(school: any, current?: Institutio
     breaks: school.breaks
       ? (typeof school.breaks === 'string' ? JSON.parse(school.breaks) : school.breaks)
       : current?.breaks?.length ? current.breaks : [{ id: 'BRK-1', label: 'Tiffin', start: '11:00', end: '11:30' }],
-    currentSession: current?.currentSession || '2025-26',
-    sessions: Array.from(new Set([
-      ...(school.sessions ? (typeof school.sessions === 'string' ? JSON.parse(school.sessions) : school.sessions) : []),
-      ...(current?.sessions || []),
-      '2025-26',
-    ])).filter(Boolean),
+    currentSession: resolvedCurrentSession,
+    sessions: resolvedSessions,
     storageMode: effectiveStorageMode,
     serverUrl: school.serverUrl || current?.serverUrl || '',
     folderName: school.folderName || current?.folderName || '',
@@ -708,6 +735,8 @@ export const useClassStore = create<ClassState>()(
       },
 
       removeSession: (session) => {
+        markExplicitUserDelete()
+        let newCurrent = ''
         set((state) => {
           const { institution, sessionClasses, sessionRoutines } = state
           const newSessions = institution.sessions.filter((s) => s !== session)
@@ -715,9 +744,11 @@ export const useClassStore = create<ClassState>()(
           const newSessionRoutines = { ...sessionRoutines }
           delete newSessionClasses[session]
           delete newSessionRoutines[session]
-          const newCurrent = institution.currentSession === session ? newSessions[0] || '' : institution.currentSession
-          const targetClasses = newSessionClasses[newCurrent] || state.classes
-          const targetRoutines = newSessionRoutines[newCurrent] || state.routines
+          newCurrent = institution.currentSession === session
+            ? (newSessions[0] || '')
+            : (newSessions.includes(institution.currentSession) ? institution.currentSession : (newSessions[0] || ''))
+          const targetClasses = newSessionClasses[newCurrent] || []
+          const targetRoutines = newSessionRoutines[newCurrent] || []
           return {
             institution: { ...institution, sessions: newSessions, currentSession: newCurrent },
             classes: targetClasses,
@@ -726,6 +757,16 @@ export const useClassStore = create<ClassState>()(
             sessionRoutines: newSessionRoutines,
           }
         })
+        const slug = getSlug()
+        if (slug) {
+          const inst = useSuperAdminStore.getState().institutions.find((i) => i.slug === slug || i.subdomain === slug || i.id === slug)
+          if (inst) {
+            useSuperAdminStore.getState().updateInstitution(inst.id, {
+              sessions: (inst.sessions || []).filter((s) => s !== session),
+              ...(inst.currentSession === session ? { currentSession: newCurrent } : {}),
+            })
+          }
+        }
         flushPendingWrites()
         void flushVaultWrites()
         queueServerSync(_get)
@@ -851,21 +892,47 @@ export const useClassStore = create<ClassState>()(
             }
 
             if (hasServerSessionClasses) {
-              const mergedSessions = Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
-              const activeSession = state.institution.currentSession || res.currentSession || currentSession
+              const effectiveSessions = isRecentExplicitDelete()
+                ? (state.institution.sessions && state.institution.sessions.length > 0 ? state.institution.sessions : (res.sessions || []))
+                : Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
+              const allowedSessions = new Set(effectiveSessions)
+              const activeSession = (state.institution.currentSession && allowedSessions.has(state.institution.currentSession))
+                ? state.institution.currentSession
+                : (res.currentSession && allowedSessions.has(res.currentSession))
+                  ? res.currentSession
+                  : (effectiveSessions[0] || '2025-26')
               const normalizedSessionClasses: Record<string, ClassInfo[]> = {}
               let needsPush = false
               for (const [sess, list] of Object.entries(res.sessionClasses || {})) {
-                const normalized = normalizeClassList(list)
-                const localForSess = state.sessionClasses?.[sess] || (sess === activeSession ? state.classes : [])
-                const merged = mergeClassLists(localForSess, normalized)
-                normalizedSessionClasses[sess] = merged
-                if (localForSess.some((lc) => (lc.subjectIds?.length ?? 0) > 0 || (lc.sections || []).some((ls) => (ls.subjectIds?.length ?? 0) > 0))) {
-                  needsPush = true
+                if (allowedSessions.has(sess)) {
+                  const normalized = normalizeClassList(list)
+                  const localForSess = state.sessionClasses?.[sess] || (sess === activeSession ? state.classes : [])
+                  const merged = mergeClassLists(localForSess, normalized)
+                  normalizedSessionClasses[sess] = merged
+                  if (localForSess.some((lc) => (lc.subjectIds?.length ?? 0) > 0 || (lc.sections || []).some((ls) => (ls.subjectIds?.length ?? 0) > 0))) {
+                    needsPush = true
+                  }
                 }
               }
-              const mergedSessionClasses = { ...state.sessionClasses, ...normalizedSessionClasses }
-              const mergedSessionRoutines = { ...state.sessionRoutines, ...(res.sessionRoutines || {}) }
+              const mergedSessionClasses: Record<string, ClassInfo[]> = {}
+              for (const [sess, list] of Object.entries(state.sessionClasses || {})) {
+                if (allowedSessions.has(sess)) {
+                  mergedSessionClasses[sess] = list
+                }
+              }
+              Object.assign(mergedSessionClasses, normalizedSessionClasses)
+
+              const mergedSessionRoutines: Record<string, any[]> = {}
+              for (const [sess, list] of Object.entries(state.sessionRoutines || {})) {
+                if (allowedSessions.has(sess)) {
+                  mergedSessionRoutines[sess] = list
+                }
+              }
+              for (const [sess, list] of Object.entries(res.sessionRoutines || {})) {
+                if (allowedSessions.has(sess)) {
+                  mergedSessionRoutines[sess] = list
+                }
+              }
               const activeClasses = mergedSessionClasses[activeSession] || []
               const activeRoutines = mergedSessionRoutines[activeSession] || []
               set((prev) => ({
@@ -875,7 +942,7 @@ export const useClassStore = create<ClassState>()(
                 sessionRoutines: mergedSessionRoutines,
                 institution: {
                   ...prev.institution,
-                  sessions: mergedSessions,
+                  sessions: effectiveSessions,
                   currentSession: activeSession,
                   ...(res.breaks && res.breaks.length > 0 ? { breaks: res.breaks } : {}),
                   ...(res.startTime ? { startTime: res.startTime } : {}),
@@ -888,22 +955,35 @@ export const useClassStore = create<ClassState>()(
                 void queueServerSync(_get)
               }
             } else if (hasServerClasses || hasServerRoutines) {
-              const mergedSessions = Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
-              const defaultSession = res.currentSession || res.sessions?.[0] || '2025-26'
-              const activeSession = state.institution.currentSession || defaultSession
+              const effectiveSessions = isRecentExplicitDelete()
+                ? (state.institution.sessions && state.institution.sessions.length > 0 ? state.institution.sessions : (res.sessions || []))
+                : Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
+              const allowedSessions = new Set(effectiveSessions)
+              const defaultSession = res.currentSession || currentSession || res.sessions?.[0] || '2025-26'
+              const activeSession = (state.institution.currentSession && allowedSessions.has(state.institution.currentSession))
+                ? state.institution.currentSession
+                : defaultSession
               const isCurrentSameAsServerDefault = activeSession === defaultSession
               const normalizedServerClasses = normalizeClassList(res.classes || [])
               const mergedActiveClasses = mergeClassLists(state.classes, normalizedServerClasses)
-              const newSessionClasses = {
-                ...state.sessionClasses,
-                [defaultSession]: mergedActiveClasses,
+              const newSessionClasses: Record<string, ClassInfo[]> = {}
+              for (const [sess, list] of Object.entries(state.sessionClasses || {})) {
+                if (allowedSessions.has(sess)) {
+                  newSessionClasses[sess] = list
+                }
               }
-              const newSessionRoutines = {
-                ...state.sessionRoutines,
-                [defaultSession]: res.routines || [],
+              newSessionClasses[defaultSession] = mergedActiveClasses
+
+              const newSessionRoutines: Record<string, any[]> = {}
+              for (const [sess, list] of Object.entries(state.sessionRoutines || {})) {
+                if (allowedSessions.has(sess)) {
+                  newSessionRoutines[sess] = list
+                }
               }
-              const activeClasses = isCurrentSameAsServerDefault ? mergedActiveClasses : (state.sessionClasses[activeSession] || [])
-              const activeRoutines = isCurrentSameAsServerDefault ? (res.routines || []) : (state.sessionRoutines[activeSession] || [])
+              newSessionRoutines[defaultSession] = res.routines || []
+
+              const activeClasses = isCurrentSameAsServerDefault ? mergedActiveClasses : (newSessionClasses[activeSession] || [])
+              const activeRoutines = isCurrentSameAsServerDefault ? (res.routines || []) : (newSessionRoutines[activeSession] || [])
               set((prev) => ({
                 classes: activeClasses,
                 routines: activeRoutines,
@@ -911,7 +991,7 @@ export const useClassStore = create<ClassState>()(
                 sessionRoutines: newSessionRoutines,
                 institution: {
                   ...prev.institution,
-                  sessions: mergedSessions,
+                  sessions: effectiveSessions,
                   currentSession: activeSession,
                   ...(res.breaks && res.breaks.length > 0 ? { breaks: res.breaks } : {}),
                   ...(res.startTime ? { startTime: res.startTime } : {}),
@@ -936,12 +1016,20 @@ export const useClassStore = create<ClassState>()(
               })
               set({ serverSynced: true, syncing: false })
             } else {
-              const mergedSessions = Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
+              const effectiveSessions = isRecentExplicitDelete()
+                ? (state.institution.sessions && state.institution.sessions.length > 0 ? state.institution.sessions : (res.sessions || []))
+                : Array.from(new Set([...(state.institution.sessions || []), ...(res.sessions || [])]))
+              const allowedSessions = new Set(effectiveSessions)
+              const activeSession = (state.institution.currentSession && allowedSessions.has(state.institution.currentSession))
+                ? state.institution.currentSession
+                : (res.currentSession && allowedSessions.has(res.currentSession))
+                  ? res.currentSession
+                  : (effectiveSessions[0] || '2025-26')
               set((prev) => ({
                 institution: {
                   ...prev.institution,
-                  ...(mergedSessions.length > 0 ? { sessions: mergedSessions } : {}),
-                  ...(res.currentSession ? { currentSession: res.currentSession } : {}),
+                  ...(effectiveSessions.length > 0 ? { sessions: effectiveSessions } : {}),
+                  currentSession: activeSession,
                   ...(res.breaks && res.breaks.length > 0 ? { breaks: res.breaks } : {}),
                   ...(res.startTime ? { startTime: res.startTime } : {}),
                   ...(res.endTime ? { endTime: res.endTime } : {}),

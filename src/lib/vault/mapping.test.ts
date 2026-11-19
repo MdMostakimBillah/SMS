@@ -446,6 +446,77 @@ describe('normalizeVaultJsonForStore', () => {
     expect(parsed.state.sessionClasses['2026-27']).toHaveLength(0)
   })
 
+  it('normalizes classes.json when session is deleted without resurrecting it from existingState', () => {
+    const existing = JSON.stringify({
+      state: {
+        institution: { currentSession: '2025-26', sessions: ['2024-25', '2025-26'] },
+        classes: [{ id: 'CLS-01', name: 'Class 1', sections: [] }],
+        sessionClasses: {
+          '2024-25': [{ id: 'CLS-OLD', name: 'Old Class', sections: [] }],
+          '2025-26': [{ id: 'CLS-01', name: 'Class 1', sections: [] }],
+        },
+        sessionRoutines: {
+          '2024-25': [{ classId: 'CLS-OLD', sectionId: 'A', periods: [] }],
+          '2025-26': [{ classId: 'CLS-01', sectionId: 'A', periods: [] }],
+        },
+      },
+      version: 1,
+    })
+
+    // Incoming classes.json from disk where 2024-25 was deleted
+    const incomingClassesJson = JSON.stringify({
+      state: {
+        institution: { currentSession: '2025-26', sessions: ['2025-26'] },
+        classes: [{ id: 'CLS-01', name: 'Class 1', sections: [] }],
+        sessionClasses: {
+          '2025-26': [{ id: 'CLS-01', name: 'Class 1', sections: [] }],
+        },
+        sessionRoutines: {
+          '2025-26': [{ classId: 'CLS-01', sectionId: 'A', periods: [] }],
+        },
+      },
+    })
+
+    const normalized = normalizeVaultJsonForStore('edutech-classes_demo', incomingClassesJson, existing, 'demo/classes.json')
+    const parsed = JSON.parse(normalized)
+
+    expect(parsed.state.institution.sessions).toEqual(['2025-26'])
+    expect(parsed.state.sessionClasses['2024-25']).toBeUndefined()
+    expect(parsed.state.sessionRoutines['2024-25']).toBeUndefined()
+    expect(parsed.state.sessionClasses['2025-26']).toHaveLength(1)
+  })
+
+  it('normalizes institution.json when session is deleted without resurrecting it from existingState', () => {
+    const existing = JSON.stringify({
+      state: {
+        institution: { currentSession: '2025-26', sessions: ['2024-25', '2025-26'], brandName: 'Test' },
+        sessionClasses: {
+          '2024-25': [{ id: 'CLS-OLD', name: 'Old Class', sections: [] }],
+          '2025-26': [{ id: 'CLS-01', name: 'Class 1', sections: [] }],
+        },
+        sessionRoutines: {
+          '2024-25': [],
+          '2025-26': [],
+        },
+      },
+      version: 1,
+    })
+
+    // Incoming institution.json where 2024-25 was deleted
+    const incomingInstJson = JSON.stringify({
+      currentSession: '2025-26',
+      sessions: ['2025-26'],
+      brandName: 'Test School',
+    })
+
+    const normalized = normalizeVaultJsonForStore('edutech-classes_demo', incomingInstJson, existing, 'demo/institution.json')
+    const parsed = JSON.parse(normalized)
+
+    expect(parsed.state.institution.sessions).toEqual(['2025-26'])
+    expect(parsed.state.sessionClasses['2024-25']).toBeUndefined()
+    expect(parsed.state.sessionRoutines['2024-25']).toBeUndefined()
+  })
+
   it('normalizes sections.json into class store and assigns to matching class', () => {
     const existing = JSON.stringify({
       state: {

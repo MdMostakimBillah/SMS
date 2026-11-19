@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { resetExplicitDeleteForTests, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import {
   useClassStore,
   extractClassNumber,
@@ -64,6 +65,7 @@ describe('classStore pure functions', () => {
 
 describe('classStore actions', () => {
   beforeEach(() => {
+    resetExplicitDeleteForTests()
     localStorage.clear()
     useClassStore.setState({
       classes: [],
@@ -144,6 +146,52 @@ describe('classStore actions', () => {
     useClassStore.getState().addSession('2024-25')
     useClassStore.getState().removeSession('2024-25')
     expect(useClassStore.getState().institution.sessions).not.toContain('2024-25')
+  })
+
+  it('removeSession triggers isRecentExplicitDelete and prevents syncFromServer from resurrecting deleted session', async () => {
+    useClassStore.getState().addSession('2026-27')
+    expect(useClassStore.getState().institution.sessions).toContain('2026-27')
+
+    useClassStore.getState().removeSession('2026-27')
+    expect(isRecentExplicitDelete()).toBe(true)
+    expect(useClassStore.getState().institution.sessions).not.toContain('2026-27')
+
+    // Simulate server returning old sessions before server processed delete
+    vi.mocked(classesApi.get).mockResolvedValueOnce({
+      sessions: ['2025-26', '2026-27'],
+      sessionClasses: { '2025-26': [], '2026-27': [{ id: 'CLS-X', name: 'Ghost', sections: [] }] },
+      sessionRoutines: { '2025-26': [], '2026-27': [{ classId: 'CLS-X', sectionId: 'A', periods: [] }] },
+      classes: [],
+      routines: [],
+      breaks: [],
+    })
+
+    await useClassStore.getState().syncFromServer('test-slug')
+    expect(useClassStore.getState().institution.sessions).not.toContain('2026-27')
+    expect(useClassStore.getState().sessionClasses['2026-27']).toBeUndefined()
+    expect(useClassStore.getState().sessionRoutines['2026-27']).toBeUndefined()
+  })
+
+  it('mapSchoolToInstitutionSettings does not resurrect deleted session or hardcode 2025-26', () => {
+    const dbSchool = {
+      id: 'sch-1',
+      name: 'Test School',
+      sessions: JSON.stringify(['2025-26', '2026-27']),
+    }
+    const currentSettings = {
+      ...useClassStore.getState().institution,
+      sessions: ['2026-27'],
+      currentSession: '2026-27',
+    }
+
+    // When an explicit delete was recently done
+    useClassStore.getState().removeSession('2025-26')
+    expect(isRecentExplicitDelete()).toBe(true)
+
+    const mapped = mapSchoolToInstitutionSettings(dbSchool, currentSettings)
+    expect(mapped.sessions).not.toContain('2025-26')
+    expect(mapped.sessions).toEqual(['2026-27'])
+    expect(mapped.currentSession).toBe('2026-27')
   })
 
   it('switchSession swaps classes and routines and preserves independence', () => {
