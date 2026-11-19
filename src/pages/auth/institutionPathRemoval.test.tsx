@@ -5,7 +5,7 @@ import InstitutionLoginRoute from './InstitutionLoginRoute'
 import InstitutionLanding from '@/pages/institution/InstitutionLanding'
 import { useSuperAdminStore, PACKAGES } from '@/store/superAdminStore'
 import { authApi } from '@/lib/api'
-import { purgeInstitutionStorage } from '@/lib/storage'
+import { purgeInstitutionStorage, getSlug } from '@/lib/storage'
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
@@ -133,5 +133,23 @@ describe('Institution path removal when deleted', () => {
     expect(localStorage.getItem('edutech_classes_demo-school')).toBeNull()
     // Unrelated institution data must stay intact
     expect(localStorage.getItem('edutech_unrelated_other-school')).not.toBeNull()
+  })
+
+  it('super admin account does not automatically connect to other institution when deleting an institution', () => {
+    // Other institutions exist in localStorage
+    localStorage.setItem('edutech-classes_other-school', JSON.stringify({ state: { classes: [] } }))
+    localStorage.setItem('edutech_user', JSON.stringify({
+      id: 'sa-1',
+      email: 'admin@edutech.com',
+      role: 'super_admin',
+    }))
+
+    // Simulate deleting "school-to-delete"
+    purgeInstitutionStorage('school-to-delete')
+
+    // getSlug() must NOT latch onto other-school for super admin
+    expect(getSlug()).toBeNull()
+    expect(sessionStorage.getItem('edutech_inst_slug')).toBeNull()
+    expect(localStorage.getItem('edutech_inst_slug')).toBeNull()
   })
 })

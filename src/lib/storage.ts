@@ -38,6 +38,10 @@ export function getSlug(): string | null {
       if (userRaw) {
         try {
           const u = JSON.parse(userRaw)
+          if (u?.role === 'super_admin') {
+            const viewingId = sessionStorage.getItem('edutech_viewing_id')
+            return viewingId || null
+          }
           const slugOrId = u?.subdomain || u?.schoolDomain || u?.schoolId
           if (slugOrId) {
             try { sessionStorage.setItem('edutech_inst_slug', String(slugOrId)) } catch { /* ignore */ }
@@ -45,6 +49,10 @@ export function getSlug(): string | null {
           }
         } catch { /* ignore */ }
       }
+    }
+    if (typeof window !== 'undefined' && window.location?.pathname?.startsWith('/super-admin')) {
+      const viewingId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null
+      return viewingId || null
     }
     if (typeof localStorage !== 'undefined') {
       for (let i = 0; i < localStorage.length; i++) {

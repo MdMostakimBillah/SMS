@@ -10,7 +10,7 @@ import {
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useClassStore, generateLightColors, generateDarkColors } from '@/store/classStore'
 import { useAuth } from '@/contexts/AuthContext'
-import { setSlug, purgeInstitutionStorage } from '@/lib/storage'
+import { setSlug, clearSlug, purgeInstitutionStorage } from '@/lib/storage'
 import { deleteVaultPath } from '@/lib/vault/vault'
 import { authApi, resolveMediaUrl } from '@/lib/api'
 import { LicenseModal } from './modals/LicenseModal'
@@ -307,6 +307,9 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
                     if (useSuperAdminStore.getState().viewingInstitutionId === inst.id) {
                       useSuperAdminStore.getState().stopViewing()
                     }
+
+                    // Always clear slug to ensure super admin is disconnected from institution namespace
+                    clearSlug()
 
                     // Remove local PC vault directory if present
                     if (inst.slug) void deleteVaultPath(inst.slug).catch(() => {})

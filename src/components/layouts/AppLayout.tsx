@@ -80,32 +80,34 @@ export default function AppLayout() {
   // Synchronize institution data from database on mount / refresh
   useEffect(() => {
     const viewingId = viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
-    if (user?.role === 'super_admin' && viewingId) {
-      const syncKey = `viewing:${viewingId}`
-      if (lastSyncedKeyRef.current === syncKey) return
-      lastSyncedKeyRef.current = syncKey
+    if (user?.role === 'super_admin') {
+      if (viewingId) {
+        const syncKey = `viewing:${viewingId}`
+        if (lastSyncedKeyRef.current === syncKey) return
+        lastSyncedKeyRef.current = syncKey
 
-      authApi.getPublicSchool(viewingId).then((res) => {
-        if (res?.school) {
-          const targetSlug = res.school.domain || res.school.slug || viewingId
-          setSlug(targetSlug)
-          const mapped = mapSchoolToInstitutionSettings(res.school, useClassStore.getState().institution)
-          useClassStore.getState().updateInstitution(mapped)
-          if (typeof sessionStorage !== 'undefined') {
-            sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
-            sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
+        authApi.getPublicSchool(viewingId).then((res) => {
+          if (res?.school) {
+            const targetSlug = res.school.domain || res.school.slug || viewingId
+            setSlug(targetSlug)
+            const mapped = mapSchoolToInstitutionSettings(res.school, useClassStore.getState().institution)
+            useClassStore.getState().updateInstitution(mapped)
+            if (typeof sessionStorage !== 'undefined') {
+              sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+              sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
+            }
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
+              if (mapped.serverUrl) localStorage.setItem('edutech_server_url', mapped.serverUrl)
+            }
+            const brand = res.school.brandColor || '#6366f1'
+            const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+            applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+            useClassStore.getState().syncFromServer(targetSlug).catch(() => {})
+            useFeeStore.getState().syncFromServer(targetSlug).catch(() => {})
           }
-          if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
-            if (mapped.serverUrl) localStorage.setItem('edutech_server_url', mapped.serverUrl)
-          }
-          const brand = res.school.brandColor || '#6366f1'
-          const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-          applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
-          useClassStore.getState().syncFromServer(targetSlug).catch(() => {})
-          useFeeStore.getState().syncFromServer(targetSlug).catch(() => {})
-        }
-      }).catch(() => {})
+        }).catch(() => {})
+      }
       return
     }
 

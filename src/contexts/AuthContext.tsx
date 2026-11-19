@@ -303,18 +303,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const pubSchool = await authApi.getPublicSchool(viewingId)
             if (pubSchool?.school) {
               syncUserSchool(pubSchool.school, { ...res.user, schoolDomain: pubSchool.school.domain })
-            } else if (res.user.school) {
-              syncUserSchool(res.user.school, res.user)
             }
           } catch {
-            if (res.user.school) {
-              syncUserSchool(res.user.school, res.user)
-            }
+            /* ignore */
           }
-        } else if (res.user.school) {
-          syncUserSchool(res.user.school, res.user)
         }
-      } else if (res.user.school) {
+      } else if (res.user.role !== 'super_admin' && res.user.school) {
         syncUserSchool(res.user.school, res.user)
       }
     } catch (err) {
@@ -474,18 +468,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const pubSchool = await authApi.getPublicSchool(viewingId)
             if (pubSchool?.school) {
               syncUserSchool(pubSchool.school, { ...res.user, schoolDomain: pubSchool.school.domain })
-            } else if (res.user.school) {
-              syncUserSchool(res.user.school, res.user)
             }
           } catch {
-            if (res.user.school) {
-              syncUserSchool(res.user.school, res.user)
-            }
+            /* ignore */
           }
-        } else if (res.user.school) {
-          syncUserSchool(res.user.school, res.user)
         }
-      } else if (res.user.school) {
+      } else if (res.user.role !== 'super_admin' && res.user.school) {
         syncUserSchool(res.user.school, res.user)
       }
       return userObj

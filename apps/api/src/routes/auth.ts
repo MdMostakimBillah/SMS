@@ -538,33 +538,16 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         }
       }
 
-      // Ensure super_admin is connected to default EduTech school to test all institution fetchers
-      if (user.role === 'super_admin' && !user.school) {
-        let defaultSchool =
-          (await prisma.school.findFirst({
-            where: { OR: [{ domain: 'edutech' }, { domain: 'main' }] },
-          })) || (await prisma.school.findFirst({ orderBy: { createdAt: 'asc' } }))
-
-        if (!defaultSchool) {
-          defaultSchool = await prisma.school.create({
-            data: {
-              name: 'EduTech',
-              nameBn: 'এডুটেক',
-              domain: 'edutech',
-              brandName: 'EduTech',
-              brandColor: '#6366f1',
-              status: 'active',
-              plan: 'enterprise',
-            },
-          }).catch(() => null)
-        }
-
-        if (defaultSchool) {
-          ;(user as any).schoolId = defaultSchool.id
-          ;(user as any).school = defaultSchool
+      // Super admin is the global platform administrator. They must never be
+      // auto-bound or hijacked into an arbitrary tenant institution.
+      if (user.role === 'super_admin') {
+        const isPlatformSchool = user.school?.domain === 'edutech' || user.school?.domain === 'main'
+        if (user.schoolId && !isPlatformSchool) {
+          ;(user as any).schoolId = null
+          ;(user as any).school = null
           await prisma.user.update({
             where: { id: user.id },
-            data: { schoolId: defaultSchool.id },
+            data: { schoolId: null },
           }).catch(() => {})
         }
       }
@@ -609,33 +592,16 @@ export function authRouter(prisma: PrismaClient, jwtSecret: string, corsOrigin: 
         }
       }
 
-      // Ensure super_admin is connected to default EduTech school to test all institution fetchers
-      if (user.role === 'super_admin' && !user.school) {
-        let defaultSchool =
-          (await prisma.school.findFirst({
-            where: { OR: [{ domain: 'edutech' }, { domain: 'main' }] },
-          })) || (await prisma.school.findFirst({ orderBy: { createdAt: 'asc' } }))
-
-        if (!defaultSchool) {
-          defaultSchool = await prisma.school.create({
-            data: {
-              name: 'EduTech',
-              nameBn: 'এডুটেক',
-              domain: 'edutech',
-              brandName: 'EduTech',
-              brandColor: '#6366f1',
-              status: 'active',
-              plan: 'enterprise',
-            },
-          }).catch(() => null)
-        }
-
-        if (defaultSchool) {
-          ;(user as any).schoolId = defaultSchool.id
-          ;(user as any).school = defaultSchool
+      // Super admin is the global platform administrator. They must never be
+      // auto-bound or hijacked into an arbitrary tenant institution.
+      if (user.role === 'super_admin') {
+        const isPlatformSchool = user.school?.domain === 'edutech' || user.school?.domain === 'main'
+        if (user.schoolId && !isPlatformSchool) {
+          ;(user as any).schoolId = null
+          ;(user as any).school = null
           await prisma.user.update({
             where: { id: user.id },
-            data: { schoolId: defaultSchool.id },
+            data: { schoolId: null },
           }).catch(() => {})
         }
       }
