@@ -237,20 +237,10 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
     }
   }, [cameraActive, facingMode, processAttendanceScan, isBn])
 
-  // Sample people for quick test: ensure both students & teachers are presented
+  // Sample people for quick test from registered members
   const sampleStudents = allPeople.filter((p) => p.type === 'student').slice(0, 2)
   const sampleStaff = allPeople.filter((p) => p.type === 'staff').slice(0, 2)
-  const defaultStudents: Person[] = [
-    { id: 'STU-2026-001', name: 'Arafat Rahman', type: 'student', photo: '', dept: 'Class 10', section: 'A' },
-    { id: 'STU-2026-002', name: 'Sumaiya Akter', type: 'student', photo: '', dept: 'Class 10', section: 'A' },
-  ]
-  const defaultStaff: Person[] = [
-    { id: 'TCH-2026-001', name: 'Dr. Rafiqul Islam', type: 'staff', photo: '', dept: 'Science' },
-    { id: 'TCH-2026-002', name: 'Prof. Salma Khatun', type: 'staff', photo: '', dept: 'Arts' },
-  ]
-  const displayStudents = sampleStudents.length > 0 ? sampleStudents : defaultStudents
-  const displayStaff = sampleStaff.length > 0 ? sampleStaff : defaultStaff
-  const samplePeople = [...displayStudents, ...displayStaff]
+  const samplePeople = [...sampleStudents, ...sampleStaff]
 
   return (
     <div className="space-y-4">
@@ -462,46 +452,48 @@ export function QrAttendanceScanner({ isBn, date, allPeople }: QrAttendanceScann
             </div>
           )}
 
-          {/* Quick Demo Test Buttons */}
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
-            <div className="text-[0.625rem] font-semibold text-[var(--text-muted)] mb-2 flex items-center gap-1">
-              <Sparkles size={11} className="text-[var(--brand)]" />
-              {isBn ? 'কুইক টেস্ট (ক্যামেরা ছাড়া ১-ক্লিকে উপস্থিতি পরীক্ষা করুন):' : 'Instant One-Click Punch Test (Student & Staff):'}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {samplePeople.map((p) => {
-                const isStudent = p.type === 'student'
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => processAttendanceScan(p.id)}
-                    className="p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)] text-left cursor-pointer transition-all flex items-center gap-2 group"
-                  >
-                    <div
-                      className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-                        isStudent
-                          ? 'bg-[var(--green-light)] text-[var(--green)]'
-                          : 'bg-[var(--brand-light)] text-[var(--brand)]'
-                      }`}
+          {/* Quick Test Buttons (only shown when people exist) */}
+          {samplePeople.length > 0 && (
+            <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-xl p-3.5">
+              <div className="text-[0.625rem] font-semibold text-[var(--text-muted)] mb-2 flex items-center gap-1">
+                <Sparkles size={11} className="text-[var(--brand)]" />
+                {isBn ? 'কুইক টেস্ট (ক্যামেরা ছাড়া ১-ক্লিকে উপস্থিতি পরীক্ষা করুন):' : 'Instant One-Click Punch Test:'}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {samplePeople.map((p) => {
+                  const isStudent = p.type === 'student'
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => processAttendanceScan(p.id)}
+                      className="p-2 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--brand)] text-left cursor-pointer transition-all flex items-center gap-2 group"
                     >
-                      {isStudent ? <GraduationCap size={13} /> : <User size={13} />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate group-hover:text-[var(--brand)]">
-                        {p.name}
+                      <div
+                        className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
+                          isStudent
+                            ? 'bg-[var(--green-light)] text-[var(--green)]'
+                            : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                        }`}
+                      >
+                        {isStudent ? <GraduationCap size={13} /> : <User size={13} />}
                       </div>
-                      <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono flex items-center gap-1">
-                        <span>{p.id}</span>
-                        <span className="text-[0.5rem] opacity-75">{isStudent ? '• Cls 10' : ''}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[0.6875rem] font-semibold text-[var(--text-primary)] truncate group-hover:text-[var(--brand)]">
+                          {p.name}
+                        </div>
+                        <div className="text-[0.5625rem] text-[var(--text-muted)] font-mono flex items-center gap-1">
+                          <span>{p.id}</span>
+                          <span className="text-[0.5rem] opacity-75">{isStudent && p.dept ? `• ${p.dept}` : ''}</span>
+                        </div>
                       </div>
-                    </div>
-                    <Zap size={10} className="text-[var(--text-muted)] group-hover:text-[var(--brand)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                )
-              })}
+                      <Zap size={10} className="text-[var(--text-muted)] group-hover:text-[var(--brand)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Recent Scans Strip */}
           {recentScans.length > 0 && (

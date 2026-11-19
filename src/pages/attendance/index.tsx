@@ -188,22 +188,8 @@ export default function AttendancePage() {
   const dayAtt = attendance[date] || {}
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
 
-  const defaultDemoStudents = useMemo(
-    () => [
-      { id: 'STU-2026-001', nameEn: 'Arafat Rahman', nameBn: 'আরাফাত রহমান', class: 'Class 10', section: 'A', status: 'approved', active: true, roll: '101' },
-      { id: 'STU-2026-002', nameEn: 'Sumaiya Akter', nameBn: 'সুমাইয়া আক্তার', class: 'Class 10', section: 'A', status: 'approved', active: true, roll: '102' },
-      { id: 'STU-2026-003', nameEn: 'Tanvir Hasan', nameBn: 'তানভীর হাসান', class: 'Class 9', section: 'B', status: 'approved', active: true, roll: '201' },
-      { id: 'STU-2026-004', nameEn: 'Nusrat Jahan', nameBn: 'নুসরাত জাহান', class: 'Class 8', section: 'A', status: 'approved', active: true, roll: '301' },
-      { id: 'STU-2026-005', nameEn: 'Mahmudul Hasan', nameBn: 'মাহমুদুল হাসান', class: 'Class 7', section: 'A', status: 'approved', active: true, roll: '401' },
-    ],
-    []
-  )
-
   const filteredStudents = useMemo(() => {
     let l = students.filter((s) => s.status === 'approved' && s.active !== false)
-    if (l.length === 0) {
-      l = defaultDemoStudents as any
-    }
     if (fClass) l = l.filter((s) => s.class === fClass)
     if (fSection) l = l.filter((s) => s.section === fSection)
     if (studentSearch) {
@@ -211,7 +197,7 @@ export default function AttendancePage() {
       l = l.filter((s) => s.nameEn.toLowerCase().includes(q) || s.nameBn.includes(studentSearch) || s.id.toLowerCase().includes(q))
     }
     return l
-  }, [students, defaultDemoStudents, fClass, fSection, studentSearch])
+  }, [students, fClass, fSection, studentSearch])
 
   const filteredEmployees = useMemo(() => {
     let l = activeTeachers

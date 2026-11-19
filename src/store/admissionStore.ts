@@ -71,21 +71,13 @@ export const useAdmissionStore = create<AdmissionState>()(
             const res = await studentsApi.list({ pageSize: 1000 })
             const serverStudents = (res.students || []).map(serverStudentToStudent)
 
-            const prev = get().students
-            // If server returned students, update store
-            if (serverStudents.length > 0) {
-              set({
-                students: serverStudents,
-                serverSynced: true,
-                syncing: false,
-                syncError: null,
-              })
-            } else if (prev.length > 0) {
-              // Local records exist but server is empty: keep local and attempt initial sync
-              set({ serverSynced: true, syncing: false, syncError: null })
-            } else {
-              set({ students: [], serverSynced: true, syncing: false, syncError: null })
-            }
+            // In cloud mode, server is authoritative
+            set({
+              students: serverStudents,
+              serverSynced: true,
+              syncing: false,
+              syncError: null,
+            })
             lastSyncAt = Date.now()
           } catch (err: any) {
             console.warn('[admissionStore] syncFromServer failed, falling back to local cache:', err?.message || err)

@@ -20,18 +20,7 @@ export default function KioskMode({ isBn, date }: { isBn: boolean; date: string 
   const { institution } = useClassStore()
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
-
-  const demoFallbackStudents = useMemo(
-    () => [
-      { id: 'STU-2026-001', nameEn: 'Arafat Rahman', nameBn: 'আরাফাত রহমান', photo: '', class: 'Class 10', section: 'A' },
-      { id: 'STU-2026-002', nameEn: 'Sumaiya Akter', nameBn: 'সুমাইয়া আক্তার', photo: '', class: 'Class 10', section: 'A' },
-      { id: 'STU-2026-003', nameEn: 'Tanvir Hasan', nameBn: 'তানভীর হাসান', photo: '', class: 'Class 9', section: 'B' },
-      { id: 'STU-2026-004', nameEn: 'Nusrat Jahan', nameBn: 'নুসরাত জাহান', photo: '', class: 'Class 8', section: 'A' },
-      { id: 'STU-2026-005', nameEn: 'Mahmudul Hasan', nameBn: 'মাহমুদুল হাসান', photo: '', class: 'Class 7', section: 'A' },
-    ],
-    []
-  )
-  const effectiveStudents = activeStudents.length > 0 ? activeStudents : demoFallbackStudents
+  const effectiveStudents = activeStudents
   const { loaded: faceApiLoaded, error: faceApiError } = useFaceApi()
 
   const [kioskMode, setKioskMode] = useState<'register' | 'attendance'>('register')

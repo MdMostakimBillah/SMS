@@ -148,10 +148,10 @@ export const useAttendanceStore = create<AttendanceState>()(
   persist(
     (set, get): AttendanceState => ({
       attendance: {},
-      devices: initialDevices,
-      rfidEntries: initialRfidEntries,
-      fpEntries: initialFpEntries,
-      faceEntries: initialFaceEntries,
+      devices: [],
+      rfidEntries: [],
+      fpEntries: [],
+      faceEntries: [],
       mobileDevices: [],
       deviceLogs: [],
 
@@ -184,16 +184,7 @@ export const useAttendanceStore = create<AttendanceState>()(
       },
 
       syncFromServer: async (slugOrId?: string) => {
-        const current = get()
         if (isLocalComputerMode()) {
-          if (!current.demoDataCleared && current.devices === undefined) {
-            set({
-              devices: initialDevices,
-              rfidEntries: initialRfidEntries,
-              fpEntries: initialFpEntries,
-              faceEntries: initialFaceEntries,
-            })
-          }
           set({ serverSynced: true, syncing: false, syncError: null })
           return
         }
@@ -204,27 +195,15 @@ export const useAttendanceStore = create<AttendanceState>()(
         try {
           const res = await attendanceApi.get(effectiveSlug)
           if (res) {
-            const current = get()
             const serverAtt = res.attendance && typeof res.attendance === 'object' ? res.attendance : {}
-            const hasServerAtt = Object.keys(serverAtt).length > 0
-            const finalAttendance = hasServerAtt ? pruneAttendance(serverAtt) : current.attendance
+            const finalAttendance = pruneAttendance(serverAtt)
 
-            const finalDevices = Array.isArray(res.devices) && res.devices.length > 0
-              ? res.devices
-              : (current.demoDataCleared ? [] : (current.devices && current.devices.length > 0 ? current.devices : []))
-            let finalRfid = Array.isArray(res.rfidEntries) && res.rfidEntries.length > 0
-              ? res.rfidEntries
-              : (current.demoDataCleared ? [] : (current.rfidEntries && current.rfidEntries.length > 0 ? current.rfidEntries : []))
-
-            let finalFp = Array.isArray(res.fpEntries) && res.fpEntries.length > 0
-              ? res.fpEntries
-              : (current.demoDataCleared ? [] : (current.fpEntries && current.fpEntries.length > 0 ? current.fpEntries : []))
-
-            let finalFace = Array.isArray(res.faceEntries) && res.faceEntries.length > 0
-              ? res.faceEntries
-              : (current.demoDataCleared ? [] : (current.faceEntries && current.faceEntries.length > 0 ? current.faceEntries : []))
-            const finalMobile = Array.isArray(res.mobileDevices) && res.mobileDevices.length > 0 ? res.mobileDevices : current.mobileDevices
-            const finalLogs = Array.isArray(res.deviceLogs) && res.deviceLogs.length > 0 ? res.deviceLogs : current.deviceLogs
+            const finalDevices = Array.isArray(res.devices) ? res.devices : []
+            const finalRfid = Array.isArray(res.rfidEntries) ? res.rfidEntries : []
+            const finalFp = Array.isArray(res.fpEntries) ? res.fpEntries : []
+            const finalFace = Array.isArray(res.faceEntries) ? res.faceEntries : []
+            const finalMobile = Array.isArray(res.mobileDevices) ? res.mobileDevices : []
+            const finalLogs = Array.isArray(res.deviceLogs) ? res.deviceLogs : []
 
             set({
               attendance: finalAttendance,

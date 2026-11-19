@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
-import { useAdmissionStore, useSessionStudents } from '@/store/admissionStore'
+import { useSessionStudents } from '@/store/admissionStore'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import { logger } from '@/lib/logger'
 import { registerWebAuthnDevice, authenticateWebAuthnDevice, getWebAuthnErrorMessage, getAuthErrorMessage, getDeviceName, saveMobileDevices } from '@/hooks/useWebAuthn'
@@ -13,20 +13,8 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
     useShallow((s) => ({ teachers: s.teachers }))
   )
   const activeTeachers = useMemo(() => teachers.filter((t) => t.status === 'active'), [teachers])
-  const allInstitutionStudents = useAdmissionStore((s) => s.students)
   const students = useSessionStudents()
   const activeStudents = useMemo(() => students.filter((s) => s.status === 'approved' && s.active !== false), [students])
-
-  const defaultDemoStudents = useMemo<Person[]>(
-    () => [
-      { id: 'STU-2026-001', name: isBn ? 'আরাফাত রহমান' : 'Arafat Rahman', type: 'student', photo: '', dept: 'Class 10', section: 'A' },
-      { id: 'STU-2026-002', name: isBn ? 'সুমাইয়া আক্তার' : 'Sumaiya Akter', type: 'student', photo: '', dept: 'Class 10', section: 'A' },
-      { id: 'STU-2026-003', name: isBn ? 'তানভীর হাসান' : 'Tanvir Hasan', type: 'student', photo: '', dept: 'Class 9', section: 'B' },
-      { id: 'STU-2026-004', name: isBn ? 'নুসরাত জাহান' : 'Nusrat Jahan', type: 'student', photo: '', dept: 'Class 8', section: 'A' },
-      { id: 'STU-2026-005', name: isBn ? 'মাহমুদুল হাসান' : 'Mahmudul Hasan', type: 'student', photo: '', dept: 'Class 7', section: 'A' },
-    ],
-    [isBn]
-  )
 
   const allPeople = useMemo<Person[]>(() => {
     const staff: Person[] = activeTeachers.map((t) => ({
@@ -36,21 +24,16 @@ export function useDeviceTab({ isBn, date }: { isBn: boolean; date: string }) {
       photo: t.photo || '',
       dept: t.departmentId,
     }))
-    const stu: Person[] =
-      activeStudents.length > 0
-        ? activeStudents.map((s) => ({
-            id: s.id,
-            name: isBn ? s.nameBn || s.nameEn : s.nameEn,
-            type: 'student' as const,
-            photo: s.photo || '',
-            dept: s.class,
-            section: s.section,
-          }))
-        : allInstitutionStudents.length > 0
-          ? []
-          : defaultDemoStudents
+    const stu: Person[] = activeStudents.map((s) => ({
+      id: s.id,
+      name: isBn ? s.nameBn || s.nameEn : s.nameEn,
+      type: 'student' as const,
+      photo: s.photo || '',
+      dept: s.class,
+      section: s.section,
+    }))
     return [...staff, ...stu]
-  }, [activeTeachers, activeStudents, allInstitutionStudents.length, defaultDemoStudents, isBn])
+  }, [activeTeachers, activeStudents, isBn])
 
   // Attendance store state
   const devices = useAttendanceStore((s) => s.devices)
