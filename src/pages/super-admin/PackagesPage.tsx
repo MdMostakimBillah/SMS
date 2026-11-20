@@ -31,7 +31,35 @@ export default function PackagesPage({ isBn }: Props) {
 
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
   const sliderRef = useRef<HTMLDivElement>(null)
-  useTabSlider({ activeTab, tabRefs, sliderRef })
+
+  const tabs = useMemo(
+    () => [
+      {
+        id: 'all' as const,
+        icon: CreditCard,
+        label: isBn ? 'সকল প্যাকেজ' : 'All Packages',
+      },
+      {
+        id: 'cloud' as const,
+        icon: Cloud,
+        label: isBn ? 'প্রোভাইডার ক্লাউড' : 'Provider Cloud',
+      },
+      {
+        id: 'system_only' as const,
+        icon: Cpu,
+        label: isBn ? 'সিস্টেম ব্যবহার (লোকাল পিসি ও ভিপিএস)' : 'System Use (Local PC & VPS)',
+      },
+    ],
+    [isBn]
+  )
+
+  useTabSlider({
+    activeTab,
+    tabRefs,
+    sliderRef,
+    scrollIntoView: true,
+    getContainer: (slider) => slider?.parentElement ?? null,
+  })
 
   // Calculate enrolled institutions count per package
   const packageUsage = useMemo(() => {
@@ -196,78 +224,45 @@ export default function PackagesPage({ isBn }: Props) {
 
       {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Architecture Mode Tabs with Smooth Slider Animation */}
-        <div className="relative flex items-center p-1 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] overflow-x-auto scrollbar-none w-fit max-w-full">
+        {/* Architecture Mode Tabs with Smooth Slider Animation (Classes & Sections style) */}
+        <div className="relative flex gap-[0.375rem] glass rounded-xl p-[0.3125rem] w-full sm:w-auto overflow-x-auto scrollbar-hide">
           {/* Smooth Sliding Pill Indicator */}
           <div
             ref={sliderRef}
-            className="absolute top-1 bottom-1 rounded-lg bg-[var(--surface)] shadow-sm [transition:width_250ms_cubic-bezier(0.4,0,0.2,1),transform_250ms_cubic-bezier(0.4,0,0.2,1)] z-0 pointer-events-none border border-[var(--border)]/70"
+            className="absolute left-0 top-[0.3125rem] bottom-[0.3125rem] rounded-[0.5625rem] [transition:width_300ms_ease-out,transform_300ms_ease-out,background-color_300ms_ease-out]"
+            style={{
+              background:
+                activeTab === 'system_only'
+                  ? '#10b981'
+                  : 'var(--brand)',
+              boxShadow:
+                activeTab === 'system_only'
+                  ? '0 2px 8px rgba(16,185,129,0.35)'
+                  : '0 2px 8px rgba(99,102,241,0.35)',
+              zIndex: 0,
+            }}
           />
 
-          <button
-            type="button"
-            ref={(el) => {
-              if (el) tabRefs.current.set('all', el)
-              else tabRefs.current.delete('all')
-            }}
-            onClick={() => setActiveTab('all')}
-            className={`relative z-10 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer border-none shrink-0 ${
-              activeTab === 'all'
-                ? 'text-[var(--text-primary)]'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
-            }`}
-          >
-            <span>{isBn ? 'সকল প্যাকেজ' : 'All Packages'}</span>
-            <span className={`text-[0.625rem] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
-              activeTab === 'all' ? 'bg-[var(--brand)]/15 text-[var(--brand)]' : 'bg-[var(--border)] text-[var(--text-muted)]'
-            }`}>
-              {totalPackages}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            ref={(el) => {
-              if (el) tabRefs.current.set('cloud', el)
-              else tabRefs.current.delete('cloud')
-            }}
-            onClick={() => setActiveTab('cloud')}
-            className={`relative z-10 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer border-none shrink-0 ${
-              activeTab === 'cloud'
-                ? 'text-blue-500'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
-            }`}
-          >
-            <Cloud size={13} />
-            <span>{isBn ? 'প্রোভাইডার ক্লাউড' : 'Provider Cloud'}</span>
-            <span className={`text-[0.625rem] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
-              activeTab === 'cloud' ? 'bg-blue-500/15 text-blue-500' : 'bg-[var(--border)] text-[var(--text-muted)]'
-            }`}>
-              {cloudPackages}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            ref={(el) => {
-              if (el) tabRefs.current.set('system_only', el)
-              else tabRefs.current.delete('system_only')
-            }}
-            onClick={() => setActiveTab('system_only')}
-            className={`relative z-10 flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors duration-200 cursor-pointer border-none shrink-0 ${
-              activeTab === 'system_only'
-                ? 'text-emerald-500'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
-            }`}
-          >
-            <Cpu size={13} />
-            <span>{isBn ? 'সিস্টেম ব্যবহার (লোকাল পিসি ও ভিপিএস)' : 'System Use (Local PC & VPS)'}</span>
-            <span className={`text-[0.625rem] px-1.5 py-0.5 rounded-full font-bold transition-colors ${
-              activeTab === 'system_only' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-[var(--border)] text-[var(--text-muted)]'
-            }`}>
-              {systemPackages}
-            </span>
-          </button>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              ref={(el) => {
+                if (el) tabRefs.current.set(tab.id, el)
+                else tabRefs.current.delete(tab.id)
+              }}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative z-10 flex-1 flex items-center justify-center gap-[0.375rem] py-2 px-3 sm:px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${
+                activeTab === tab.id
+                  ? 'text-white'
+                  : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+              style={{ background: 'transparent' }}
+            >
+              <tab.icon size={15} />
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
 
         {/* Search Input */}
