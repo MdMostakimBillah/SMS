@@ -309,10 +309,10 @@ export default function Step2Schedule() {
             }}
           />
           {[
-            { key: 'rooms' as SubTab, label: isBn ? 'কক্ষ' : 'Rooms', icon: <Building size={14} />, count: rooms.length },
-            { key: 'routine' as SubTab, label: isBn ? 'রুটিন' : 'Routine', icon: <Calendar size={14} />, count: filteredRoutines.length },
-            { key: 'seats' as SubTab, label: isBn ? 'আসন পরিকল্পনা' : 'Seat Plan', icon: <LayoutGrid size={14} />, count: filteredSeatPlans.length },
-            { key: 'invigilators' as SubTab, label: isBn ? 'ইনভিজিলেটর' : 'Invigilators', icon: <UserCheck size={14} />, count: filteredInvigilators.length },
+            { key: 'rooms' as SubTab, label: isBn ? 'কক্ষ' : 'Rooms', icon: <Building size={14} /> },
+            { key: 'routine' as SubTab, label: isBn ? 'রুটিন' : 'Routine', icon: <Calendar size={14} /> },
+            { key: 'seats' as SubTab, label: isBn ? 'আসন পরিকল্পনা' : 'Seat Plan', icon: <LayoutGrid size={14} /> },
+            { key: 'invigilators' as SubTab, label: isBn ? 'ইনভিজিলেটর' : 'Invigilators', icon: <UserCheck size={14} /> },
             { key: 'admit-cards' as SubTab, label: isBn ? 'প্রবেশপত্র' : 'Admit Cards', icon: <IdCard size={14} /> },
             { key: 'attendance' as SubTab, label: isBn ? 'পরীক্ষার উপস্থিতি' : 'Exam Attendance', icon: <Users size={14} /> },
           ].map((t) => (
@@ -327,7 +327,6 @@ export default function Step2Schedule() {
             >
               {t.icon}
               {t.label}
-              {t.count !== undefined && <span className="text-[0.625rem] opacity-70">({t.count})</span>}
             </button>
           ))}
         </div>
