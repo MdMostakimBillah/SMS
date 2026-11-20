@@ -28,7 +28,8 @@ import {
   CreditCard,
   GraduationCap,
 } from 'lucide-react'
-import { useNotificationStore } from '@/store/notificationStore'
+import { useNotificationStore, type Notification } from '@/store/notificationStore'
+import { NotificationDetailModal } from '@/pages/notifications/modals/NotificationDetailModal'
 import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
@@ -196,8 +197,11 @@ export default React.memo(function Topbar() {
 
   const notifications = useNotificationStore((s) => s.notifications)
   const markRead = useNotificationStore((s) => s.markRead)
+  const markUnread = useNotificationStore((s) => s.markUnread)
+  const deleteNotification = useNotificationStore((s) => s.deleteNotification)
   const markAllRead = useNotificationStore((s) => s.markAllRead)
   const checkAndGenerateSystemNotifications = useNotificationStore((s) => s.checkAndGenerateSystemNotifications)
+  const [viewNotification, setViewNotification] = useState<Notification | null>(null)
 
   useEffect(() => {
     checkAndGenerateSystemNotifications()
@@ -465,19 +469,7 @@ export default React.memo(function Topbar() {
                         onClick={() => {
                           if (!n.read) markRead(n.id)
                           setNotifOpen(false)
-                          if (n.link) {
-                            if (n.link.startsWith('/')) {
-                              if (navBase && !n.link.startsWith(navBase) && !n.link.startsWith('/i/') && !n.link.startsWith('/super-admin/')) {
-                                navigate(`${navBase}${n.link}`)
-                              } else {
-                                navigate(n.link)
-                              }
-                            } else {
-                              navigate(n.link)
-                            }
-                          } else {
-                            navigate(`${navBase}/notifications`)
-                          }
+                          setViewNotification(n)
                         }}
                         style={{
                           ...panelItem,
@@ -1107,6 +1099,35 @@ export default React.memo(function Topbar() {
           )}
         </div>
       </div>
+
+      {viewNotification && (
+        <NotificationDetailModal
+          notification={viewNotification}
+          onClose={() => setViewNotification(null)}
+          onToggleRead={(id) => {
+            if (viewNotification.read) markUnread(id)
+            else markRead(id)
+            setViewNotification((prev) => (prev ? { ...prev, read: !prev.read } : null))
+          }}
+          onDelete={(id) => {
+            deleteNotification(id)
+            setViewNotification(null)
+          }}
+          onNavigate={(link) => {
+            setViewNotification(null)
+            if (link.startsWith('/')) {
+              if (navBase && !link.startsWith(navBase) && !link.startsWith('/i/') && !link.startsWith('/super-admin/')) {
+                navigate(`${navBase}${link}`)
+              } else {
+                navigate(link)
+              }
+            } else {
+              navigate(link)
+            }
+          }}
+          bn={isBn}
+        />
+      )}
     </header>
   )
 })

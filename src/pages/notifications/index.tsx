@@ -5,15 +5,12 @@ import {
   Plus,
   Trash2,
   CheckCheck,
-  ArrowLeft,
   Clock,
   Sparkles,
   CreditCard,
   GraduationCap,
   Eye,
   EyeOff,
-  ExternalLink,
-  Edit3,
   CheckCircle2,
   AlertTriangle,
   Info,
@@ -23,7 +20,7 @@ import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useNotificationStore, type Notification, type NotificationType, type NotificationCategory } from '@/store/notificationStore'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -32,6 +29,7 @@ import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { NotificationModal } from './modals/NotificationModal'
+import { NotificationDetailModal } from './modals/NotificationDetailModal'
 
 const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
 
@@ -103,6 +101,21 @@ export default function NotificationsPage() {
     return () => clearTimeout(t)
   }, [syncFromServer, checkAndGenerateSystemNotifications])
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const viewId = searchParams.get('view')
+
+  useEffect(() => {
+    if (viewId && notifications.length > 0) {
+      const target = notifications.find((n) => n.id === viewId)
+      if (target) {
+        setViewNotification(target)
+        if (!target.read) markRead(target.id)
+        searchParams.delete('view')
+        setSearchParams(searchParams, { replace: true })
+      }
+    }
+  }, [viewId, notifications, markRead, searchParams, setSearchParams])
+
   // Unread counts
   const unreadTotal = useMemo(() => notifications.filter((n) => !n.read).length, [notifications])
   const unreadSystem = useMemo(() => notifications.filter((n) => !n.read && n.category === 'system').length, [notifications])
@@ -168,43 +181,7 @@ export default function NotificationsPage() {
 
   const handleCardClick = (n: Notification) => {
     if (!n.read) markRead(n.id)
-    if (n.link) {
-      handleNavigateToLink(n.link)
-    } else {
-      setViewNotification(n)
-    }
-  }
-
-  if (viewNotification) {
-    return (
-      <NotificationDetail
-        notification={viewNotification}
-        onBack={() => {
-          setViewNotification(null)
-          if (!viewNotification.read) markRead(viewNotification.id)
-        }}
-        onToggleRead={(id) => {
-          if (viewNotification.read) markUnread(id)
-          else markRead(id)
-          setViewNotification((prev) => (prev ? { ...prev, read: !prev.read } : null))
-        }}
-        onDelete={(id) => {
-          deleteNotification(id)
-          setViewNotification(null)
-        }}
-        onEdit={
-          canCreateNotification
-            ? (item) => {
-                setViewNotification(null)
-                setEditingNotification(item)
-                setShowCompose(true)
-              }
-            : undefined
-        }
-        onNavigate={(link) => handleNavigateToLink(link)}
-        bn={bn}
-      />
-    )
+    setViewNotification(n)
   }
 
   if (isLoading) {
@@ -455,6 +432,34 @@ export default function NotificationsPage() {
         />
       )}
 
+      {/* Notification Detail Modal (Animated Popup) */}
+      {viewNotification && (
+        <NotificationDetailModal
+          notification={viewNotification}
+          onClose={() => setViewNotification(null)}
+          onToggleRead={(id) => {
+            if (viewNotification.read) markUnread(id)
+            else markRead(id)
+            setViewNotification((prev) => (prev ? { ...prev, read: !prev.read } : null))
+          }}
+          onDelete={(id) => {
+            deleteNotification(id)
+            setViewNotification(null)
+          }}
+          onEdit={
+            canCreateNotification
+              ? (item) => {
+                  setViewNotification(null)
+                  setEditingNotification(item)
+                  setShowCompose(true)
+                }
+              : undefined
+          }
+          onNavigate={(link) => handleNavigateToLink(link)}
+          bn={bn}
+        />
+      )}
+
       {/* Delete Single Confirmation Dialog */}
       {deleteTarget && (
         <DeleteConfirmDialog
@@ -482,154 +487,6 @@ export default function NotificationsPage() {
           isBn={bn}
         />
       )}
-    </div>
-  )
-}
-
-function NotificationDetail({
-  notification,
-  onBack,
-  onToggleRead,
-  onDelete,
-  onEdit,
-  onNavigate,
-  bn,
-}: {
-  notification: Notification
-  onBack: () => void
-  onToggleRead: (id: string) => void
-  onDelete: (id: string) => void
-  onEdit?: (item: Notification) => void
-  onNavigate?: (link: string) => void
-  bn: boolean
-}) {
-  const typeConf = TYPE_CONFIG[notification.type] || TYPE_CONFIG.info
-  const catConf = CATEGORY_CONFIG[notification.category || 'general'] || CATEGORY_CONFIG.general
-  const senderDisplayName = notification.sender || (notification.category === 'system' ? 'Super Admin' : 'Admin')
-  const displayTitle = (bn ? notification.titleBn || notification.title : notification.title || notification.titleBn) || ''
-  const displayMessage = (bn ? notification.messageBn || notification.message : notification.message || notification.messageBn) || ''
-
-  return (
-    <div className="max-w-3xl mx-auto space-y-4">
-      {/* Top Bar with Back Button */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="p-2 rounded-xl hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer border-none bg-transparent"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span
-              className="text-[0.625rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
-              style={{ background: `${catConf.color}18`, color: catConf.color }}
-            >
-              {bn ? catConf.labelBn : catConf.label}
-            </span>
-            <span
-              className="text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-              style={{ background: typeConf.bg, color: typeConf.color }}
-            >
-              {bn ? typeConf.labelBn : typeConf.label}
-            </span>
-          </div>
-          <h1 className="font-bold text-[1.125rem] text-[var(--text-primary)] mt-1 truncate m-0">
-            {displayTitle}
-          </h1>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => onToggleRead(notification.id)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[var(--border)] text-[0.75rem] font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-transparent"
-          >
-            {notification.read ? <EyeOff size={13} /> : <Eye size={13} />}
-            {notification.read ? (bn ? 'অপঠিত করুন' : 'Mark Unread') : (bn ? 'পঠিত করুন' : 'Mark Read')}
-          </button>
-
-          {onEdit && (
-            <button
-              onClick={() => onEdit(notification)}
-              className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors cursor-pointer bg-transparent"
-              title={bn ? 'সম্পাদনা' : 'Edit'}
-            >
-              <Edit3 size={15} />
-            </button>
-          )}
-
-          <button
-            onClick={() => onDelete(notification.id)}
-            className="p-1.5 rounded-lg border border-[var(--red)]/30 text-[var(--red)] hover:bg-[var(--red-light)] transition-colors cursor-pointer bg-transparent"
-            title={bn ? 'মুছুন' : 'Delete'}
-          >
-            <Trash2 size={15} />
-          </button>
-        </div>
-      </div>
-
-      {/* Sender Header Card */}
-      <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0 shadow-sm"
-            style={{ background: typeConf.color }}
-          >
-            <typeConf.icon size={20} />
-          </div>
-          <div>
-            <div className="text-[0.875rem] font-bold text-[var(--text-primary)]">
-              {senderDisplayName}
-            </div>
-            <div className="text-[0.6875rem] text-[var(--text-muted)] flex items-center gap-1 mt-0.5">
-              <Clock size={11} />
-              <span>
-                {new Date(notification.createdAt).toLocaleString(bn ? 'bn-BD' : 'en-GB', {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                })}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {notification.broadcastToAll && (
-          <span className="text-[0.6875rem] font-semibold text-[var(--teal)] bg-[var(--teal-light)] px-2.5 py-1 rounded-full flex items-center gap-1">
-            <Sparkles size={12} />
-            {bn ? 'সকল প্রতিষ্ঠানে সম্প্রচারিত' : 'Broadcast to all institutions'}
-          </span>
-        )}
-      </div>
-
-      {/* Message Body Card */}
-      <div className="p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xs space-y-4">
-        {notification.titleBn && notification.title && notification.titleBn !== notification.title && (
-          <p className="text-[0.75rem] text-[var(--text-muted)] m-0">
-            {bn ? notification.title : notification.titleBn}
-          </p>
-        )}
-
-        <div className="text-[0.875rem] text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
-          {displayMessage}
-        </div>
-
-        {notification.link && (
-          <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between gap-3">
-            <div className="text-[0.75rem] text-[var(--text-muted)] font-mono">
-              {notification.link}
-            </div>
-            {onNavigate && (
-              <button
-                onClick={() => onNavigate(notification.link!)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold hover:opacity-90 transition-opacity cursor-pointer border-none shadow-sm"
-              >
-                <ExternalLink size={13} />
-                {bn ? 'পেজে যান' : 'Go to Page'}
-              </button>
-            )}
-          </div>
-        )}
-      </div>
     </div>
   )
 }

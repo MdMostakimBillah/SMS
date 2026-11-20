@@ -141,7 +141,7 @@ describe('NotificationsPage', () => {
     expect(screen.getByText('Institution Billing Invoice')).toBeTruthy()
   })
 
-  it('opens in-place detail view and navigates back with back button', async () => {
+  it('opens notification in animated pop up modal and closes it', async () => {
     useNotificationStore.setState({
       notifications: [
         {
@@ -176,16 +176,20 @@ describe('NotificationsPage', () => {
     const card = routineText.closest('.group')
     expect(card).toBeTruthy()
 
-    // Click card to open in-place detail
+    // Click card to open modal
     fireEvent.click(card!)
 
-    expect(screen.getByText('Full exam routine is now available on syllabus page')).toBeTruthy()
+    // Modal is opened and displays message and controls
+    const matches = screen.getAllByText('Full exam routine is now available on syllabus page')
+    expect(matches.length).toBeGreaterThanOrEqual(2)
+    const closeButtons = screen.getAllByRole('button', { name: 'Close' })
+    expect(closeButtons.length).toBeGreaterThanOrEqual(1)
 
-    // Click Back button
-    const backBtn = screen.getByRole('button', { name: '' })
-    fireEvent.click(backBtn)
+    // Click Close button
+    fireEvent.click(closeButtons[0])
 
-    // Back on list view
+    // Modal is dismissed, list still has the card
+    expect(screen.queryAllByRole('button', { name: 'Close' }).length).toBe(0)
     expect(screen.getByText('Class 10 Routine Published')).toBeTruthy()
   })
 
@@ -261,5 +265,52 @@ describe('NotificationsPage', () => {
 
     expect(useNotificationStore.getState().notifications.some((n) => n.title === 'Winter Vacation Announcement')).toBe(true)
     expect(notificationsApi.broadcast).toHaveBeenCalled()
+  })
+
+  it('clicking a notification card with action link opens pop up modal without navigating to settings', async () => {
+    useNotificationStore.setState({
+      notifications: [
+        {
+          id: 'NTF-BILLING-LINK-TEST',
+          title: 'Custom Tuition Billing Alert',
+          titleBn: 'কাস্টম টিউশন বিলিং সতর্কতা',
+          message: 'Please complete your payment to avoid service interruption.',
+          messageBn: 'অনুগ্রহ করে পেমেন্ট সম্পন্ন করুন।',
+          type: 'warning',
+          category: 'billing',
+          read: false,
+          link: '/settings?panel=subscription-payment',
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/i/school-test/admin/notifications']}>
+        <AuthContext.Provider value={mockAuthAdmin}>
+          <Routes>
+            <Route path="*" element={<NotificationsPage />} />
+          </Routes>
+        </AuthContext.Provider>
+      </MemoryRouter>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450))
+    })
+
+    const titleEl = screen.getByText('Custom Tuition Billing Alert')
+    const card = titleEl.closest('.group')
+    expect(card).toBeTruthy()
+
+    // Click the notification card
+    fireEvent.click(card!)
+
+    // Modal popup appears with action button rather than navigating immediately
+    expect(screen.getByText('Go to Page')).toBeTruthy()
+    expect(screen.getByText('/settings?panel=subscription-payment')).toBeTruthy()
+
+    // The notification is marked read
+    expect(useNotificationStore.getState().notifications.find((n) => n.id === 'NTF-BILLING-LINK-TEST')?.read).toBe(true)
   })
 })
