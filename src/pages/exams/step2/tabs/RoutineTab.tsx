@@ -228,7 +228,7 @@ export default React.memo(function RoutineTab({
   }
 
   const applyRoutineColumnToAll = (
-    field: 'classId' | 'sectionId' | 'date' | 'startTime' | 'endTime' | 'roomNo',
+    field: 'classId' | 'sectionId' | 'date' | 'startTime' | 'endTime' | 'roomNo' | 'subjectId',
     fromIndex = 0
   ) => {
     const sourceValue = routineRows[fromIndex]?.[field]
@@ -677,9 +677,12 @@ export default React.memo(function RoutineTab({
 
       {showRoutineForm &&
         createPortal(
-          <div className="modal-overlay" onClick={() => setShowRoutineForm(false)}>
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/55 backdrop-blur-xs p-3"
+            onClick={() => setShowRoutineForm(false)}
+          >
             <div
-              className="modal-box modal-content max-w-[96vw] w-[76rem] max-h-[90vh] flex flex-col p-0 overflow-hidden"
+              className="bg-[var(--bg-primary)] rounded-2xl w-[78rem] max-w-[96vw] max-h-[90vh] flex flex-col shadow-2xl border border-[var(--border)] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -689,13 +692,13 @@ export default React.memo(function RoutineTab({
                     <Calendar size={16} />
                   </div>
                   <div>
-                    <h3 className="text-[1rem] font-bold text-[var(--text-primary)]">
+                    <h3 className="text-[0.9375rem] font-bold text-[var(--text-primary)] m-0">
                       {isBn ? 'নতুন পরীক্ষার রুটিন তৈরি করুন' : 'Add Exam Routines'}
                     </h3>
-                    <p className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
+                    <p className="text-[0.6875rem] text-[var(--text-muted)] m-0">
                       {isBn
-                        ? 'প্রতিটি সারিতে শ্রেণি, সেকশন, বিষয়, তারিখ, সময় ও কক্ষ নির্ধারণ করুন। কলামের তীর চিহ্নে ক্লিক করে তথ্য সব সারিতে প্রয়োগ করা যাবে।'
-                        : 'Define class, section, subject, date, time & room in a single row. Click column arrow icons to copy values down.'}
+                        ? 'প্রতিটি সারিতে শ্রেণি, সেকশন, বিষয়, তারিখ, সময় ও কক্ষ নির্ধারণ করুন। নিচে নতুন সারি যোগ এবং কলামের তীর চিহ্নে ক্লিক করে তথ্য প্রয়োগ করা যাবে।'
+                        : 'Define class, section, subject, date, time & room in a single row. Add rows at the bottom and click column arrow icons to copy values down.'}
                     </p>
                   </div>
                 </div>
@@ -747,9 +750,21 @@ export default React.memo(function RoutineTab({
                           </div>
                         </th>
                         <th className="py-2.5 px-3 min-w-[12rem]">
-                          <span className="text-[var(--text-primary)]">
-                            {isBn ? 'বিষয়' : 'Subject'} <span className="text-[var(--red)]">*</span>
-                          </span>
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="text-[var(--text-primary)]">
+                              {isBn ? 'বিষয়' : 'Subject'} <span className="text-[var(--red)]">*</span>
+                            </span>
+                            {routineRows.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => applyRoutineColumnToAll('subjectId', 0)}
+                                title={isBn ? '১ম সারির বিষয় সব সারিতে প্রয়োগ করুন' : 'Apply 1st row subject to all'}
+                                className="p-1 rounded-md text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/30"
+                              >
+                                <ChevronsDown size={13} />
+                              </button>
+                            )}
+                          </div>
                         </th>
                         <th className="py-2.5 px-3 min-w-[9.5rem]">
                           <div className="flex items-center justify-between gap-1.5">
@@ -956,44 +971,41 @@ export default React.memo(function RoutineTab({
                   </table>
                 </div>
 
-                {/* Add Row Button */}
-                <div className="mt-3">
+                {/* Add Row Button under table */}
+                <div className="mt-3 flex items-center justify-between">
                   <button
                     type="button"
                     onClick={handleAddRoutineRow}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-dashed border-[var(--brand)] text-[var(--brand)] bg-[var(--brand)]/5 hover:bg-[var(--brand)]/10 text-[0.75rem] font-semibold cursor-pointer transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-dashed border-[var(--brand)] text-[var(--brand)] bg-[var(--brand)]/5 hover:bg-[var(--brand)]/10 text-[0.75rem] font-medium cursor-pointer transition-colors"
                   >
                     <Plus size={14} />
-                    {isBn ? 'আরেকটি রুটিনের সারি যোগ করুন' : 'Add Another Routine Row'}
+                    {isBn ? '+ আরেকটি রুটিনের সারি যোগ করুন' : '+ Add Another Routine Row'}
                   </button>
+
+                  <span className="text-[0.6875rem] text-[var(--text-muted)]">
+                    {isBn ? `মোট ${routineRows.length}টি সারি` : `Total: ${routineRows.length} row(s)`}
+                  </span>
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="flex items-center justify-between px-6 py-3.5 border-t border-[var(--border)] bg-[var(--bg-secondary)]/40">
-                <div className="text-[0.6875rem] text-[var(--text-muted)] font-medium">
+              {/* Modal Footer */}
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t border-[var(--border)] bg-[var(--bg-secondary)]/50">
+                <button
+                  type="button"
+                  onClick={() => setShowRoutineForm(false)}
+                  className="px-4 py-2 rounded-xl text-[0.75rem] font-medium text-[var(--text-secondary)] hover:bg-[var(--border)] transition-colors cursor-pointer border-none bg-transparent"
+                >
+                  {isBn ? 'বাতিল' : 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveRoutines}
+                  className={`${btnPrimary} text-[0.75rem] px-5 py-2 rounded-xl font-semibold shadow-xs`}
+                >
                   {isBn
-                    ? `মোট ${routineRows.length} টি রুটিনের সারি`
-                    : `Total ${routineRows.length} routine row${routineRows.length > 1 ? 's' : ''}`}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowRoutineForm(false)}
-                    className="px-4 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[0.75rem] font-medium cursor-pointer transition-colors"
-                  >
-                    {isBn ? 'বাতিল' : 'Cancel'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveRoutines}
-                    className={`${btnPrimary} text-[0.75rem] px-5 py-2`}
-                  >
-                    {isBn
-                      ? `রুটিন সংরক্ষণ করুন (${routineRows.filter((r) => r.classId && r.subjectId && r.date).length || routineRows.length})`
-                      : `Save Routines (${routineRows.filter((r) => r.classId && r.subjectId && r.date).length || routineRows.length})`}
-                  </button>
-                </div>
+                    ? `সংরক্ষণ করুন (${routineRows.filter((r) => r.classId && r.subjectId && r.date).length || routineRows.length})`
+                    : `Save Routines (${routineRows.filter((r) => r.classId && r.subjectId && r.date).length || routineRows.length})`}
+                </button>
               </div>
             </div>
           </div>,
