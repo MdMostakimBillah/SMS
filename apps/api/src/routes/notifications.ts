@@ -22,7 +22,7 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
         const requestedSlug = ((req.query.slug || req.query.domain) as string | undefined)?.trim()
         if (authReq.userRole === 'super_admin' || requestedSlug === 'super-admin' || requestedSlug === 'edutech') {
           const allSchools = await prisma.school.findMany({
-            where: { status: 'active' },
+            where: { status: { not: 'deleted' } },
             select: { notificationsData: true },
           })
           const notifMap = new Map<string, any>()
@@ -179,30 +179,35 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
       }
 
       const schools = await prisma.school.findMany({
-        where: { status: 'active' },
-        select: { id: true, name: true, domain: true, storageMode: true, notificationsData: true },
+        where: { status: { not: 'deleted' } },
+        select: { id: true, name: true, nameBn: true, domain: true, eiin: true, storageMode: true, notificationsData: true },
       })
 
       const isTargeted = newNotif.targetType === 'specific' && Array.isArray(newNotif.targetInstitutions) && newNotif.targetInstitutions.length > 0
-      const targetSet = new Set<string>((newNotif.targetInstitutions || []).map((t: string) => String(t).toLowerCase().trim()))
-      if (Array.isArray(newNotif.targetInstitutionNames)) {
-        newNotif.targetInstitutionNames.forEach((n: string) => targetSet.add(String(n).toLowerCase().trim()))
+      const targetSet = new Set<string>()
+      const addTarget = (val: any) => {
+        if (!val || typeof val !== 'string') return
+        const str = val.toLowerCase().trim()
+        if (!str) return
+        targetSet.add(str)
+        if (str.startsWith('inst-')) targetSet.add(str.replace('inst-', ''))
+        if (str.startsWith('sch_')) targetSet.add(str.replace('sch_', ''))
       }
+      ;(newNotif.targetInstitutions || []).forEach(addTarget)
+      ;(newNotif.targetInstitutionNames || []).forEach(addTarget)
 
       let broadcastedCount = 0
       for (const s of schools) {
         if (isTargeted) {
-          const keys = [s.id, s.domain, s.name].filter(Boolean).map((k) => String(k).toLowerCase().trim())
+          const keys = [s.id, s.domain, s.name, (s as any).nameBn, (s as any).eiin].filter(Boolean).map((k) => String(k).toLowerCase().trim())
           const matches = keys.some((k) => {
             if (targetSet.has(k)) return true
             if (k.startsWith('inst-') && targetSet.has(k.replace('inst-', ''))) return true
             if (k.startsWith('sch_') && targetSet.has(k.replace('sch_', ''))) return true
-            const normKey = k.replace(/[^a-z0-9]/g, '')
             return Array.from(targetSet).some((t: string) => {
               if (t.startsWith('inst-') && t.replace('inst-', '') === k) return true
               if (t.startsWith('sch_') && t.replace('sch_', '') === k) return true
-              if (normKey.length >= 3 && t.replace(/[^a-z0-9]/g, '') === normKey) return true
-              if (t.length > 3 && k.length > 3 && (k.includes(t) || t.includes(k))) return true
+              if (t.length >= 3 && k.length >= 3 && (k.includes(t) || t.includes(k))) return true
               return false
             })
           })

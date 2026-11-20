@@ -19,8 +19,9 @@ import {
   Check,
 } from 'lucide-react'
 import { useNotificationStore, notificationId, type Notification, type NotificationType, type NotificationCategory } from '@/store/notificationStore'
-import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useAuth } from '@/contexts/AuthContext'
+import { authApi } from '@/lib/api'
 
 const inputCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'
 const textareaCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10 resize-none'
@@ -81,6 +82,72 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
   const [messageBn, setMessageBn] = useState(existing?.messageBn || '')
   const [link, setLink] = useState(existing?.link || '')
   const [errors, setErrors] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    let active = true
+    if (isSuperAdmin) {
+      authApi.getSchools().then((dbSchools) => {
+        if (!active || !Array.isArray(dbSchools) || dbSchools.length === 0) return
+        const currentInsts = useSuperAdminStore.getState().institutions || []
+        const mapped: Institution[] = dbSchools.map((item) => {
+          const existing = currentInsts.find(
+            (i) => i.id === item.id || i.slug === item.slug || i.subdomain === item.domain
+          )
+          const sName = item.name || 'School'
+          const sSlug = item.slug || item.domain || sName.toLowerCase().replace(/[^a-z0-9]/g, '-')
+          const pkg = existing?.package || PACKAGES[0]
+          return {
+            id: item.id,
+            name: sName,
+            nameBn: item.nameBn || existing?.nameBn || sName,
+            email: item.email || existing?.email || '',
+            phone: item.phone || existing?.phone || '',
+            address: item.address || existing?.address || '',
+            addressBn: (item as any).addressBn || existing?.addressBn || item.address || '',
+            eiin: (item as any).eiin || existing?.eiin || '',
+            website: item.website || existing?.website || `smsappbd.vercel.app/i/${sSlug}`,
+            subdomain: sSlug,
+            slug: sSlug,
+            status: ((item as any).status as InstitutionStatus) || existing?.status || 'active',
+            package: pkg,
+            expiresAt: item.expiresAt ? (item.expiresAt as string).split('T')[0] : existing?.expiresAt || null,
+            storageMode: item.storageMode || existing?.storageMode || 'cloud',
+            serverUrl: item.serverUrl || existing?.serverUrl || '',
+            folderName: item.folderName || existing?.folderName || '',
+            storageBytes: (item as any).storageBytes ?? existing?.storageBytes ?? 0,
+            mediaCount: (item as any).mediaCount ?? existing?.mediaCount ?? 0,
+            createdAt: (item as any).createdAt
+              ? (item as any).createdAt.split('T')[0]
+              : existing?.createdAt || new Date().toISOString().split('T')[0],
+            lastLogin: existing?.lastLogin || '-',
+            logo: item.logo || existing?.logo || '',
+            banner: item.banner || existing?.banner || '',
+            brandColor: (item as any).brandColor || existing?.brandColor || '#6366f1',
+            brandName: (item as any).brandName || existing?.brandName || sName,
+            motto: (item as any).motto || existing?.motto || '',
+            mottoBn: (item as any).mottoBn || existing?.mottoBn || '',
+            startTime: item.startTime || existing?.startTime || '07:30',
+            endTime: item.endTime || existing?.endTime || '14:30',
+            optionalSubjects: existing?.optionalSubjects || [],
+            sessions: (item as any).sessions
+              ? (typeof (item as any).sessions === 'string' ? JSON.parse((item as any).sessions) : (item as any).sessions)
+              : existing?.sessions || ['2025-26'],
+            accessModes: existing?.accessModes || {
+              pathBased: true,
+              subdomainBased: true,
+              customDomain: '',
+            },
+            language: existing?.language || 'en',
+            theme: existing?.theme || 'light',
+          }
+        })
+        useSuperAdminStore.getState().setInstitutions(mapped)
+      }).catch(() => {})
+    }
+    return () => {
+      active = false
+    }
+  }, [isSuperAdmin])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -280,7 +347,8 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
     const isBroadcast = targetType === 'all'
 
     if (existing) {
-      updateNotification(existing.id, {
+      const updatedNotif: Notification = {
+        ...existing,
         title: primaryTitle,
         titleBn: primaryTitleBn,
         message: primaryMessage,
@@ -292,7 +360,9 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
         targetInstitutions: isBroadcast ? [] : targetIds,
         targetInstitutionNames: isBroadcast ? [] : targetNames,
         broadcastToAll: isBroadcast,
-      })
+      }
+      updateNotification(existing.id, updatedNotif)
+      await broadcastNotification(updatedNotif)
     } else {
       const newNotif: Notification = {
         id: notificationId(),

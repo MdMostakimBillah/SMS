@@ -37,6 +37,14 @@ function put(jar: CookieJar, path: string, body: unknown) {
     .send(body as object)
 }
 
+function post(jar: CookieJar, path: string, body: unknown) {
+  return request(app)
+    .post(path)
+    .set('Cookie', cookieHeader(jar))
+    .set('x-csrf-token', csrfToken(jar))
+    .send(body as object)
+}
+
 beforeAll(async () => {
   await prisma.user.deleteMany({ where: { email: { in: Object.values(EMAILS) } } })
   await prisma.school.deleteMany({
@@ -190,5 +198,47 @@ describe('PUT /api/notifications', () => {
     })
     expect(res.status).toBe(200)
     expect(res.body.success).toBe(true)
+  })
+})
+
+describe('POST /api/notifications/broadcast', () => {
+  it('broadcasts to specifically targeted institutions', async () => {
+    const targetedNotif = {
+      id: 'NTF-TARGETED-1',
+      title: 'Targeted Notice for School A',
+      titleBn: 'স্কুল এ এর জন্য বিশেষ নোটিশ',
+      message: 'This notice is only for School A.',
+      targetType: 'specific',
+      targetInstitutions: ['school-a-notif'],
+      targetInstitutionNames: ['Notif Test School A'],
+    }
+
+    const res = await post(jars.super!, '/api/notifications/broadcast', { notification: targetedNotif })
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+
+    // School A should have received the notification
+    const resA = await get(jars.adminA, '/api/notifications')
+    expect(resA.body.notifications.some((n: any) => n.id === 'NTF-TARGETED-1')).toBe(true)
+
+    // School B should NOT have received the targeted notification
+    const resB = await get(jars.adminB, '/api/notifications')
+    expect(resB.body.notifications.some((n: any) => n.id === 'NTF-TARGETED-1')).toBe(false)
+  })
+
+  it('delivers targeted notifications to local_computer institutions', async () => {
+    const targetedLocalNotif = {
+      id: 'NTF-TARGETED-LOCAL',
+      title: 'Targeted Local Notice',
+      targetType: 'specific',
+      targetInstitutions: [schoolLocalId],
+    }
+
+    const res = await post(jars.super!, '/api/notifications/broadcast', { notification: targetedLocalNotif })
+    expect(res.status).toBe(200)
+    expect(res.body.success).toBe(true)
+
+    const check = await get(jars.super, `/api/notifications?schoolId=${schoolLocalId}`)
+    expect(check.body.notifications.some((n: any) => n.id === 'NTF-TARGETED-LOCAL')).toBe(true)
   })
 })

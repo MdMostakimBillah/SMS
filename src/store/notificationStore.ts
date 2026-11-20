@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getStorageKey } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getStorageKey, getSlug } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { isLocalComputerMode } from '@/lib/storageMode'
@@ -279,8 +279,8 @@ export function resolveCurrentSchoolIdentifiers(user?: any): SchoolIdentifiers {
     subdomain: user?.subdomain || user?.schoolDomain || classInst?.subdomain || activeSlug,
     schoolId: user?.schoolId || classInst?.id || null,
     name: user?.schoolName || user?.school?.name || classInst?.name || null,
-    nameBn: classInst?.nameBn || null,
-    eiin: classInst?.eiin || user?.school?.eiin || null,
+    nameBn: user?.school?.nameBn || user?.schoolNameBn || classInst?.nameBn || null,
+    eiin: user?.school?.eiin || classInst?.eiin || null,
     aliases: Array.from(candidateSet),
   }
 }
@@ -557,8 +557,6 @@ function queueServerSync(get: () => NotificationState) {
   try {
     if (typeof window === 'undefined') return
     if (isLocalComputerMode()) return
-    const token = localStorage.getItem('edutech_auth_token') || sessionStorage.getItem('edutech_auth_token')
-    if (!token) return
     if (serverSyncTimer) clearTimeout(serverSyncTimer)
     serverSyncTimer = setTimeout(async () => {
       try {
@@ -597,6 +595,7 @@ export const useNotificationStore = create<NotificationState>()(
         const isSuperAdmin = isSuperAdminPlatform()
         const targetSlug =
           slugOrId ||
+          getSlug() ||
           (typeof window !== 'undefined'
             ? sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
             : undefined) ||
