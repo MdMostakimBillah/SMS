@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Info,
   XCircle,
+  Building2,
 } from 'lucide-react'
 import type { Notification, NotificationType, NotificationCategory } from '@/store/notificationStore'
 
@@ -159,7 +160,12 @@ export function NotificationDetailModal({
                   {bn ? typeConf.labelBn : typeConf.label}
                 </span>
 
-                {notification.broadcastToAll && (
+                {notification.targetType === 'specific' ? (
+                  <span className="inline-flex items-center gap-1 text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-500">
+                    <Building2 size={10} />
+                    {bn ? 'নির্দিষ্ট প্রতিষ্ঠান' : 'Targeted'}
+                  </span>
+                ) : (
                   <span className="inline-flex items-center gap-1 text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--teal-light)] text-[var(--teal)]">
                     <Sparkles size={10} />
                     {bn ? 'সকল প্রতিষ্ঠান' : 'All Institutes'}
@@ -206,6 +212,28 @@ export function NotificationDetailModal({
               </span>
             </div>
           </div>
+
+          {/* Targeted Institutions Badge/List (if targeted) */}
+          {notification.targetType === 'specific' && notification.targetInstitutionNames && notification.targetInstitutionNames.length > 0 && (
+            <div className="p-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 flex items-start gap-2.5">
+              <Building2 size={16} className="text-indigo-500 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.6875rem] font-bold uppercase tracking-wider text-indigo-500">
+                  {bn ? 'টার্গেট প্রতিষ্ঠান' : 'Targeted Institutions'}
+                </div>
+                <div className="text-[0.75rem] text-[var(--text-primary)] font-medium mt-1 flex flex-wrap gap-1.5">
+                  {notification.targetInstitutionNames.map((name, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 rounded-md bg-[var(--bg-primary)] border border-indigo-500/20 text-indigo-600 text-[0.6875rem] font-medium"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Bilingual Secondary Title */}
           {notification.titleBn &&

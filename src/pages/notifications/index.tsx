@@ -15,11 +15,12 @@ import {
   AlertTriangle,
   Info,
   XCircle,
+  Building2,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useNotificationStore, type Notification, type NotificationType, type NotificationCategory } from '@/store/notificationStore'
+import { useNotificationStore, isNotificationForSchool, type Notification, type NotificationType, type NotificationCategory } from '@/store/notificationStore'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubdomain } from '@/hooks/useSubdomain'
@@ -116,11 +117,29 @@ export default function NotificationsPage() {
     }
   }, [viewId, notifications, markRead, searchParams, setSearchParams])
 
+  const isSuperAdminView = isSuperAdmin && !isViewing
+
+  // Visible notifications based on school context
+  const visibleNotifications = useMemo(() => {
+    if (isSuperAdminView) return notifications
+    const currentSlug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || viewingInstitutionId || user?.subdomain || (user as any)?.schoolId
+    const currentSchoolId = (user as any)?.schoolId || (user as any)?.institutionId || viewingInstitutionId
+
+    return notifications.filter((n) =>
+      isNotificationForSchool(n, {
+        slug: currentSlug,
+        id: currentSchoolId,
+        subdomain: user?.subdomain,
+        schoolId: (user as any)?.schoolId,
+      })
+    )
+  }, [notifications, isSuperAdminView, viewingInstitutionId, user])
+
   // Unread counts
-  const unreadTotal = useMemo(() => notifications.filter((n) => !n.read).length, [notifications])
-  const unreadSystem = useMemo(() => notifications.filter((n) => !n.read && n.category === 'system').length, [notifications])
-  const unreadBilling = useMemo(() => notifications.filter((n) => !n.read && n.category === 'billing').length, [notifications])
-  const unreadAcademic = useMemo(() => notifications.filter((n) => !n.read && (n.category === 'academic' || (!n.category && n.type !== 'error'))).length, [notifications])
+  const unreadTotal = useMemo(() => visibleNotifications.filter((n) => !n.read).length, [visibleNotifications])
+  const unreadSystem = useMemo(() => visibleNotifications.filter((n) => !n.read && n.category === 'system').length, [visibleNotifications])
+  const unreadBilling = useMemo(() => visibleNotifications.filter((n) => !n.read && n.category === 'billing').length, [visibleNotifications])
+  const unreadAcademic = useMemo(() => visibleNotifications.filter((n) => !n.read && (n.category === 'academic' || (!n.category && n.type !== 'error'))).length, [visibleNotifications])
 
   const tabs = [
     { key: 'all', label: bn ? 'সকল নোটিফিকেশন' : 'All', icon: Bell, count: unreadTotal },
@@ -131,7 +150,7 @@ export default function NotificationsPage() {
   ]
 
   const filtered = useMemo(() => {
-    let list = [...notifications]
+    let list = [...visibleNotifications]
 
     // Tab filter
     if (activeTab === 'system') {
@@ -158,7 +177,28 @@ export default function NotificationsPage() {
     }
 
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-  }, [notifications, activeTab, search])
+  }, [visibleNotifications, activeTab, search])
+
+  const handleMarkAllRead = () => {
+    if (isSuperAdminView) {
+      markAllRead()
+    } else {
+      visibleNotifications.forEach((n) => {
+        if (!n.read) markRead(n.id)
+      })
+    }
+  }
+
+  const handleClearAll = () => {
+    if (isSuperAdminView) {
+      clearAll()
+    } else {
+      visibleNotifications.forEach((n) => {
+        deleteNotification(n.id)
+      })
+    }
+    setShowClearConfirm(false)
+  }
 
   useEffect(() => {
     setPage(1)
@@ -203,7 +243,7 @@ export default function NotificationsPage() {
             {bn ? 'নোটিফিকেশন ও ঘোষণা' : 'Notifications & Announcements'}
           </h1>
           <p className="text-[0.8125rem] text-[var(--text-muted)] mt-0.5">
-            {bn ? `মোট: ${notifications.length}টি নোটিফিকেশন` : `Total: ${notifications.length} notifications`}
+            {bn ? `মোট: ${visibleNotifications.length}টি নোটিফিকেশন` : `Total: ${visibleNotifications.length} notifications`}
             {unreadTotal > 0 && ` · ${unreadTotal} ${bn ? 'টি অপঠিত' : 'unread'}`}
           </p>
         </div>
@@ -211,7 +251,7 @@ export default function NotificationsPage() {
         <div className="flex items-center gap-2">
           {unreadTotal > 0 && canEdit('notifications') && (
             <button
-              onClick={() => markAllRead()}
+              onClick={() => handleMarkAllRead()}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer bg-transparent"
             >
               <CheckCheck size={14} />
@@ -219,7 +259,7 @@ export default function NotificationsPage() {
             </button>
           )}
 
-          {notifications.length > 0 && canDelete('notifications') && (
+          {visibleNotifications.length > 0 && canDelete('notifications') && (
             <button
               onClick={() => setShowClearConfirm(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[0.75rem] font-medium border border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)] hover:text-white transition-colors cursor-pointer bg-transparent"
@@ -354,6 +394,28 @@ export default function NotificationsPage() {
                       {bn ? typeConf.labelBn : typeConf.label}
                     </span>
 
+                    {/* Target Audience Badge */}
+                    {n.targetType === 'specific' ? (
+                      <span
+                        className="inline-flex items-center gap-1 text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-500"
+                        title={n.targetInstitutionNames?.join(', ') || 'Targeted'}
+                      >
+                        <Building2 size={10} />
+                        {isSuperAdminView
+                          ? `${bn ? 'টার্গেট: ' : 'Target: '}${n.targetInstitutionNames?.[0] || 'Specific'}${
+                              (n.targetInstitutionNames?.length || 0) > 1
+                                ? ` +${(n.targetInstitutionNames?.length || 0) - 1}`
+                                : ''
+                            }`
+                          : (bn ? 'আপনার প্রতিষ্ঠান' : 'Targeted')}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[0.5625rem] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--teal-light)] text-[var(--teal)]">
+                        <Sparkles size={10} />
+                        {bn ? 'সকল প্রতিষ্ঠান' : 'All Institutes'}
+                      </span>
+                    )}
+
                     <span className="text-[0.6875rem] text-[var(--text-muted)] ml-auto shrink-0 flex items-center gap-1">
                       <Clock size={11} />
                       {formattedTime}
@@ -477,10 +539,7 @@ export default function NotificationsPage() {
       {/* Clear All Confirmation Dialog */}
       {showClearConfirm && (
         <DeleteConfirmDialog
-          onConfirm={() => {
-            clearAll()
-            setShowClearConfirm(false)
-          }}
+          onConfirm={handleClearAll}
           onCancel={() => setShowClearConfirm(false)}
           title={bn ? 'সব নোটিফিকেশন মুছুন' : 'Clear All Notifications'}
           message={bn ? 'আপনি কি নিশ্চিত সব নোটিফিকেশন স্থায়ীভাবে মুছে ফেলতে চান?' : 'Are you sure you want to clear all notifications?'}

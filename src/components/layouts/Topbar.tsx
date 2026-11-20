@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import {
   Search,
   Bell,
@@ -28,7 +28,7 @@ import {
   CreditCard,
   GraduationCap,
 } from 'lucide-react'
-import { useNotificationStore, type Notification } from '@/store/notificationStore'
+import { useNotificationStore, isNotificationForSchool, type Notification } from '@/store/notificationStore'
 import { NotificationDetailModal } from '@/pages/notifications/modals/NotificationDetailModal'
 import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
@@ -207,7 +207,24 @@ export default React.memo(function Topbar() {
     checkAndGenerateSystemNotifications()
   }, [checkAndGenerateSystemNotifications])
 
-  const unreadNotifs = notifications.filter((n) => !n.read).length
+  const isSuperAdminView = user?.role === 'super_admin' && !viewingInstitutionId
+
+  const visibleNotifications = useMemo(() => {
+    if (isSuperAdminView) return notifications
+    const currentSlug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || viewingInstitutionId || user?.subdomain || (user as any)?.schoolId
+    const currentSchoolId = (user as any)?.schoolId || (user as any)?.institutionId || viewingInstitutionId
+
+    return notifications.filter((n) =>
+      isNotificationForSchool(n, {
+        slug: currentSlug,
+        id: currentSchoolId,
+        subdomain: user?.subdomain,
+        schoolId: (user as any)?.schoolId,
+      })
+    )
+  }, [notifications, isSuperAdminView, viewingInstitutionId, user])
+
+  const unreadNotifs = visibleNotifications.filter((n) => !n.read).length
   const unreadMsgs = demoMessages.reduce((sum, m) => sum + m.unread, 0)
   const panelStyle: React.CSSProperties = {
     position: 'absolute',
@@ -439,7 +456,15 @@ export default React.memo(function Topbar() {
                 </span>
                 {unreadNotifs > 0 && (
                   <span
-                    onClick={() => markAllRead()}
+                    onClick={() => {
+                      if (isSuperAdminView) {
+                        markAllRead()
+                      } else {
+                        visibleNotifications.forEach((n) => {
+                          if (!n.read) markRead(n.id)
+                        })
+                      }
+                    }}
                     style={{
                       fontSize: '0.6875rem',
                       color: 'var(--brand)',
@@ -452,12 +477,12 @@ export default React.memo(function Topbar() {
                 )}
               </div>
               <div style={{ overflowY: 'auto', maxHeight: '18.75rem' }}>
-                {notifications.length === 0 ? (
+                {visibleNotifications.length === 0 ? (
                   <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
                     {isBn ? 'কোনো নোটিফিকেশন নেই' : 'No notifications'}
                   </div>
                 ) : (
-                  notifications.slice(0, 10).map((n) => {
+                  visibleNotifications.slice(0, 10).map((n) => {
                     const cfg = (n.category && NOTIF_ICONS[n.category]) || NOTIF_ICONS[n.type] || NOTIF_ICONS.info
                     const titleText = (isBn ? n.titleBn || n.title : n.title || n.titleBn) || ''
                     const msgText = (isBn ? n.messageBn || n.message : n.message || n.messageBn) || ''

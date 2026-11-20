@@ -313,4 +313,122 @@ describe('NotificationsPage', () => {
     // The notification is marked read
     expect(useNotificationStore.getState().notifications.find((n) => n.id === 'NTF-BILLING-LINK-TEST')?.read).toBe(true)
   })
+
+  it('allows super admin to compose notification targeted to a specific institution', async () => {
+    const mockAuthSuperAdmin = {
+      user: {
+        id: 'super-admin-1',
+        name: 'Super Admin',
+        email: 'superadmin@edutech.pro.bd',
+        role: 'super_admin',
+      },
+      token: 'mock-token',
+      login: async () => {},
+      logout: () => {},
+      register: async () => {},
+      isLoading: false,
+      error: null,
+      isAuthenticated: true,
+      checkAuth: async () => {},
+    } as any
+
+    vi.spyOn(notificationsApi, 'broadcast').mockResolvedValue({ success: true } as any)
+
+    render(
+      <MemoryRouter initialEntries={['/super-admin/admin/notifications']}>
+        <AuthContext.Provider value={mockAuthSuperAdmin}>
+          <Routes>
+            <Route path="*" element={<NotificationsPage />} />
+          </Routes>
+        </AuthContext.Provider>
+      </MemoryRouter>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450))
+    })
+
+    fireEvent.click(screen.getByText('Create Notification'))
+
+    // Switch to Specific Institution(s)
+    const specificBtn = screen.getByText('Targeted Institution(s)')
+    fireEvent.click(specificBtn)
+
+    // Select the institution (Daffodil Model High School)
+    const daffodilItem = screen.getByText('Daffodil Model High School')
+    fireEvent.click(daffodilItem)
+
+    // Enter title & message
+    const titleInput = screen.getByPlaceholderText('e.g. System Update / Payment Reminder')
+    const msgTextarea = screen.getByPlaceholderText('Enter detailed notification content...')
+    fireEvent.change(titleInput, { target: { value: 'Special Inspection Notice' } })
+    fireEvent.change(msgTextarea, { target: { value: 'Inspection scheduled for next Monday.' } })
+
+    const sendBtn = screen.getByText('Send Notification')
+    await act(async () => {
+      fireEvent.click(sendBtn)
+    })
+
+    const created = useNotificationStore.getState().notifications.find((n) => n.title === 'Special Inspection Notice')
+    expect(created).toBeTruthy()
+    expect(created?.targetType).toBe('specific')
+    expect(created?.broadcastToAll).toBe(false)
+    expect(created?.targetInstitutions).toContain('inst-daffodil')
+  })
+
+  it('shows targeted notification only to targeted institution and hides it from other institutions', async () => {
+    useNotificationStore.setState({
+      notifications: [
+        {
+          id: 'NTF-TARGET-FOR-TEST',
+          title: 'Targeted Notice For School-Test',
+          titleBn: 'স্কুল-টেস্ট এর জন্য নোটিশ',
+          message: 'Only visible to school-test',
+          messageBn: 'শুধুমাত্র স্কুল-টেস্ট দেখতে পাবে',
+          type: 'info',
+          category: 'academic',
+          read: false,
+          targetType: 'specific',
+          targetInstitutions: ['school-test'],
+          targetInstitutionNames: ['School Test Academy'],
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: 'NTF-TARGET-FOR-OTHER',
+          title: 'Targeted Notice For Other-School',
+          titleBn: 'অন্য স্কুলের জন্য নোটিশ',
+          message: 'Should NOT be visible to school-test',
+          messageBn: 'স্কুল-টেস্ট দেখতে পাবে না',
+          type: 'warning',
+          category: 'academic',
+          read: false,
+          targetType: 'specific',
+          targetInstitutions: ['other-school-slug'],
+          targetInstitutionNames: ['Other School'],
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    })
+
+    // Render as school-test user
+    render(
+      <MemoryRouter initialEntries={['/i/school-test/admin/notifications']}>
+        <AuthContext.Provider value={mockAuthAdmin}>
+          <Routes>
+            <Route path="*" element={<NotificationsPage />} />
+          </Routes>
+        </AuthContext.Provider>
+      </MemoryRouter>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450))
+    })
+
+    // School-test sees their targeted notification
+    expect(screen.getByText('Targeted Notice For School-Test')).toBeTruthy()
+
+    // School-test does NOT see the notification targeted to other school
+    expect(screen.queryByText('Targeted Notice For Other-School')).toBeNull()
+  })
 })

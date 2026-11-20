@@ -1,7 +1,25 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Bell, X, Info, CheckCircle, AlertTriangle, XCircle, Link as LinkIcon, Send, Radio, Sparkles, CreditCard, GraduationCap, Megaphone } from 'lucide-react'
+import {
+  Bell,
+  X,
+  Info,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Link as LinkIcon,
+  Send,
+  Sparkles,
+  CreditCard,
+  GraduationCap,
+  Megaphone,
+  Globe,
+  Building2,
+  Search,
+  Check,
+} from 'lucide-react'
 import { useNotificationStore, notificationId, type Notification, type NotificationType, type NotificationCategory } from '@/store/notificationStore'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 import { useAuth } from '@/contexts/AuthContext'
 
 const inputCls = 'w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.8125rem] font-[inherit] outline-none transition-all duration-200 focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/10'
@@ -44,6 +62,16 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
 
   const updateNotification = useNotificationStore((s) => s.updateNotification)
   const broadcastNotification = useNotificationStore((s) => s.broadcastNotification)
+  const storeInstitutions = useSuperAdminStore((s) => s.institutions) ?? []
+
+  // Target audience state
+  const [targetType, setTargetType] = useState<'all' | 'specific'>(
+    existing?.targetType || (existing?.broadcastToAll === false && existing?.targetInstitutions?.length ? 'specific' : 'all')
+  )
+  const [selectedInstIds, setSelectedInstIds] = useState<string[]>(
+    existing?.targetInstitutions || []
+  )
+  const [instSearch, setInstSearch] = useState('')
 
   const [category, setCategory] = useState<NotificationCategory>(existing?.category || 'system')
   const [type, setType] = useState<NotificationType>(existing?.type || 'info')
@@ -62,6 +90,94 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
+  // Discover all registered and local institutions
+  const availableInstitutions = useMemo(() => {
+    const list = [...storeInstitutions]
+    const idSet = new Set(list.map((i) => i.id))
+    const slugSet = new Set(list.map((i) => i.slug))
+
+    try {
+      const raw = localStorage.getItem('edutech_super_admin')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        const persistedInsts = parsed.state?.institutions || []
+        for (const inst of persistedInsts) {
+          if (inst && !idSet.has(inst.id) && !slugSet.has(inst.slug)) {
+            list.push(inst)
+            idSet.add(inst.id)
+            slugSet.add(inst.slug)
+          }
+        }
+      }
+    } catch { /* ignore */ }
+
+    try {
+      const raw = localStorage.getItem('edutech-institutions')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        const arr = Array.isArray(parsed) ? parsed : (parsed.state?.institutions || [])
+        for (const inst of arr) {
+          if (inst && !idSet.has(inst.id) && !slugSet.has(inst.slug)) {
+            list.push(inst)
+            idSet.add(inst.id)
+            slugSet.add(inst.slug)
+          }
+        }
+      }
+    } catch { /* ignore */ }
+
+    // Fallback default institution if empty
+    if (list.length === 0) {
+      list.push({
+        id: 'inst-daffodil',
+        name: 'Daffodil Model High School',
+        nameBn: 'ড্যাফোডিল মডেল হাই স্কুল',
+        slug: 'daffodil',
+        subdomain: 'daffodil',
+        eiin: '134567',
+        brandColor: '#6366f1',
+      } as any)
+    }
+
+    return list
+  }, [storeInstitutions])
+
+  // Filtered institutions for search
+  const filteredInstitutions = useMemo(() => {
+    if (!instSearch.trim()) return availableInstitutions
+    const q = instSearch.toLowerCase().trim()
+    return availableInstitutions.filter(
+      (i) =>
+        (i.name && i.name.toLowerCase().includes(q)) ||
+        (i.nameBn && i.nameBn.includes(q)) ||
+        (i.eiin && i.eiin.includes(q)) ||
+        (i.slug && i.slug.toLowerCase().includes(q)) ||
+        (i.subdomain && i.subdomain.toLowerCase().includes(q))
+    )
+  }, [availableInstitutions, instSearch])
+
+  const toggleInstitution = (idOrSlug: string) => {
+    setSelectedInstIds((prev) => {
+      const exists = prev.includes(idOrSlug)
+      if (exists) {
+        return prev.filter((id) => id !== idOrSlug)
+      } else {
+        return [...prev, idOrSlug]
+      }
+    })
+    setErrors((prev) => ({ ...prev, target: false }))
+  }
+
+  const selectAllInstitutions = () => {
+    const allIds = availableInstitutions.map((i) => i.id)
+    setSelectedInstIds(allIds)
+    setErrors((prev) => ({ ...prev, target: false }))
+  }
+
+  const clearSelectedInstitutions = () => {
+    setSelectedInstIds([])
+  }
+
   if (!isSuperAdmin) {
     return null
   }
@@ -70,6 +186,7 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
     const errs: Record<string, boolean> = {}
     if (!title.trim() && !titleBn.trim()) errs.title = true
     if (!message.trim() && !messageBn.trim()) errs.message = true
+    if (targetType === 'specific' && selectedInstIds.length === 0) errs.target = true
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -84,6 +201,29 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
     const senderName = 'Super Admin (EduTech)'
     const senderRole = 'super_admin'
 
+    // Resolve target institutions
+    const targetedInstitutions = targetType === 'specific'
+      ? availableInstitutions.filter(
+          (i) =>
+            selectedInstIds.includes(i.id) ||
+            (i.slug && selectedInstIds.includes(i.slug)) ||
+            (i.subdomain && selectedInstIds.includes(i.subdomain))
+        )
+      : []
+
+    const targetIds = targetType === 'specific'
+      ? Array.from(
+          new Set([
+            ...selectedInstIds,
+            ...targetedInstitutions.flatMap((i) => [i.id, i.slug, i.subdomain].filter(Boolean)),
+          ])
+        )
+      : []
+
+    const targetNames = targetType === 'specific'
+      ? targetedInstitutions.map((i) => (bn ? i.nameBn || i.name : i.name))
+      : []
+
     if (existing) {
       updateNotification(existing.id, {
         title: primaryTitle,
@@ -93,6 +233,10 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
         type,
         category,
         link: cleanLink,
+        targetType,
+        targetInstitutions: targetIds,
+        targetInstitutionNames: targetNames,
+        broadcastToAll: targetType === 'all',
       })
     } else {
       const newNotif: Notification = {
@@ -107,7 +251,10 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
         link: cleanLink,
         sender: senderName,
         senderRole,
-        broadcastToAll: true,
+        broadcastToAll: targetType === 'all',
+        targetType,
+        targetInstitutions: targetIds,
+        targetInstitutionNames: targetNames,
         createdAt: new Date().toISOString(),
       }
 
@@ -119,7 +266,7 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
   return createPortal(
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="bg-[var(--bg-primary)] rounded-2xl w-[35rem] max-w-[95vw] max-h-[90vh] flex flex-col shadow-2xl border border-[var(--border)] overflow-hidden"
+        className="bg-[var(--bg-primary)] rounded-2xl w-[36rem] max-w-[95vw] max-h-[90vh] flex flex-col shadow-2xl border border-[var(--border)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -135,7 +282,7 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
                   : (bn ? 'নতুন নোটিফিকেশন প্রেরণ' : 'Compose Notification')}
               </h3>
               <p className="text-[0.6875rem] text-[var(--text-muted)] m-0">
-                {bn ? 'সকল প্রতিষ্ঠানে সফটওয়্যার ও সিস্টেম আপডেট সম্প্রচার করুন' : 'Broadcast software update & announcements to all institutions'}
+                {bn ? 'সকল অথবা নির্দিষ্ট প্রতিষ্ঠানে সফটওয়্যার ও সিস্টেম আপডেট পাঠান' : 'Broadcast to all or target specific institutions'}
               </p>
             </div>
           </div>
@@ -149,25 +296,195 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-          {/* Super Admin Broadcast Notice */}
-          {!existing && (
-            <div className="p-3 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <Radio size={16} className="text-[var(--brand)] shrink-0" />
-                <div>
-                  <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
-                    {bn ? 'সকল প্রতিষ্ঠানে সম্প্রচার' : 'Broadcast to all institutions'}
+          {/* Target Audience Selector */}
+          <div>
+            <label className={labelCls}>
+              {bn ? 'প্রাপক প্রতিষ্ঠান' : 'Target Audience'}
+              <span className="text-[var(--red)] ml-0.5">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setTargetType('all')
+                  setErrors((prev) => ({ ...prev, target: false }))
+                }}
+                className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer text-left ${
+                  targetType === 'all'
+                    ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)] font-semibold shadow-xs'
+                    : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40'
+                }`}
+              >
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${targetType === 'all' ? 'bg-[var(--brand)] text-white' : 'bg-[var(--border)] text-[var(--text-muted)]'}`}>
+                  <Globe size={15} />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[0.75rem] font-bold truncate">
+                    {bn ? 'সকল প্রতিষ্ঠানে সম্প্রচার' : 'All Institutions'}
                   </div>
-                  <div className="text-[0.6875rem] text-[var(--text-muted)]">
-                    {bn ? 'সিস্টেম বা সফটওয়্যার আপডেট নোটিফিকেশন সব স্কুলের ড্যাশবোর্ডে যাবে' : 'Every active school will receive this notification immediately'}
+                  <div className="text-[0.625rem] text-[var(--text-muted)] leading-tight mt-0.5">
+                    {bn ? 'সব স্কুলের নোটিফিকেশন বোর্ডে যাবে' : 'Broadcast to all registered schools'}
                   </div>
                 </div>
-              </div>
-              <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded-full bg-[var(--brand)] text-white shrink-0">
-                {bn ? 'সকল প্রতিষ্ঠান' : 'All Institutes'}
-              </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTargetType('specific')}
+                className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer text-left ${
+                  targetType === 'specific'
+                    ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)] font-semibold shadow-xs'
+                    : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40'
+                }`}
+              >
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${targetType === 'specific' ? 'bg-[var(--brand)] text-white' : 'bg-[var(--border)] text-[var(--text-muted)]'}`}>
+                  <Building2 size={15} />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[0.75rem] font-bold truncate">
+                    {bn ? 'নির্দিষ্ট প্রতিষ্ঠান' : 'Targeted Institution(s)'}
+                  </div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] leading-tight mt-0.5">
+                    {bn ? 'শুধু বাছাইকৃত প্রতিষ্ঠানে প্রদর্শিত হবে' : 'Send only to selected school(s)'}
+                  </div>
+                </div>
+              </button>
             </div>
-          )}
+
+            {/* Target Audience Summary & Specific Picker */}
+            {targetType === 'all' ? (
+              <div className="p-3 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Globe size={16} className="text-[var(--brand)] shrink-0" />
+                  <div>
+                    <div className="text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+                      {bn ? 'সকল প্রতিষ্ঠানে সম্প্রচার' : 'Broadcast to all institutions'}
+                    </div>
+                    <div className="text-[0.6875rem] text-[var(--text-muted)]">
+                      {bn ? 'সিস্টেম বা সফটওয়্যার আপডেট নোটিফিকেশন সব স্কুলের ড্যাশবোর্ডে যাবে' : 'Every active school will receive this notification immediately'}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[0.6875rem] font-bold px-2 py-0.5 rounded-full bg-[var(--brand)] text-white shrink-0">
+                  {bn ? 'সকল প্রতিষ্ঠান' : 'All Institutes'}
+                </span>
+              </div>
+            ) : (
+              <div className={`p-3 rounded-xl border bg-[var(--bg-secondary)]/50 space-y-2.5 ${errors.target ? 'border-[var(--red)] ring-1 ring-[var(--red)]/20' : 'border-[var(--border)]'}`}>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="relative flex-1 min-w-[140px]">
+                    <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                    <input
+                      type="text"
+                      value={instSearch}
+                      onChange={(e) => setInstSearch(e.target.value)}
+                      placeholder={bn ? 'প্রতিষ্ঠান খুঁজুন (নাম, EIIN)...' : 'Search school (name, EIIN)...'}
+                      className="w-full pl-8 pr-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] text-[0.75rem] outline-none focus:border-[var(--brand)]"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0 text-[0.6875rem]">
+                    <button
+                      type="button"
+                      onClick={selectAllInstitutions}
+                      className="px-2 py-1 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--brand)] hover:border-[var(--brand)] transition-colors cursor-pointer"
+                    >
+                      {bn ? 'সবগুলো নির্বাচন' : 'Select All'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearSelectedInstitutions}
+                      className="px-2 py-1 rounded-md bg-[var(--bg-primary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--red)] hover:border-[var(--red)] transition-colors cursor-pointer"
+                    >
+                      {bn ? 'মুছুন' : 'Clear'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Selected Chips */}
+                {selectedInstIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto p-1.5 bg-[var(--bg-primary)] rounded-lg border border-[var(--border)]">
+                    {selectedInstIds.map((id) => {
+                      const inst = availableInstitutions.find((i) => i.id === id || i.slug === id || i.subdomain === id)
+                      const name = inst ? (bn ? inst.nameBn || inst.name : inst.name) : id
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.6875rem] bg-[var(--brand)]/10 text-[var(--brand)] font-medium border border-[var(--brand)]/20"
+                        >
+                          <span className="truncate max-w-[12rem]">{name}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleInstitution(id)}
+                            className="hover:text-[var(--red)] cursor-pointer border-none bg-transparent p-0 flex items-center"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* Institutions Checkbox List */}
+                <div className="max-h-36 overflow-y-auto space-y-1 border border-[var(--border)] rounded-lg bg-[var(--bg-primary)] p-1">
+                  {filteredInstitutions.length === 0 ? (
+                    <div className="text-center py-3 text-[0.75rem] text-[var(--text-muted)]">
+                      {bn ? 'কোনো প্রতিষ্ঠান পাওয়া যায়নি' : 'No institutions found'}
+                    </div>
+                  ) : (
+                    filteredInstitutions.map((inst) => {
+                      const isChecked = selectedInstIds.includes(inst.id) || (inst.slug && selectedInstIds.includes(inst.slug))
+                      return (
+                        <div
+                          key={inst.id}
+                          onClick={() => toggleInstitution(inst.id)}
+                          className={`flex items-center gap-2.5 p-2 rounded-lg transition-colors cursor-pointer select-none text-[0.75rem] ${
+                            isChecked
+                              ? 'bg-[var(--brand)]/10 text-[var(--text-primary)] font-medium'
+                              : 'hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
+                          }`}
+                        >
+                          <div
+                            className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${
+                              isChecked
+                                ? 'bg-[var(--brand)] border-[var(--brand)] text-white'
+                                : 'border-[var(--border)] bg-[var(--bg-primary)]'
+                            }`}
+                          >
+                            {isChecked && <Check size={11} strokeWidth={3} />}
+                          </div>
+
+                          <div
+                            className="w-5 h-5 rounded-md flex items-center justify-center text-[0.625rem] font-bold text-white shrink-0"
+                            style={{ background: inst.brandColor || '#6366f1' }}
+                          >
+                            {(inst.name || 'S').charAt(0)}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="truncate font-medium text-[var(--text-primary)]">
+                              {bn ? inst.nameBn || inst.name : inst.name}
+                            </div>
+                            <div className="text-[0.625rem] text-[var(--text-muted)] truncate flex items-center gap-1.5">
+                              {inst.eiin && <span>EIIN: {inst.eiin}</span>}
+                              {inst.subdomain && <span>• {inst.subdomain}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+
+                {errors.target && (
+                  <div className="text-[0.6875rem] text-[var(--red)] flex items-center gap-1 pt-0.5 font-medium">
+                    <AlertTriangle size={12} />
+                    {bn ? 'অনুগ্রহ করে অন্তত একটি প্রতিষ্ঠান নির্বাচন করুন' : 'Please select at least one institution'}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Category Selector */}
           <div>

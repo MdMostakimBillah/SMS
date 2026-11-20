@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useNotificationStore, SEED_NOTIFICATIONS, notificationId } from './notificationStore'
+import { useNotificationStore, SEED_NOTIFICATIONS, notificationId, isNotificationForSchool, type Notification } from './notificationStore'
 import { notificationsApi } from '@/lib/api'
 import { normalizeVaultJsonForStore, vaultPathToKey } from '@/lib/vault/mapping'
 
@@ -157,5 +157,79 @@ describe('notificationStore', () => {
     expect(parsed.state.notifications).toHaveLength(1)
     expect(parsed.state.notifications[0].title).toBe('Science Fair')
     expect(parsed.state.notifications[0].read).toBe(true)
+  })
+
+  it('correctly filters notifications with isNotificationForSchool', () => {
+    const broadcastNotif: Notification = {
+      id: 'N-ALL',
+      title: 'Global Announcement',
+      titleBn: 'সার্বিক ঘোষণা',
+      message: 'All schools notice',
+      messageBn: 'সকল স্কুলের নোটিশ',
+      type: 'info',
+      read: false,
+      broadcastToAll: true,
+      targetType: 'all',
+      createdAt: new Date().toISOString(),
+    }
+
+    const targetedNotif: Notification = {
+      id: 'N-SPECIFIC',
+      title: 'Targeted Notice',
+      titleBn: 'টার্গেটেড নোটিশ',
+      message: 'For Daffodil only',
+      messageBn: 'শুধু ড্যাফোডিলের জন্য',
+      type: 'warning',
+      read: false,
+      broadcastToAll: false,
+      targetType: 'specific',
+      targetInstitutions: ['inst-daffodil', 'daffodil'],
+      targetInstitutionNames: ['Daffodil Model High School'],
+      createdAt: new Date().toISOString(),
+    }
+
+    // Broadcast should be visible to any school
+    expect(isNotificationForSchool(broadcastNotif, { slug: 'daffodil' })).toBe(true)
+    expect(isNotificationForSchool(broadcastNotif, { slug: 'sunrise' })).toBe(true)
+
+    // Targeted should be visible only to targeted school
+    expect(isNotificationForSchool(targetedNotif, { slug: 'daffodil' })).toBe(true)
+    expect(isNotificationForSchool(targetedNotif, { id: 'inst-daffodil' })).toBe(true)
+    expect(isNotificationForSchool(targetedNotif, { slug: 'sunrise' })).toBe(false)
+    expect(isNotificationForSchool(targetedNotif, { id: 'inst-sunrise' })).toBe(false)
+  })
+
+  it('broadcastNotification routes targeted notification only to targeted school storage keys', async () => {
+    localStorage.setItem('edutech-notifications_daffodil', JSON.stringify({ state: { notifications: [] } }))
+    localStorage.setItem('edutech-notifications_sunrise', JSON.stringify({ state: { notifications: [] } }))
+
+    const targetedNotif: Notification = {
+      id: 'NTF-TARGET-TEST',
+      title: 'Daffodil Exclusive Update',
+      titleBn: 'ড্যাফোডিল বিশেষ আপডেট',
+      message: 'Special configuration applied',
+      messageBn: 'বিশেষ কনফিগারেশন প্রয়োগ করা হয়েছে',
+      type: 'info',
+      read: false,
+      targetType: 'specific',
+      targetInstitutions: ['daffodil'],
+      targetInstitutionNames: ['Daffodil Model High School'],
+      createdAt: new Date().toISOString(),
+    }
+
+    vi.spyOn(notificationsApi, 'broadcast').mockResolvedValue({ success: true } as any)
+
+    await useNotificationStore.getState().broadcastNotification(targetedNotif)
+
+    // Local state contains it
+    expect(useNotificationStore.getState().notifications.some((n) => n.id === 'NTF-TARGET-TEST')).toBe(true)
+
+    // Daffodil storage contains it
+    const daffodilStore = JSON.parse(localStorage.getItem('edutech-notifications_daffodil') || '{}')
+    expect(daffodilStore.state.notifications.some((n: any) => n.id === 'NTF-TARGET-TEST')).toBe(true)
+
+    // Sunrise storage does NOT contain it
+    const sunriseStore = JSON.parse(localStorage.getItem('edutech-notifications_sunrise') || '{}')
+    expect(sunriseStore.state.notifications.some((n: any) => n.id === 'NTF-TARGET-TEST')).toBe(false)
   })
 })

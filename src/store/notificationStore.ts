@@ -22,7 +22,49 @@ export interface Notification {
   sender?: string
   senderRole?: string
   broadcastToAll?: boolean
+  targetType?: 'all' | 'specific'
+  targetInstitutions?: string[]
+  targetInstitutionNames?: string[]
   createdAt: string
+}
+
+export function isNotificationForSchool(
+  notification: Notification,
+  schoolIdentifiers: {
+    slug?: string | null
+    id?: string | null
+    subdomain?: string | null
+    schoolId?: string | null
+  }
+): boolean {
+  // If broadcast to all or targetType === 'all' or broadcastToAll is true, or no specific targets
+  if (notification.broadcastToAll || !notification.targetType || notification.targetType === 'all') {
+    return true
+  }
+
+  // If specific target type
+  if (notification.targetType === 'specific') {
+    const targets = notification.targetInstitutions || []
+    if (targets.length === 0) return true
+
+    const candidates = [
+      schoolIdentifiers.slug,
+      schoolIdentifiers.id,
+      schoolIdentifiers.subdomain,
+      schoolIdentifiers.schoolId,
+    ]
+      .filter((v): v is string => Boolean(v && typeof v === 'string' && v.trim()))
+      .map((s) => s.toLowerCase().trim())
+
+    if (candidates.length === 0) return true
+
+    return targets.some((t) => {
+      const targetClean = String(t).toLowerCase().trim()
+      return candidates.includes(targetClean)
+    })
+  }
+
+  return true
 }
 
 let counter = 0
@@ -201,48 +243,86 @@ export const useNotificationStore = create<NotificationState>()(
         set((state) => ({ notifications: [n, ...state.notifications] }))
         onStateMutated(get)
 
-        // 2. Broadcast to all known school storage in localStorage
+        // 2. Broadcast or target to school storage in localStorage
         try {
           if (typeof window !== 'undefined') {
-            const slugs = new Set<string>()
+            const isTargeted = n.targetType === 'specific' && Array.isArray(n.targetInstitutions) && n.targetInstitutions.length > 0
+            const targetSet = new Set((n.targetInstitutions || []).map((t) => String(t).toLowerCase().trim()))
 
-            // A. Check edutech_super_admin institutions
-            try {
-              const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
-              if (rawSuperAdmin) {
-                const parsed = JSON.parse(rawSuperAdmin)
-                const instList = parsed.state?.institutions || []
-                for (const inst of instList) {
-                  const s = inst.slug || inst.id || inst.subdomain
-                  if (s) slugs.add(s)
+            const destSlugs = new Set<string>()
+
+            if (isTargeted) {
+              // 1. Add raw target identifiers directly
+              for (const t of n.targetInstitutions || []) {
+                if (t && t !== 'super-admin') destSlugs.add(t)
+              }
+
+              // 2. Cross-reference with super admin store institutions to resolve slug/id/subdomain
+              try {
+                const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
+                if (rawSuperAdmin) {
+                  const parsed = JSON.parse(rawSuperAdmin)
+                  const instList = parsed.state?.institutions || []
+                  for (const inst of instList) {
+                    const keys = [inst.slug, inst.id, inst.subdomain].filter(Boolean)
+                    const matches = keys.some((k) => targetSet.has(k.toLowerCase().trim()))
+                    if (matches) {
+                      keys.forEach((k) => destSlugs.add(k))
+                    }
+                  }
+                }
+              } catch { /* ignore */ }
+
+              // 3. Match against existing edutech-notifications_<slug> keys
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i)
+                if (k && k.startsWith('edutech-notifications_')) {
+                  const s = k.replace('edutech-notifications_', '')
+                  if (s && targetSet.has(s.toLowerCase().trim())) {
+                    destSlugs.add(s)
+                  }
                 }
               }
-            } catch { /* ignore */ }
-
-            // B. Check edutech-institutions
-            try {
-              const rawInsts = localStorage.getItem('edutech-institutions')
-              if (rawInsts) {
-                const parsed = JSON.parse(rawInsts)
-                const instList = Array.isArray(parsed) ? parsed : (parsed.state?.institutions || [])
-                for (const inst of instList) {
-                  const s = inst.slug || inst.id
-                  if (s) slugs.add(s)
+            } else {
+              // Broadcast to ALL known institutions
+              // A. Check edutech_super_admin institutions
+              try {
+                const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
+                if (rawSuperAdmin) {
+                  const parsed = JSON.parse(rawSuperAdmin)
+                  const instList = parsed.state?.institutions || []
+                  for (const inst of instList) {
+                    const s = inst.slug || inst.id || inst.subdomain
+                    if (s) destSlugs.add(s)
+                  }
                 }
-              }
-            } catch { /* ignore */ }
+              } catch { /* ignore */ }
 
-            // C. Discover all existing notification stores in localStorage
-            for (let i = 0; i < localStorage.length; i++) {
-              const k = localStorage.key(i)
-              if (k && k.startsWith('edutech-notifications_')) {
-                const s = k.replace('edutech-notifications_', '')
-                if (s) slugs.add(s)
+              // B. Check edutech-institutions
+              try {
+                const rawInsts = localStorage.getItem('edutech-institutions')
+                if (rawInsts) {
+                  const parsed = JSON.parse(rawInsts)
+                  const instList = Array.isArray(parsed) ? parsed : (parsed.state?.institutions || [])
+                  for (const inst of instList) {
+                    const s = inst.slug || inst.id
+                    if (s) destSlugs.add(s)
+                  }
+                }
+              } catch { /* ignore */ }
+
+              // C. Discover all existing notification stores in localStorage
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i)
+                if (k && k.startsWith('edutech-notifications_')) {
+                  const s = k.replace('edutech-notifications_', '')
+                  if (s) destSlugs.add(s)
+                }
               }
             }
 
-            // Distribute to all discovered school stores
-            for (const slug of slugs) {
+            // Distribute to destination school stores
+            for (const slug of destSlugs) {
               if (slug === 'super-admin') continue
               const key = `edutech-notifications_${slug}`
               try {
