@@ -60,7 +60,9 @@ export default function Step2Schedule() {
   const sessionSubjectMarkConfigs = useMemo(() => subjectMarkConfigs.filter((s) => sessionExamIds.has(s.examId)), [subjectMarkConfigs, sessionExamIds])
   const deleteRoutine = useExamStore((s) => s.deleteRoutine)
   const addRoutine = useExamStore((s) => s.addRoutine)
+  const bulkAddRoutines = useExamStore((s) => s.bulkAddRoutines)
   const addRoom = useExamStore((s) => s.addRoom)
+  const bulkAddRooms = useExamStore((s) => s.bulkAddRooms)
   const updateRoom = useExamStore((s) => s.updateRoom)
   const deleteRoom = useExamStore((s) => s.deleteRoom)
   const addSeatPlan = useExamStore((s) => s.addSeatPlan)
@@ -353,6 +355,7 @@ export default function Step2Schedule() {
             currentMonth={currentMonth}
             setCurrentMonth={setCurrentMonth}
             addRoutine={addRoutine}
+            bulkAddRoutines={bulkAddRoutines}
             deleteRoutine={deleteRoutine}
           />
         )}
@@ -363,6 +366,7 @@ export default function Step2Schedule() {
             rooms={rooms}
             roomCapacityMap={roomCapacityMap}
             addRoom={addRoom}
+            bulkAddRooms={bulkAddRooms}
             updateRoom={updateRoom}
             deleteRoom={deleteRoom}
           />

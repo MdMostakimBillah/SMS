@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Search,
   Bell,
@@ -27,6 +28,7 @@ import {
   Sparkles,
   CreditCard,
   GraduationCap,
+  X,
 } from 'lucide-react'
 import { useNotificationStore, isNotificationForSchool, type Notification } from '@/store/notificationStore'
 import { NotificationDetailModal } from '@/pages/notifications/modals/NotificationDetailModal'
@@ -39,6 +41,7 @@ import { ROLE_LABELS, type InstitutionRole } from '@/lib/navUtils'
 import { usePermissionStore } from '@/store/permissionStore'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useClassStore } from '@/store/classStore'
 import { getNavBase, getSuperAdminViewNavBase, getLogoutRedirect } from '@/lib/navUtils'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
@@ -200,26 +203,114 @@ export default React.memo(function Topbar() {
   const markUnread = useNotificationStore((s) => s.markUnread)
   const deleteNotification = useNotificationStore((s) => s.deleteNotification)
   const markAllRead = useNotificationStore((s) => s.markAllRead)
+  const syncFromServer = useNotificationStore((s) => s.syncFromServer)
   const checkAndGenerateSystemNotifications = useNotificationStore((s) => s.checkAndGenerateSystemNotifications)
   const [viewNotification, setViewNotification] = useState<Notification | null>(null)
-
-  useEffect(() => {
-    checkAndGenerateSystemNotifications()
-  }, [checkAndGenerateSystemNotifications])
+  const [toastNotif, setToastNotif] = useState<Notification | null>(null)
 
   const isSuperAdminView = user?.role === 'super_admin' && !viewingInstitutionId
 
+  useEffect(() => {
+    checkAndGenerateSystemNotifications()
+    void syncFromServer()
+
+    // Realtime notification listener
+    const handleNewNotif = (e: any) => {
+      const n: Notification = e.detail
+      if (!n) return
+      const instSettings = useClassStore.getState().institution
+      const currentSlug =
+        sessionStorage.getItem('edutech_inst_slug') ||
+        localStorage.getItem('edutech_inst_slug') ||
+        viewingInstitutionId ||
+        user?.subdomain ||
+        user?.schoolDomain ||
+        (user as any)?.schoolId ||
+        (instSettings as any)?.slug
+      const currentSchoolId =
+        (user as any)?.schoolId ||
+        (user as any)?.institutionId ||
+        viewingInstitutionId ||
+        (instSettings as any)?.id
+      const currentSchoolName = user?.schoolName || user?.school?.name || instSettings?.name
+
+      if (
+        isSuperAdminView ||
+        isNotificationForSchool(n, {
+          slug: currentSlug,
+          id: currentSchoolId,
+          subdomain: user?.subdomain || user?.schoolDomain,
+          schoolId: (user as any)?.schoolId,
+          name: currentSchoolName,
+          nameBn: instSettings?.nameBn,
+          eiin: instSettings?.eiin,
+        })
+      ) {
+        setToastNotif(n)
+      }
+    }
+    window.addEventListener('edutech:new_notification', handleNewNotif)
+
+    // Periodic sync (every 25s) for background updates & local PC mode
+    const interval = setInterval(() => {
+      void syncFromServer()
+    }, 25000)
+
+    // Sync on tab focus or visibility change
+    const onFocus = () => {
+      void syncFromServer()
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
+
+    return () => {
+      window.removeEventListener('edutech:new_notification', handleNewNotif)
+      clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onFocus)
+    }
+  }, [checkAndGenerateSystemNotifications, syncFromServer, isSuperAdminView, viewingInstitutionId, user])
+
+  useEffect(() => {
+    if (!toastNotif) return
+    const timer = setTimeout(() => {
+      setToastNotif(null)
+    }, 7000)
+    return () => clearTimeout(timer)
+  }, [toastNotif])
+
   const visibleNotifications = useMemo(() => {
     if (isSuperAdminView) return notifications
-    const currentSlug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || viewingInstitutionId || user?.subdomain || (user as any)?.schoolId
-    const currentSchoolId = (user as any)?.schoolId || (user as any)?.institutionId || viewingInstitutionId
+    const instSettings = useClassStore.getState().institution
+    const currentSlug =
+      sessionStorage.getItem('edutech_inst_slug') ||
+      localStorage.getItem('edutech_inst_slug') ||
+      viewingInstitutionId ||
+      user?.subdomain ||
+      user?.schoolDomain ||
+      (user as any)?.schoolId ||
+      (instSettings as any)?.slug
+    const currentSchoolId =
+      (user as any)?.schoolId ||
+      (user as any)?.institutionId ||
+      viewingInstitutionId ||
+      (instSettings as any)?.id
+    const currentSchoolName =
+      user?.schoolName ||
+      user?.school?.name ||
+      instSettings?.name
+    const currentSchoolNameBn =
+      instSettings?.nameBn
 
     return notifications.filter((n) =>
       isNotificationForSchool(n, {
         slug: currentSlug,
         id: currentSchoolId,
-        subdomain: user?.subdomain,
+        subdomain: user?.subdomain || user?.schoolDomain,
         schoolId: (user as any)?.schoolId,
+        name: currentSchoolName,
+        nameBn: currentSchoolNameBn,
+        eiin: instSettings?.eiin,
       })
     )
   }, [notifications, isSuperAdminView, viewingInstitutionId, user])
@@ -1153,6 +1244,51 @@ export default React.memo(function Topbar() {
           bn={isBn}
         />
       )}
+
+      {toastNotif &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            onClick={() => {
+              if (!toastNotif.read) markRead(toastNotif.id)
+              setViewNotification(toastNotif)
+              setToastNotif(null)
+            }}
+            className="fixed top-4 right-4 z-[99999] max-w-[22rem] w-[calc(100vw-2rem)] bg-[var(--bg-primary)] border border-[var(--brand)]/40 rounded-2xl p-3.5 shadow-2xl flex items-start gap-3 cursor-pointer transition-all hover:scale-[1.02] backdrop-blur-xl animate-in fade-in slide-in-from-top-4 duration-200"
+            role="alert"
+          >
+            <div className="w-8 h-8 rounded-xl bg-[var(--brand)]/15 text-[var(--brand)] flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles size={16} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[0.625rem] font-bold text-[var(--brand)] uppercase tracking-wider">
+                  {isBn ? 'সুপার অ্যাডমিন বার্তা' : 'Super Admin Alert'}
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setToastNotif(null)
+                  }}
+                  className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-0.5 rounded cursor-pointer transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <h4 className="text-[0.8125rem] font-bold text-[var(--text-primary)] truncate mt-0.5">
+                {isBn ? toastNotif.titleBn || toastNotif.title : toastNotif.title || toastNotif.titleBn}
+              </h4>
+              <p className="text-[0.6875rem] text-[var(--text-secondary)] line-clamp-2 mt-0.5">
+                {isBn ? toastNotif.messageBn || toastNotif.message : toastNotif.message || toastNotif.messageBn}
+              </p>
+              <div className="mt-1.5 flex items-center gap-1 text-[0.625rem] font-semibold text-[var(--brand)]">
+                <span>{isBn ? 'বিস্তারিত দেখতে ক্লিক করুন →' : 'Click to view details →'}</span>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </header>
   )
 })

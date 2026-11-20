@@ -143,11 +143,12 @@ describe('GET /api/notifications', () => {
     expect(res.body.notifications[0].title).toBe('Exam Starting Tomorrow')
   })
 
-  it('returns empty array when local_computer storage mode', async () => {
+  it('returns delivered notifications even when local_computer storage mode', async () => {
     const res = await get(jars.super, `/api/notifications?schoolId=${schoolLocalId}`)
     expect(res.status).toBe(200)
     expect(res.body.storageMode).toBe('local_computer')
-    expect(res.body.notifications).toEqual([])
+    expect(res.body.notifications).toHaveLength(1)
+    expect(res.body.notifications[0].title).toBe('Local')
   })
 })
 

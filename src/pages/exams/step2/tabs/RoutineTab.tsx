@@ -15,6 +15,9 @@ import {
   ChevronDown,
   FileSpreadsheet,
   FileText,
+  Copy,
+  ChevronsDown,
+  Sparkles,
 } from 'lucide-react'
 import {
   startOfMonth,
@@ -70,7 +73,19 @@ interface Props {
   currentMonth: Date
   setCurrentMonth: (d: Date) => void
   addRoutine: (r: any) => void
+  bulkAddRoutines?: (routines: any[]) => void
   deleteRoutine: (id: string) => void
+}
+
+interface RoutineRow {
+  id: string
+  classId: string
+  sectionId: string
+  subjectId: string
+  date: string
+  startTime: string
+  endTime: string
+  roomNo: string
 }
 
 export default React.memo(function RoutineTab({
@@ -91,94 +106,216 @@ export default React.memo(function RoutineTab({
   currentMonth,
   setCurrentMonth,
   addRoutine,
+  bulkAddRoutines,
   deleteRoutine,
 }: Props) {
   const { canCreate, canRead, canDelete } = usePermission()
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [showDayDetail, setShowDayDetail] = useState(false)
   const [showRoutineForm, setShowRoutineForm] = useState(false)
-  const [routineForm, setRoutineForm] = useState({
-    classId: '',
-    sectionId: '',
-    subjectId: '',
-    date: '',
-    startTime: '',
-    endTime: '',
-    roomNo: '',
-  })
+
+  // Single-row batch table state for routines
+  const [routineRows, setRoutineRows] = useState<RoutineRow[]>([
+    {
+      id: 'rt-1',
+      classId: '',
+      sectionId: '',
+      subjectId: '',
+      date: '',
+      startTime: '10:00',
+      endTime: '13:00',
+      roomNo: '',
+    },
+  ])
+  const [routineFormError, setRoutineFormError] = useState('')
+
   const [showExamRoutinePDF, setShowExamRoutinePDF] = useState(false)
   const [showExamRoutineActionMenu, setShowExamRoutineActionMenu] = useState(false)
   const examRoutineActionMenuRef = useRef<HTMLDivElement>(null)
 
-  const routineStudentCount = useMemo(() => {
-    if (!routineForm.classId) return 0
-    return students.filter(
-      (s) => s.status === 'approved' && s.active !== false && s.class === routineForm.classId && (!routineForm.sectionId || s.section === routineForm.sectionId)
-    ).length
-  }, [students, routineForm.classId, routineForm.sectionId])
+  const getSubjectsForRow = useCallback(
+    (classId: string, sectionId?: string) => {
+      const allSubjects = useTeacherStore.getState().subjects
+      if (!classId) return allSubjects
+      const classObj = classes.find((c) => c.name === classId)
+      if (!classObj) return allSubjects
 
-  const suggestedRoom = useMemo(() => {
-    if (routineStudentCount === 0) return null
-    return rooms.find((r) => r.isActive && r.capacity >= routineStudentCount) || null
-  }, [rooms, routineStudentCount])
-
-  const roomUsage = useMemo(() => {
-    if (!routineForm.date) return {}
-    const usage: Record<string, number> = {}
-    const dayRoutines = filteredRoutines.filter((r) => r.date === routineForm.date)
-    for (const r of dayRoutines) {
-      usage[r.roomNo] = (usage[r.roomNo] || 0) + 1
-    }
-    return usage
-  }, [filteredRoutines, routineForm.date])
-
-  const routineFormSections = useMemo(
-    () => (routineForm.classId ? sectionsMap[routineForm.classId] || [] : []),
-    [routineForm.classId, sectionsMap]
+      let classSubjects: typeof allSubjects = []
+      if (sectionId) {
+        const section = classObj.sections.find((s: any) => s.name === sectionId)
+        if (section?.subjectIds && section.subjectIds.length > 0) {
+          classSubjects = allSubjects.filter((s) => section.subjectIds!.includes(s.id))
+        }
+      }
+      if (classSubjects.length === 0 && classObj.subjectIds?.length > 0) {
+        classSubjects = allSubjects.filter((s) => classObj.subjectIds.includes(s.id))
+      }
+      if (classSubjects.length === 0) classSubjects = allSubjects
+      return classSubjects
+    },
+    [classes]
   )
 
-  const routineFormSubjects = useMemo(() => {
-    if (!routineForm.classId) return useTeacherStore.getState().subjects
-    const classObj = classes.find((c) => c.name === routineForm.classId)
-    if (!classObj) return useTeacherStore.getState().subjects
-    const allSubjects = useTeacherStore.getState().subjects
+  const handleOpenNewRoutineModal = (initialDate?: string) => {
+    const defaultDate = initialDate || (selectedExam?.startDate ? selectedExam.startDate.split('T')[0] : '')
+    const defaultClass = classOptions[0] || ''
+    const secs = defaultClass ? sectionsMap[defaultClass] || [] : []
+    const defaultSection = secs[0] || 'A'
+    const defaultRoom = rooms[0]?.roomNo || 'R-101'
 
-    let classSubjects: typeof allSubjects = []
-    if (routineForm.sectionId) {
-      const section = classObj.sections.find((s: any) => s.name === routineForm.sectionId)
-      if (section?.subjectIds && section.subjectIds.length > 0) {
-        classSubjects = allSubjects.filter((s) => section.subjectIds!.includes(s.id))
-      }
-    }
-    if (classSubjects.length === 0 && classObj.subjectIds?.length > 0) {
-      classSubjects = allSubjects.filter((s) => classObj.subjectIds.includes(s.id))
-    }
-    if (classSubjects.length === 0) classSubjects = allSubjects
+    setRoutineRows([
+      {
+        id: `rt-${Date.now()}-1`,
+        classId: defaultClass,
+        sectionId: defaultSection,
+        subjectId: '',
+        date: defaultDate,
+        startTime: '10:00',
+        endTime: '13:00',
+        roomNo: defaultRoom,
+      },
+    ])
+    setRoutineFormError('')
+    setShowRoutineForm(true)
+  }
 
-    const scheduledSubjectIds = new Set(
-      filteredRoutines
-        .filter((r) => r.classId === routineForm.classId && r.sectionId === (routineForm.sectionId || 'A'))
-        .map((r) => r.subjectId)
-    )
-    return classSubjects.filter((s) => !scheduledSubjectIds.has(s.id))
-  }, [classes, routineForm.classId, routineForm.sectionId, routineForm.date, filteredRoutines])
-
-  const handleSaveRoutine = useCallback(() => {
-    if (!selectedExamId || !routineForm.classId || !routineForm.subjectId || !routineForm.date) return
-    addRoutine({
-      examId: selectedExamId,
-      classId: routineForm.classId,
-      sectionId: routineForm.sectionId || 'A',
-      subjectId: routineForm.subjectId,
-      date: routineForm.date,
-      startTime: routineForm.startTime || '09:00',
-      endTime: routineForm.endTime || '12:00',
-      roomNo: routineForm.roomNo || 'R-101',
-      status: getAutoStatus(routineForm.date),
+  const handleAddRoutineRow = () => {
+    setRoutineRows((prev) => {
+      const last = prev[prev.length - 1]
+      const defaultClass = last?.classId || classOptions[0] || ''
+      const secs = defaultClass ? sectionsMap[defaultClass] || [] : []
+      return [
+        ...prev,
+        {
+          id: `rt-${Date.now()}-${prev.length + 1}`,
+          classId: defaultClass,
+          sectionId: last?.sectionId || secs[0] || 'A',
+          subjectId: '',
+          date: last?.date || (selectedExam?.startDate ? selectedExam.startDate.split('T')[0] : ''),
+          startTime: last?.startTime || '10:00',
+          endTime: last?.endTime || '13:00',
+          roomNo: last?.roomNo || rooms[0]?.roomNo || 'R-101',
+        },
+      ]
     })
+    setRoutineFormError('')
+  }
+
+  const handleDuplicateRoutineRow = (index: number) => {
+    const target = routineRows[index]
+    if (!target) return
+    const cloned: RoutineRow = {
+      ...target,
+      id: `rt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      subjectId: '',
+    }
+    setRoutineRows((prev) => {
+      const next = [...prev]
+      next.splice(index + 1, 0, cloned)
+      return next
+    })
+  }
+
+  const handleRemoveRoutineRow = (index: number) => {
+    if (routineRows.length <= 1) return
+    setRoutineRows((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleUpdateRoutineRow = (index: number, field: keyof RoutineRow, value: string) => {
+    setRoutineRows((prev) => {
+      const next = [...prev]
+      const updated = { ...next[index], [field]: value }
+
+      if (field === 'classId') {
+        const secs = sectionsMap[value] || []
+        updated.sectionId = secs[0] || 'A'
+        updated.subjectId = ''
+
+        const count = students.filter(
+          (s) => s.status === 'approved' && s.active !== false && s.class === value
+        ).length
+        const rm = rooms.find((r) => r.isActive && r.capacity >= count)
+        if (rm) updated.roomNo = rm.roomNo
+      }
+
+      next[index] = updated
+      return next
+    })
+    setRoutineFormError('')
+  }
+
+  const applyRoutineColumnToAll = (
+    field: 'classId' | 'sectionId' | 'date' | 'startTime' | 'endTime' | 'roomNo',
+    fromIndex = 0
+  ) => {
+    const sourceValue = routineRows[fromIndex]?.[field]
+    if (sourceValue === undefined) return
+
+    setRoutineRows((prev) =>
+      prev.map((r, i) => {
+        if (i === fromIndex) return r
+        const updated = { ...r, [field]: sourceValue }
+        if (field === 'classId') {
+          const secs = sectionsMap[sourceValue] || []
+          updated.sectionId = secs[0] || 'A'
+          updated.subjectId = ''
+        }
+        return updated
+      })
+    )
+  }
+
+  const applyDateTimeRoomToAll = () => {
+    const first = routineRows[0]
+    if (!first) return
+    setRoutineRows((prev) =>
+      prev.map((r, i) =>
+        i === 0
+          ? r
+          : {
+              ...r,
+              date: first.date,
+              startTime: first.startTime,
+              endTime: first.endTime,
+              roomNo: first.roomNo || r.roomNo,
+            }
+      )
+    )
+  }
+
+  const handleSaveRoutines = useCallback(() => {
+    if (!selectedExamId) return
+    const validRows = routineRows.filter((r) => r.classId && r.subjectId && r.date)
+    if (validRows.length === 0) {
+      setRoutineFormError(
+        isBn
+          ? 'অনুগ্রহ করে অন্তত একটি রুটিনের শ্রেণি, বিষয় ও তারিখ পূরণ করুন'
+          : 'Please select Class, Subject, and Date for at least one routine'
+      )
+      return
+    }
+
+    const routinesToSave = validRows.map((r) => ({
+      examId: selectedExamId,
+      classId: r.classId,
+      sectionId: r.sectionId || 'A',
+      subjectId: r.subjectId,
+      date: r.date,
+      startTime: r.startTime || '10:00',
+      endTime: r.endTime || '13:00',
+      roomNo: r.roomNo || (rooms.length > 0 ? rooms[0].roomNo : 'R-101'),
+      status: getAutoStatus(r.date),
+    }))
+
+    if (bulkAddRoutines) {
+      bulkAddRoutines(routinesToSave)
+    } else {
+      routinesToSave.forEach((r) => addRoutine(r))
+    }
+
     setShowRoutineForm(false)
-    setRoutineForm({ classId: '', sectionId: '', subjectId: '', date: '', startTime: '', endTime: '', roomNo: '' })
-  }, [selectedExamId, routineForm, addRoutine])
+    setRoutineFormError('')
+  }, [selectedExamId, routineRows, bulkAddRoutines, addRoutine, rooms, isBn])
 
   const calendarDays = useMemo(() => {
     if (!calendarRange) {
@@ -366,56 +503,67 @@ export default React.memo(function RoutineTab({
             {isBn ? 'আজ' : 'Today'}
           </button>
         </div>
-        {filteredRoutines.length > 0 && canRead('exams.read.view') && (
-          <div style={{ position: 'relative' }} ref={examRoutineActionMenuRef}>
+        <div className="flex items-center gap-2">
+          {canCreate('exams.create.create') && (
             <button
-              onClick={() => setShowExamRoutineActionMenu(!showExamRoutineActionMenu)}
+              onClick={() => handleOpenNewRoutineModal()}
               className={btnPrimary}
-              style={{ background: 'var(--brand-light)', border: '1px solid var(--brand)', color: 'var(--brand)' }}
             >
-              <MoreVertical size={15} />
-              {isBn ? 'অ্যাকশন' : 'Action'}
-              <ChevronDown size={12} />
+              <Plus size={14} />
+              {isBn ? 'নতুন রুটিন' : 'New Routine'}
             </button>
-            {showExamRoutineActionMenu && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: '0.375rem',
-                  background: 'var(--bg-primary)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '0.5rem',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  minWidth: '12.5rem',
-                  zIndex: 100,
-                  overflow: 'hidden',
-                }}
+          )}
+          {filteredRoutines.length > 0 && canRead('exams.read.view') && (
+            <div style={{ position: 'relative' }} ref={examRoutineActionMenuRef}>
+              <button
+                onClick={() => setShowExamRoutineActionMenu(!showExamRoutineActionMenu)}
+                className={btnPrimary}
+                style={{ background: 'var(--brand-light)', border: '1px solid var(--brand)', color: 'var(--brand)' }}
               >
-                <button
-                  onClick={() => { handleExamRoutineExcel(); setShowExamRoutineActionMenu(false) }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                <MoreVertical size={15} />
+                {isBn ? 'অ্যাকশন' : 'Action'}
+                <ChevronDown size={12} />
+              </button>
+              {showExamRoutineActionMenu && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '0.375rem',
+                    background: 'var(--bg-primary)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    minWidth: '12.5rem',
+                    zIndex: 100,
+                    overflow: 'hidden',
+                  }}
                 >
-                  <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
-                  {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
-                </button>
-                <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
-                <button
-                  onClick={() => { setShowExamRoutinePDF(true); setShowExamRoutineActionMenu(false) }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  <FileText size={14} style={{ color: 'var(--red)' }} />
-                  {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+                  <button
+                    onClick={() => { handleExamRoutineExcel(); setShowExamRoutineActionMenu(false) }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--green-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
+                    {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                  <button
+                    onClick={() => { setShowExamRoutinePDF(true); setShowExamRoutineActionMenu(false) }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.8125rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--red-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileText size={14} style={{ color: 'var(--red)' }} />
+                    {isBn ? 'পিডিএফ ডাউনলোড' : 'Download PDF'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className={`${sectionCls} !mb-0 flex-1 flex flex-col`}>
@@ -501,10 +649,7 @@ export default React.memo(function RoutineTab({
               <div className="flex items-center gap-2">
                 {canCreate('exams.create.create') && (
                   <button
-                    onClick={() => {
-                      setRoutineForm({ classId: '', sectionId: '', subjectId: '', date: format(selectedDate!, 'yyyy-MM-dd'), startTime: '', endTime: '', roomNo: '' })
-                      setShowRoutineForm(true)
-                    }}
+                    onClick={() => handleOpenNewRoutineModal(format(selectedDate!, 'yyyy-MM-dd'))}
                     className="flex items-center gap-1 py-1 px-2.5 rounded-lg bg-[var(--brand)] text-white text-[0.6875rem] font-medium cursor-pointer border-none"
                   >
                     <Plus size={12} />
@@ -565,109 +710,427 @@ export default React.memo(function RoutineTab({
         </div>
       )}
 
-      {showRoutineForm && createPortal(
-        <div className="modal-overlay" onClick={() => setShowRoutineForm(false)}>
-          <div className="modal-box modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '26.25rem' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[0.875rem] font-semibold text-[var(--text-primary)]">{isBn ? 'নতুন রুটিন' : 'New Routine'}</h3>
-              <button onClick={() => setShowRoutineForm(false)} className="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-                <X size={16} />
-              </button>
-            </div>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শ্রেণি' : 'Class'}</label>
-                  <select
-                    value={routineForm.classId}
-                    onChange={(e) => {
-                      const classId = e.target.value
-                      const count = students.filter((s) => s.status === 'approved' && s.active !== false && s.class === classId).length
-                      const room = rooms.find((r) => r.isActive && r.capacity >= count)
-                      setRoutineForm((p) => ({ ...p, classId, sectionId: '', subjectId: '', roomNo: room?.roomNo || '' }))
-                    }}
-                    className={`${selectCls} w-full`}
+      {showRoutineForm &&
+        createPortal(
+          <div className="modal-overlay" onClick={() => setShowRoutineForm(false)}>
+            <div
+              className="modal-box modal-content max-w-[96vw] w-[76rem] max-h-[90vh] flex flex-col p-0 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg-secondary)]/50">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--brand)]/10 text-[var(--brand)]">
+                    <Calendar size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-[1rem] font-bold text-[var(--text-primary)]">
+                      {isBn ? 'নতুন পরীক্ষার রুটিন তৈরি করুন' : 'Add Exam Routines'}
+                    </h3>
+                    <p className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
+                      {isBn
+                        ? 'প্রতিটি সারিতে শ্রেণি, সেকশন, বিষয়, তারিখ, সময় ও কক্ষ নির্ধারণ করুন। কলামের কপি বোতাম দিয়ে যেকোনো তথ্য সব সারিতে প্রয়োগ করতে পারেন।'
+                        : 'Define class, section, subject, date, time & room in a single row. Use column copy buttons to apply values to all rows.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAddRoutineRow}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold hover:opacity-90 shadow-xs cursor-pointer transition-all"
+                    title={isBn ? 'নতুন রুটিন সারি যোগ করুন' : 'Add New Routine Row'}
                   >
-                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                    {classOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'সেকশন' : 'Section'}</label>
-                  <select
-                    value={routineForm.sectionId}
-                    onChange={(e) => {
-                      const sectionId = e.target.value
-                      const count = students.filter((s) => s.status === 'approved' && s.active !== false && s.class === routineForm.classId && s.section === sectionId).length
-                      const room = rooms.find((r) => r.isActive && r.capacity >= count)
-                      setRoutineForm((p) => ({ ...p, sectionId, subjectId: '', roomNo: room?.roomNo || '' }))
-                    }}
-                    className={`${selectCls} w-full`}
-                    disabled={!routineForm.classId}
+                    <Plus size={14} />
+                    <span>{isBn ? 'রুটিন যোগ' : 'Add Routine'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRoutineForm(false)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors"
                   >
-                    <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                    {routineFormSections.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                    <X size={18} />
+                  </button>
                 </div>
               </div>
-              <div>
-                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'বিষয়' : 'Subject'}</label>
-                <select
-                  value={routineForm.subjectId}
-                  onChange={(e) => setRoutineForm((p) => ({ ...p, subjectId: e.target.value }))}
-                  className={`${selectCls} w-full`}
-                  disabled={!routineForm.classId}
-                >
-                  <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                  {routineFormSubjects.map((s) => <option key={s.id} value={s.id}>{isBn ? s.nameBn : s.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'তারিখ' : 'Date'}</label>
-                <input type="date" value={routineForm.date} onChange={(e) => setRoutineForm((p) => ({ ...p, date: e.target.value }))} className={`${inputCls} w-full`} min={selectedExam?.startDate || ''} max={selectedExam?.endDate || ''} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শুরু' : 'Start'}</label>
-                  <input type="time" value={routineForm.startTime} onChange={(e) => setRoutineForm((p) => ({ ...p, startTime: e.target.value }))} className={`${inputCls} w-full`} />
+
+              {/* Toolbar */}
+              {routineRows.length > 1 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 bg-[var(--brand)]/5 border-b border-[var(--border)] text-[0.75rem]">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={14} className="text-[var(--brand)] shrink-0" />
+                    <span className="text-[var(--text-secondary)] font-medium text-[0.6875rem]">
+                      {isBn
+                        ? 'দ্রুত তথ্য কপি ও প্রয়োগ করুন:'
+                        : 'Quick Copy & Apply Column Values:'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => applyRoutineColumnToAll('classId', 0)}
+                      title={isBn ? '১ম সারির শ্রেণি সব সারিতে কপি করুন' : 'Copy 1st row class to all'}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] hover:border-[var(--brand)] text-[var(--text-secondary)] hover:text-[var(--brand)] text-[0.6875rem] font-medium transition-colors cursor-pointer"
+                    >
+                      <Copy size={11} />
+                      {isBn ? 'শ্রেণি কপি ⬇' : 'Copy Class ⬇'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyRoutineColumnToAll('date', 0)}
+                      title={isBn ? '১ম সারির তারিখ সব সারিতে কপি করুন' : 'Copy 1st row date to all'}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] hover:border-[var(--brand)] text-[var(--text-secondary)] hover:text-[var(--brand)] text-[0.6875rem] font-medium transition-colors cursor-pointer"
+                    >
+                      <Copy size={11} />
+                      {isBn ? 'তারিখ কপি ⬇' : 'Copy Date ⬇'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        applyRoutineColumnToAll('startTime', 0)
+                        applyRoutineColumnToAll('endTime', 0)
+                      }}
+                      title={isBn ? '১ম সারির সময় সব সারিতে কপি করুন' : 'Copy 1st row time to all'}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] hover:border-[var(--brand)] text-[var(--text-secondary)] hover:text-[var(--brand)] text-[0.6875rem] font-medium transition-colors cursor-pointer"
+                    >
+                      <Copy size={11} />
+                      {isBn ? 'সময় কপি ⬇' : 'Copy Time ⬇'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyRoutineColumnToAll('roomNo', 0)}
+                      title={isBn ? '১ম সারির কক্ষ সব সারিতে কপি করুন' : 'Copy 1st row room to all'}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] hover:border-[var(--brand)] text-[var(--text-secondary)] hover:text-[var(--brand)] text-[0.6875rem] font-medium transition-colors cursor-pointer"
+                    >
+                      <Copy size={11} />
+                      {isBn ? 'কক্ষ কপি ⬇' : 'Copy Room ⬇'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyDateTimeRoomToAll}
+                      title={isBn ? '১ম সারির তারিখ, সময় ও কক্ষ সবার জন্য প্রয়োগ করুন' : 'Apply 1st row date, time & room to all'}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[var(--brand)]/10 border border-[var(--brand)]/30 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white text-[0.6875rem] font-semibold transition-all cursor-pointer shadow-xs"
+                    >
+                      <ChevronsDown size={13} />
+                      {isBn ? 'তারিখ, সময় ও কক্ষ প্রয়োগ ⬇' : 'Apply Schedule ⬇'}
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'শেষ' : 'End'}</label>
-                  <input type="time" value={routineForm.endTime} onChange={(e) => setRoutineForm((p) => ({ ...p, endTime: e.target.value }))} className={`${inputCls} w-full`} />
-                </div>
-              </div>
-              <div>
-                <label className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mb-1 block">{isBn ? 'কক্ষ' : 'Room'}</label>
-                <select value={routineForm.roomNo} onChange={(e) => setRoutineForm((p) => ({ ...p, roomNo: e.target.value }))} className={`${selectCls} w-full`}>
-                  <option value="">{isBn ? 'নির্বাচন...' : 'Select...'}</option>
-                  {rooms.map((r) => {
-                    const used = roomUsage[r.roomNo] || 0
-                    const pct = r.capacity > 0 ? Math.round((used / r.capacity) * 100) : 0
-                    return <option key={r.id} value={r.roomNo}>{r.roomNo} ({r.capacity}) {used > 0 ? `- ${pct}% ${isBn ? 'ব্যবহৃত' : 'used'}` : ''}</option>
-                  })}
-                </select>
-                {routineForm.classId && routineStudentCount > 0 && (
-                  <p className="text-[0.625rem] text-[var(--text-muted)] mt-1">
-                    {isBn ? `শিক্ষার্থী: ${routineStudentCount} জন` : `Students: ${routineStudentCount}`}
-                    {suggestedRoom && routineForm.roomNo !== suggestedRoom.roomNo && (
-                      <span className="text-[var(--brand)] ml-1 cursor-pointer hover:underline" onClick={() => setRoutineForm((p) => ({ ...p, roomNo: suggestedRoom.roomNo }))}>
-                        {isBn ? `(${suggestedRoom.roomNo} সাজেস্টেড)` : `(Suggest: ${suggestedRoom.roomNo})`}
-                      </span>
-                    )}
-                  </p>
+              )}
+
+              {/* Table Body with Single Row Input Fields */}
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                {routineFormError && (
+                  <div className="mb-3 p-2.5 rounded-xl bg-[var(--red)]/10 border border-[var(--red)]/20 text-[var(--red)] text-[0.75rem] font-medium">
+                    {routineFormError}
+                  </div>
                 )}
+
+                <div className="overflow-x-auto border border-[var(--border)] rounded-xl bg-[var(--bg-primary)]">
+                  <table className="w-full text-left border-collapse text-[0.75rem]">
+                    <thead>
+                      <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)]/70 text-[var(--text-muted)] text-[0.6875rem] font-semibold uppercase tracking-wider">
+                        <th className="py-2.5 px-3 w-10 text-center">#</th>
+                        <th className="py-2.5 px-3 min-w-[9.5rem]">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="text-[var(--text-primary)]">
+                              {isBn ? 'শ্রেণি' : 'Class'} <span className="text-[var(--red)]">*</span>
+                            </span>
+                            {routineRows.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => applyRoutineColumnToAll('classId', 0)}
+                                title={isBn ? '১ম সারির শ্রেণি সব সারিতে প্রয়োগ করুন' : 'Apply 1st row class to all'}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                              >
+                                <Copy size={10} />
+                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </th>
+                        <th className="py-2.5 px-3 min-w-[7.5rem]">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span>{isBn ? 'সেকশন' : 'Section'}</span>
+                            {routineRows.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => applyRoutineColumnToAll('sectionId', 0)}
+                                title={isBn ? '১ম সারির সেকশন সব সারিতে প্রয়োগ করুন' : 'Apply 1st row section to all'}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                              >
+                                <Copy size={10} />
+                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </th>
+                        <th className="py-2.5 px-3 min-w-[12rem]">
+                          <span className="text-[var(--text-primary)]">
+                            {isBn ? 'বিষয়' : 'Subject'} <span className="text-[var(--red)]">*</span>
+                          </span>
+                        </th>
+                        <th className="py-2.5 px-3 min-w-[9.5rem]">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="text-[var(--text-primary)]">
+                              {isBn ? 'তারিখ' : 'Date'} <span className="text-[var(--red)]">*</span>
+                            </span>
+                            {routineRows.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => applyRoutineColumnToAll('date', 0)}
+                                title={isBn ? '১ম সারির তারিখ সব সারিতে প্রয়োগ করুন' : 'Apply 1st row date to all'}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                              >
+                                <Copy size={10} />
+                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </th>
+                        <th className="py-2.5 px-3 min-w-[8rem]">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span>{isBn ? 'শুরু' : 'Start'}</span>
+                            {routineRows.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => applyRoutineColumnToAll('startTime', 0)}
+                                title={isBn ? '১ম সারির শুরুর সময় সব সারিতে প্রয়োগ করুন' : 'Apply 1st row start time to all'}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                              >
+                                <Copy size={10} />
+                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </th>
+                        <th className="py-2.5 px-3 min-w-[8rem]">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span>{isBn ? 'শেষ' : 'End'}</span>
+                            {routineRows.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => applyRoutineColumnToAll('endTime', 0)}
+                                title={isBn ? '১ম সারির শেষ সময় সব সারিতে প্রয়োগ করুন' : 'Apply 1st row end time to all'}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                              >
+                                <Copy size={10} />
+                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </th>
+                        <th className="py-2.5 px-3 min-w-[10rem]">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span>{isBn ? 'কক্ষ' : 'Room'}</span>
+                            {routineRows.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => applyRoutineColumnToAll('roomNo', 0)}
+                                title={isBn ? '১ম সারির কক্ষ সব সারিতে প্রয়োগ করুন' : 'Apply 1st row room to all'}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                              >
+                                <Copy size={10} />
+                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </th>
+                        <th className="py-2.5 px-3 w-20 text-center">{isBn ? 'অ্যাকশন' : 'Action'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                      {routineRows.map((row, idx) => {
+                        const rowSections = sectionsMap[row.classId] || []
+                        const rowSubjects = getSubjectsForRow(row.classId, row.sectionId)
+                        const count = students.filter(
+                          (s) =>
+                            s.status === 'approved' &&
+                            s.active !== false &&
+                            s.class === row.classId &&
+                            (!row.sectionId || s.section === row.sectionId)
+                        ).length
+
+                        return (
+                          <tr key={row.id} className="hover:bg-[var(--bg-secondary)]/30 transition-colors">
+                            <td className="py-2 px-3 text-center text-[var(--text-muted)] font-mono text-[0.6875rem]">
+                              {idx + 1}
+                            </td>
+                            {/* Class */}
+                            <td className="py-2 px-3">
+                              <select
+                                value={row.classId}
+                                onChange={(e) => handleUpdateRoutineRow(idx, 'classId', e.target.value)}
+                                className={`${selectCls} w-full font-semibold`}
+                              >
+                                <option value="">{isBn ? 'শ্রেণি...' : 'Select Class...'}</option>
+                                {classOptions.map((c) => (
+                                  <option key={c} value={c}>
+                                    {c}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            {/* Section */}
+                            <td className="py-2 px-3">
+                              <select
+                                value={row.sectionId}
+                                onChange={(e) => handleUpdateRoutineRow(idx, 'sectionId', e.target.value)}
+                                className={`${selectCls} w-full`}
+                                disabled={!row.classId}
+                              >
+                                <option value="">{isBn ? 'সব' : 'All'}</option>
+                                {rowSections.map((s) => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            {/* Subject */}
+                            <td className="py-2 px-3">
+                              <select
+                                value={row.subjectId}
+                                onChange={(e) => handleUpdateRoutineRow(idx, 'subjectId', e.target.value)}
+                                className={`${selectCls} w-full font-medium`}
+                                disabled={!row.classId}
+                              >
+                                <option value="">{isBn ? 'বিষয় নির্বাচন...' : 'Select Subject...'}</option>
+                                {rowSubjects.map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {isBn ? s.nameBn : s.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            {/* Date */}
+                            <td className="py-2 px-3">
+                              <input
+                                type="date"
+                                value={row.date}
+                                onChange={(e) => handleUpdateRoutineRow(idx, 'date', e.target.value)}
+                                min={selectedExam?.startDate ? selectedExam.startDate.split('T')[0] : ''}
+                                max={selectedExam?.endDate ? selectedExam.endDate.split('T')[0] : ''}
+                                className={`${inputCls} w-full`}
+                              />
+                            </td>
+                            {/* Start Time */}
+                            <td className="py-2 px-3">
+                              <input
+                                type="time"
+                                value={row.startTime}
+                                onChange={(e) => handleUpdateRoutineRow(idx, 'startTime', e.target.value)}
+                                className={`${inputCls} w-full`}
+                              />
+                            </td>
+                            {/* End Time */}
+                            <td className="py-2 px-3">
+                              <input
+                                type="time"
+                                value={row.endTime}
+                                onChange={(e) => handleUpdateRoutineRow(idx, 'endTime', e.target.value)}
+                                className={`${inputCls} w-full`}
+                              />
+                            </td>
+                            {/* Room */}
+                            <td className="py-2 px-3">
+                              <div className="flex flex-col gap-0.5">
+                                <select
+                                  value={row.roomNo}
+                                  onChange={(e) => handleUpdateRoutineRow(idx, 'roomNo', e.target.value)}
+                                  className={`${selectCls} w-full`}
+                                >
+                                  <option value="">{isBn ? 'কক্ষ...' : 'Select Room...'}</option>
+                                  {rooms.map((r) => (
+                                    <option key={r.id} value={r.roomNo}>
+                                      {r.roomNo} ({r.capacity})
+                                    </option>
+                                  ))}
+                                </select>
+                                {row.classId && count > 0 && (
+                                  <span className="text-[0.625rem] text-[var(--text-muted)] truncate">
+                                    {isBn ? `শিক্ষার্থী: ${count} জন` : `Students: ${count}`}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            {/* Action */}
+                            <td className="py-2 px-3 text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDuplicateRoutineRow(idx)}
+                                  title={isBn ? 'সারি অনুলিপি করুন' : 'Duplicate Row'}
+                                  className="p-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)] transition-colors cursor-pointer"
+                                >
+                                  <Copy size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={routineRows.length <= 1}
+                                  onClick={() => handleRemoveRoutineRow(idx)}
+                                  title={isBn ? 'সারি মুছুন' : 'Remove Row'}
+                                  className={`p-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] transition-colors ${
+                                    routineRows.length <= 1
+                                      ? 'opacity-30 cursor-not-allowed text-[var(--text-muted)]'
+                                      : 'text-[var(--text-muted)] hover:text-[var(--red)] hover:border-[var(--red)] cursor-pointer'
+                                  }`}
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Add Row Button */}
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={handleAddRoutineRow}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-dashed border-[var(--brand)] text-[var(--brand)] bg-[var(--brand)]/5 hover:bg-[var(--brand)]/10 text-[0.75rem] font-semibold cursor-pointer transition-all"
+                  >
+                    <Plus size={14} />
+                    {isBn ? 'আরেকটি রুটিনের সারি যোগ করুন' : 'Add Another Routine Row'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between px-6 py-3.5 border-t border-[var(--border)] bg-[var(--bg-secondary)]/40">
+                <div className="text-[0.6875rem] text-[var(--text-muted)] font-medium">
+                  {isBn
+                    ? `মোট ${routineRows.length} টি রুটিনের সারি`
+                    : `Total ${routineRows.length} routine row${routineRows.length > 1 ? 's' : ''}`}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowRoutineForm(false)}
+                    className="px-4 py-2 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[0.75rem] font-medium cursor-pointer transition-colors"
+                  >
+                    {isBn ? 'বাতিল' : 'Cancel'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveRoutines}
+                    className={`${btnPrimary} text-[0.75rem] px-5 py-2`}
+                  >
+                    {isBn
+                      ? `রুটিন সংরক্ষণ করুন (${routineRows.filter((r) => r.classId && r.subjectId && r.date).length || routineRows.length})`
+                      : `Save Routines (${routineRows.filter((r) => r.classId && r.subjectId && r.date).length || routineRows.length})`}
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="flex gap-2 justify-end mt-4">
-              <button onClick={() => setShowRoutineForm(false)} className="px-3.5 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] text-[0.75rem] cursor-pointer">
-                {isBn ? 'বাতিল' : 'Cancel'}
-              </button>
-              <button onClick={handleSaveRoutine} className={`${btnPrimary} text-[0.75rem]`}>{isBn ? 'সংরক্ষণ' : 'Save'}</button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body
+        )}
 
       {showExamRoutinePDF && (
         <ExamRoutinePDFOptionsModal

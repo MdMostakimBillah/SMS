@@ -35,6 +35,9 @@ export function isNotificationForSchool(
     id?: string | null
     subdomain?: string | null
     schoolId?: string | null
+    name?: string | null
+    nameBn?: string | null
+    eiin?: string | null
   }
 ): boolean {
   // If broadcast to all or targetType === 'all' or broadcastToAll is true, or no specific targets
@@ -44,24 +47,82 @@ export function isNotificationForSchool(
 
   // If specific target type
   if (notification.targetType === 'specific') {
-    const targets = notification.targetInstitutions || []
-    if (targets.length === 0) return true
+    const targets = (notification.targetInstitutions || []).map((t) => String(t).toLowerCase().trim())
+    const targetNames = (notification.targetInstitutionNames || []).map((t) => String(t).toLowerCase().trim())
+    if (targets.length === 0 && targetNames.length === 0) return true
 
-    const candidates = [
+    const candidateSet = new Set<string>()
+    const rawCandidates = [
       schoolIdentifiers.slug,
       schoolIdentifiers.id,
       schoolIdentifiers.subdomain,
       schoolIdentifiers.schoolId,
+      schoolIdentifiers.name,
+      schoolIdentifiers.nameBn,
+      schoolIdentifiers.eiin,
     ]
-      .filter((v): v is string => Boolean(v && typeof v === 'string' && v.trim()))
-      .map((s) => s.toLowerCase().trim())
+    for (const c of rawCandidates) {
+      if (c && typeof c === 'string' && c.trim()) {
+        candidateSet.add(c.toLowerCase().trim())
+      }
+    }
 
-    if (candidates.length === 0) return true
+    // Cross-reference with institutions stored in localStorage
+    try {
+      if (typeof window !== 'undefined') {
+        const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
+        if (rawSuperAdmin) {
+          const parsed = JSON.parse(rawSuperAdmin)
+          const instList: any[] = parsed.state?.institutions || []
+          for (const inst of instList) {
+            const instKeys = [
+              inst.id,
+              inst.slug,
+              inst.subdomain,
+              inst.name,
+              inst.nameBn,
+              inst.eiin,
+            ]
+              .filter(Boolean)
+              .map((k) => String(k).toLowerCase().trim())
 
-    return targets.some((t) => {
-      const targetClean = String(t).toLowerCase().trim()
-      return candidates.includes(targetClean)
-    })
+            const hasMatch = instKeys.some((k) => candidateSet.has(k))
+            if (hasMatch) {
+              instKeys.forEach((k) => candidateSet.add(k))
+            }
+          }
+        }
+      }
+    } catch { /* ignore */ }
+
+    // If candidate set has no valid entries, return true as fallback
+    if (candidateSet.size === 0) return true
+
+    // Check direct equality
+    for (const c of candidateSet) {
+      if (targets.includes(c)) return true
+      if (targetNames.includes(c)) return true
+    }
+
+    // Check substring / fuzzy matching for institution names (length > 3)
+    for (const target of targets) {
+      for (const cand of candidateSet) {
+        if (cand === target) return true
+        if (target.length > 3 && cand.length > 3 && (cand.includes(target) || target.includes(cand))) {
+          return true
+        }
+      }
+    }
+    for (const tName of targetNames) {
+      for (const cand of candidateSet) {
+        if (cand === tName) return true
+        if (tName.length > 3 && cand.length > 3 && (cand.includes(tName) || tName.includes(cand))) {
+          return true
+        }
+      }
+    }
+
+    return false
   }
 
   return true
@@ -83,6 +144,120 @@ export const LEGACY_SEED_NOTIFICATION_IDS = new Set([
   'NTF-SEED-005',
   'NTF-SEED-006',
 ])
+
+export const NOTIFICATION_CHANNEL_NAME = 'edutech_notifications_realtime'
+export const NOTIFICATION_STORAGE_EVENT_KEY = 'edutech_notification_event'
+
+/**
+ * Dispatches notification to all tabs, windows, and in-process subscribers instantly.
+ */
+export function dispatchRealtimeNotification(n: Notification) {
+  try {
+    if (typeof window === 'undefined' || !n) return
+
+    // 1. In-process DOM custom event for current window/components
+    window.dispatchEvent(new CustomEvent('edutech:new_notification', { detail: n }))
+
+    // 2. BroadcastChannel for cross-tab realtime messaging
+    if ('BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel(NOTIFICATION_CHANNEL_NAME)
+        bc.postMessage({ type: 'NEW_NOTIFICATION', notification: n })
+        bc.close()
+      } catch { /* ignore */ }
+    }
+
+    // 3. localStorage storage event (triggers across all tabs/windows of same origin)
+    try {
+      localStorage.setItem(
+        NOTIFICATION_STORAGE_EVENT_KEY,
+        JSON.stringify({ notification: n, timestamp: Date.now() })
+      )
+    } catch { /* ignore */ }
+  } catch { /* ignore */ }
+}
+
+/**
+ * Handles incoming real-time notification from BroadcastChannel, storage event, or DOM event.
+ */
+export function handleIncomingRealtimeNotification(n: Notification) {
+  try {
+    if (typeof window === 'undefined' || !n) return
+    const currentSlug =
+      sessionStorage.getItem('edutech_inst_slug') ||
+      localStorage.getItem('edutech_inst_slug') ||
+      null
+    const isSuperAdmin =
+      currentSlug === 'super-admin' ||
+      (!currentSlug && localStorage.getItem('edutech_auth_role') === 'super_admin')
+
+    let instName: string | undefined
+    let instNameBn: string | undefined
+    let instEiin: string | undefined
+    try {
+      const rawClass = localStorage.getItem('edutech-classes')
+      if (rawClass) {
+        const parsed = JSON.parse(rawClass)
+        const inst = parsed.state?.institution
+        if (inst) {
+          instName = inst.name
+          instNameBn = inst.nameBn
+          instEiin = inst.eiin
+        }
+      }
+    } catch { /* ignore */ }
+
+    const identifiers = {
+      slug: currentSlug,
+      id: sessionStorage.getItem('edutech_viewing_id') || currentSlug,
+      subdomain: currentSlug,
+      name: instName,
+      nameBn: instNameBn,
+      eiin: instEiin,
+    }
+
+    if (isSuperAdmin || isNotificationForSchool(n, identifiers)) {
+      const state = useNotificationStore.getState()
+      const exists = state.notifications.some((item) => item.id === n.id)
+      if (!exists) {
+        useNotificationStore.setState({
+          notifications: [n, ...state.notifications],
+        })
+        onStateMutated(useNotificationStore.getState)
+      }
+    }
+  } catch { /* ignore */ }
+}
+
+if (typeof window !== 'undefined') {
+  try {
+    if ('BroadcastChannel' in window) {
+      const bc = new BroadcastChannel(NOTIFICATION_CHANNEL_NAME)
+      bc.onmessage = (event) => {
+        if (event.data?.type === 'NEW_NOTIFICATION' && event.data.notification) {
+          handleIncomingRealtimeNotification(event.data.notification)
+        }
+      }
+    }
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === NOTIFICATION_STORAGE_EVENT_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue)
+          if (parsed.notification) {
+            handleIncomingRealtimeNotification(parsed.notification)
+          }
+        } catch { /* ignore */ }
+      }
+    })
+
+    window.addEventListener('edutech:new_notification', ((e: CustomEvent) => {
+      if (e.detail) {
+        handleIncomingRealtimeNotification(e.detail)
+      }
+    }) as EventListener)
+  } catch { /* ignore */ }
+}
 
 interface NotificationState {
   notifications: Notification[]
@@ -148,25 +323,80 @@ export const useNotificationStore = create<NotificationState>()(
       syncError: null,
 
       syncFromServer: async (slugOrId?: string) => {
-        if (isLocalComputerMode()) {
-          set({ serverSynced: true, syncing: false })
-          return
+        const slug =
+          slugOrId ||
+          (typeof window !== 'undefined'
+            ? sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
+            : undefined)
+
+        // Cross-namespace sync from master stores for institution contexts
+        if (typeof window !== 'undefined' && slug && slug !== 'super-admin') {
+          try {
+            const rootKeys = ['edutech-notifications', 'edutech-notifications_super-admin']
+            const masterNotifs: Notification[] = []
+            for (const rk of rootKeys) {
+              const rootRaw = localStorage.getItem(rk)
+              if (rootRaw) {
+                try {
+                  const parsed = JSON.parse(rootRaw)
+                  if (parsed.state && Array.isArray(parsed.state.notifications)) {
+                    masterNotifs.push(...parsed.state.notifications)
+                  }
+                } catch { /* ignore */ }
+              }
+            }
+
+            const schoolNotifs = masterNotifs.filter((n) =>
+              isNotificationForSchool(n, {
+                slug,
+                id: sessionStorage.getItem('edutech_viewing_id') || slug,
+                subdomain: slug,
+              })
+            )
+
+            const state = get()
+            const notifMap = new Map<string, Notification>()
+            schoolNotifs.forEach((n) => notifMap.set(n.id, n))
+            state.notifications.forEach((n) => {
+              if (notifMap.has(n.id)) {
+                notifMap.set(n.id, { ...notifMap.get(n.id)!, read: n.read })
+              } else {
+                notifMap.set(n.id, n)
+              }
+            })
+            const merged = Array.from(notifMap.values()).filter((n) => !LEGACY_SEED_NOTIFICATION_IDS.has(n.id))
+            set({ notifications: merged })
+            onStateMutated(get)
+          } catch { /* ignore */ }
         }
+
+        // 2. Fetch from backend API (even if in local_computer mode, so institutions receive super admin notices!)
         set({ syncing: true, syncError: null })
         try {
           const res = await notificationsApi.get(slugOrId)
           if (res) {
-            const hasNotifs = Array.isArray(res.notifications) && res.notifications.length > 0
+            const serverNotifs = Array.isArray(res.notifications) ? res.notifications : []
             const state = get()
 
-            if (hasNotifs) {
+            if (serverNotifs.length > 0) {
+              const notifMap = new Map<string, Notification>()
+              serverNotifs.forEach((n) => notifMap.set(n.id, n))
+              state.notifications.forEach((n) => {
+                if (notifMap.has(n.id)) {
+                  notifMap.set(n.id, { ...notifMap.get(n.id)!, read: n.read })
+                } else {
+                  notifMap.set(n.id, n)
+                }
+              })
+              const merged = Array.from(notifMap.values()).filter((n) => !LEGACY_SEED_NOTIFICATION_IDS.has(n.id))
               set({
-                notifications: res.notifications!,
+                notifications: merged,
                 serverSynced: true,
                 syncing: false,
                 syncError: null,
               })
-            } else if (state.notifications.length > 0) {
+              onStateMutated(get)
+            } else if (state.notifications.length > 0 && !isLocalComputerMode()) {
               await notificationsApi.update({
                 notifications: state.notifications,
                 schoolId: slugOrId,
@@ -178,8 +408,9 @@ export const useNotificationStore = create<NotificationState>()(
           } else {
             set({ serverSynced: true, syncing: false, syncError: null })
           }
-        } catch (err: any) {
-          set({ syncing: false, syncError: err?.message || 'Failed to sync notifications' })
+        } catch {
+          // In local_computer / offline mode, gracefully keep local state
+          set({ syncing: false, serverSynced: true, syncError: null })
         }
       },
 
@@ -200,12 +431,40 @@ export const useNotificationStore = create<NotificationState>()(
       addNotification: (n) => {
         set((state) => ({ notifications: [n, ...state.notifications] }))
         onStateMutated(get)
+        dispatchRealtimeNotification(n)
       },
       updateNotification: (id, updates) => {
         set((state) => ({
           notifications: state.notifications.map((n) => (n.id === id ? { ...n, ...updates } : n)),
         }))
         onStateMutated(get)
+        const updated = get().notifications.find((n) => n.id === id)
+        if (updated) {
+          dispatchRealtimeNotification(updated)
+        }
+
+        // Also update across root keys and matching storage keys
+        try {
+          if (typeof window !== 'undefined') {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i)
+              if (k && (k === 'edutech-notifications' || k.startsWith('edutech-notifications_'))) {
+                try {
+                  const raw = localStorage.getItem(k)
+                  if (raw) {
+                    const parsed = JSON.parse(raw)
+                    if (parsed.state && Array.isArray(parsed.state.notifications)) {
+                      const updated = parsed.state.notifications.map((n: any) =>
+                        n.id === id ? { ...n, ...updates } : n
+                      )
+                      localStorage.setItem(k, JSON.stringify({ ...parsed, state: { ...parsed.state, notifications: updated } }))
+                    }
+                  }
+                } catch { /* ignore */ }
+              }
+            }
+          }
+        } catch { /* ignore */ }
       },
       markRead: (id) => {
         set((state) => ({
@@ -231,6 +490,27 @@ export const useNotificationStore = create<NotificationState>()(
           notifications: state.notifications.filter((n) => n.id !== id),
         }))
         onStateMutated(get)
+
+        // Also remove across root keys and matching storage keys
+        try {
+          if (typeof window !== 'undefined') {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i)
+              if (k && (k === 'edutech-notifications' || k.startsWith('edutech-notifications_'))) {
+                try {
+                  const raw = localStorage.getItem(k)
+                  if (raw) {
+                    const parsed = JSON.parse(raw)
+                    if (parsed.state && Array.isArray(parsed.state.notifications)) {
+                      const filtered = parsed.state.notifications.filter((n: any) => n.id !== id)
+                      localStorage.setItem(k, JSON.stringify({ ...parsed, state: { ...parsed.state, notifications: filtered } }))
+                    }
+                  }
+                } catch { /* ignore */ }
+              }
+            }
+          }
+        } catch { /* ignore */ }
       },
       clearAll: () => {
         markExplicitUserDelete()
@@ -240,97 +520,118 @@ export const useNotificationStore = create<NotificationState>()(
 
       broadcastNotification: async (n) => {
         // 1. Add locally
-        set((state) => ({ notifications: [n, ...state.notifications] }))
+        set((state) => ({ notifications: [n, ...state.notifications.filter((item) => item.id !== n.id)] }))
         onStateMutated(get)
 
-        // 2. Broadcast or target to school storage in localStorage
+        // 2. Always persist into root stores: edutech-notifications and edutech-notifications_super-admin
+        try {
+          if (typeof window !== 'undefined') {
+            const rootKeys = ['edutech-notifications', 'edutech-notifications_super-admin']
+            for (const rk of rootKeys) {
+              const raw = localStorage.getItem(rk)
+              let existingState: any = { notifications: [] }
+              if (raw) {
+                try {
+                  const p = JSON.parse(raw)
+                  existingState = p.state || existingState
+                } catch { /* ignore */ }
+              }
+              const currentNotifs = Array.isArray(existingState.notifications) ? existingState.notifications : []
+              const merged = [n, ...currentNotifs.filter((item: any) => item.id !== n.id)]
+              localStorage.setItem(rk, JSON.stringify({ state: { ...existingState, notifications: merged }, version: 2 }))
+            }
+          }
+        } catch { /* ignore */ }
+
+        // 3. Broadcast or target to destination school storage in localStorage
         try {
           if (typeof window !== 'undefined') {
             const isTargeted = n.targetType === 'specific' && Array.isArray(n.targetInstitutions) && n.targetInstitutions.length > 0
             const targetSet = new Set((n.targetInstitutions || []).map((t) => String(t).toLowerCase().trim()))
+            if (n.targetInstitutionNames) {
+              n.targetInstitutionNames.forEach((name) => targetSet.add(name.toLowerCase().trim()))
+            }
 
             const destSlugs = new Set<string>()
+
+            // Gather all available institutions from superAdminStore and localStorage
+            const allInstList: any[] = []
+            try {
+              const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
+              if (rawSuperAdmin) {
+                const parsed = JSON.parse(rawSuperAdmin)
+                allInstList.push(...(parsed.state?.institutions || []))
+              }
+            } catch { /* ignore */ }
+
+            try {
+              const rawInsts = localStorage.getItem('edutech-institutions')
+              if (rawInsts) {
+                const parsed = JSON.parse(rawInsts)
+                const arr = Array.isArray(parsed) ? parsed : (parsed.state?.institutions || [])
+                allInstList.push(...arr)
+              }
+            } catch { /* ignore */ }
 
             if (isTargeted) {
               // 1. Add raw target identifiers directly
               for (const t of n.targetInstitutions || []) {
-                if (t && t !== 'super-admin') destSlugs.add(t)
+                if (t && t !== 'super-admin') destSlugs.add(String(t).toLowerCase().trim())
               }
 
               // 2. Cross-reference with super admin store institutions to resolve slug/id/subdomain
-              try {
-                const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
-                if (rawSuperAdmin) {
-                  const parsed = JSON.parse(rawSuperAdmin)
-                  const instList = parsed.state?.institutions || []
-                  for (const inst of instList) {
-                    const keys = [inst.slug, inst.id, inst.subdomain].filter(Boolean)
-                    const matches = keys.some((k) => targetSet.has(k.toLowerCase().trim()))
-                    if (matches) {
-                      keys.forEach((k) => destSlugs.add(k))
-                    }
-                  }
+              for (const inst of allInstList) {
+                const keys = [inst.slug, inst.id, inst.subdomain, inst.name, inst.nameBn, inst.eiin]
+                  .filter(Boolean)
+                  .map((k) => String(k).toLowerCase().trim())
+
+                const matches = keys.some((k) => targetSet.has(k))
+                if (matches) {
+                  if (inst.slug) destSlugs.add(String(inst.slug).toLowerCase().trim())
+                  if (inst.id) destSlugs.add(String(inst.id).toLowerCase().trim())
+                  if (inst.subdomain) destSlugs.add(String(inst.subdomain).toLowerCase().trim())
                 }
-              } catch { /* ignore */ }
+              }
 
               // 3. Match against existing edutech-notifications_<slug> keys
               for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i)
                 if (k && k.startsWith('edutech-notifications_')) {
-                  const s = k.replace('edutech-notifications_', '')
-                  if (s && targetSet.has(s.toLowerCase().trim())) {
+                  const s = k.replace('edutech-notifications_', '').toLowerCase().trim()
+                  if (s && s !== 'super-admin' && targetSet.has(s)) {
                     destSlugs.add(s)
                   }
                 }
               }
             } else {
               // Broadcast to ALL known institutions
-              // A. Check edutech_super_admin institutions
-              try {
-                const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
-                if (rawSuperAdmin) {
-                  const parsed = JSON.parse(rawSuperAdmin)
-                  const instList = parsed.state?.institutions || []
-                  for (const inst of instList) {
-                    const s = inst.slug || inst.id || inst.subdomain
-                    if (s) destSlugs.add(s)
-                  }
-                }
-              } catch { /* ignore */ }
+              for (const inst of allInstList) {
+                if (inst.slug) destSlugs.add(String(inst.slug).toLowerCase().trim())
+                if (inst.id) destSlugs.add(String(inst.id).toLowerCase().trim())
+                if (inst.subdomain) destSlugs.add(String(inst.subdomain).toLowerCase().trim())
+              }
 
-              // B. Check edutech-institutions
-              try {
-                const rawInsts = localStorage.getItem('edutech-institutions')
-                if (rawInsts) {
-                  const parsed = JSON.parse(rawInsts)
-                  const instList = Array.isArray(parsed) ? parsed : (parsed.state?.institutions || [])
-                  for (const inst of instList) {
-                    const s = inst.slug || inst.id
-                    if (s) destSlugs.add(s)
-                  }
-                }
-              } catch { /* ignore */ }
-
-              // C. Discover all existing notification stores in localStorage
               for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i)
                 if (k && k.startsWith('edutech-notifications_')) {
-                  const s = k.replace('edutech-notifications_', '')
-                  if (s) destSlugs.add(s)
+                  const s = k.replace('edutech-notifications_', '').toLowerCase().trim()
+                  if (s && s !== 'super-admin') destSlugs.add(s)
                 }
               }
             }
 
             // Distribute to destination school stores
             for (const slug of destSlugs) {
-              if (slug === 'super-admin') continue
+              if (!slug || slug === 'super-admin') continue
               const key = `edutech-notifications_${slug}`
               try {
                 const raw = localStorage.getItem(key)
                 let existingState: any = { notifications: [] }
                 if (raw) {
-                  const p = JSON.parse(raw)
-                  existingState = p.state || existingState
+                  try {
+                    const p = JSON.parse(raw)
+                    existingState = p.state || existingState
+                  } catch { /* ignore */ }
                 }
                 const currentNotifs = Array.isArray(existingState.notifications) ? existingState.notifications : []
                 const merged = [n, ...currentNotifs.filter((item: any) => item.id !== n.id)]
@@ -340,10 +641,13 @@ export const useNotificationStore = create<NotificationState>()(
           }
         } catch { /* ignore */ }
 
-        // 3. Server API broadcast
+        // 4. Server API broadcast
         try {
           await notificationsApi.broadcast(n)
         } catch { /* ignore */ }
+
+        // 5. Instantly dispatch realtime event to all tabs, windows, and in-memory subscribers
+        dispatchRealtimeNotification(n)
       },
 
       checkAndGenerateSystemNotifications: (slugOrId?: string) => {
@@ -433,22 +737,63 @@ registerStoreReset(() => {
 })
 
 registerStoreLoad(() => {
-  const slug = sessionStorage.getItem('edutech_inst_slug')
+  const slug =
+    (typeof window !== 'undefined'
+      ? sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
+      : null) || null
   if (!slug) return
   try {
     const raw = localStorage.getItem(`edutech-notifications_${slug}`)
+    let currentNotifs: Notification[] = []
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed.state) {
-        const state = parsed.state
-        const list = Array.isArray(state.notifications) ? state.notifications : []
-        const cleaned = list.filter((n: Notification) => !LEGACY_SEED_NOTIFICATION_IDS.has(n.id))
-        useNotificationStore.setState({
-          ...state,
-          notifications: cleaned,
-        })
+      if (parsed.state && Array.isArray(parsed.state.notifications)) {
+        currentNotifs = parsed.state.notifications
       }
     }
+
+    // Pull from master notifications storage if not super-admin
+    if (slug !== 'super-admin') {
+      const rootKeys = ['edutech-notifications', 'edutech-notifications_super-admin']
+      const masterNotifs: Notification[] = []
+      for (const rk of rootKeys) {
+        const rootRaw = localStorage.getItem(rk)
+        if (rootRaw) {
+          try {
+            const parsed = JSON.parse(rootRaw)
+            if (parsed.state && Array.isArray(parsed.state.notifications)) {
+              masterNotifs.push(...parsed.state.notifications)
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      // Filter master notifications that apply to this school
+      const schoolNotifs = masterNotifs.filter((n) =>
+        isNotificationForSchool(n, {
+          slug,
+          id: sessionStorage.getItem('edutech_viewing_id') || slug,
+          subdomain: slug,
+        })
+      )
+
+      // Merge into currentNotifs without duplicates, preserving local read state
+      const notifMap = new Map<string, Notification>()
+      schoolNotifs.forEach((n) => notifMap.set(n.id, n))
+      currentNotifs.forEach((n) => {
+        if (notifMap.has(n.id)) {
+          notifMap.set(n.id, { ...notifMap.get(n.id)!, read: n.read })
+        } else {
+          notifMap.set(n.id, n)
+        }
+      })
+      currentNotifs = Array.from(notifMap.values())
+    }
+
+    const cleaned = currentNotifs.filter((n: Notification) => !LEGACY_SEED_NOTIFICATION_IDS.has(n.id))
+    useNotificationStore.setState({
+      notifications: cleaned,
+    })
   } catch {
     /* ignore */
   }

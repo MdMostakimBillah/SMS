@@ -25,6 +25,7 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useClassStore } from '@/store/classStore'
 import { getNavBase, getSuperAdminViewNavBase } from '@/lib/navUtils'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
@@ -122,15 +123,36 @@ export default function NotificationsPage() {
   // Visible notifications based on school context
   const visibleNotifications = useMemo(() => {
     if (isSuperAdminView) return notifications
-    const currentSlug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || viewingInstitutionId || user?.subdomain || (user as any)?.schoolId
-    const currentSchoolId = (user as any)?.schoolId || (user as any)?.institutionId || viewingInstitutionId
+    const instSettings = useClassStore.getState().institution
+    const currentSlug =
+      sessionStorage.getItem('edutech_inst_slug') ||
+      localStorage.getItem('edutech_inst_slug') ||
+      viewingInstitutionId ||
+      user?.subdomain ||
+      user?.schoolDomain ||
+      (user as any)?.schoolId ||
+      (instSettings as any)?.slug
+    const currentSchoolId =
+      (user as any)?.schoolId ||
+      (user as any)?.institutionId ||
+      viewingInstitutionId ||
+      (instSettings as any)?.id
+    const currentSchoolName =
+      user?.schoolName ||
+      user?.school?.name ||
+      instSettings?.name
+    const currentSchoolNameBn =
+      instSettings?.nameBn
 
     return notifications.filter((n) =>
       isNotificationForSchool(n, {
         slug: currentSlug,
         id: currentSchoolId,
-        subdomain: user?.subdomain,
+        subdomain: user?.subdomain || user?.schoolDomain,
         schoolId: (user as any)?.schoolId,
+        name: currentSchoolName,
+        nameBn: currentSchoolNameBn,
+        eiin: instSettings?.eiin,
       })
     )
   }, [notifications, isSuperAdminView, viewingInstitutionId, user])

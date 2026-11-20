@@ -124,13 +124,28 @@ describe('notificationStore', () => {
     expect(state.serverSynced).toBe(true)
   })
 
-  it('skips server sync in local_computer mode', async () => {
+  it('fetches server notifications even in local_computer mode and keeps syncToServer local', async () => {
     sessionStorage.setItem('edutech_storage_mode', 'local_computer')
-    const getSpy = vi.spyOn(notificationsApi, 'get')
-    const updateSpy = vi.spyOn(notificationsApi, 'update')
+    const mockData = {
+      notifications: [
+        {
+          id: 'NTF-LOCAL-SYNC-1',
+          title: 'Emergency Server Notice',
+          titleBn: 'জরুরি নোটিশ',
+          message: 'Server maintenance',
+          messageBn: 'রক্ষণাবেক্ষণ',
+          type: 'warning' as const,
+          read: false,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    }
+    const getSpy = vi.spyOn(notificationsApi, 'get').mockResolvedValue(mockData)
+    const updateSpy = vi.spyOn(notificationsApi, 'update').mockResolvedValue({ success: true })
 
     await useNotificationStore.getState().syncFromServer('local-school')
-    expect(getSpy).not.toHaveBeenCalled()
+    expect(getSpy).toHaveBeenCalledWith('local-school')
+    expect(useNotificationStore.getState().notifications.some((n) => n.id === 'NTF-LOCAL-SYNC-1')).toBe(true)
     expect(useNotificationStore.getState().serverSynced).toBe(true)
 
     await useNotificationStore.getState().syncToServer()
@@ -231,5 +246,63 @@ describe('notificationStore', () => {
     // Sunrise storage does NOT contain it
     const sunriseStore = JSON.parse(localStorage.getItem('edutech-notifications_sunrise') || '{}')
     expect(sunriseStore.state.notifications.some((n: any) => n.id === 'NTF-TARGET-TEST')).toBe(false)
+  })
+
+  it('matches targeted notification by institution name or EIIN via isNotificationForSchool', () => {
+    const targetedNotif: Notification = {
+      id: 'NTF-NAME-TEST',
+      title: 'Targeted to Ideal School',
+      titleBn: 'আইডিয়াল স্কুলের জন্য',
+      message: 'Exclusive test',
+      messageBn: 'টেস্ট',
+      type: 'info',
+      read: false,
+      targetType: 'specific',
+      targetInstitutions: ['inst-ideal'],
+      targetInstitutionNames: ['Ideal School and College'],
+      createdAt: new Date().toISOString(),
+    }
+
+    // Direct match by targetInstitutionNames
+    expect(isNotificationForSchool(targetedNotif, { name: 'Ideal School and College' })).toBe(true)
+    // Partial substring name match
+    expect(isNotificationForSchool(targetedNotif, { name: 'Ideal School' })).toBe(true)
+    // Unrelated school should not match
+    expect(isNotificationForSchool(targetedNotif, { name: 'Daffodil Model High School' })).toBe(false)
+  })
+
+  it('instantly delivers notification to institution using local PC storage via realtime event pipeline', async () => {
+    // Institution in local_computer storage mode
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    sessionStorage.setItem('edutech_inst_slug', 'rajuk-college')
+    localStorage.setItem('edutech_inst_slug', 'rajuk-college')
+
+    useNotificationStore.setState({ notifications: [] })
+
+    const instantNotif: Notification = {
+      id: 'NTF-REALTIME-INSTANT-1',
+      title: 'Instant Super Admin Broadcast',
+      titleBn: 'তাৎক্ষণিক সুপার অ্যাডমিন বার্তা',
+      message: 'Urgent notice for local PC institutions',
+      messageBn: 'লোকাল পিসির জন্য জরুরি নোটিশ',
+      type: 'warning',
+      read: false,
+      targetType: 'specific',
+      targetInstitutions: ['rajuk-college'],
+      createdAt: new Date().toISOString(),
+    }
+
+    vi.spyOn(notificationsApi, 'broadcast').mockResolvedValue({ success: true } as any)
+
+    // Super admin broadcasts notification
+    await useNotificationStore.getState().broadcastNotification(instantNotif)
+
+    // Store has it immediately
+    const notifs = useNotificationStore.getState().notifications
+    expect(notifs.some((n) => n.id === 'NTF-REALTIME-INSTANT-1')).toBe(true)
+
+    // Local PC storage namespace for this institution is updated
+    const localStore = JSON.parse(localStorage.getItem('edutech-notifications_rajuk-college') || '{}')
+    expect(localStore.state.notifications.some((n: any) => n.id === 'NTF-REALTIME-INSTANT-1')).toBe(true)
   })
 })

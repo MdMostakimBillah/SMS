@@ -26,13 +26,6 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
         return res.status(403).json({ error: 'Forbidden: cross-tenant access denied' })
       }
 
-      if (school.storageMode === 'local_computer') {
-        return res.json({
-          storageMode: 'local_computer',
-          notifications: [],
-        })
-      }
-
       let parsedNotifications: any[] = []
       try {
         if ((school as any).notificationsData) {
@@ -48,6 +41,7 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
       }
 
       res.json({
+        storageMode: school.storageMode,
         notifications: parsedNotifications,
       })
     } catch (err) {
@@ -153,17 +147,31 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
         sender: raw.sender || 'Super Admin',
         senderRole: 'super_admin',
         read: false,
+        broadcastToAll: raw.broadcastToAll ?? (raw.targetType !== 'specific'),
+        targetType: raw.targetType || 'all',
+        targetInstitutions: raw.targetInstitutions || [],
+        targetInstitutionNames: raw.targetInstitutionNames || [],
         createdAt: raw.createdAt || new Date().toISOString(),
       }
 
       const schools = await prisma.school.findMany({
         where: { status: 'active' },
-        select: { id: true, storageMode: true, notificationsData: true },
+        select: { id: true, name: true, domain: true, storageMode: true, notificationsData: true },
       })
+
+      const isTargeted = newNotif.targetType === 'specific' && Array.isArray(newNotif.targetInstitutions) && newNotif.targetInstitutions.length > 0
+      const targetSet = new Set((newNotif.targetInstitutions || []).map((t: string) => String(t).toLowerCase().trim()))
+      if (Array.isArray(newNotif.targetInstitutionNames)) {
+        newNotif.targetInstitutionNames.forEach((n: string) => targetSet.add(String(n).toLowerCase().trim()))
+      }
 
       let broadcastedCount = 0
       for (const s of schools) {
-        if (s.storageMode === 'local_computer') continue
+        if (isTargeted) {
+          const keys = [s.id, s.domain, s.name].filter(Boolean).map((k) => String(k).toLowerCase().trim())
+          const matches = keys.some((k) => targetSet.has(k))
+          if (!matches) continue
+        }
 
         let existing: any[] = []
         try {

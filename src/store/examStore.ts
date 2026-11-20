@@ -433,6 +433,7 @@ interface ExamState {
   bulkAddRoutines: (routines: Omit<ExamRoutine, 'id' | 'createdAt'>[]) => void
 
   addRoom: (room: Omit<ExamRoom, 'id'>) => void
+  bulkAddRooms: (rooms: Omit<ExamRoom, 'id'>[]) => void
   updateRoom: (id: string, data: Partial<ExamRoom>) => void
   deleteRoom: (id: string) => void
 
@@ -1086,7 +1087,19 @@ export const useExamStore = create<ExamState>()(
       // ─── Rooms ───
       addRoom: (room) => {
         set((state) => ({
-          rooms: [...state.rooms, { ...room, id: `RM-${Date.now()}` }],
+          rooms: [...state.rooms, { ...room, id: `RM-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` }],
+        }))
+        onStateMutated(get)
+      },
+      bulkAddRooms: (newRooms) => {
+        set((state) => ({
+          rooms: [
+            ...state.rooms,
+            ...newRooms.map((r, i) => ({
+              ...r,
+              id: `RM-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+            })),
+          ],
         }))
         onStateMutated(get)
       },

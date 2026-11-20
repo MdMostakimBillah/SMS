@@ -215,13 +215,25 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
       ? Array.from(
           new Set([
             ...selectedInstIds,
-            ...targetedInstitutions.flatMap((i) => [i.id, i.slug, i.subdomain].filter(Boolean)),
+            ...targetedInstitutions.flatMap((i) => [
+              i.id,
+              i.slug,
+              i.subdomain,
+              (i as any).eiin,
+              i.name,
+              i.name ? i.name.toLowerCase().trim() : '',
+              i.nameBn,
+            ].filter(Boolean)),
           ])
         )
       : []
 
     const targetNames = targetType === 'specific'
-      ? targetedInstitutions.map((i) => (bn ? i.nameBn || i.name : i.name))
+      ? Array.from(
+          new Set(
+            targetedInstitutions.flatMap((i) => [bn ? i.nameBn || i.name : i.name, i.name, i.nameBn].filter(Boolean) as string[])
+          )
+        )
       : []
 
     if (existing) {
