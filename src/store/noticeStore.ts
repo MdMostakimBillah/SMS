@@ -37,6 +37,126 @@ const DEFAULT_CATEGORIES = ['General', 'Academic', 'Events', 'Emergency', 'Holid
 
 export const SEED_NOTICES: Notice[] = [
   {
+    id: 'NOTICE-DEMO-001',
+    title: 'Annual Final Examination Schedule 2026',
+    titleBn: 'বার্ষিক সমাপনী পরীক্ষা ২০২৬ এর সময়সূচি',
+    content: `<h2>Annual Final Examination Schedule 2026</h2>
+<p>Dear Students and Parents, this is to inform you that the <strong>Annual Final Examination 2026</strong> will commence from <strong>November 28, 2026</strong>. All students are advised to prepare diligently.</p>
+<h3>Important Instructions:</h3>
+<ol>
+  <li>Students must bring their printed <strong>Admit Card</strong> and geometry box/stationery to the exam hall.</li>
+  <li>Mobile phones, smartwatches, and unauthorized electronic devices are strictly prohibited.</li>
+  <li>Students must arrive in proper school uniform at least 20 minutes before the exam starts.</li>
+</ol>
+<h3>Examination Timetable</h3>
+<table>
+  <thead>
+    <tr><th>Date</th><th>Subject</th><th>Time</th><th>Room</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Nov 28, 2026</td><td>English 1st Paper</td><td>10:00 AM - 01:00 PM</td><td>Hall A & B</td></tr>
+    <tr><td>Nov 30, 2026</td><td>Bangla 1st Paper</td><td>10:00 AM - 01:00 PM</td><td>Hall A & B</td></tr>
+    <tr><td>Dec 02, 2026</td><td>Mathematics</td><td>10:00 AM - 01:00 PM</td><td>Hall A & B</td></tr>
+    <tr><td>Dec 04, 2026</td><td>General Science</td><td>10:00 AM - 01:00 PM</td><td>Hall A & B</td></tr>
+  </tbody>
+</table>
+<blockquote>For any queries regarding admit cards or syllabus coverage, please contact the academic coordinator.</blockquote>`,
+    contentBn: `<h2>বার্ষিক সমাপনী পরীক্ষা ২০২৬ এর সময়সূচি</h2>
+<p>প্রিয় শিক্ষার্থী ও অভিভাবকবৃন্দ, আগামী <strong>২৮ নভেম্বর, ২০২৬</strong> তারিখ থেকে <strong>বার্ষিক সমাপনী পরীক্ষা ২০২৬</strong> শুরু হতে যাচ্ছে। শিক্ষার্থীদের যথাসময়ে প্রস্তুতি সম্পন্ন করার নির্দেশ দেওয়া হচ্ছে।</p>
+<h3>পরীক্ষার্থীদের জন্য জরুরি নির্দেশনাবলী:</h3>
+<ol>
+  <li>প্রতিটি পরীক্ষায় মুদ্রিত <strong>প্রবেশপত্র (Admit Card)</strong> সঙ্গে আনা বাধ্যতামূলক।</li>
+  <li>পরীক্ষা কক্ষে মোবাইল ফোন বা যেকোনো ইলেকট্রনিক ডিভাইস নিয়ে প্রবেশ সম্পূর্ণ নিষিদ্ধ।</li>
+  <li>পরীক্ষা শুরুর অন্তত ২০ মিনিট পূর্বে নির্দিষ্ট ইউনিফর্মে পরীক্ষাকেন্দ্রে উপস্থিত হতে হবে।</li>
+</ol>
+<h3>পরীক্ষার সময়সূচি</h3>
+<table>
+  <thead>
+    <tr><th>তারিখ</th><th>বিষয়</th><th>সময়</th><th>কক্ষ</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>২৮ নভেম্বর ২০২৬</td><td>ইংরেজি ১ম পত্র</td><td>সকাল ১০:০০ - দুপুর ১:০০</td><td>হল এ ও বি</td></tr>
+    <tr><td>৩০ নভেম্বর ২০২৬</td><td>বাংলা ১ম পত্র</td><td>সকাল ১০:০০ - দুপুর ১:০০</td><td>হল এ ও বি</td></tr>
+    <tr><td>০২ ডিসেম্বর ২০২৬</td><td>গণিত</td><td>সকাল ১০:০০ - দুপুর ১:০০</td><td>হল এ ও বি</td></tr>
+    <tr><td>০৪ ডিসেম্বর ২০২৬</td><td>সাধারণ বিজ্ঞান</td><td>সকাল ১০:০০ - দুপুর ১:০০</td><td>হল এ ও বি</td></tr>
+  </tbody>
+</table>
+<blockquote>প্রবেশপত্র সংগ্রহে কোনো জটিলতা থাকলে সংশ্লিষ্ট শ্রেণি শিক্ষক বা অ্যাকাডেমিক অফিসের সাথে যোগাযোগ করুন।</blockquote>`,
+    author: 'Academic Controller',
+    authorBn: 'পরীক্ষা নিয়ন্ত্রক',
+    target: 'students',
+    priority: 'urgent',
+    category: 'Academic',
+    pinned: true,
+    isActive: true,
+    publishedAt: new Date(Date.now() - 3600000).toISOString(),
+    expiresAt: '2026-12-15',
+  },
+  {
+    id: 'NOTICE-DEMO-002',
+    title: 'Parent-Teacher Conference & Academic Progress Review',
+    titleBn: 'অভিভাবক-শিক্ষক মতবিনিময় ও ফলাফল মূল্যায়ন সভা',
+    content: `<h2>Parent-Teacher Conference (PTC)</h2>
+<p>We cordially invite all parents to attend the <strong>Parent-Teacher Conference</strong> scheduled for <strong>Saturday, December 12, 2026</strong> from 10:00 AM to 02:00 PM in the Main Auditorium.</p>
+<h3>Agenda</h3>
+<ul>
+  <li>Review of students' terminal progress and attendance records.</li>
+  <li>Discussion on academic enrichment and co-curricular development.</li>
+  <li>Collection of mid-term evaluation reports and teacher feedback.</li>
+</ul>
+<blockquote>Your valuable presence and constructive suggestions are vital for our students' holistic growth.</blockquote>`,
+    contentBn: `<h2>অভিভাবক-শিক্ষক মতবিনিময় সভা</h2>
+<p>সম্মানিত অভিভাবকবৃন্দকে জানানো যাচ্ছে যে, শিক্ষার্থীদের অ্যাকাডেমিক অগ্রগতি মূল্যায়নের লক্ষ্যে আগামী <strong>শনিবার, ১২ ডিসেম্বর ২০২৬</strong> সকাল ১০:০০ টা থেকে দুপুর ২:০০ টা পর্যন্ত <strong>অভিভাবক-শিক্ষক মতবিনিময় সভা</strong> অনুষ্ঠিত হবে।</p>
+<h3>আলোচ্য বিষয়:</h3>
+<ul>
+  <li>শিক্ষার্থীদের ক্লাসে উপস্থিতি ও আচরণগত মূল্যায়ন।</li>
+  <li>বিষয়ভিত্তিক পারফরম্যান্স পর্যালোচনা ও অগ্রগতি পত্র বিতরণ।</li>
+  <li>শিক্ষার্থীদের সার্বিক উন্নয়নে দিকনির্দেশনা ও পরামর্শ গ্রহণ।</li>
+</ul>
+<blockquote>শিক্ষার্থীদের সার্বিক কল্যাণ ও ভবিষ্যৎ সাফল্যের জন্য সকল অভিভাবকের উপস্থিতি একান্ত কাম্য।</blockquote>`,
+    author: 'Principal',
+    authorBn: 'অধ্যক্ষ',
+    target: 'parents',
+    priority: 'high',
+    category: 'Events',
+    pinned: true,
+    isActive: true,
+    publishedAt: new Date(Date.now() - 86400000).toISOString(),
+    expiresAt: '2026-12-13',
+  },
+  {
+    id: 'NOTICE-DEMO-003',
+    title: 'Winter Vacation & Administrative Office Schedule',
+    titleBn: 'শীতকালীন অবকাশ ও প্রশাসনিক অফিস সময়সূচি',
+    content: `<h2>Winter Vacation & Office Schedule</h2>
+<p>The academic activities of the institution will remain suspended for the <strong>Winter Vacation</strong> from <strong>December 22, 2026 to January 02, 2027</strong>. Regular classes will resume on <strong>Sunday, January 03, 2027</strong>.</p>
+<h3>Administrative Office Timings During Vacation</h3>
+<ul>
+  <li>Office remains open: Sunday to Thursday, 09:30 AM — 01:30 PM.</li>
+  <li>Closed on: Fridays, Saturdays, and Government Holidays.</li>
+  <li>New Admissions Office will remain active for session 2027 inquiries.</li>
+</ul>
+<p>We wish all students, teachers, and guardians a safe and refreshing winter holiday.</p>`,
+    contentBn: `<h2>শীতকালীন অবকাশ ও অফিস কার্যক্রম</h2>
+<p>সকলের অবগতির জন্য জানানো যাচ্ছে যে, আগামী <strong>২২ ডিসেম্বর ২০২৬ থেকে ০২ জানুয়ারি ২০২৭</strong> পর্যন্ত প্রতিষ্ঠান <strong>শীতকালীন অবকাশ</strong> উপলক্ষে বন্ধ থাকবে। আগামী <strong>০৩ জানুয়ারি ২০২৭ (রবিবার)</strong> থেকে যথারীতি নিয়মিত ক্লাস শুরু হবে।</p>
+<h3>অবকাশকালীন অফিস সময়সূচি:</h3>
+<ul>
+  <li>অফিস খোলা থাকবে: রবিবার থেকে বৃহস্পতিবার, সকাল ৯:৩০ থেকে দুপুর ১:৩০ পর্যন্ত।</li>
+  <li>শুক্রবার, শনিবার ও সরকারি ছুটির দিনগুলোতে অফিস বন্ধ থাকবে।</li>
+  <li>২০২৭ শিক্ষাবর্ষের নতুন ভর্তি সংক্রান্ত কার্যক্রম খোলা থাকবে।</li>
+</ul>
+<p>সকল শিক্ষক, শিক্ষার্থী ও অভিভাবকদের সুস্থ ও সুন্দর অবকাশ যাপনের শুভকামনা রইল।</p>`,
+    author: 'Administration',
+    authorBn: 'প্রশাসন বিভাগ',
+    target: 'all',
+    priority: 'medium',
+    category: 'Holiday',
+    pinned: false,
+    isActive: true,
+    publishedAt: new Date(Date.now() - 172800000).toISOString(),
+    expiresAt: '2027-01-04',
+  },
+  {
     id: 'NOTICE-SEED-001',
     title: 'Annual Sports Day 2026',
     titleBn: 'বার্ষিক ক্রীড়া দিবস ২০২৬',
