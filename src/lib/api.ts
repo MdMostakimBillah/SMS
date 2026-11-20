@@ -597,10 +597,14 @@ export interface PaginatedTeachers {
 }
 
 export const teachersApi = {
-  list: (page = 1, pageSize = 100) =>
-    apiRequest<PaginatedTeachers>(`/api/teachers?page=${page}&pageSize=${pageSize}`),
+  list: (page = 1, pageSize = 100, schoolId?: string) => {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+    if (schoolId) params.set('schoolId', schoolId)
+    return apiRequest<PaginatedTeachers>(`/api/teachers?${params.toString()}`)
+  },
 
-  get: (id: string) => apiRequest<TeacherData>(`/api/teachers/${id}`),
+  get: (id: string, schoolId?: string) =>
+    apiRequest<TeacherData>(`/api/teachers/${id}${schoolId ? `?schoolId=${encodeURIComponent(schoolId)}` : ''}`),
 
   create: (data: Partial<TeacherData>) =>
     apiRequest<TeacherData>('/api/teachers', { method: 'POST', body: data }),
@@ -634,7 +638,8 @@ export interface PaginatedDepartments {
  * sent from the client, so no client-supplied tenant value can influence scope.
  */
 export const departmentsApi = {
-  list: () => apiRequest<PaginatedDepartments>('/api/departments'),
+  list: (schoolId?: string) =>
+    apiRequest<PaginatedDepartments>(`/api/departments${schoolId ? `?schoolId=${encodeURIComponent(schoolId)}` : ''}`),
 
   create: (data: { name: string; nameBn?: string | null; head?: string | null }) =>
     apiRequest<DepartmentData>('/api/departments', { method: 'POST', body: data }),
@@ -663,7 +668,8 @@ export interface PaginatedSubjects {
 }
 
 export const subjectsApi = {
-  list: () => apiRequest<PaginatedSubjects>('/api/subjects'),
+  list: (schoolId?: string) =>
+    apiRequest<PaginatedSubjects>(`/api/subjects${schoolId ? `?schoolId=${encodeURIComponent(schoolId)}` : ''}`),
   create: (data: { name: string; nameBn?: string | null; departmentId?: string | null; departmentIds?: string[] }) =>
     apiRequest<SubjectData>('/api/subjects', { method: 'POST', body: data }),
   update: (id: string, data: { name?: string; nameBn?: string | null; departmentId?: string | null; departmentIds?: string[] }) =>
@@ -687,7 +693,8 @@ export interface PaginatedDesignations {
 }
 
 export const designationsApi = {
-  list: () => apiRequest<PaginatedDesignations>('/api/designations'),
+  list: (schoolId?: string) =>
+    apiRequest<PaginatedDesignations>(`/api/designations${schoolId ? `?schoolId=${encodeURIComponent(schoolId)}` : ''}`),
   create: (data: { name: string; nameBn?: string | null }) =>
     apiRequest<DesignationData>('/api/designations', { method: 'POST', body: data }),
   update: (id: string, data: { name?: string; nameBn?: string | null }) =>

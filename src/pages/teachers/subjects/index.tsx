@@ -10,6 +10,7 @@ import { useNavPath } from '@/hooks/useNavPath'
 import { usePermission } from '@/hooks/usePermission'
 import type { Subject } from '@/pages/teachers/types'
 import { subjectsApi } from '@/lib/api'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { serverSubjectToSubject } from '@/lib/teacherMappers'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { SkeletonTable } from '@/components/ui/Skeleton'
@@ -87,7 +88,15 @@ export default function SubjectsPage() {
       updatedAt: now,
     })
 
-    // Also persist to database
+    if (isLocalComputerMode()) {
+      setNewName('')
+      setNewNameBn('')
+      setNewDeptIds([])
+      setShowAdd(false)
+      return
+    }
+
+    // Also persist to database in cloud/server mode
     try {
       const created = await subjectsApi.create({
         name: newName.trim(),
@@ -120,7 +129,15 @@ export default function SubjectsPage() {
       departmentIds: newDeptIds,
     })
 
-    // Also persist to database
+    if (isLocalComputerMode()) {
+      setEditS(null)
+      setNewName('')
+      setNewNameBn('')
+      setNewDeptIds([])
+      return
+    }
+
+    // Also persist to database in cloud/server mode
     try {
       const updated = await subjectsApi.update(editS.id, {
         name: newName.trim(),
@@ -145,7 +162,12 @@ export default function SubjectsPage() {
     deleteSubject(id)
     removeServerSubject(id)
 
-    // Also delete from database
+    if (isLocalComputerMode()) {
+      setDelConfirm(null)
+      return
+    }
+
+    // Also delete from database in cloud/server mode
     try {
       await subjectsApi.delete(id)
     } catch (err) {

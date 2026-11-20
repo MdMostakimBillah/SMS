@@ -1,26 +1,32 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useTeacherStore } from './teacherStore'
-import { teachersApi, departmentsApi, type TeacherData, type DepartmentData } from '@/lib/api'
+import { teachersApi, departmentsApi, subjectsApi, designationsApi, attendanceApi, type TeacherData, type DepartmentData } from '@/lib/api'
 import type { Teacher, Department, Subject, Designation } from '@/pages/teachers/types'
 
 /**
- * Phase 7 tests: teacher/department state is server-authoritative.
- * - syncFromServer replaces local rows with API data (no dual writes)
- * - first successful sync backs up pre-migration local records (write-once)
- * - failed sync surfaces syncError and leaves local rows untouched
- * - subjects/designations/attendance remain local-only domains
+ * Teacher Management tests:
+ * - Dual persistence across backend database (cloud) and local PC storage (local_computer)
+ * - syncFromServer merges server rows and preserves offline drafts
+ * - syncToServer pushes local draft records to the backend database
+ * - local_computer mode operates offline without server API network calls
  */
 vi.mock('@/lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/api')>()
   return {
     ...actual,
-    teachersApi: { ...actual.teachersApi, list: vi.fn() },
-    departmentsApi: { ...actual.departmentsApi, list: vi.fn() },
+    teachersApi: { ...actual.teachersApi, list: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    departmentsApi: { ...actual.departmentsApi, list: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    subjectsApi: { ...actual.subjectsApi, list: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    designationsApi: { ...actual.designationsApi, list: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    attendanceApi: { ...actual.attendanceApi, get: vi.fn(), updateAttendance: vi.fn() },
   }
 })
 
 const mockedTeachersApi = vi.mocked(teachersApi)
 const mockedDepartmentsApi = vi.mocked(departmentsApi)
+const mockedSubjectsApi = vi.mocked(subjectsApi)
+const mockedDesignationsApi = vi.mocked(designationsApi)
+const mockedAttendanceApi = vi.mocked(attendanceApi)
 
 function mkServerTeacher(id: string, nameEn = 'Server Teacher'): TeacherData {
   return {
@@ -93,6 +99,15 @@ describe('teacherStore', () => {
     localStorage.clear()
     sessionStorage.clear()
     vi.clearAllMocks()
+    mockedTeachersApi.list.mockResolvedValue({ data: [], total: 0, page: 1, pageSize: 100 })
+    mockedTeachersApi.create.mockResolvedValue({} as any)
+    mockedTeachersApi.update.mockResolvedValue({} as any)
+    mockedTeachersApi.delete.mockResolvedValue({ success: true })
+    mockedDepartmentsApi.list.mockResolvedValue({ data: [], total: 0 })
+    mockedSubjectsApi.list.mockResolvedValue({ data: [], total: 0 })
+    mockedDesignationsApi.list.mockResolvedValue({ data: [], total: 0 })
+    mockedAttendanceApi.get.mockResolvedValue({ attendance: {}, devices: [] } as any)
+    mockedAttendanceApi.updateAttendance.mockResolvedValue({ success: true } as any)
     useTeacherStore.setState({
       teachers: [],
       departments: [],
@@ -343,5 +358,95 @@ describe('teacherStore', () => {
     const stats = useTeacherStore.getState().getAttendanceStats('2026-06-01')
     expect(stats.present).toBe(1)
     expect(stats.absent).toBe(0)
+  })
+
+  // ── local_computer storage mode & dual persistence ─────────────────────────
+
+  it('skips server sync and keeps local records when in local_computer mode', async () => {
+    sessionStorage.setItem('edutech_storage_mode', 'local_computer')
+    localStorage.setItem('edutech_storage_mode', 'local_computer')
+
+    useTeacherStore.setState({
+      teachers: [localTeacher('ET0001', 'Local Teacher 1')],
+      departments: [{ id: 'DEP-001', name: 'Local Science', nameBn: '', head: '', createdAt: '', updatedAt: '' }],
+      subjects: [{ id: 'SUB-001', name: 'Local Physics', nameBn: '', departmentId: 'DEP-001', createdAt: '', updatedAt: '' }],
+      designations: [{ id: 'DES-001', name: 'Lecturer', nameBn: '', createdAt: '', updatedAt: '' }],
+      attendance: {},
+      serverSynced: false,
+    })
+
+    await useTeacherStore.getState().syncFromServer()
+
+    // Server API list calls must NOT be called in local_computer mode
+    expect(mockedTeachersApi.list).not.toHaveBeenCalled()
+    expect(mockedDepartmentsApi.list).not.toHaveBeenCalled()
+
+    const state = useTeacherStore.getState()
+    expect(state.serverSynced).toBe(true)
+    expect(state.syncError).toBeNull()
+    expect(state.teachers[0].nameEn).toBe('Local Teacher 1')
+    expect(state.departments[0].name).toBe('Local Science')
+    expect(state.subjects[0].name).toBe('Local Physics')
+    expect(state.designations[0].name).toBe('Lecturer')
+  })
+
+  it('syncToServer pushes local draft records to backend database in Cloud mode', async () => {
+    sessionStorage.setItem('edutech_storage_mode', 'cloud')
+    localStorage.setItem('edutech_storage_mode', 'cloud')
+
+    mockedDepartmentsApi.create.mockResolvedValue({
+      id: 'dep-db-1',
+      schoolId: 'school-1',
+      name: 'Commerce',
+      nameBn: null,
+      head: null,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+    })
+    mockedSubjectsApi.create.mockResolvedValue({
+      id: 'sub-db-1',
+      schoolId: 'school-1',
+      name: 'Accounting',
+      nameBn: null,
+      departmentId: 'dep-db-1',
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+    })
+    mockedDesignationsApi.create.mockResolvedValue({
+      id: 'des-db-1',
+      schoolId: 'school-1',
+      name: 'Professor',
+      nameBn: null,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+    })
+    mockedTeachersApi.create.mockResolvedValue(mkServerTeacher('srv-new-1', 'Draft Teacher'))
+
+    useTeacherStore.setState({
+      teachers: [localTeacher('local-1', 'Draft Teacher')],
+      departments: [{ id: 'loc-1', name: 'Commerce', nameBn: '', head: '', createdAt: '', updatedAt: '' }],
+      subjects: [{ id: 'SUB-001', name: 'Accounting', nameBn: '', departmentId: 'loc-1', createdAt: '', updatedAt: '' }],
+      designations: [{ id: 'DES-001', name: 'Professor', nameBn: '', createdAt: '', updatedAt: '' }],
+    })
+
+    await useTeacherStore.getState().syncToServer()
+
+    expect(mockedDepartmentsApi.create).toHaveBeenCalled()
+    expect(mockedSubjectsApi.create).toHaveBeenCalled()
+    expect(mockedDesignationsApi.create).toHaveBeenCalled()
+    expect(mockedTeachersApi.create).toHaveBeenCalled()
+
+    const state = useTeacherStore.getState()
+    expect(state.serverSynced).toBe(true)
+  })
+
+  it('markAttendance syncs to attendanceApi in Cloud mode', () => {
+    sessionStorage.setItem('edutech_storage_mode', 'cloud')
+    localStorage.setItem('edutech_storage_mode', 'cloud')
+
+    useTeacherStore.setState({ teachers: [localTeacher('TCH-1')] })
+    useTeacherStore.getState().markAttendance('2026-06-01', 'TCH-1', 'present')
+
+    expect(mockedAttendanceApi.updateAttendance).toHaveBeenCalled()
   })
 })

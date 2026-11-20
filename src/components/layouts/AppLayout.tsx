@@ -4,6 +4,7 @@ import { useAppStore } from '@/store/appStore'
 import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, generateDarkColors } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useNotificationStore } from '@/store/notificationStore'
+import { useTeacherStore } from '@/store/teacherStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useThemeColors, applyThemeColors } from '@/hooks/useThemeColors'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -107,6 +108,7 @@ export default function AppLayout() {
             useClassStore.getState().syncFromServer(targetSlug).catch(() => {})
             useFeeStore.getState().syncFromServer(targetSlug).catch(() => {})
             useNotificationStore.getState().syncFromServer(targetSlug).catch(() => {})
+            useTeacherStore.getState().syncFromServer(targetSlug).catch(() => {})
           }
         }).catch(() => {})
       } else {
@@ -158,6 +160,7 @@ export default function AppLayout() {
       useClassStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
       useFeeStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
       useNotificationStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
+      useTeacherStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
     } else {
       if (isLocalComputerMode()) return
       const pathSlug =
@@ -188,6 +191,7 @@ export default function AppLayout() {
             useClassStore.getState().syncFromServer(pathSlug).catch(() => {})
             useFeeStore.getState().syncFromServer(pathSlug).catch(() => {})
             useNotificationStore.getState().syncFromServer(pathSlug).catch(() => {})
+            useTeacherStore.getState().syncFromServer(pathSlug).catch(() => {})
           }
         }).catch(() => {})
       }

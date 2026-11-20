@@ -85,33 +85,17 @@ export default function DepartmentsPage() {
     setFormError('')
 
     if (isLocalComputerMode()) {
-      const localId = `loc-dept-${Date.now()}`
-      const localDept: Department = {
-        id: localId,
-        name: newName.trim(),
-        nameBn: newNameBn.trim(),
-        head: newHead.trim(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      upsertServerDepartment(localDept)
-      resetForm()
-      setShowAdd(false)
-      setSaving(false)
-      return
-    }
-
-    if (isLocalComputerMode()) {
       const localId = `DEP-${String(departments.length + 1).padStart(3, '0')}`
       const now = new Date().toISOString()
-      upsertServerDepartment({
+      const localDept: Department = {
         id: localId,
         name: newName.trim(),
         nameBn: newNameBn.trim(),
         head: newHead.trim(),
         createdAt: now,
         updatedAt: now,
-      })
+      }
+      upsertServerDepartment(localDept)
       resetForm()
       setShowAdd(false)
       setSaving(false)

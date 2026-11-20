@@ -4,12 +4,13 @@ import type { Teacher, Department, Subject, Designation } from '@/pages/teachers
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getSlug } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete } from '@/lib/vault/bridge'
-import { teachersApi, departmentsApi, subjectsApi, designationsApi, type TeacherData } from '@/lib/api'
+import { teachersApi, departmentsApi, subjectsApi, designationsApi, attendanceApi, type TeacherData } from '@/lib/api'
 import {
   serverTeacherToTeacher,
   serverDepartmentToDepartment,
   serverSubjectToSubject,
   serverDesignationToDesignation,
+  teacherToPayload,
   apiErrorMessage,
 } from '@/lib/teacherMappers'
 import { isLocalComputerMode } from '@/lib/storageMode'
@@ -87,8 +88,9 @@ interface TeacherState {
   legacyTeachers: Teacher[]
   legacyDepartments: Department[]
 
-  /** Fetches teachers + departments from the secured API; backs up local data on first successful sync. */
-  syncFromServer: () => Promise<void>
+  /** Fetches teachers + departments + subjects + designations from the secured API; backs up local data on first successful sync. */
+  syncFromServer: (slugOrId?: string) => Promise<void>
+  syncToServer: () => Promise<void>
   upsertServerTeacher: (teacher: Teacher) => void
   bulkUpdateTeachers: (updates: Array<{ id: string; data: Partial<Teacher> }>) => void
   removeServerTeacher: (id: string) => void
@@ -111,12 +113,12 @@ interface TeacherState {
 }
 
 /** Page-size cap on the API (max 500) — fetch every page so the list is complete. */
-async function fetchAllServerTeachers(): Promise<Teacher[]> {
+async function fetchAllServerTeachers(schoolId?: string): Promise<Teacher[]> {
   const all: TeacherData[] = []
   let page = 1
   let total = Number.POSITIVE_INFINITY
   while (all.length < total) {
-    const res = await teachersApi.list(page, 500)
+    const res = await teachersApi.list(page, 500, schoolId)
     all.push(...res.data)
     total = res.total
     if (res.data.length === 0) break
@@ -146,20 +148,27 @@ export const useTeacherStore = create<TeacherState>()(
       legacyTeachers: [],
       legacyDepartments: [],
 
-      syncFromServer: async () => {
+      syncFromServer: async (slugOrId?: string) => {
+        // In Local Computer mode, local PC storage is authoritative — do not make server network calls
+        if (isLocalComputerMode()) {
+          set({ serverSynced: true, syncing: false, syncError: null })
+          return
+        }
+
         if (syncPromise) return syncPromise
         const current = get()
-        // Fresh server data already on screen: avoid re-fetching on every mount.
-        if (current.serverSynced && Date.now() - lastSyncAt < SYNC_MIN_INTERVAL_MS) return
+        // Fresh server data already on screen: avoid re-fetching on every mount unless tenant requested
+        if (current.serverSynced && Date.now() - lastSyncAt < SYNC_MIN_INTERVAL_MS && !slugOrId) return
         if (!current.serverSynced) set({ syncing: true, syncError: null })
 
         syncPromise = (async () => {
           try {
-            const [serverTeachers, deptRes, subjectRes, designationRes] = await Promise.all([
-              fetchAllServerTeachers(),
-              departmentsApi.list(),
-              subjectsApi.list().catch(() => ({ data: [], total: 0 })),
-              designationsApi.list().catch(() => ({ data: [], total: 0 })),
+            const [serverTeachers, deptRes, subjectRes, designationRes, attRes] = await Promise.all([
+              fetchAllServerTeachers(slugOrId),
+              departmentsApi.list(slugOrId),
+              subjectsApi.list(slugOrId).catch(() => ({ data: [], total: 0 })),
+              designationsApi.list(slugOrId).catch(() => ({ data: [], total: 0 })),
+              attendanceApi.get(slugOrId).catch(() => null),
             ])
             const serverDepts = deptRes.data.map(serverDepartmentToDepartment)
             const serverSubjects = subjectRes.data.map(serverSubjectToSubject)
@@ -167,10 +176,20 @@ export const useTeacherStore = create<TeacherState>()(
 
             const prev = get()
             let attendance = prev.attendance
+            if (attRes?.attendance && typeof attRes.attendance === 'object' && Object.keys(attRes.attendance).length > 0) {
+              attendance = pruneAttendance({ ...prev.attendance, ...attRes.attendance })
+            }
 
-            // Server-authoritative data: replace with server rows
-            const finalTeachers = serverTeachers
-            const finalDepartments = serverDepts
+            // Server-authoritative data: replace with server rows while preserving local un-synced drafts
+            const localDraftTeachers = prev.teachers.filter(
+              (t) => (t.id.startsWith('local-') || t.id.startsWith('loc-')) && !serverTeachers.some((st) => st.id === t.id)
+            )
+            const finalTeachers = [...serverTeachers, ...localDraftTeachers]
+
+            const localDraftDepts = prev.departments.filter(
+              (d) => (d.id.startsWith('local-') || d.id.startsWith('loc-')) && !serverDepts.some((sd) => sd.id === d.id)
+            )
+            const finalDepartments = [...serverDepts, ...localDraftDepts]
 
             // Subjects: server-authoritative + un-synced local drafts (e.g. SUB- / local- prefix)
             const localDraftSubjects = prev.subjects.filter(
@@ -218,6 +237,9 @@ export const useTeacherStore = create<TeacherState>()(
               syncing: false,
               syncError: null,
             })
+            // Always update local PC storage & vault with fresh synced state
+            flushPendingWrites()
+            void flushVaultWrites()
           } catch (err) {
             // Never replace local rows with an error: a failed sync leaves the
             // store untouched and surfaces syncError instead.
@@ -229,6 +251,83 @@ export const useTeacherStore = create<TeacherState>()(
           }
         })()
         return syncPromise
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        set({ syncing: true })
+        try {
+          const state = get()
+          // Sync any local departments that are not on server
+          for (const d of state.departments) {
+            if (d.id.startsWith('loc-') || d.id.startsWith('DEP-') || d.id.startsWith('local-')) {
+              try {
+                const created = await departmentsApi.create({
+                  name: d.name,
+                  nameBn: d.nameBn || null,
+                  head: d.head || null,
+                })
+                if (created?.id) {
+                  get().upsertServerDepartment(serverDepartmentToDepartment(created))
+                }
+              } catch {}
+            }
+          }
+
+          // Sync any local subjects
+          for (const s of state.subjects) {
+            if (s.id.startsWith('SUB-') || s.id.startsWith('local-')) {
+              try {
+                const created = await subjectsApi.create({
+                  name: s.name,
+                  nameBn: s.nameBn || null,
+                  departmentId: s.departmentId || null,
+                  departmentIds: s.departmentIds || (s.departmentId ? [s.departmentId] : []),
+                })
+                if (created?.id) {
+                  get().deleteSubject(s.id)
+                  get().upsertServerSubject(serverSubjectToSubject(created))
+                }
+              } catch {}
+            }
+          }
+
+          // Sync any local designations
+          for (const des of state.designations) {
+            if (des.id.startsWith('DES-') || des.id.startsWith('local-')) {
+              try {
+                const created = await designationsApi.create({
+                  name: des.name,
+                  nameBn: des.nameBn || null,
+                })
+                if (created?.id) {
+                  get().deleteDesignation(des.id)
+                  get().upsertServerDesignation(serverDesignationToDesignation(created))
+                }
+              } catch {}
+            }
+          }
+
+          // Sync any local teachers
+          for (const t of state.teachers) {
+            if (t.id.startsWith('local-') || (t.id.startsWith('ET') && !t.createdAt)) {
+              try {
+                const created = await teachersApi.create(teacherToPayload(t))
+                if (created?.id) {
+                  get().removeServerTeacher(t.id)
+                  get().upsertServerTeacher(serverTeacherToTeacher(created))
+                }
+              } catch {}
+            }
+          }
+
+          set({ serverSynced: true, syncing: false, syncError: null })
+          flushPendingWrites()
+          void flushVaultWrites()
+        } catch (err) {
+          console.warn('[teacherStore] syncToServer error:', err)
+          set({ syncing: false })
+        }
       },
 
       upsertServerTeacher: (teacher) => {
@@ -262,7 +361,7 @@ export const useTeacherStore = create<TeacherState>()(
               ...(u.data as any),
               ...(u.data.salary !== undefined ? { salary: u.data.salary != null ? String(u.data.salary) : null } : {}),
             }
-            void teachersApi.update(u.id, payload).catch(() => {})
+            Promise.resolve(teachersApi.update(u.id, payload)).catch(() => {})
           }
         }
       },
@@ -368,6 +467,7 @@ export const useTeacherStore = create<TeacherState>()(
       },
 
       markAttendance: (date, teacherId, status) => {
+        let newAttendance: Record<string, Record<string, DayAttendance>> = {}
         set((state) => {
           const dayAtt = state.attendance[date] || {}
           const existing = dayAtt[teacherId]
@@ -375,21 +475,24 @@ export const useTeacherStore = create<TeacherState>()(
           const now = new Date()
           const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
           const newPunches = status === 'present' ? [...punches, { time, type: 'in' as const }] : punches
-          return {
-            attendance: pruneAttendance({
-              ...state.attendance,
-              [date]: {
-                ...dayAtt,
-                [teacherId]: { status, punches: newPunches },
-              },
-            }),
-          }
+          newAttendance = pruneAttendance({
+            ...state.attendance,
+            [date]: {
+              ...dayAtt,
+              [teacherId]: { status, punches: newPunches },
+            },
+          })
+          return { attendance: newAttendance }
         })
         flushPendingWrites()
         void flushVaultWrites()
+        if (!isLocalComputerMode()) {
+          Promise.resolve(attendanceApi.updateAttendance({ attendance: newAttendance })).catch(() => {})
+        }
       },
 
       markAllPresent: (date) => {
+        let newAttendance: Record<string, Record<string, DayAttendance>> = {}
         set((state) => {
           const dayAtt: Record<string, DayAttendance> = {}
           const now = new Date()
@@ -399,10 +502,14 @@ export const useTeacherStore = create<TeacherState>()(
             .forEach((t) => {
               dayAtt[t.id] = { status: 'present', punches: [{ time, type: 'in' }] }
             })
-          return { attendance: pruneAttendance({ ...state.attendance, [date]: dayAtt }) }
+          newAttendance = pruneAttendance({ ...state.attendance, [date]: dayAtt })
+          return { attendance: newAttendance }
         })
         flushPendingWrites()
         void flushVaultWrites()
+        if (!isLocalComputerMode()) {
+          Promise.resolve(attendanceApi.updateAttendance({ attendance: newAttendance })).catch(() => {})
+        }
       },
 
       getAttendanceStats: (date) => {
