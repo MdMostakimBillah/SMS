@@ -12,6 +12,8 @@ import {
   Calendar,
   HelpCircle,
   Sparkles,
+  Users,
+  GraduationCap,
 } from 'lucide-react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { useAuth } from '@/contexts/AuthContext'
@@ -133,12 +135,47 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
   const syncFromServer = useInstitutionPaymentStore((s) => s.syncFromServer)
   const submitPayment = useInstitutionPaymentStore((s) => s.submitPayment)
 
-  // Selected package, duration, and gateway
+  // Current school's active package name
+  const currentPkgName = currentSchool?.package?.name || ''
+
+  // Track if user has manually clicked a package
+  const [hasManuallySelected, setHasManuallySelected] = useState(false)
   const [selectedPkgName, setSelectedPkgName] = useState<string>(
     currentSchool?.package?.name || 'Standard'
   )
   const [selectedMonths, setSelectedMonths] = useState<number>(1)
   const [selectedGateway, setSelectedGateway] = useState<PaymentMethodType>('bkash')
+  const [packageCategory, setPackageCategory] = useState<'all' | 'cloud' | 'self_hosted'>('all')
+
+  // Keep selected package in sync with current school's package until user manually selects another
+  useEffect(() => {
+    if (currentSchool?.package?.name && !hasManuallySelected) {
+      setSelectedPkgName(currentSchool.package.name)
+    }
+  }, [currentSchool?.package?.name, hasManuallySelected])
+
+  // Filter packages by category if desired
+  const filteredPackages = useMemo(() => {
+    if (packageCategory === 'cloud') {
+      return packages.filter(
+        (p) =>
+          !p.hostingType ||
+          p.hostingType === 'cloud' ||
+          p.hostingType === 'all' ||
+          ['Basic', 'Standard', 'Premium', 'Enterprise'].includes(p.name)
+      )
+    }
+    if (packageCategory === 'self_hosted') {
+      return packages.filter(
+        (p) =>
+          p.hostingType === 'local_pc' ||
+          p.hostingType === 'personal_vps' ||
+          p.hostingType === 'system_only' ||
+          ['Local PC Basic', 'Personal VPS Pro', 'System Lifetime License'].includes(p.name)
+      )
+    }
+    return packages
+  }, [packages, packageCategory])
 
   // Form fields
   const [senderNumber, setSenderNumber] = useState('')
@@ -350,68 +387,175 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
         </div>
 
         {/* 2. Choose Package & Duration */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="text-[0.9375rem] font-bold text-[var(--text-primary)] m-0 flex items-center gap-2">
-              <Sparkles size={16} className="text-[var(--brand)]" />
-              {isBn ? '১. প্যাকেজ ও মেয়াদ নির্বাচন করুন' : '1. Choose Package & Duration'}
-            </h4>
-            <span className="text-[0.6875rem] text-[var(--text-muted)]">
-              {isBn ? 'নবায়ন বা নতুন প্যাকেজে আপগ্রেড করুন' : 'Renew or upgrade to a new package'}
-            </span>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <h4 className="text-[0.9375rem] font-bold text-[var(--text-primary)] m-0 flex items-center gap-2">
+                <Sparkles size={16} className="text-[var(--brand)]" />
+                <span>{isBn ? '১. প্যাকেজ ও মেয়াদ নির্বাচন করুন' : '1. Choose Package & Duration'}</span>
+              </h4>
+              <span className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5 block">
+                {isBn ? 'আপনার প্রতিষ্ঠানের জন্য উপযুক্ত প্যাকেজ নির্বাচন করুন' : 'Select the best plan for your institution'}
+              </span>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              <button
+                type="button"
+                onClick={() => setPackageCategory('all')}
+                className={`px-3 py-1 rounded-xl text-[0.6875rem] font-bold transition-all cursor-pointer border ${
+                  packageCategory === 'all'
+                    ? 'border-[var(--brand)] bg-[var(--brand)] text-white shadow-2xs'
+                    : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {isBn ? 'সকল প্যাকেজ' : 'All Plans'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPackageCategory('cloud')}
+                className={`px-3 py-1 rounded-xl text-[0.6875rem] font-bold transition-all cursor-pointer border ${
+                  packageCategory === 'cloud'
+                    ? 'border-[var(--brand)] bg-[var(--brand)] text-white shadow-2xs'
+                    : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {isBn ? 'ক্লাউড হোস্টেড' : 'Cloud Hosted'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPackageCategory('self_hosted')}
+                className={`px-3 py-1 rounded-xl text-[0.6875rem] font-bold transition-all cursor-pointer border ${
+                  packageCategory === 'self_hosted'
+                    ? 'border-[var(--brand)] bg-[var(--brand)] text-white shadow-2xs'
+                    : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {isBn ? 'সেলফ-হোস্টেড / লোকাল' : 'Self-Hosted'}
+              </button>
+            </div>
           </div>
 
-          {/* Package Selection Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {packages.map((pkg) => {
+          {/* Package Selection Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+            {filteredPackages.map((pkg) => {
               const isSelected = selectedPkgName.toLowerCase() === pkg.name.toLowerCase()
-              const isCurrent = currentSchool?.package?.name?.toLowerCase() === pkg.name.toLowerCase()
+              const isCurrent = currentPkgName.toLowerCase() === pkg.name.toLowerCase()
 
               return (
                 <div
                   key={pkg.id || pkg.name}
-                  onClick={() => setSelectedPkgName(pkg.name)}
-                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
+                  onClick={() => {
+                    setSelectedPkgName(pkg.name)
+                    setHasManuallySelected(true)
+                  }}
+                  className={`group relative rounded-2xl p-4 sm:p-5 border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
                     isSelected
-                      ? 'border-[var(--brand)] bg-[var(--brand)]/5 shadow-md -translate-y-0.5'
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/40 hover:bg-[var(--bg-secondary)]/30'
+                      ? 'border-[var(--brand)] bg-[var(--brand)]/[0.04] shadow-md ring-4 ring-[var(--brand)]/10 -translate-y-1'
+                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/50 hover:bg-[var(--bg-secondary)]/40 hover:-translate-y-0.5 hover:shadow-xs'
                   }`}
                 >
-                  {isCurrent && (
-                    <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full text-[0.5625rem] font-extrabold bg-[var(--brand)] text-white shadow-xs">
-                      {isBn ? 'বর্তমান' : 'Current'}
-                    </span>
-                  )}
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-[0.875rem] text-[var(--text-primary)]">
-                        {isBn ? pkg.nameBn || pkg.name : pkg.name}
-                      </span>
-                    </div>
-                    <div className="text-[1.25rem] font-extrabold text-[var(--brand)] mb-2.5">
-                      ৳{(pkg.price || 1500).toLocaleString()}
-                      <span className="text-[0.6875rem] font-normal text-[var(--text-muted)] ml-0.5"> / {isBn ? 'মাস' : 'mo'}</span>
-                    </div>
-                    <div className="text-[0.6875rem] text-[var(--text-muted)] space-y-1.5 mb-2.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[0.75rem]">👥</span>
-                        <span>{isBn ? 'শিক্ষার্থী:' : 'Students:'} <strong className="text-[var(--text-primary)]">{pkg.maxStudents || 999}</strong></span>
+                    {/* Card Header: Title + Badges + Radio Indicator */}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div>
+                        <h5 className="font-bold text-[1rem] text-[var(--text-primary)] m-0 tracking-tight">
+                          {isBn ? pkg.nameBn || pkg.name : pkg.name}
+                        </h5>
+                        <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider block mt-0.5">
+                          {pkg.hostingType === 'system_only' || pkg.duration === 0
+                            ? (isBn ? 'আজীবন লাইসেন্স' : 'Lifetime System')
+                            : pkg.hostingType === 'local_pc'
+                            ? (isBn ? 'লোকাল পিসি' : 'Local PC')
+                            : pkg.hostingType === 'personal_vps'
+                            ? (isBn ? 'পার্সোনাল ভিপিএস' : 'Personal VPS')
+                            : (isBn ? 'ক্লাউড হোস্টেড' : 'Cloud Hosted')}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[0.75rem]">👨‍🏫</span>
-                        <span>{isBn ? 'শিক্ষক:' : 'Teachers:'} <strong className="text-[var(--text-primary)]">{pkg.maxTeachers || 99}</strong></span>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {isCurrent && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            {isBn ? 'বর্তমান' : 'Current'}
+                          </span>
+                        )}
+
+                        {/* Radio Checkmark Indicator */}
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                            isSelected
+                              ? 'bg-[var(--brand)] text-white shadow-2xs'
+                              : 'border-2 border-[var(--border)] group-hover:border-[var(--brand)]/60'
+                          }`}
+                        >
+                          {isSelected && <Check size={12} strokeWidth={3} />}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Price Section */}
+                    <div className="my-3 pb-3 border-b border-[var(--border)]/70">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-[1.5rem] font-extrabold text-[var(--text-primary)] tracking-tight">
+                          ৳{(pkg.price || 1500).toLocaleString()}
+                        </span>
+                        <span className="text-[0.75rem] font-medium text-[var(--text-muted)]">
+                          / {pkg.duration === 0 ? (isBn ? 'এককালীন' : 'lifetime') : (isBn ? 'মাস' : 'mo')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Capacity & Limits */}
+                    <div className="space-y-2 mb-4 text-[0.75rem]">
+                      <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                        <div className="w-6 h-6 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--brand)] shrink-0">
+                          <Users size={13} />
+                        </div>
+                        <span>
+                          {isBn ? 'শিক্ষার্থী:' : 'Students:'}{' '}
+                          <strong className="text-[var(--text-primary)] font-bold">{pkg.maxStudents || 999}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                        <div className="w-6 h-6 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--brand)] shrink-0">
+                          <GraduationCap size={13} />
+                        </div>
+                        <span>
+                          {isBn ? 'শিক্ষক:' : 'Teachers:'}{' '}
+                          <strong className="text-[var(--text-primary)] font-bold">{pkg.maxTeachers || 99}</strong>
+                        </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-2.5 border-t border-[var(--border)] text-[0.6875rem] font-medium text-[var(--text-secondary)]">
-                    {isSelected ? (
-                      <span className="flex items-center gap-1.5 text-[var(--brand)] font-bold">
-                        <Check size={14} /> {isBn ? 'নির্বাচিত প্ল্যান' : 'Selected Plan'}
-                      </span>
-                    ) : (
-                      <span className="text-[var(--text-muted)]">{isBn ? 'নির্বাচন করতে ক্লিক করুন' : 'Click to select'}</span>
-                    )}
+                  {/* Action Button at bottom */}
+                  <div className="pt-2">
+                    <div
+                      className={`w-full py-2 px-3 rounded-xl text-[0.75rem] font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-[var(--brand)] text-white shadow-xs'
+                          : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] group-hover:bg-[var(--brand)]/10 group-hover:text-[var(--brand)]'
+                      }`}
+                    >
+                      {isSelected ? (
+                        <>
+                          <Check size={14} strokeWidth={2.5} />
+                          <span>
+                            {isCurrent
+                              ? (isBn ? 'বর্তমান প্ল্যান (নির্বাচিত)' : 'Current Plan (Selected)')
+                              : (isBn ? 'নির্বাচিত প্ল্যান' : 'Selected Plan')}
+                          </span>
+                        </>
+                      ) : (
+                        <span>
+                          {isCurrent
+                            ? (isBn ? 'বর্তমান প্ল্যান বেছে নিন' : 'Select Current Plan')
+                            : (isBn ? 'প্ল্যান নির্বাচন করুন' : 'Select Plan')}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )
@@ -419,40 +563,62 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
           </div>
 
           {/* Duration Selector */}
-          <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
-            <div>
-              <div className="text-[0.8125rem] font-bold text-[var(--text-primary)] mb-0.5">
-                {isBn ? 'বিলিং চক্র / সময়সীমা নির্বাচন করুন' : 'Select Billing Duration'}
+          <div className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[var(--brand)]/10 text-[var(--brand)] flex items-center justify-center shrink-0">
+                <Clock size={20} />
               </div>
-              <div className="text-[0.6875rem] text-[var(--text-muted)]">
-                {isBn ? 'দীর্ঘমেয়াদী প্ল্যানে সর্বোচ্চ ১৫% পর্যন্ত ছাড় উপভোগ করুন' : 'Save up to 15% with longer subscription plans'}
+              <div>
+                <h5 className="text-[0.875rem] font-bold text-[var(--text-primary)] m-0">
+                  {isBn ? 'বিলিং চক্র / সময়সীমা নির্বাচন করুন' : 'Select Billing Duration'}
+                </h5>
+                <p className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5 mb-0">
+                  {isBn
+                    ? 'দীর্ঘমেয়াদে সাবস্ক্রিপশন নিলে সর্বোচ্চ ১৫% পর্যন্ত ডিসকাউন্ট সাশ্রয় করুন'
+                    : 'Save up to 15% with longer subscription plans'}
+                </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-2 shrink-0">
-              {DURATION_OPTIONS.map((opt) => (
-                <button
-                  key={opt.months}
-                  type="button"
-                  onClick={() => setSelectedMonths(opt.months)}
-                  className={`py-2 px-3 rounded-xl text-center border transition-all cursor-pointer ${
-                    selectedMonths === opt.months
-                      ? 'border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)] font-bold shadow-xs'
-                      : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-medium hover:border-[var(--brand)]/40'
-                  }`}
-                >
-                  <div className="text-[0.75rem]">{isBn ? opt.labelBn : opt.labelEn}</div>
-                  {opt.discount > 0 ? (
-                    <div className="text-[0.5625rem] text-green-500 font-bold mt-0.5">
-                      {opt.discount}% {isBn ? 'ছাড়' : 'off'}
-                    </div>
-                  ) : (
-                    <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
-                      {isBn ? 'রেগুলার' : 'Regular'}
-                    </div>
-                  )}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0 w-full md:w-auto">
+              {DURATION_OPTIONS.map((opt) => {
+                const isDurSelected = selectedMonths === opt.months
+                return (
+                  <button
+                    key={opt.months}
+                    type="button"
+                    onClick={() => setSelectedMonths(opt.months)}
+                    className={`px-3.5 py-2.5 rounded-xl text-center border-2 transition-all cursor-pointer flex flex-col items-center justify-center relative ${
+                      isDurSelected
+                        ? 'border-[var(--brand)] bg-[var(--brand)] text-white font-bold shadow-sm -translate-y-0.5'
+                        : 'border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--brand)]/40 font-semibold'
+                    }`}
+                  >
+                    <span className="text-[0.8125rem] leading-tight">
+                      {isBn ? opt.labelBn : opt.labelEn}
+                    </span>
+                    {opt.discount > 0 ? (
+                      <span
+                        className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-md mt-1 ${
+                          isDurSelected
+                            ? 'bg-white/20 text-white'
+                            : 'bg-green-500/15 text-green-600 dark:text-green-400'
+                        }`}
+                      >
+                        {opt.discount}% {isBn ? 'ছাড়' : 'off'}
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-[10px] font-medium mt-1 ${
+                          isDurSelected ? 'text-white/80' : 'text-[var(--text-muted)]'
+                        }`}
+                      >
+                        {isBn ? 'রেগুলার' : 'Regular'}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
