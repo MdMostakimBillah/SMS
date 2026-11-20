@@ -12,8 +12,6 @@ import {
   Cloud,
   Download,
   Upload,
-  LayoutGrid,
-  List,
   X,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
@@ -72,7 +70,6 @@ export default function NoticeBoardPage() {
   const [filterCategory, setFilterCategory] = useState('')
   const [filterTarget, setFilterTarget] = useState('')
   const [filterPriority, setFilterPriority] = useState('')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const [showModal, setShowModal] = useState(false)
   const [editItem, setEditItem] = useState<Notice | null>(null)
@@ -593,41 +590,15 @@ export default function NoticeBoardPage() {
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
-            className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors"
+            className="p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors ml-auto sm:ml-0"
             title={bn ? 'ফিল্টার মুছুন' : 'Clear filters'}
           >
             <X size={15} />
           </button>
         )}
-
-        {/* View Mode Toggle */}
-        <div className="flex items-center rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] p-0.5 ml-auto">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`p-1.5 rounded-lg transition-colors ${
-              viewMode === 'grid'
-                ? 'bg-[var(--bg-primary)] text-[var(--brand)] shadow-xs'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            }`}
-            title={bn ? 'গ্রিড ভিউ' : 'Grid view'}
-          >
-            <LayoutGrid size={15} />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-1.5 rounded-lg transition-colors ${
-              viewMode === 'list'
-                ? 'bg-[var(--bg-primary)] text-[var(--brand)] shadow-xs'
-                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            }`}
-            title={bn ? 'লিস্ট ভিউ' : 'List view'}
-          >
-            <List size={15} />
-          </button>
-        </div>
       </div>
 
-      {/* Notice List */}
+      {/* Notice List (Full-width cards identical to SMS and Notifications) */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-[var(--text-muted)] rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg-secondary)]/30">
           <Megaphone size={48} className="mb-3 opacity-25" />
@@ -653,13 +624,7 @@ export default function NoticeBoardPage() {
           )}
         </div>
       ) : (
-        <div
-          className={
-            viewMode === 'grid'
-              ? 'grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-              : 'space-y-2'
-          }
-        >
+        <div className="space-y-2 w-full">
           {filtered.map((notice) => (
             <NoticeCard
               key={notice.id}
@@ -669,7 +634,6 @@ export default function NoticeBoardPage() {
               canEdit={canEdit('notice')}
               canDelete={canDelete('notice')}
               bn={bn}
-              viewMode={viewMode}
               onClick={() => setViewNotice(notice)}
               onTogglePin={(id) => {
                 togglePin(id).catch((err) => reportError(err, 'পিন পরিবর্তন ব্যর্থ', 'Could not toggle pin'))
