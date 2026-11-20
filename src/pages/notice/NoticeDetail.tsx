@@ -1,4 +1,5 @@
-import { ArrowLeft, Pin, PinOff, Edit3, Trash2, Download, Calendar, Users, Tag } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowLeft, Pin, PinOff, Edit3, Trash2, Download, Calendar, Users, Tag, Copy, Check, FileJson } from 'lucide-react'
 import { openPrintWindow } from '@/lib/pdf'
 import { getPDFBranding, pdfLogoHTML, pdfFooterHTML } from '@/lib/pdfBranding'
 import { BrandLogo } from '@/components/ui/BrandLogo'
@@ -40,6 +41,26 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
   const displayTitle = (bn ? notice.titleBn || notice.title : notice.title || notice.titleBn) || ''
   const displayAuthor = (bn ? notice.authorBn || notice.author : notice.author || notice.authorBn) || ''
   const displayContent = (bn ? notice.contentBn || notice.content : notice.content || notice.contentBn) || ''
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    const plainText = displayContent.replace(/<[^>]*>/g, '').trim()
+    const shareText = `${displayTitle}\n\n${plainText}\n\n${schoolName} · ${displayAuthor}`
+    navigator.clipboard.writeText(shareText).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  const handleDownloadJSON = () => {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(notice, null, 2))
+    const a = document.createElement('a')
+    a.href = dataStr
+    a.download = `notice-${notice.id}.json`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+  }
 
   const handleDownloadPDF = () => {
     const brand = getPDFBranding()
@@ -218,8 +239,8 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
         </div>
 
         {/* Action bar */}
-        <div className="relative flex items-center justify-between px-4 py-3 border-t border-[var(--border)] bg-[var(--bg-secondary)]/50">
-          <div className="flex items-center gap-1">
+        <div className="relative flex items-center justify-between px-4 py-3 border-t border-[var(--border)] bg-[var(--bg-secondary)]/50 flex-wrap gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {canEditNotice && (
               <button
                 onClick={() => onTogglePin(notice.id)}
@@ -249,13 +270,32 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
               </button>
             )}
           </div>
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity"
-          >
-            <Download size={14} />
-            PDF
-          </button>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+              title={bn ? 'টেক্সট কপি করুন' : 'Copy Text'}
+            >
+              {copied ? <Check size={14} className="text-[var(--green,green)]" /> : <Copy size={14} />}
+              {copied ? (bn ? 'কপি হয়েছে!' : 'Copied!') : (bn ? 'কপি' : 'Copy')}
+            </button>
+            <button
+              onClick={handleDownloadJSON}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+              title={bn ? 'লোকাল পিসির জন্য JSON ডাউনলোড করুন' : 'Download JSON for Local PC'}
+            >
+              <FileJson size={14} />
+              JSON
+            </button>
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[0.75rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity"
+            >
+              <Download size={14} />
+              PDF
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1318,7 +1318,10 @@ export interface NoticeImportResult {
  * conflicts are reported — nothing is overwritten or duplicated).
  */
 export const noticesApi = {
-  list: () => apiRequest<{ data: NoticeData[]; total: number }>('/api/notices'),
+  list: (params?: { schoolId?: string }) => {
+    const query = params?.schoolId ? `?schoolId=${encodeURIComponent(params.schoolId)}` : ''
+    return apiRequest<{ data: NoticeData[]; total: number }>(`/api/notices${query}`)
+  },
 
   create: (data: NoticeInput) => apiRequest<NoticeData>('/api/notices', { method: 'POST', body: data }),
 

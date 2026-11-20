@@ -77,7 +77,7 @@ export function keyMatchesInstitution(key: string, slug: string, userId?: string
   if (BLOCKED_KEYS.has(key)) return false
   if (userId && key.endsWith(`_${slug}_${userId}`)) return true
   if (key.endsWith(`_${slug}`)) return true
-  if (key === 'edutech-classes' || key === 'edutech-teachers' || key === 'edutech-admissions' || key === 'edutech-fees') {
+  if (key === 'edutech-classes' || key === 'edutech-teachers' || key === 'edutech-admissions' || key === 'edutech-fees' || key === 'edutech-notices') {
     return true
   }
   return false
@@ -109,6 +109,9 @@ export function keyToVaultPath(key: string, fallbackSlug?: string | null): strin
   }
   if (key === 'edutech-fees' || key === 'edutech_fees') {
     return effSlug ? `${effSlug}/fees.json` : 'fees.json'
+  }
+  if (key === 'edutech-notices' || key === 'edutech_notices') {
+    return effSlug ? `${effSlug}/notices.json` : 'notices.json'
   }
   return null
 }
@@ -194,6 +197,7 @@ export function vaultPathToKey(
     else if (base === 'assignments' || base === 'assignment' || base === 'submissions') storeBase = 'assignments'
     else if (base === 'online' || base === 'online_classes' || base === 'online-classes') storeBase = 'online'
     else if (base === 'notifications' || base === 'notification_entries') storeBase = 'notifications'
+    else if (base === 'notices' || base === 'notice') storeBase = 'notices'
 
     return userId ? `edutech-${storeBase}_${slug}_${userId}` : `edutech-${storeBase}_${slug}`
   }

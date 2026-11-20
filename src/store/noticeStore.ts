@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getSlug } from '@/lib/storage'
+import { flushVaultWrites } from '@/lib/vault/vault'
+import { isLocalComputerMode } from '@/lib/storageMode'
+import { noticesApi, type NoticeImportResult } from '@/lib/api'
+import { noticeToApiInput, serverNoticeToLocal, mergeCategories, localNoticeToImportItem } from '@/lib/noticeMigration'
 
 export type NoticeTarget = 'all' | 'students' | 'teachers' | 'parents'
 export type NoticePriority = 'low' | 'medium' | 'high' | 'urgent'
@@ -31,7 +35,7 @@ export function noticeId(): string {
 
 const DEFAULT_CATEGORIES = ['General', 'Academic', 'Events', 'Emergency', 'Holiday']
 
-const SEED_NOTICES: Notice[] = [
+export const SEED_NOTICES: Notice[] = [
   {
     id: 'NOTICE-SEED-001',
     title: 'Annual Sports Day 2026',
@@ -349,43 +353,330 @@ const SEED_NOTICES: Notice[] = [
   },
 ]
 
-interface NoticeState {
+export interface NoticeState {
   notices: Notice[]
   categories: string[]
-  addNotice: (n: Notice) => void
-  updateNotice: (id: string, data: Partial<Notice>) => void
-  deleteNotice: (id: string) => void
-  togglePin: (id: string) => void
-  toggleActive: (id: string) => void
-  addCategory: (name: string) => void
-  removeCategory: (name: string) => void
+  serverSynced: boolean
+  syncing: boolean
+  syncError: string | null
+  lastSyncAt: number | null
+  importCandidate: boolean
+  importing: boolean
+
+  // Sync methods
+  syncFromServer: (schoolIdOrSlug?: string) => Promise<void>
+  syncToServer: () => Promise<void>
+
+  // CRUD actions (optimistic update + local storage + vault flush + backend API sync)
+  addNotice: (n: Omit<Notice, 'id'> | Notice) => Promise<Notice>
+  updateNotice: (id: string, data: Partial<Notice>) => Promise<void>
+  deleteNotice: (id: string) => Promise<void>
+  togglePin: (id: string) => Promise<void>
+  toggleActive: (id: string) => Promise<void>
+
+  // Category management
+  addCategory: (name: string) => Promise<void>
+  removeCategory: (name: string) => Promise<void>
+
+  // One-time legacy migration
+  importLocal: () => Promise<NoticeImportResult>
+  dismissImport: () => void
+
+  // Helper
+  setNotices: (notices: Notice[]) => void
+}
+
+function onStateMutated(get: () => NoticeState) {
+  const state = get()
+  flushPendingWrites()
+  const slug = getSlug()
+  if (slug) {
+    try {
+      localStorage.setItem(
+        `edutech-notices_${slug}`,
+        JSON.stringify({
+          state: {
+            notices: state.notices,
+            categories: state.categories,
+            serverSynced: state.serverSynced,
+          },
+          version: 4,
+        })
+      )
+    } catch {
+      /* ignore */
+    }
+  }
+  void flushVaultWrites()
 }
 
 export const useNoticeStore = create<NoticeState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       notices: SEED_NOTICES,
       categories: DEFAULT_CATEGORIES,
+      serverSynced: false,
+      syncing: false,
+      syncError: null,
+      lastSyncAt: null,
+      importCandidate: false,
+      importing: false,
 
-      addNotice: (n) => set((state) => ({ notices: [n, ...state.notices] })),
-      updateNotice: (id, data) =>
-        set((state) => ({ notices: state.notices.map((n) => (n.id === id ? { ...n, ...data } : n)) })),
-      deleteNotice: (id) =>
-        set((state) => ({ notices: state.notices.filter((n) => n.id !== id) })),
-      togglePin: (id) =>
-        set((state) => ({ notices: state.notices.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n)) })),
-      toggleActive: (id) =>
-        set((state) => ({ notices: state.notices.map((n) => (n.id === id ? { ...n, isActive: !n.isActive } : n)) })),
+      setNotices: (notices) => {
+        set({ notices })
+        onStateMutated(get)
+      },
 
-      addCategory: (name) =>
+      dismissImport: () => set({ importCandidate: false }),
+
+      syncFromServer: async (schoolIdOrSlug?: string) => {
+        const slug = schoolIdOrSlug || getSlug()
+
+        // 1. Read from local vault / namespaced storage if present
+        if (slug) {
+          try {
+            const localRaw = localStorage.getItem(`edutech-notices_${slug}`)
+            if (localRaw) {
+              const parsed = JSON.parse(localRaw)
+              const localData = parsed?.state ?? parsed
+              if (Array.isArray(localData?.notices) && localData.notices.length > 0) {
+                set({
+                  notices: localData.notices,
+                  categories: Array.isArray(localData.categories) ? localData.categories : get().categories,
+                })
+              }
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+
+        // Local computer mode uses local storage and vault exclusively
+        if (isLocalComputerMode()) {
+          set({
+            serverSynced: true,
+            syncing: false,
+            syncError: null,
+            lastSyncAt: Date.now(),
+          })
+          onStateMutated(get)
+          return
+        }
+
+        // Cloud / VPS mode: fetch from backend API
+        set({ syncing: true, syncError: null })
+        try {
+          const [listRes, catRes] = await Promise.all([
+            noticesApi.list(schoolIdOrSlug ? { schoolId: schoolIdOrSlug } : undefined),
+            noticesApi.categories(),
+          ])
+
+          const serverNotices = listRes.data.map(serverNoticeToLocal)
+          const serverCategories = mergeCategories(catRes.data)
+
+          const currentNotices = get().notices
+          const shouldOfferImport =
+            serverNotices.length === 0 &&
+            currentNotices.length > 0 &&
+            !currentNotices.every((n) => n.id.startsWith('NOTICE-SEED-'))
+
+          set({
+            notices: serverNotices.length > 0 ? serverNotices : currentNotices,
+            categories: serverCategories,
+            serverSynced: true,
+            syncing: false,
+            syncError: null,
+            lastSyncAt: Date.now(),
+            importCandidate: shouldOfferImport,
+          })
+
+          onStateMutated(get)
+        } catch (err: any) {
+          // Keep existing local state on network error
+          set({
+            syncing: false,
+            syncError: err?.message || 'Could not sync notices with server',
+          })
+        }
+      },
+
+      syncToServer: async () => {
+        if (isLocalComputerMode()) return
+        set({ syncing: true, syncError: null })
+        try {
+          const state = get()
+          // Re-fetch to merge state
+          const [listRes] = await Promise.all([noticesApi.list()])
+          const serverIds = new Set(listRes.data.map((r) => r.id))
+          for (const localN of state.notices) {
+            if (!serverIds.has(localN.id)) {
+              try {
+                await noticesApi.create(noticeToApiInput(localN))
+              } catch {
+                /* ignore single item conflict */
+              }
+            }
+          }
+          await get().syncFromServer()
+          set({ syncing: false, serverSynced: true, syncError: null })
+        } catch (err: any) {
+          set({ syncing: false, syncError: err?.message || 'Failed to sync notices to server' })
+        }
+      },
+
+      addNotice: async (input) => {
+        const newId = 'id' in input && input.id ? input.id : noticeId()
+        const fullNotice: Notice = {
+          ...input,
+          id: newId,
+          titleBn: input.titleBn ?? input.title,
+          contentBn: input.contentBn ?? input.content,
+          author: input.author || 'Admin',
+          authorBn: input.authorBn || input.author || 'অ্যাডমিন',
+          target: input.target || 'all',
+          priority: input.priority || 'medium',
+          category: input.category || 'General',
+          pinned: input.pinned ?? false,
+          isActive: input.isActive ?? true,
+          publishedAt: input.publishedAt || new Date().toISOString(),
+          expiresAt: input.expiresAt || '',
+        }
+
+        set((state) => ({ notices: [fullNotice, ...state.notices] }))
+        onStateMutated(get)
+
+        if (!isLocalComputerMode()) {
+          try {
+            const created = await noticesApi.create(noticeToApiInput(fullNotice))
+            if (created && created.id && created.id !== fullNotice.id) {
+              const updated = serverNoticeToLocal(created)
+              set((state) => ({
+                notices: state.notices.map((n) => (n.id === fullNotice.id ? updated : n)),
+              }))
+              onStateMutated(get)
+              return updated
+            }
+          } catch (err) {
+            console.warn('[NoticeStore] Failed to save notice to server:', err)
+          }
+        }
+        return fullNotice
+      },
+
+      updateNotice: async (id, data) => {
         set((state) => ({
-          categories: state.categories.includes(name) ? state.categories : [...state.categories, name],
-        })),
-      removeCategory: (name) =>
+          notices: state.notices.map((n) => (n.id === id ? { ...n, ...data } : n)),
+        }))
+        onStateMutated(get)
+
+        if (!isLocalComputerMode()) {
+          try {
+            const current = get().notices.find((n) => n.id === id)
+            if (current) {
+              await noticesApi.update(id, noticeToApiInput(current))
+            }
+          } catch (err) {
+            console.warn('[NoticeStore] Failed to update notice on server:', err)
+          }
+        }
+      },
+
+      deleteNotice: async (id) => {
+        set((state) => ({ notices: state.notices.filter((n) => n.id !== id) }))
+        onStateMutated(get)
+
+        if (!isLocalComputerMode()) {
+          try {
+            await noticesApi.remove(id)
+          } catch (err) {
+            console.warn('[NoticeStore] Failed to delete notice on server:', err)
+          }
+        }
+      },
+
+      togglePin: async (id) => {
+        const current = get().notices.find((n) => n.id === id)
+        if (!current) return
+        const newPinned = !current.pinned
+        set((state) => ({
+          notices: state.notices.map((n) => (n.id === id ? { ...n, pinned: newPinned } : n)),
+        }))
+        onStateMutated(get)
+
+        if (!isLocalComputerMode()) {
+          try {
+            await noticesApi.update(id, { pinned: newPinned })
+          } catch (err) {
+            console.warn('[NoticeStore] Failed to toggle pin on server:', err)
+          }
+        }
+      },
+
+      toggleActive: async (id) => {
+        const current = get().notices.find((n) => n.id === id)
+        if (!current) return
+        const newActive = !current.isActive
+        set((state) => ({
+          notices: state.notices.map((n) => (n.id === id ? { ...n, isActive: newActive } : n)),
+        }))
+        onStateMutated(get)
+
+        if (!isLocalComputerMode()) {
+          try {
+            await noticesApi.update(id, { isActive: newActive })
+          } catch (err) {
+            console.warn('[NoticeStore] Failed to toggle active on server:', err)
+          }
+        }
+      },
+
+      addCategory: async (name) => {
+        const trimmed = name.trim()
+        if (!trimmed) return
+        set((state) => ({
+          categories: state.categories.includes(trimmed) ? state.categories : [...state.categories, trimmed],
+        }))
+        onStateMutated(get)
+
+        if (!isLocalComputerMode()) {
+          try {
+            await noticesApi.addCategory(trimmed)
+          } catch (err) {
+            console.warn('[NoticeStore] Failed to add category on server:', err)
+          }
+        }
+      },
+
+      removeCategory: async (name) => {
         set((state) => ({
           categories: state.categories.filter((c) => c !== name),
           notices: state.notices.map((n) => (n.category === name ? { ...n, category: 'General' } : n)),
-        })),
+        }))
+        onStateMutated(get)
+
+        if (!isLocalComputerMode()) {
+          try {
+            await noticesApi.removeCategory(name)
+          } catch (err) {
+            console.warn('[NoticeStore] Failed to remove category on server:', err)
+          }
+        }
+      },
+
+      importLocal: async () => {
+        set({ importing: true })
+        try {
+          const legacyNotices = get().notices
+          const payload = legacyNotices.map(localNoticeToImportItem)
+          const result = await noticesApi.importLocal(payload)
+          await get().syncFromServer()
+          set({ importing: false, importCandidate: false })
+          return result
+        } catch (err) {
+          set({ importing: false })
+          throw err
+        }
+      },
     }),
     {
       name: 'edutech-notices',
@@ -406,5 +697,19 @@ export const useNoticeStore = create<NoticeState>()(
 )
 
 registerStoreReset(() => {
-  useNoticeStore.setState({ notices: [], categories: DEFAULT_CATEGORIES })
+  useNoticeStore.setState({
+    notices: [],
+    categories: DEFAULT_CATEGORIES,
+    serverSynced: false,
+    syncing: false,
+    syncError: null,
+    importCandidate: false,
+    importing: false,
+  })
+})
+
+registerStoreLoad(async () => {
+  const slug = getSlug()
+  if (!slug) return
+  await useNoticeStore.getState().syncFromServer(slug)
 })

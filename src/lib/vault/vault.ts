@@ -245,6 +245,7 @@ export interface DomainCounts {
   routes: number
   assignments: number
   rooms: number
+  notices: number
 }
 
 export function extractDomainCounts(text: string, path = ''): DomainCounts {
@@ -266,6 +267,7 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
     routes: -1,
     assignments: -1,
     rooms: -1,
+    notices: -1,
   }
   if (!text || !text.trim()) return counts
 
@@ -292,6 +294,7 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       else if (base.includes('route')) counts.routes = state.length
       else if (base.includes('assignment')) counts.assignments = state.length
       else if (base.includes('room')) counts.rooms = state.length
+      else if (base.includes('notice')) counts.notices = state.length
       return counts
     }
 
@@ -331,6 +334,7 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       if (Array.isArray(state.routes)) counts.routes = state.routes.length
       if (Array.isArray(state.assignments)) counts.assignments = state.assignments.length
       if (Array.isArray(state.rooms)) counts.rooms = state.rooms.length
+      if (Array.isArray(state.notices)) counts.notices = state.notices.length
     }
   } catch {
     /* ignore parse error */
@@ -414,6 +418,9 @@ export function shouldBlockDomainOverwrite(subPath: string, incomingText: string
   }
   if (diskCounts.rooms > 0 && inCounts.rooms === 0) {
     return { blocked: true, reason: `rooms on disk (${diskCounts.rooms}) vs incoming (0)` }
+  }
+  if (diskCounts.notices > 0 && inCounts.notices === 0) {
+    return { blocked: true, reason: `notices on disk (${diskCounts.notices}) vs incoming (0)` }
   }
 
   const inItemCount = getItemCount(incomingText)
@@ -884,7 +891,7 @@ async function hydrateFromVault(): Promise<number> {
   }
 
   // Load primary store files first so individual slice files cleanly overlay on top
-  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json', 'transport.json', 'hostel.json', 'others-income.json', 'expenses.json', 'assignments.json', 'notifications.json'])
+  const PRIMARY_SLOTS = new Set(['teachers.json', 'classes.json', 'students.json', 'admissions.json', 'fees.json', 'store.json', 'transport.json', 'hostel.json', 'others-income.json', 'expenses.json', 'assignments.json', 'notifications.json', 'notices.json'])
   const sortedEntries = Array.from(jsonGroups.entries()).sort(([slotA], [slotB]) => {
     const isPriA = PRIMARY_SLOTS.has(slotA) ? 0 : 1
     const isPriB = PRIMARY_SLOTS.has(slotB) ? 0 : 1
@@ -1616,6 +1623,13 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       }
     } catch { /* ignore */ }
   }
+
+  if (path === `${slug}/notices.json` || path === 'notices.json' || path.endsWith('/notices.json')) {
+    await writeVaultFile('notices.json', prettifyJson(rawJson))
+    if (slug && path !== `${slug}/notices.json`) {
+      await writeVaultFile(`${slug}/notices.json`, prettifyJson(rawJson))
+    }
+  }
 }
 
 async function seedVaultFromStorage(): Promise<number> {
@@ -1669,6 +1683,33 @@ async function seedVaultFromStorage(): Promise<number> {
           await writeVaultFile(path, prettifyJson(raw))
           await syncIndividualDomainFiles(slug, path, raw)
           await exportStoreImages(slug, path, raw)
+          seeded++
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Ensure notice domain files are seeded if present in store
+  const noticeKey = slug ? `edutech-notices_${slug}` : 'edutech-notices'
+  if (!localStorage.getItem(noticeKey)) {
+    try {
+      const { useNoticeStore } = await import('@/store/noticeStore')
+      const nState = useNoticeStore.getState()
+      if (nState && nState.notices?.length > 0) {
+        const raw = JSON.stringify({
+          state: {
+            notices: nState.notices,
+            categories: nState.categories,
+          },
+          version: 4,
+        })
+        localStorage.setItem(noticeKey, raw)
+        const path = keyToVaultPath(noticeKey, slug)
+        if (path) {
+          await writeVaultFile(path, prettifyJson(raw))
+          await syncIndividualDomainFiles(slug, path, raw)
           seeded++
         }
       }
