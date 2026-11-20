@@ -3,6 +3,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, generateDarkColors } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
+import { useNotificationStore } from '@/store/notificationStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { useThemeColors, applyThemeColors } from '@/hooks/useThemeColors'
 import { useSuperAdminStore } from '@/store/superAdminStore'
@@ -105,6 +106,7 @@ export default function AppLayout() {
             applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
             useClassStore.getState().syncFromServer(targetSlug).catch(() => {})
             useFeeStore.getState().syncFromServer(targetSlug).catch(() => {})
+            useNotificationStore.getState().syncFromServer(targetSlug).catch(() => {})
           }
         }).catch(() => {})
       } else {
@@ -113,6 +115,7 @@ export default function AppLayout() {
         if (lastSyncedKeyRef.current !== syncKey) {
           lastSyncedKeyRef.current = syncKey
           setSlug(platformSlug)
+          useNotificationStore.getState().syncFromServer('super-admin').catch(() => {})
         }
       }
       return
@@ -154,6 +157,7 @@ export default function AppLayout() {
       applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
       useClassStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
       useFeeStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
+      useNotificationStore.getState().syncFromServer(targetSlug || user.school.id).catch(() => {})
     } else {
       if (isLocalComputerMode()) return
       const pathSlug =
@@ -183,6 +187,7 @@ export default function AppLayout() {
             applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
             useClassStore.getState().syncFromServer(pathSlug).catch(() => {})
             useFeeStore.getState().syncFromServer(pathSlug).catch(() => {})
+            useNotificationStore.getState().syncFromServer(pathSlug).catch(() => {})
           }
         }).catch(() => {})
       }

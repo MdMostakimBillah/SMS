@@ -330,4 +330,50 @@ describe('notificationStore', () => {
     // Non-targeted school should NOT match
     expect(isNotificationForSchool(notif, { slug: 'other-school', name: 'Other High School' })).toBe(false)
   })
+
+  it('broadcastToAll notification is always visible to any institution', () => {
+    const broadcastNotif: Notification = {
+      id: 'NTF-BROADCAST-ALL',
+      title: 'Global Platform Update',
+      titleBn: 'সার্বিক প্ল্যাটফর্ম আপডেট',
+      message: 'All schools receive this immediately',
+      messageBn: 'সব প্রতিষ্ঠান এটি দেখতে পাবে',
+      type: 'info',
+      read: false,
+      broadcastToAll: true,
+      targetType: 'all',
+      createdAt: new Date().toISOString(),
+    }
+
+    expect(isNotificationForSchool(broadcastNotif, { slug: 'school-a', name: 'School A' })).toBe(true)
+    expect(isNotificationForSchool(broadcastNotif, { slug: 'school-b', name: 'School B' })).toBe(true)
+    expect(isNotificationForSchool(broadcastNotif, { slug: 'daffodil', name: 'Daffodil Model' })).toBe(true)
+  })
+
+  it('broadcastNotification routes broadcastToAll to all existing and known institution namespaces', async () => {
+    localStorage.setItem('edutech-notifications_school-x', JSON.stringify({ state: { notifications: [] }, version: 2 }))
+    localStorage.setItem('edutech-notifications_school-y', JSON.stringify({ state: { notifications: [] }, version: 2 }))
+
+    const broadcastNotif: Notification = {
+      id: 'NTF-GLOBAL-BROADCAST',
+      title: 'Global Emergency Maintenance',
+      titleBn: 'জরুরি রক্ষণাবেক্ষণ',
+      message: 'Scheduled tonight',
+      messageBn: 'আজ রাতে',
+      type: 'error',
+      read: false,
+      broadcastToAll: true,
+      targetType: 'all',
+      createdAt: new Date().toISOString(),
+    }
+
+    vi.spyOn(notificationsApi, 'broadcast').mockResolvedValue({ success: true } as any)
+    await useNotificationStore.getState().broadcastNotification(broadcastNotif)
+
+    const rawX = JSON.parse(localStorage.getItem('edutech-notifications_school-x') || '{}')
+    const rawY = JSON.parse(localStorage.getItem('edutech-notifications_school-y') || '{}')
+
+    expect(rawX.state.notifications.some((n: any) => n.id === 'NTF-GLOBAL-BROADCAST')).toBe(true)
+    expect(rawY.state.notifications.some((n: any) => n.id === 'NTF-GLOBAL-BROADCAST')).toBe(true)
+  })
 })

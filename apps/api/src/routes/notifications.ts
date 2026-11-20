@@ -18,6 +18,30 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
         notificationsData: true,
       })
       if (!school) {
+        const authReq = req as AuthenticatedRequest
+        const requestedSlug = ((req.query.slug || req.query.domain) as string | undefined)?.trim()
+        if (authReq.userRole === 'super_admin' || requestedSlug === 'super-admin' || requestedSlug === 'edutech') {
+          const allSchools = await prisma.school.findMany({
+            where: { status: 'active' },
+            select: { notificationsData: true },
+          })
+          const notifMap = new Map<string, any>()
+          for (const s of allSchools) {
+            try {
+              if (s.notificationsData) {
+                const raw = typeof s.notificationsData === 'string' ? JSON.parse(s.notificationsData) : s.notificationsData
+                const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.notifications) ? raw.notifications : [])
+                arr.forEach((n: any) => {
+                  if (n?.id) notifMap.set(n.id, n)
+                })
+              }
+            } catch { /* ignore */ }
+          }
+          return res.json({
+            storageMode: 'cloud',
+            notifications: Array.from(notifMap.values()),
+          })
+        }
         return res.status(404).json({ error: 'Institution not found' })
       }
 

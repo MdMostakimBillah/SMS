@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites } from '@/lib/storage'
+import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getStorageKey } from '@/lib/storage'
 import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { isLocalComputerMode } from '@/lib/storageMode'
@@ -42,6 +42,36 @@ export interface SchoolIdentifiers {
 }
 
 /**
+ * Returns true if the active browser session is operating as the Super Admin platform
+ * (not viewing or impersonating a specific institution).
+ */
+export function isSuperAdminPlatform(): boolean {
+  if (typeof window === 'undefined') return false
+  const viewingId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null
+  if (viewingId) return false
+  try {
+    const viewingStore = useSuperAdminStore.getState?.()?.viewingInstitutionId
+    if (viewingStore) return false
+  } catch { /* ignore */ }
+
+  const role = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_user_role') : null
+  if (role === 'super_admin') return true
+
+  try {
+    const raw = localStorage.getItem('edutech_auth_user')
+    if (raw) {
+      const u = JSON.parse(raw)
+      if (u?.role === 'super_admin') return true
+    }
+  } catch { /* ignore */ }
+
+  const path = typeof window !== 'undefined' ? (window.location?.pathname || '') : ''
+  if (path.startsWith('/super-admin')) return true
+
+  return false
+}
+
+/**
  * Resolves all identifiers and aliases for the active institution across all
  * memory stores, session keys, user auth, and persistent local storage.
  */
@@ -50,6 +80,29 @@ export function resolveCurrentSchoolIdentifiers(user?: any): SchoolIdentifiers {
   const rawValues: (string | null | undefined)[] = []
 
   if (typeof window !== 'undefined') {
+    // 0. Viewing institution lookup
+    const viewingId =
+      (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null) ||
+      useSuperAdminStore.getState?.()?.viewingInstitutionId
+    if (viewingId) {
+      rawValues.push(viewingId)
+      try {
+        const insts = useSuperAdminStore.getState?.()?.institutions || []
+        const found = insts.find((i: any) => i.id === viewingId || i.slug === viewingId)
+        if (found) {
+          rawValues.push(
+            found.id,
+            found.slug,
+            found.subdomain,
+            found.name,
+            found.nameBn,
+            found.eiin,
+            (found as any).domain
+          )
+        }
+      } catch { /* ignore */ }
+    }
+
     // 1. Session & Local Storage keys
     rawValues.push(
       sessionStorage.getItem('edutech_inst_slug'),
@@ -426,10 +479,8 @@ export function dispatchRealtimeNotification(n: Notification) {
 export function handleIncomingRealtimeNotification(n: Notification) {
   try {
     if (typeof window === 'undefined' || !n) return
+    const isSuperAdmin = isSuperAdminPlatform()
     const idents = resolveCurrentSchoolIdentifiers()
-    const isSuperAdmin =
-      idents.slug === 'super-admin' ||
-      (!idents.slug && localStorage.getItem('edutech_auth_role') === 'super_admin')
 
     if (isSuperAdmin || isNotificationForSchool(n, idents)) {
       const state = useNotificationStore.getState()
@@ -437,6 +488,11 @@ export function handleIncomingRealtimeNotification(n: Notification) {
       if (!exists) {
         useNotificationStore.setState({
           notifications: [n, ...state.notifications],
+        })
+        onStateMutated(useNotificationStore.getState)
+      } else {
+        useNotificationStore.setState({
+          notifications: state.notifications.map((item) => (item.id === n.id ? { ...item, ...n } : item)),
         })
         onStateMutated(useNotificationStore.getState)
       }
@@ -538,16 +594,22 @@ export const useNotificationStore = create<NotificationState>()(
       syncError: null,
 
       syncFromServer: async (slugOrId?: string) => {
-        const slug =
+        const isSuperAdmin = isSuperAdminPlatform()
+        const targetSlug =
           slugOrId ||
           (typeof window !== 'undefined'
             ? sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
-            : undefined)
+            : undefined) ||
+          undefined
 
         // Cross-namespace sync from master stores for institution contexts
-        if (typeof window !== 'undefined' && slug && slug !== 'super-admin') {
+        if (typeof window !== 'undefined' && !isSuperAdmin) {
           try {
-            const rootKeys = ['edutech-notifications', 'edutech-notifications_super-admin']
+            const rootKeys = [
+              'edutech-notifications',
+              'edutech-notifications_super-admin',
+              'edutech-notifications_edutech',
+            ]
             const masterNotifs: Notification[] = []
             for (const rk of rootKeys) {
               const rootRaw = localStorage.getItem(rk)
@@ -585,7 +647,7 @@ export const useNotificationStore = create<NotificationState>()(
         // 2. Fetch from backend API (even if in local_computer mode, so institutions receive super admin notices!)
         set({ syncing: true, syncError: null })
         try {
-          const res = await notificationsApi.get(slugOrId)
+          const res = await notificationsApi.get(isSuperAdmin ? 'super-admin' : (targetSlug || undefined))
           if (res) {
             const serverNotifs = Array.isArray(res.notifications) ? res.notifications : []
             const state = get()
@@ -611,7 +673,7 @@ export const useNotificationStore = create<NotificationState>()(
             } else if (state.notifications.length > 0 && !isLocalComputerMode()) {
               await notificationsApi.update({
                 notifications: state.notifications,
-                schoolId: slugOrId,
+                schoolId: targetSlug || undefined,
               })
               set({ serverSynced: true, syncing: false, syncError: null })
             } else {
@@ -735,10 +797,15 @@ export const useNotificationStore = create<NotificationState>()(
         set((state) => ({ notifications: [n, ...state.notifications.filter((item) => item.id !== n.id)] }))
         onStateMutated(get)
 
-        // 2. Always persist into root stores: edutech-notifications and edutech-notifications_super-admin
+        // 2. Always persist into root stores: edutech-notifications and edutech-notifications_super-admin and edutech-notifications_edutech
         try {
           if (typeof window !== 'undefined') {
-            const rootKeys = ['edutech-notifications', 'edutech-notifications_super-admin']
+            const rootKeys = [
+              'edutech-notifications',
+              'edutech-notifications_super-admin',
+              'edutech-notifications_edutech',
+              getStorageKey('edutech-notifications'),
+            ]
             for (const rk of rootKeys) {
               const raw = localStorage.getItem(rk)
               let existingState: any = { notifications: [] }
@@ -769,6 +836,11 @@ export const useNotificationStore = create<NotificationState>()(
             // Gather all available institutions from superAdminStore and localStorage
             const allInstList: any[] = []
             try {
+              const inMemory = useSuperAdminStore.getState?.()?.institutions
+              if (Array.isArray(inMemory)) allInstList.push(...inMemory)
+            } catch { /* ignore */ }
+
+            try {
               const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
               if (rawSuperAdmin) {
                 const parsed = JSON.parse(rawSuperAdmin)
@@ -788,7 +860,7 @@ export const useNotificationStore = create<NotificationState>()(
             if (isTargeted) {
               // 1. Add raw target identifiers directly (and without 'inst-', 'sch_')
               for (const t of n.targetInstitutions || []) {
-                if (t && t !== 'super-admin') {
+                if (t && t !== 'super-admin' && t !== 'edutech') {
                   const s = String(t).toLowerCase().trim()
                   destSlugs.add(s)
                   if (s.startsWith('inst-')) destSlugs.add(s.replace('inst-', ''))
@@ -821,7 +893,7 @@ export const useNotificationStore = create<NotificationState>()(
                 const k = localStorage.key(i)
                 if (k && (k.startsWith('edutech-notifications_') || k.startsWith('edutech-classes_'))) {
                   const s = k.replace('edutech-notifications_', '').replace('edutech-classes_', '').toLowerCase().trim()
-                  if (s && s !== 'super-admin') {
+                  if (s && s !== 'super-admin' && s !== 'edutech') {
                     let matched = false
                     try {
                       const rawCls = localStorage.getItem(`edutech-classes_${s}`)
@@ -858,15 +930,19 @@ export const useNotificationStore = create<NotificationState>()(
                 const k = localStorage.key(i)
                 if (k && k.startsWith('edutech-notifications_')) {
                   const s = k.replace('edutech-notifications_', '').toLowerCase().trim()
-                  if (s && s !== 'super-admin') destSlugs.add(s)
+                  if (s && s !== 'super-admin' && s !== 'edutech') destSlugs.add(s)
+                }
+                if (k && k.startsWith('edutech-classes_')) {
+                  const s = k.replace('edutech-classes_', '').toLowerCase().trim()
+                  if (s && s !== 'super-admin' && s !== 'edutech') destSlugs.add(s)
                 }
               }
             }
 
             // Distribute to destination school stores
-            for (const slug of destSlugs) {
-              if (!slug || slug === 'super-admin') continue
-              const key = `edutech-notifications_${slug}`
+            for (const destSlug of destSlugs) {
+              if (!destSlug || destSlug === 'super-admin' || destSlug === 'edutech') continue
+              const key = `edutech-notifications_${destSlug}`
               try {
                 const raw = localStorage.getItem(key)
                 let existingState: any = { notifications: [] }
@@ -980,6 +1056,36 @@ registerStoreReset(() => {
 })
 
 registerStoreLoad(() => {
+  const isSuperAdmin = isSuperAdminPlatform()
+  if (isSuperAdmin) {
+    const rootKeys = [
+      'edutech-notifications',
+      'edutech-notifications_super-admin',
+      'edutech-notifications_edutech',
+      getStorageKey('edutech-notifications'),
+    ]
+    const notifMap = new Map<string, Notification>()
+    for (const rk of rootKeys) {
+      try {
+        const raw = localStorage.getItem(rk)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          const list = Array.isArray(parsed) ? parsed : (parsed.state?.notifications || [])
+          list.forEach((n: Notification) => {
+            if (n && n.id && !LEGACY_SEED_NOTIFICATION_IDS.has(n.id)) {
+              notifMap.set(n.id, n)
+            }
+          })
+        }
+      } catch { /* ignore */ }
+    }
+    const merged = Array.from(notifMap.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    useNotificationStore.setState({ notifications: merged })
+    return
+  }
+
   const slug =
     (typeof window !== 'undefined'
       ? sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
@@ -995,40 +1101,42 @@ registerStoreLoad(() => {
       }
     }
 
-    // Pull from master notifications storage if not super-admin
-    if (slug !== 'super-admin') {
-      const rootKeys = ['edutech-notifications', 'edutech-notifications_super-admin']
-      const masterNotifs: Notification[] = []
-      for (const rk of rootKeys) {
-        const rootRaw = localStorage.getItem(rk)
-        if (rootRaw) {
-          try {
-            const parsed = JSON.parse(rootRaw)
-            if (parsed.state && Array.isArray(parsed.state.notifications)) {
-              masterNotifs.push(...parsed.state.notifications)
-            }
-          } catch { /* ignore */ }
-        }
+    // Pull from master notifications storage
+    const rootKeys = [
+      'edutech-notifications',
+      'edutech-notifications_super-admin',
+      'edutech-notifications_edutech',
+    ]
+    const masterNotifs: Notification[] = []
+    for (const rk of rootKeys) {
+      const rootRaw = localStorage.getItem(rk)
+      if (rootRaw) {
+        try {
+          const parsed = JSON.parse(rootRaw)
+          if (parsed.state && Array.isArray(parsed.state.notifications)) {
+            masterNotifs.push(...parsed.state.notifications)
+          }
+        } catch { /* ignore */ }
       }
-
-      // Filter master notifications that apply to this school
-      const idents = resolveCurrentSchoolIdentifiers()
-      const schoolNotifs = masterNotifs.filter((n) =>
-        isNotificationForSchool(n, idents)
-      )
-
-      // Merge into currentNotifs without duplicates, preserving local read state
-      const notifMap = new Map<string, Notification>()
-      schoolNotifs.forEach((n) => notifMap.set(n.id, n))
-      currentNotifs.forEach((n) => {
-        if (notifMap.has(n.id)) {
-          notifMap.set(n.id, { ...notifMap.get(n.id)!, read: n.read })
-        } else {
-          notifMap.set(n.id, n)
-        }
-      })
-      currentNotifs = Array.from(notifMap.values())
     }
+
+    // Filter master notifications that apply to this school
+    const idents = resolveCurrentSchoolIdentifiers()
+    const schoolNotifs = masterNotifs.filter((n) =>
+      isNotificationForSchool(n, idents)
+    )
+
+    // Merge into currentNotifs without duplicates, preserving local read state
+    const notifMap = new Map<string, Notification>()
+    schoolNotifs.forEach((n) => notifMap.set(n.id, n))
+    currentNotifs.forEach((n) => {
+      if (notifMap.has(n.id)) {
+        notifMap.set(n.id, { ...notifMap.get(n.id)!, read: n.read })
+      } else {
+        notifMap.set(n.id, n)
+      }
+    })
+    currentNotifs = Array.from(notifMap.values())
 
     const cleaned = currentNotifs.filter((n: Notification) => !LEGACY_SEED_NOTIFICATION_IDS.has(n.id))
     useNotificationStore.setState({

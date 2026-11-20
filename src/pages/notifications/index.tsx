@@ -57,9 +57,10 @@ export default function NotificationsPage() {
   const { user } = useAuth()
   const { resolved } = useSubdomain()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
+  const viewingId = viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
 
   const isSuperAdmin = user?.role === 'super_admin'
-  const isViewing = isSuperAdmin && !!viewingInstitutionId
+  const isViewing = isSuperAdmin && !!viewingId
   const canCreateNotification = isSuperAdmin && !isViewing
   const viewingRole = isViewing ? (location.pathname.split('/')[3] || 'admin') : undefined
   const navBase = isViewing
@@ -124,7 +125,7 @@ export default function NotificationsPage() {
     if (isSuperAdminView) return notifications
     const idents = resolveCurrentSchoolIdentifiers(user)
     return notifications.filter((n) => isNotificationForSchool(n, idents))
-  }, [notifications, isSuperAdminView, viewingInstitutionId, user])
+  }, [notifications, isSuperAdminView, viewingId, user])
 
   // Unread counts
   const unreadTotal = useMemo(() => visibleNotifications.filter((n) => !n.read).length, [visibleNotifications])

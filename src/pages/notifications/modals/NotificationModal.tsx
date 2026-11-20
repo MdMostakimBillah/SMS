@@ -126,6 +126,40 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
       }
     } catch { /* ignore */ }
 
+    // Scan any edutech-classes_<slug> namespaces in localStorage
+    if (typeof localStorage !== 'undefined') {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith('edutech-classes_')) {
+            const s = k.replace('edutech-classes_', '')
+            if (s && s !== 'super-admin' && s !== 'edutech' && !slugSet.has(s)) {
+              try {
+                const rawCls = localStorage.getItem(k)
+                if (rawCls) {
+                  const p = JSON.parse(rawCls)
+                  const cInst = p.state?.institution
+                  if (cInst && !idSet.has(cInst.id) && !slugSet.has(cInst.slug || s)) {
+                    list.push({
+                      id: cInst.id || `inst-${s}`,
+                      name: cInst.name || s,
+                      nameBn: cInst.nameBn || cInst.name || s,
+                      slug: cInst.slug || s,
+                      subdomain: cInst.subdomain || s,
+                      eiin: cInst.eiin || '',
+                      brandColor: cInst.brandColor || '#6366f1',
+                    } as any)
+                    idSet.add(cInst.id || `inst-${s}`)
+                    slugSet.add(cInst.slug || s)
+                  }
+                }
+              } catch { /* ignore */ }
+            }
+          }
+        }
+      } catch { /* ignore */ }
+    }
+
     // Fallback default institution if empty
     if (list.length === 0) {
       list.push({
@@ -223,6 +257,9 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
               i.name,
               i.name ? i.name.toLowerCase().trim() : '',
               i.nameBn,
+              i.id ? String(i.id).replace('inst-', '') : '',
+              i.id ? String(i.id).replace('sch_', '') : '',
+              (i as any).domain,
             ].filter(Boolean)),
           ])
         )
@@ -231,10 +268,16 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
     const targetNames = targetType === 'specific'
       ? Array.from(
           new Set(
-            targetedInstitutions.flatMap((i) => [bn ? i.nameBn || i.name : i.name, i.name, i.nameBn].filter(Boolean) as string[])
+            targetedInstitutions.flatMap((i) => [
+              i.name,
+              i.nameBn,
+              bn ? i.nameBn || i.name : i.name,
+            ].filter(Boolean) as string[])
           )
         )
       : []
+
+    const isBroadcast = targetType === 'all'
 
     if (existing) {
       updateNotification(existing.id, {
@@ -245,10 +288,10 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
         type,
         category,
         link: cleanLink,
-        targetType,
-        targetInstitutions: targetIds,
-        targetInstitutionNames: targetNames,
-        broadcastToAll: targetType === 'all',
+        targetType: isBroadcast ? 'all' : 'specific',
+        targetInstitutions: isBroadcast ? [] : targetIds,
+        targetInstitutionNames: isBroadcast ? [] : targetNames,
+        broadcastToAll: isBroadcast,
       })
     } else {
       const newNotif: Notification = {
@@ -263,10 +306,10 @@ export function NotificationModal({ existing, onSaved, onClose, bn }: Props) {
         link: cleanLink,
         sender: senderName,
         senderRole,
-        broadcastToAll: targetType === 'all',
-        targetType,
-        targetInstitutions: targetIds,
-        targetInstitutionNames: targetNames,
+        broadcastToAll: isBroadcast,
+        targetType: isBroadcast ? 'all' : 'specific',
+        targetInstitutions: isBroadcast ? [] : targetIds,
+        targetInstitutionNames: isBroadcast ? [] : targetNames,
         createdAt: new Date().toISOString(),
       }
 

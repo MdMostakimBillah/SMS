@@ -129,7 +129,8 @@ export default React.memo(function Topbar() {
   const { logout, user } = useAuth()
   const { resolved } = useSubdomain()
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
-  const isViewing = user?.role === 'super_admin' && !!viewingInstitutionId
+  const viewingId = viewingInstitutionId || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') : null)
+  const isViewing = user?.role === 'super_admin' && !!viewingId
   const viewingRole = isViewing ? (location.pathname.split('/')[3] || 'admin') : undefined
   const navBase = isViewing
     ? getSuperAdminViewNavBase(user, viewingRole)
@@ -207,7 +208,7 @@ export default React.memo(function Topbar() {
   const [viewNotification, setViewNotification] = useState<Notification | null>(null)
   const [toastNotif, setToastNotif] = useState<Notification | null>(null)
 
-  const isSuperAdminView = user?.role === 'super_admin' && !viewingInstitutionId
+  const isSuperAdminView = user?.role === 'super_admin' && !isViewing
 
   useEffect(() => {
     checkAndGenerateSystemNotifications()
@@ -221,6 +222,12 @@ export default React.memo(function Topbar() {
 
       if (isSuperAdminView || isNotificationForSchool(n, idents)) {
         setToastNotif(n)
+        const state = useNotificationStore.getState()
+        if (!state.notifications.some((item) => item.id === n.id)) {
+          useNotificationStore.setState({
+            notifications: [n, ...state.notifications],
+          })
+        }
       }
     }
     window.addEventListener('edutech:new_notification', handleNewNotif)
@@ -243,7 +250,7 @@ export default React.memo(function Topbar() {
       window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', onFocus)
     }
-  }, [checkAndGenerateSystemNotifications, syncFromServer, isSuperAdminView, viewingInstitutionId, user])
+  }, [checkAndGenerateSystemNotifications, syncFromServer, isSuperAdminView, viewingId, user])
 
   useEffect(() => {
     if (!toastNotif) return
@@ -257,7 +264,7 @@ export default React.memo(function Topbar() {
     if (isSuperAdminView) return notifications
     const idents = resolveCurrentSchoolIdentifiers(user)
     return notifications.filter((n) => isNotificationForSchool(n, idents))
-  }, [notifications, isSuperAdminView, viewingInstitutionId, user])
+  }, [notifications, isSuperAdminView, viewingId, user])
 
   const unreadNotifs = visibleNotifications.filter((n) => !n.read).length
   const unreadMsgs = demoMessages.reduce((sum, m) => sum + m.unread, 0)
