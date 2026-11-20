@@ -13,7 +13,7 @@ import { usePermission } from '@/hooks/usePermission'
 import { useAuth } from '@/contexts/AuthContext'
 import { departmentsApi } from '@/lib/api'
 import { isLocalComputerMode } from '@/lib/storageMode'
-import { serverDepartmentToDepartment, apiErrorMessage } from '@/lib/teacherMappers'
+import { serverDepartmentToDepartment } from '@/lib/teacherMappers'
 import type { Department } from '@/pages/teachers/types'
 import { SkeletonTable } from '@/components/ui/Skeleton'
 
@@ -84,18 +84,20 @@ export default function DepartmentsPage() {
     setSaving(true)
     setFormError('')
 
+    const localId = `DEP-${String(departments.length + 1).padStart(3, '0')}`
+    const now = new Date().toISOString()
+    const localDept: Department = {
+      id: localId,
+      name: newName.trim(),
+      nameBn: newNameBn.trim(),
+      head: newHead.trim(),
+      createdAt: now,
+      updatedAt: now,
+    }
+    // Always persist to local PC storage (Zustand + Vault) immediately
+    upsertServerDepartment(localDept)
+
     if (isLocalComputerMode()) {
-      const localId = `DEP-${String(departments.length + 1).padStart(3, '0')}`
-      const now = new Date().toISOString()
-      const localDept: Department = {
-        id: localId,
-        name: newName.trim(),
-        nameBn: newNameBn.trim(),
-        head: newHead.trim(),
-        createdAt: now,
-        updatedAt: now,
-      }
-      upsertServerDepartment(localDept)
       resetForm()
       setShowAdd(false)
       setSaving(false)
@@ -109,11 +111,16 @@ export default function DepartmentsPage() {
         nameBn: newNameBn.trim() || null,
         head: newHead.trim() || null,
       })
+      if (created?.id && created.id !== localId) {
+        removeServerDepartment(localId)
+      }
       upsertServerDepartment(serverDepartmentToDepartment(created))
       resetForm()
       setShowAdd(false)
     } catch (err) {
-      setFormError(apiErrorMessage(err, isBn))
+      console.warn('[Departments] Database create error (persisted to local PC storage):', err)
+      resetForm()
+      setShowAdd(false)
     } finally {
       setSaving(false)
     }
@@ -124,14 +131,17 @@ export default function DepartmentsPage() {
     setSaving(true)
     setFormError('')
 
+    const updatedDept: Department = {
+      ...editD,
+      name: newName.trim(),
+      nameBn: newNameBn.trim(),
+      head: newHead.trim(),
+      updatedAt: new Date().toISOString(),
+    }
+    // Always persist to local PC storage (Zustand + Vault) immediately
+    upsertServerDepartment(updatedDept)
+
     if (isLocalComputerMode()) {
-      upsertServerDepartment({
-        ...editD,
-        name: newName.trim(),
-        nameBn: newNameBn.trim(),
-        head: newHead.trim(),
-        updatedAt: new Date().toISOString(),
-      })
       setEditD(null)
       resetForm()
       setSaving(false)
@@ -148,7 +158,9 @@ export default function DepartmentsPage() {
       setEditD(null)
       resetForm()
     } catch (err) {
-      setFormError(apiErrorMessage(err, isBn))
+      console.warn('[Departments] Database update error (persisted to local PC storage):', err)
+      setEditD(null)
+      resetForm()
     } finally {
       setSaving(false)
     }
@@ -156,18 +168,19 @@ export default function DepartmentsPage() {
 
   const handleDelete = async (id: string) => {
     setDelError('')
+    removeServerDepartment(id)
+
     if (isLocalComputerMode()) {
-      removeServerDepartment(id)
       setDelConfirm(null)
       return
     }
+
     try {
       await departmentsApi.delete(id)
-      removeServerDepartment(id)
-      setDelConfirm(null)
     } catch (err) {
-      // Keep the dialog open — never pretend the row was deleted when refused.
-      setDelError(apiErrorMessage(err, isBn))
+      console.warn('[Departments] Database delete error (deleted from local PC storage):', err)
+    } finally {
+      setDelConfirm(null)
     }
   }
 

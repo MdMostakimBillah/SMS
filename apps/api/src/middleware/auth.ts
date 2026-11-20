@@ -9,6 +9,7 @@ export interface AuthenticatedRequest extends Request {
   userRole?: string
   schoolId?: string | null
   sessionId?: string
+  userName?: string
 }
 
 export interface SessionClaims {

@@ -1054,6 +1054,13 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
       const parsed = JSON.parse(rawJson)
       const state = parsed?.state ?? parsed
 
+      const teachers = state.teachers ?? []
+      if (teachers.length > 0 || isRecentExplicitDelete()) {
+        const teachersPretty = JSON.stringify(teachers, null, 2)
+        if (slug) await writeVaultFile(`${slug}/staff.json`, teachersPretty)
+        await writeVaultFile('staff.json', teachersPretty)
+      }
+
       const departments = state.departments ?? []
       if (departments.length > 0 || isRecentExplicitDelete()) {
         const deptsPretty = JSON.stringify(departments, null, 2)
@@ -1630,6 +1637,44 @@ async function seedVaultFromStorage(): Promise<number> {
     await syncIndividualDomainFiles(slug, path, raw)
     await exportStoreImages(slug, path, raw)
     seeded++
+  }
+
+  // Ensure teacher management domain files are seeded if present in store
+  const teacherKey = slug ? `edutech-teachers_${slug}` : 'edutech-teachers'
+  if (!localStorage.getItem(teacherKey)) {
+    try {
+      const { useTeacherStore } = await import('@/store/teacherStore')
+      const tState = useTeacherStore.getState()
+      if (
+        tState &&
+        (tState.teachers?.length > 0 ||
+          tState.departments?.length > 0 ||
+          tState.subjects?.length > 0 ||
+          tState.designations?.length > 0)
+      ) {
+        const raw = JSON.stringify({
+          state: {
+            teachers: tState.teachers,
+            departments: tState.departments,
+            subjects: tState.subjects,
+            designations: tState.designations,
+            attendance: tState.attendance,
+            serverSynced: tState.serverSynced,
+          },
+          version: 3,
+        })
+        localStorage.setItem(teacherKey, raw)
+        const path = keyToVaultPath(teacherKey, slug)
+        if (path) {
+          await writeVaultFile(path, prettifyJson(raw))
+          await syncIndividualDomainFiles(slug, path, raw)
+          await exportStoreImages(slug, path, raw)
+          seeded++
+        }
+      }
+    } catch {
+      /* ignore */
+    }
   }
 
   // Seed permanent config and Telegram settings to disk

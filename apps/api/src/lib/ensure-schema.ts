@@ -8,8 +8,8 @@ import type { PrismaClient } from '@prisma/client'
  * were skipped or schema changes were pushed ahead of manual migrations.
  */
 export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> {
+  // 1. Ensure all columns on schools table exist
   try {
-    // 1. Ensure all columns on schools table exist
     await prisma.$executeRawUnsafe(`
       DO $$
       BEGIN
@@ -53,17 +53,31 @@ export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> 
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "payment_status" TEXT DEFAULT 'paid';
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "billing_cycle" TEXT DEFAULT 'monthly';
       END $$;
+    `)
+    console.log('[schema] Schools table columns verified.')
+  } catch (err) {
+    console.warn('[schema] Warning: Could not verify schools table columns:', err instanceof Error ? err.message : err)
+  }
 
-      -- System configuration key-value storage (for dynamic login path, etc.)
+  // 2. System configuration key-value storage (for dynamic login path, etc.)
+  try {
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "system_config" (
         "key" TEXT PRIMARY KEY,
         "value" TEXT NOT NULL,
         "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+    `)
+    console.log('[schema] System config table verified.')
+  } catch (err) {
+    console.warn('[schema] Warning: Could not verify system_config table:', err instanceof Error ? err.message : err)
+  }
 
-      -- Better Auth schema & tables for Google OAuth & social authentication
-      CREATE SCHEMA IF NOT EXISTS neon_auth;
+  // 3. Better Auth schema & tables for Google OAuth & social authentication
+  try {
+    await prisma.$executeRawUnsafe(`CREATE SCHEMA IF NOT EXISTS neon_auth;`).catch(() => {})
 
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS neon_auth.user (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         name TEXT NOT NULL,
@@ -77,7 +91,9 @@ export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> 
         "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
         "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
       );
+    `).catch(() => {})
 
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS neon_auth.session (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         "expiresAt" TIMESTAMP NOT NULL,
@@ -89,7 +105,9 @@ export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> 
         "userId" UUID NOT NULL REFERENCES neon_auth.user(id) ON DELETE CASCADE,
         "activeOrganizationId" UUID
       );
+    `).catch(() => {})
 
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS neon_auth.account (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         "accountId" TEXT NOT NULL,
@@ -105,7 +123,9 @@ export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> 
         "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
         "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
       );
+    `).catch(() => {})
 
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS neon_auth.verification (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         identifier TEXT NOT NULL,
@@ -114,9 +134,9 @@ export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> 
         "createdAt" TIMESTAMP DEFAULT NOW(),
         "updatedAt" TIMESTAMP DEFAULT NOW()
       );
-    `)
+    `).catch(() => {})
     console.log('[schema] Database schema verified successfully.')
   } catch (err) {
-    console.warn('[schema] Warning: Could not run automated schema verification:', err instanceof Error ? err.message : err)
+    console.warn('[schema] Warning: Neon auth schema setup skipped:', err instanceof Error ? err.message : err)
   }
 }

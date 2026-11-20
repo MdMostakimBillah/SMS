@@ -20,6 +20,7 @@ import {
   ChevronDown,
   MoreVertical,
   Trash2,
+  FileJson,
 } from 'lucide-react'
 import { XLSX } from '@/lib/excelExport'
 import { useBn } from '@/hooks/useBn'
@@ -246,6 +247,27 @@ export default function AllTeachersPage() {
       </span>
     )
   }
+
+  const exportJson = useCallback(() => {
+    const list = selected.length > 0 ? filtered.filter((t) => selected.includes(t.id)) : filtered
+    const payload = {
+      teachers: list,
+      departments,
+      subjects,
+      designations: useTeacherStore.getState().designations,
+      exportedAt: new Date().toISOString(),
+      institution: getPDFBranding().schoolName,
+    }
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(payload, null, 2))
+    const downloadAnchor = document.createElement('a')
+    downloadAnchor.setAttribute('href', dataStr)
+    downloadAnchor.setAttribute('download', `teachers-backup-${new Date().toISOString().split('T')[0]}.json`)
+    document.body.appendChild(downloadAnchor)
+    downloadAnchor.click()
+    downloadAnchor.remove()
+    flushPendingWrites()
+    void flushVaultWrites()
+  }, [selected, filtered, departments, subjects])
 
   const exportExcel = useCallback(() => {
     const brand = getPDFBranding()
@@ -767,6 +789,32 @@ ${photoHtml}
                   >
                     <FileSpreadsheet size={14} style={{ color: 'var(--green)' }} />
                     {isBn ? 'এক্সেল ডাউনলোড' : 'Download Excel'}
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
+                  <button
+                    onClick={() => {
+                      exportJson()
+                      setShowActionMenu(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.625rem 0.875rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.8125rem',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--amber-light)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <FileJson size={14} style={{ color: 'var(--amber)' }} />
+                    {isBn ? 'JSON ব্যাকআপ (লোকাল পিসি)' : 'JSON Backup (Local PC)'}
                   </button>
                   <div style={{ height: '1px', background: 'var(--border)', margin: '0 0.5rem' }} />
                   <button

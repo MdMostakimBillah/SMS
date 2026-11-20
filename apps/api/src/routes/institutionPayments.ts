@@ -489,17 +489,6 @@ export function institutionPaymentsRouter(prisma: PrismaClient, jwtSecret: strin
     }
   })
 
-      res.json({
-        success: true,
-        payment: updatedPayment,
-        school: updatedSchool,
-      })
-    } catch (err) {
-      console.error('[institution-payments] approve payment error:', err instanceof Error ? err.message : err)
-      res.status(500).json({ error: 'Internal server error' })
-    }
-  })
-
   /**
    * POST /api/institution-payments/:id/reject
    * Super Admin rejects a payment with reason

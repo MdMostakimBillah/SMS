@@ -184,7 +184,7 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
       })
 
       const isTargeted = newNotif.targetType === 'specific' && Array.isArray(newNotif.targetInstitutions) && newNotif.targetInstitutions.length > 0
-      const targetSet = new Set((newNotif.targetInstitutions || []).map((t: string) => String(t).toLowerCase().trim()))
+      const targetSet = new Set<string>((newNotif.targetInstitutions || []).map((t: string) => String(t).toLowerCase().trim()))
       if (Array.isArray(newNotif.targetInstitutionNames)) {
         newNotif.targetInstitutionNames.forEach((n: string) => targetSet.add(String(n).toLowerCase().trim()))
       }
@@ -198,7 +198,7 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
             if (k.startsWith('inst-') && targetSet.has(k.replace('inst-', ''))) return true
             if (k.startsWith('sch_') && targetSet.has(k.replace('sch_', ''))) return true
             const normKey = k.replace(/[^a-z0-9]/g, '')
-            return Array.from(targetSet).some((t) => {
+            return Array.from(targetSet).some((t: string) => {
               if (t.startsWith('inst-') && t.replace('inst-', '') === k) return true
               if (t.startsWith('sch_') && t.replace('sch_', '') === k) return true
               if (normKey.length >= 3 && t.replace(/[^a-z0-9]/g, '') === normKey) return true

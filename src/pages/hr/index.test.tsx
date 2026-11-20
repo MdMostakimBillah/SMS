@@ -76,7 +76,7 @@ describe('HRPage integration', () => {
     })
   })
 
-  it('renders HR page header, stats, and refresh button', async () => {
+  it('renders HR page header, stats, and ensures refresh button is removed', async () => {
     render(
       <TestWrapper>
         <HRPage />
@@ -91,15 +91,15 @@ describe('HRPage integration', () => {
       { timeout: 2000 }
     )
 
-    // Check refresh button exists
-    const refreshBtn = screen.getByRole('button', { name: /রিফ্রেশ|Refresh/i })
-    expect(refreshBtn).toBeInTheDocument()
+    // Check refresh button does not exist
+    const refreshBtn = screen.queryByRole('button', { name: /রিফ্রেশ|Refresh/i })
+    expect(refreshBtn).not.toBeInTheDocument()
 
     // Check staff & department counts are displayed
     expect(screen.getByText(/1.*সক্রিয় কর্মচারী|1 active staff/i)).toBeInTheDocument()
   })
 
-  it('handles clicking the refresh button and triggers syncFromServer', async () => {
+  it('triggers syncFromServer on mount', async () => {
     const hrSyncSpy = vi.spyOn(useHRStore.getState(), 'syncFromServer').mockResolvedValue()
     const teacherSyncSpy = vi.spyOn(useTeacherStore.getState(), 'syncFromServer').mockResolvedValue()
 
@@ -108,16 +108,6 @@ describe('HRPage integration', () => {
         <HRPage />
       </TestWrapper>
     )
-
-    await waitFor(
-      () => {
-        expect(screen.getByRole('button', { name: /রিফ্রেশ|Refresh/i })).toBeInTheDocument()
-      },
-      { timeout: 2000 }
-    )
-
-    const refreshBtn = screen.getByRole('button', { name: /রিফ্রেশ|Refresh/i })
-    fireEvent.click(refreshBtn)
 
     await waitFor(() => {
       expect(hrSyncSpy).toHaveBeenCalled()
@@ -140,9 +130,6 @@ describe('HRPage integration', () => {
       },
       { timeout: 2000 }
     )
-
-    const refreshBtn = screen.getByRole('button', { name: /রিফ্রেশ|Refresh/i })
-    fireEvent.click(refreshBtn)
 
     // In local_computer mode, syncing completes immediately without errors
     await waitFor(() => {

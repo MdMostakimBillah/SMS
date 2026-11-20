@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  RefreshCw,
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { usePermission } from '@/hooks/usePermission'
@@ -220,22 +219,6 @@ export default function HRPage() {
   // ─── UI State ───
   const { slug: paramSlug } = useParams<{ slug?: string }>()
   const slug = paramSlug || getSlug() || undefined
-  const [refreshing, setRefreshing] = useState(false)
-  const isHRSyncing = useHRStore((s) => s.syncing)
-  const isTeacherSyncing = useTeacherStore((s) => s.syncing)
-  const isSyncing = isHRSyncing || isTeacherSyncing
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true)
-    try {
-      await Promise.allSettled([
-        useHRStore.getState().syncFromServer(slug),
-        useTeacherStore.getState().syncFromServer(),
-      ])
-    } finally {
-      setRefreshing(false)
-    }
-  }, [slug])
 
   const [employeeSearch, setEmployeeSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -1141,26 +1124,15 @@ export default function HRPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between gap-[0.625rem] mb-4 flex-wrap">
-        <div>
-          <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
-            {isBn ? 'HR ও কর্মচারী ব্যবস্থাপনা' : 'HR & Staff Management'}
-          </h1>
-          <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
-            {isBn
-              ? `${activeTeachers.length} জন সক্রিয় কর্মচারী · ${departments.length} টি বিভাগ`
-              : `${activeTeachers.length} active staff · ${departments.length} departments`}
-          </p>
-        </div>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing || isSyncing}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] text-[0.75rem] font-medium hover:text-[var(--text-primary)] hover:border-[var(--brand)] transition-colors cursor-pointer disabled:opacity-50"
-          title={isBn ? 'তথ্য রিফ্রেশ করুন' : 'Refresh data'}
-        >
-          <RefreshCw size={13} className={refreshing || isSyncing ? 'animate-spin text-[var(--brand)]' : ''} />
-          <span>{isBn ? 'রিফ্রেশ' : 'Refresh'}</span>
-        </button>
+      <div className="mb-4">
+        <h1 className={`font-semibold text-[var(--text-primary)] ${isMobile ? 'text-lg' : 'text-[1.375rem]'}`}>
+          {isBn ? 'HR ও কর্মচারী ব্যবস্থাপনা' : 'HR & Staff Management'}
+        </h1>
+        <p className="text-[0.8125rem] text-[var(--text-secondary)] mt-[0.1875rem]">
+          {isBn
+            ? `${activeTeachers.length} জন সক্রিয় কর্মচারী · ${departments.length} টি বিভাগ`
+            : `${activeTeachers.length} active staff · ${departments.length} departments`}
+        </p>
       </div>
 
       {/* Tabs */}

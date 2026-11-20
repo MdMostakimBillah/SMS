@@ -199,64 +199,82 @@ export default function AddTeacherPage() {
         signature: form.signature,
       })
 
+      const localId = generateSimpleTeacherId(useTeacherStore.getState().teachers)
+      const localTeacher: Teacher = {
+        id: localId,
+        nameEn: form.nameEn.trim(),
+        nameBn: form.nameBn.trim(),
+        gender: form.gender,
+        dob: form.dob,
+        bloodGroup: form.bloodGroup,
+        religion: form.religion,
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        address: form.address.trim(),
+        nid: form.nid.trim(),
+        emergencyPhone: form.emergencyPhone.trim(),
+        photo: form.photo,
+        departmentId: form.departmentId,
+        subjectIds: form.subjectIds,
+        designation: form.designation,
+        category: form.category,
+        qualification: form.qualification.trim(),
+        experience: form.experience.trim(),
+        joiningDate: form.joiningDate,
+        salary: Number(form.salary) || 0,
+        salaryStartDate: form.salaryStartDate || undefined,
+        overtime: Number(form.overtime) || 0,
+        status: form.status,
+        inTime: form.inTime,
+        outTime: form.outTime,
+        fatherNameEn: form.fatherNameEn.trim(),
+        fatherNameBn: form.fatherNameBn.trim(),
+        fatherPhone: form.fatherPhone.trim(),
+        fatherNid: form.fatherNid.trim(),
+        motherNameEn: form.motherNameEn.trim(),
+        motherNameBn: form.motherNameBn.trim(),
+        motherPhone: form.motherPhone.trim(),
+        guardianName: form.guardianName.trim(),
+        guardianPhone: form.guardianPhone.trim(),
+        guardianRelation: form.guardianRelation.trim(),
+        parentAddress: form.parentAddress.trim(),
+        signature: form.signature,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+
+      // Always update local PC storage (Zustand + Vault) immediately
+      upsertServerTeacher(localTeacher)
+      flushPendingWrites()
+      await flushVaultWrites()
+
       if (isLocalComputerMode()) {
-        const localId = generateSimpleTeacherId(useTeacherStore.getState().teachers)
-        const localTeacher: Teacher = {
-          id: localId,
-          nameEn: form.nameEn.trim(),
-          nameBn: form.nameBn.trim(),
-          gender: form.gender,
-          dob: form.dob,
-          bloodGroup: form.bloodGroup,
-          religion: form.religion,
-          phone: form.phone.trim(),
-          email: form.email.trim(),
-          address: form.address.trim(),
-          nid: form.nid.trim(),
-          emergencyPhone: form.emergencyPhone.trim(),
-          photo: form.photo,
-          departmentId: form.departmentId,
-          subjectIds: form.subjectIds,
-          designation: form.designation,
-          category: form.category,
-          qualification: form.qualification.trim(),
-          experience: form.experience.trim(),
-          joiningDate: form.joiningDate,
-          salary: Number(form.salary) || 0,
-          salaryStartDate: form.salaryStartDate || undefined,
-          overtime: Number(form.overtime) || 0,
-          status: form.status,
-          inTime: form.inTime,
-          outTime: form.outTime,
-          fatherNameEn: form.fatherNameEn.trim(),
-          fatherNameBn: form.fatherNameBn.trim(),
-          fatherPhone: form.fatherPhone.trim(),
-          fatherNid: form.fatherNid.trim(),
-          motherNameEn: form.motherNameEn.trim(),
-          motherNameBn: form.motherNameBn.trim(),
-          motherPhone: form.motherPhone.trim(),
-          guardianName: form.guardianName.trim(),
-          guardianPhone: form.guardianPhone.trim(),
-          guardianRelation: form.guardianRelation.trim(),
-          parentAddress: form.parentAddress.trim(),
-          signature: form.signature,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-        upsertServerTeacher(localTeacher)
-        flushPendingWrites()
-        await flushVaultWrites()
         setDoneId(localId)
         setDone(true)
         return
       }
 
-      const created = await teachersApi.create(payload)
-      upsertServerTeacher(serverTeacherToTeacher(created))
-      flushPendingWrites()
-      await flushVaultWrites()
-      setDoneId(created.id)
-      setDone(true)
+      // In database / provider mode, also persist to backend database
+      try {
+        const created = await teachersApi.create(payload)
+        if (created?.id) {
+          if (created.id !== localId) {
+            useTeacherStore.getState().removeServerTeacher(localId)
+          }
+          upsertServerTeacher(serverTeacherToTeacher(created))
+          flushPendingWrites()
+          await flushVaultWrites()
+          setDoneId(created.id)
+        } else {
+          setDoneId(localId)
+        }
+        setDone(true)
+      } catch (apiErr) {
+        console.warn('[Teachers] Database create error (persisted to local PC storage):', apiErr)
+        // Saved locally, so keep teacher in store & vault!
+        setDoneId(localId)
+        setDone(true)
+      }
     } catch (err) {
       setSubmitError(apiErrorMessage(err, isBn))
     } finally {
