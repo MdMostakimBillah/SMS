@@ -169,7 +169,19 @@ export function notificationsRouter(prisma: PrismaClient, jwtSecret: string) {
       for (const s of schools) {
         if (isTargeted) {
           const keys = [s.id, s.domain, s.name].filter(Boolean).map((k) => String(k).toLowerCase().trim())
-          const matches = keys.some((k) => targetSet.has(k))
+          const matches = keys.some((k) => {
+            if (targetSet.has(k)) return true
+            if (k.startsWith('inst-') && targetSet.has(k.replace('inst-', ''))) return true
+            if (k.startsWith('sch_') && targetSet.has(k.replace('sch_', ''))) return true
+            const normKey = k.replace(/[^a-z0-9]/g, '')
+            return Array.from(targetSet).some((t) => {
+              if (t.startsWith('inst-') && t.replace('inst-', '') === k) return true
+              if (t.startsWith('sch_') && t.replace('sch_', '') === k) return true
+              if (normKey.length >= 3 && t.replace(/[^a-z0-9]/g, '') === normKey) return true
+              if (t.length > 3 && k.length > 3 && (k.includes(t) || t.includes(k))) return true
+              return false
+            })
+          })
           if (!matches) continue
         }
 

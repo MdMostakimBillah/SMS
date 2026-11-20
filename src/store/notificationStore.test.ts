@@ -305,4 +305,29 @@ describe('notificationStore', () => {
     const localStore = JSON.parse(localStorage.getItem('edutech-notifications_rajuk-college') || '{}')
     expect(localStore.state.notifications.some((n: any) => n.id === 'NTF-REALTIME-INSTANT-1')).toBe(true)
   })
+
+  it('matches targeted notification across inst- prefix and aliases in isNotificationForSchool', () => {
+    const notif: Notification = {
+      id: 'NTF-TARGET-PREFIX',
+      title: 'Targeted Notice',
+      titleBn: 'টার্গেটেড নোটিশ',
+      message: 'Testing prefix match',
+      messageBn: 'টেস্টিং',
+      type: 'info',
+      read: false,
+      targetType: 'specific',
+      targetInstitutions: ['inst-excellence'],
+      targetInstitutionNames: ['School of Excellence'],
+      createdAt: new Date().toISOString(),
+    }
+
+    // Matching by slug without 'inst-' prefix
+    expect(isNotificationForSchool(notif, { slug: 'excellence' })).toBe(true)
+    // Matching by exact ID
+    expect(isNotificationForSchool(notif, { id: 'inst-excellence' })).toBe(true)
+    // Matching by name
+    expect(isNotificationForSchool(notif, { name: 'School of Excellence' })).toBe(true)
+    // Non-targeted school should NOT match
+    expect(isNotificationForSchool(notif, { slug: 'other-school', name: 'Other High School' })).toBe(false)
+  })
 })

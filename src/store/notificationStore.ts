@@ -5,6 +5,8 @@ import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { notificationsApi } from '@/lib/api'
+import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useClassStore } from '@/store/classStore'
 
 export type NotificationType = 'info' | 'warning' | 'success' | 'error'
 export type NotificationCategory = 'system' | 'billing' | 'academic' | 'general'
@@ -28,17 +30,211 @@ export interface Notification {
   createdAt: string
 }
 
+export interface SchoolIdentifiers {
+  slug?: string | null
+  id?: string | null
+  subdomain?: string | null
+  schoolId?: string | null
+  name?: string | null
+  nameBn?: string | null
+  eiin?: string | null
+  aliases?: string[]
+}
+
+/**
+ * Resolves all identifiers and aliases for the active institution across all
+ * memory stores, session keys, user auth, and persistent local storage.
+ */
+export function resolveCurrentSchoolIdentifiers(user?: any): SchoolIdentifiers {
+  const candidateSet = new Set<string>()
+  const rawValues: (string | null | undefined)[] = []
+
+  if (typeof window !== 'undefined') {
+    // 1. Session & Local Storage keys
+    rawValues.push(
+      sessionStorage.getItem('edutech_inst_slug'),
+      localStorage.getItem('edutech_inst_slug'),
+      sessionStorage.getItem('edutech_viewing_id'),
+      sessionStorage.getItem('edutech_school_id'),
+      localStorage.getItem('edutech_school_id'),
+      sessionStorage.getItem('edutech_school_name'),
+      localStorage.getItem('edutech_school_name'),
+      sessionStorage.getItem('edutech_school_domain'),
+      localStorage.getItem('edutech_school_domain'),
+      sessionStorage.getItem('edutech_school_eiin'),
+      localStorage.getItem('edutech_school_eiin')
+    )
+
+    // 2. Auth user in localStorage
+    try {
+      const rawUser = localStorage.getItem('edutech_auth_user')
+      if (rawUser) {
+        const u = JSON.parse(rawUser)
+        rawValues.push(
+          u.schoolId,
+          u.schoolDomain,
+          u.subdomain,
+          u.schoolName,
+          u.school?.id,
+          u.school?.name,
+          u.school?.nameBn,
+          u.school?.domain,
+          u.school?.eiin
+        )
+      }
+    } catch { /* ignore */ }
+
+    // 3. Offline session
+    try {
+      const rawOffline = sessionStorage.getItem('edutech_offline_session') || localStorage.getItem('edutech_offline_session')
+      if (rawOffline) {
+        const off = JSON.parse(rawOffline)
+        rawValues.push(off.schoolId, off.schoolName, off.subdomain, off.schoolDomain)
+      }
+    } catch { /* ignore */ }
+  }
+
+  // 4. Passed user parameter (from useAuth)
+  if (user) {
+    rawValues.push(
+      user.id,
+      user.schoolId,
+      user.schoolName,
+      user.schoolDomain,
+      user.subdomain,
+      user.school?.id,
+      user.school?.name,
+      user.school?.nameBn,
+      user.school?.domain,
+      user.school?.eiin,
+      (user as any).institutionId
+    )
+  }
+
+  // 5. useClassStore institution settings
+  let classInst: any = null
+  try {
+    const rawClassStore = useClassStore.getState?.()?.institution
+    if (rawClassStore) {
+      classInst = rawClassStore
+      rawValues.push(
+        classInst.id,
+        classInst.name,
+        classInst.nameBn,
+        classInst.eiin,
+        classInst.slug,
+        classInst.subdomain,
+        classInst.code
+      )
+    }
+  } catch { /* ignore */ }
+
+  // 6. Namespaced classStore in localStorage if useClassStore had empty defaults
+  if (typeof window !== 'undefined') {
+    try {
+      const slug = sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
+      const keys = [slug ? `edutech-classes_${slug}` : null, 'edutech-classes'].filter(Boolean) as string[]
+      for (const k of keys) {
+        const raw = localStorage.getItem(k)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          const inst = parsed.state?.institution
+          if (inst) {
+            rawValues.push(inst.id, inst.name, inst.nameBn, inst.eiin, inst.slug, inst.subdomain)
+          }
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  // Filter non-empty strings into candidateSet
+  for (const v of rawValues) {
+    if (v && typeof v === 'string' && v.trim() && v !== 'super-admin') {
+      const lower = v.trim().toLowerCase()
+      candidateSet.add(lower)
+      if (lower.startsWith('inst-')) candidateSet.add(lower.replace('inst-', ''))
+      if (lower.startsWith('sch_')) candidateSet.add(lower.replace('sch_', ''))
+    }
+  }
+
+  // 7. Cross-reference with superAdminStore institutions list
+  try {
+    const allKnownInstitutions: any[] = []
+    if (typeof window !== 'undefined') {
+      try {
+        const rawSA = localStorage.getItem('edutech_super_admin')
+        if (rawSA) {
+          const p = JSON.parse(rawSA)
+          if (Array.isArray(p.state?.institutions)) allKnownInstitutions.push(...p.state.institutions)
+        }
+      } catch { /* ignore */ }
+
+      try {
+        const rawInsts = localStorage.getItem('edutech-institutions')
+        if (rawInsts) {
+          const p = JSON.parse(rawInsts)
+          const arr = Array.isArray(p) ? p : (p.state?.institutions || [])
+          allKnownInstitutions.push(...arr)
+        }
+      } catch { /* ignore */ }
+    }
+
+    try {
+      const inMemory = useSuperAdminStore.getState?.()?.institutions
+      if (Array.isArray(inMemory)) allKnownInstitutions.push(...inMemory)
+    } catch { /* ignore */ }
+
+    // For any institution that matches any discovered identifier, add ALL its other identifiers
+    for (const inst of allKnownInstitutions) {
+      if (!inst) continue
+      const instKeys = [
+        inst.id,
+        inst.slug,
+        inst.subdomain,
+        inst.name,
+        inst.nameBn,
+        inst.eiin,
+      ]
+        .filter(Boolean)
+        .map((k) => String(k).trim().toLowerCase())
+
+      const hasMatch = instKeys.some((k) => {
+        if (candidateSet.has(k)) return true
+        if (k.startsWith('inst-') && candidateSet.has(k.replace('inst-', ''))) return true
+        if (k.startsWith('sch_') && candidateSet.has(k.replace('sch_', ''))) return true
+        return false
+      })
+
+      if (hasMatch) {
+        for (const k of instKeys) {
+          candidateSet.add(k)
+          if (k.startsWith('inst-')) candidateSet.add(k.replace('inst-', ''))
+          if (k.startsWith('sch_')) candidateSet.add(k.replace('sch_', ''))
+        }
+      }
+    }
+  } catch { /* ignore */ }
+
+  const activeSlug =
+    (typeof window !== 'undefined'
+      ? sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
+      : null) || user?.schoolDomain || user?.subdomain || classInst?.slug || null
+
+  return {
+    slug: activeSlug,
+    id: (typeof window !== 'undefined' ? sessionStorage.getItem('edutech_viewing_id') || sessionStorage.getItem('edutech_school_id') : null) || user?.schoolId || classInst?.id || activeSlug,
+    subdomain: user?.subdomain || user?.schoolDomain || classInst?.subdomain || activeSlug,
+    schoolId: user?.schoolId || classInst?.id || null,
+    name: user?.schoolName || user?.school?.name || classInst?.name || null,
+    nameBn: classInst?.nameBn || null,
+    eiin: classInst?.eiin || user?.school?.eiin || null,
+    aliases: Array.from(candidateSet),
+  }
+}
+
 export function isNotificationForSchool(
   notification: Notification,
-  schoolIdentifiers: {
-    slug?: string | null
-    id?: string | null
-    subdomain?: string | null
-    schoolId?: string | null
-    name?: string | null
-    nameBn?: string | null
-    eiin?: string | null
-  }
+  schoolIdentifiers?: SchoolIdentifiers | null
 ): boolean {
   // If broadcast to all or targetType === 'all' or broadcastToAll is true, or no specific targets
   if (notification.broadcastToAll || !notification.targetType || notification.targetType === 'all') {
@@ -47,49 +243,96 @@ export function isNotificationForSchool(
 
   // If specific target type
   if (notification.targetType === 'specific') {
-    const targets = (notification.targetInstitutions || []).map((t) => String(t).toLowerCase().trim())
-    const targetNames = (notification.targetInstitutionNames || []).map((t) => String(t).toLowerCase().trim())
-    if (targets.length === 0 && targetNames.length === 0) return true
+    const rawTargets = notification.targetInstitutions || []
+    const rawNames = notification.targetInstitutionNames || []
+    if (rawTargets.length === 0 && rawNames.length === 0) return true
 
-    const candidateSet = new Set<string>()
-    const rawCandidates = [
-      schoolIdentifiers.slug,
-      schoolIdentifiers.id,
-      schoolIdentifiers.subdomain,
-      schoolIdentifiers.schoolId,
-      schoolIdentifiers.name,
-      schoolIdentifiers.nameBn,
-      schoolIdentifiers.eiin,
-    ]
-    for (const c of rawCandidates) {
-      if (c && typeof c === 'string' && c.trim()) {
-        candidateSet.add(c.toLowerCase().trim())
-      }
+    const targets = rawTargets.map((t) => String(t).toLowerCase().trim())
+    const targetNames = rawNames.map((t) => String(t).toLowerCase().trim())
+
+    const targetSet = new Set<string>()
+    for (const t of targets) {
+      targetSet.add(t)
+      if (t.startsWith('inst-')) targetSet.add(t.replace('inst-', ''))
+      if (t.startsWith('sch_')) targetSet.add(t.replace('sch_', ''))
+    }
+    for (const n of targetNames) {
+      targetSet.add(n)
     }
 
-    // Cross-reference with institutions stored in localStorage
+    const candidateSet = new Set<string>()
+    if (schoolIdentifiers) {
+      if (schoolIdentifiers.aliases) {
+        schoolIdentifiers.aliases.forEach((a) => candidateSet.add(String(a).toLowerCase().trim()))
+      }
+      const rawCandidates = [
+        schoolIdentifiers.slug,
+        schoolIdentifiers.id,
+        schoolIdentifiers.subdomain,
+        schoolIdentifiers.schoolId,
+        schoolIdentifiers.name,
+        schoolIdentifiers.nameBn,
+        schoolIdentifiers.eiin,
+      ]
+      for (const c of rawCandidates) {
+        if (c && typeof c === 'string' && c.trim()) {
+          const lower = c.toLowerCase().trim()
+          candidateSet.add(lower)
+          if (lower.startsWith('inst-')) candidateSet.add(lower.replace('inst-', ''))
+          if (lower.startsWith('sch_')) candidateSet.add(lower.replace('sch_', ''))
+        }
+      }
+    } else {
+      const resolved = resolveCurrentSchoolIdentifiers()
+      if (resolved.aliases) resolved.aliases.forEach((a) => candidateSet.add(a))
+    }
+
+    // Cross-reference with institutions stored in memory and localStorage
     try {
+      const allKnownInstitutions: any[] = []
       if (typeof window !== 'undefined') {
         const rawSuperAdmin = localStorage.getItem('edutech_super_admin')
         if (rawSuperAdmin) {
           const parsed = JSON.parse(rawSuperAdmin)
-          const instList: any[] = parsed.state?.institutions || []
-          for (const inst of instList) {
-            const instKeys = [
-              inst.id,
-              inst.slug,
-              inst.subdomain,
-              inst.name,
-              inst.nameBn,
-              inst.eiin,
-            ]
-              .filter(Boolean)
-              .map((k) => String(k).toLowerCase().trim())
+          if (Array.isArray(parsed.state?.institutions)) allKnownInstitutions.push(...parsed.state.institutions)
+        }
+        const rawInsts = localStorage.getItem('edutech-institutions')
+        if (rawInsts) {
+          const parsed = JSON.parse(rawInsts)
+          const arr = Array.isArray(parsed) ? parsed : (parsed.state?.institutions || [])
+          allKnownInstitutions.push(...arr)
+        }
+      }
+      try {
+        const inMemory = useSuperAdminStore.getState?.()?.institutions
+        if (Array.isArray(inMemory)) allKnownInstitutions.push(...inMemory)
+      } catch { /* ignore */ }
 
-            const hasMatch = instKeys.some((k) => candidateSet.has(k))
-            if (hasMatch) {
-              instKeys.forEach((k) => candidateSet.add(k))
-            }
+      for (const inst of allKnownInstitutions) {
+        if (!inst) continue
+        const instKeys = [
+          inst.id,
+          inst.slug,
+          inst.subdomain,
+          inst.name,
+          inst.nameBn,
+          inst.eiin,
+        ]
+          .filter(Boolean)
+          .map((k) => String(k).toLowerCase().trim())
+
+        const hasMatch = instKeys.some((k) => {
+          if (candidateSet.has(k)) return true
+          if (k.startsWith('inst-') && candidateSet.has(k.replace('inst-', ''))) return true
+          if (k.startsWith('sch_') && candidateSet.has(k.replace('sch_', ''))) return true
+          return false
+        })
+
+        if (hasMatch) {
+          for (const k of instKeys) {
+            candidateSet.add(k)
+            if (k.startsWith('inst-')) candidateSet.add(k.replace('inst-', ''))
+            if (k.startsWith('sch_')) candidateSet.add(k.replace('sch_', ''))
           }
         }
       }
@@ -98,25 +341,25 @@ export function isNotificationForSchool(
     // If candidate set has no valid entries, return true as fallback
     if (candidateSet.size === 0) return true
 
-    // Check direct equality
+    // 1. Check direct equality
     for (const c of candidateSet) {
-      if (targets.includes(c)) return true
-      if (targetNames.includes(c)) return true
+      if (targetSet.has(c)) return true
     }
 
-    // Check substring / fuzzy matching for institution names (length > 3)
-    for (const target of targets) {
+    // 2. Alphanumeric match (ignoring punctuation/spaces)
+    const normTargets = Array.from(targetSet).map((t) => t.replace(/[^a-z0-9]/g, ''))
+    for (const cand of candidateSet) {
+      const normCand = cand.replace(/[^a-z0-9]/g, '')
+      if (normCand.length >= 3 && normTargets.includes(normCand)) {
+        return true
+      }
+    }
+
+    // 3. Check substring / fuzzy matching for institution names / slugs (length > 3)
+    for (const target of targetSet) {
       for (const cand of candidateSet) {
         if (cand === target) return true
         if (target.length > 3 && cand.length > 3 && (cand.includes(target) || target.includes(cand))) {
-          return true
-        }
-      }
-    }
-    for (const tName of targetNames) {
-      for (const cand of candidateSet) {
-        if (cand === tName) return true
-        if (tName.length > 3 && cand.length > 3 && (cand.includes(tName) || tName.includes(cand))) {
           return true
         }
       }
@@ -183,40 +426,12 @@ export function dispatchRealtimeNotification(n: Notification) {
 export function handleIncomingRealtimeNotification(n: Notification) {
   try {
     if (typeof window === 'undefined' || !n) return
-    const currentSlug =
-      sessionStorage.getItem('edutech_inst_slug') ||
-      localStorage.getItem('edutech_inst_slug') ||
-      null
+    const idents = resolveCurrentSchoolIdentifiers()
     const isSuperAdmin =
-      currentSlug === 'super-admin' ||
-      (!currentSlug && localStorage.getItem('edutech_auth_role') === 'super_admin')
+      idents.slug === 'super-admin' ||
+      (!idents.slug && localStorage.getItem('edutech_auth_role') === 'super_admin')
 
-    let instName: string | undefined
-    let instNameBn: string | undefined
-    let instEiin: string | undefined
-    try {
-      const rawClass = localStorage.getItem('edutech-classes')
-      if (rawClass) {
-        const parsed = JSON.parse(rawClass)
-        const inst = parsed.state?.institution
-        if (inst) {
-          instName = inst.name
-          instNameBn = inst.nameBn
-          instEiin = inst.eiin
-        }
-      }
-    } catch { /* ignore */ }
-
-    const identifiers = {
-      slug: currentSlug,
-      id: sessionStorage.getItem('edutech_viewing_id') || currentSlug,
-      subdomain: currentSlug,
-      name: instName,
-      nameBn: instNameBn,
-      eiin: instEiin,
-    }
-
-    if (isSuperAdmin || isNotificationForSchool(n, identifiers)) {
+    if (isSuperAdmin || isNotificationForSchool(n, idents)) {
       const state = useNotificationStore.getState()
       const exists = state.notifications.some((item) => item.id === n.id)
       if (!exists) {
@@ -346,12 +561,9 @@ export const useNotificationStore = create<NotificationState>()(
               }
             }
 
+            const idents = resolveCurrentSchoolIdentifiers()
             const schoolNotifs = masterNotifs.filter((n) =>
-              isNotificationForSchool(n, {
-                slug,
-                id: sessionStorage.getItem('edutech_viewing_id') || slug,
-                subdomain: slug,
-              })
+              isNotificationForSchool(n, idents)
             )
 
             const state = get()
@@ -574,32 +786,63 @@ export const useNotificationStore = create<NotificationState>()(
             } catch { /* ignore */ }
 
             if (isTargeted) {
-              // 1. Add raw target identifiers directly
+              // 1. Add raw target identifiers directly (and without 'inst-', 'sch_')
               for (const t of n.targetInstitutions || []) {
-                if (t && t !== 'super-admin') destSlugs.add(String(t).toLowerCase().trim())
+                if (t && t !== 'super-admin') {
+                  const s = String(t).toLowerCase().trim()
+                  destSlugs.add(s)
+                  if (s.startsWith('inst-')) destSlugs.add(s.replace('inst-', ''))
+                  if (s.startsWith('sch_')) destSlugs.add(s.replace('sch_', ''))
+                }
               }
 
-              // 2. Cross-reference with super admin store institutions to resolve slug/id/subdomain
+              // 2. Cross-reference with all institutions to resolve slug/id/subdomain
               for (const inst of allInstList) {
-                const keys = [inst.slug, inst.id, inst.subdomain, inst.name, inst.nameBn, inst.eiin]
-                  .filter(Boolean)
-                  .map((k) => String(k).toLowerCase().trim())
+                if (!inst) continue
+                const instIdentifiers: SchoolIdentifiers = {
+                  id: inst.id,
+                  slug: inst.slug,
+                  subdomain: inst.subdomain,
+                  name: inst.name,
+                  nameBn: inst.nameBn,
+                  eiin: inst.eiin,
+                  aliases: [inst.id, inst.slug, inst.subdomain, inst.name, inst.nameBn, inst.eiin].filter(Boolean),
+                }
 
-                const matches = keys.some((k) => targetSet.has(k))
-                if (matches) {
+                if (isNotificationForSchool(n, instIdentifiers)) {
                   if (inst.slug) destSlugs.add(String(inst.slug).toLowerCase().trim())
                   if (inst.id) destSlugs.add(String(inst.id).toLowerCase().trim())
                   if (inst.subdomain) destSlugs.add(String(inst.subdomain).toLowerCase().trim())
                 }
               }
 
-              // 3. Match against existing edutech-notifications_<slug> keys
+              // 3. Match against existing edutech-notifications_<slug> and edutech-classes_<slug> keys
               for (let i = 0; i < localStorage.length; i++) {
                 const k = localStorage.key(i)
-                if (k && k.startsWith('edutech-notifications_')) {
-                  const s = k.replace('edutech-notifications_', '').toLowerCase().trim()
-                  if (s && s !== 'super-admin' && targetSet.has(s)) {
-                    destSlugs.add(s)
+                if (k && (k.startsWith('edutech-notifications_') || k.startsWith('edutech-classes_'))) {
+                  const s = k.replace('edutech-notifications_', '').replace('edutech-classes_', '').toLowerCase().trim()
+                  if (s && s !== 'super-admin') {
+                    let matched = false
+                    try {
+                      const rawCls = localStorage.getItem(`edutech-classes_${s}`)
+                      if (rawCls) {
+                        const parsed = JSON.parse(rawCls)
+                        const cInst = parsed.state?.institution
+                        if (cInst && isNotificationForSchool(n, {
+                          slug: s,
+                          id: cInst.id,
+                          name: cInst.name,
+                          nameBn: cInst.nameBn,
+                          eiin: cInst.eiin,
+                        })) {
+                          matched = true
+                        }
+                      }
+                    } catch { /* ignore */ }
+
+                    if (matched || isNotificationForSchool(n, { slug: s, id: s, subdomain: s })) {
+                      destSlugs.add(s)
+                    }
                   }
                 }
               }
@@ -769,12 +1012,9 @@ registerStoreLoad(() => {
       }
 
       // Filter master notifications that apply to this school
+      const idents = resolveCurrentSchoolIdentifiers()
       const schoolNotifs = masterNotifs.filter((n) =>
-        isNotificationForSchool(n, {
-          slug,
-          id: sessionStorage.getItem('edutech_viewing_id') || slug,
-          subdomain: slug,
-        })
+        isNotificationForSchool(n, idents)
       )
 
       // Merge into currentNotifs without duplicates, preserving local read state

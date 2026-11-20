@@ -30,7 +30,7 @@ import {
   GraduationCap,
   X,
 } from 'lucide-react'
-import { useNotificationStore, isNotificationForSchool, type Notification } from '@/store/notificationStore'
+import { useNotificationStore, isNotificationForSchool, resolveCurrentSchoolIdentifiers, type Notification } from '@/store/notificationStore'
 import { NotificationDetailModal } from '@/pages/notifications/modals/NotificationDetailModal'
 import { useAppStore } from '@/store/appStore'
 import { useBn } from '@/hooks/useBn'
@@ -41,7 +41,6 @@ import { ROLE_LABELS, type InstitutionRole } from '@/lib/navUtils'
 import { usePermissionStore } from '@/store/permissionStore'
 import { useSubdomain } from '@/hooks/useSubdomain'
 import { useSuperAdminStore } from '@/store/superAdminStore'
-import { useClassStore } from '@/store/classStore'
 import { getNavBase, getSuperAdminViewNavBase, getLogoutRedirect } from '@/lib/navUtils'
 import { t } from '@/lib/i18n'
 import type { TranslationKey } from '@/lib/i18n'
@@ -218,34 +217,9 @@ export default React.memo(function Topbar() {
     const handleNewNotif = (e: any) => {
       const n: Notification = e.detail
       if (!n) return
-      const instSettings = useClassStore.getState().institution
-      const currentSlug =
-        sessionStorage.getItem('edutech_inst_slug') ||
-        localStorage.getItem('edutech_inst_slug') ||
-        viewingInstitutionId ||
-        user?.subdomain ||
-        user?.schoolDomain ||
-        (user as any)?.schoolId ||
-        (instSettings as any)?.slug
-      const currentSchoolId =
-        (user as any)?.schoolId ||
-        (user as any)?.institutionId ||
-        viewingInstitutionId ||
-        (instSettings as any)?.id
-      const currentSchoolName = user?.schoolName || user?.school?.name || instSettings?.name
+      const idents = resolveCurrentSchoolIdentifiers(user)
 
-      if (
-        isSuperAdminView ||
-        isNotificationForSchool(n, {
-          slug: currentSlug,
-          id: currentSchoolId,
-          subdomain: user?.subdomain || user?.schoolDomain,
-          schoolId: (user as any)?.schoolId,
-          name: currentSchoolName,
-          nameBn: instSettings?.nameBn,
-          eiin: instSettings?.eiin,
-        })
-      ) {
+      if (isSuperAdminView || isNotificationForSchool(n, idents)) {
         setToastNotif(n)
       }
     }
@@ -281,38 +255,8 @@ export default React.memo(function Topbar() {
 
   const visibleNotifications = useMemo(() => {
     if (isSuperAdminView) return notifications
-    const instSettings = useClassStore.getState().institution
-    const currentSlug =
-      sessionStorage.getItem('edutech_inst_slug') ||
-      localStorage.getItem('edutech_inst_slug') ||
-      viewingInstitutionId ||
-      user?.subdomain ||
-      user?.schoolDomain ||
-      (user as any)?.schoolId ||
-      (instSettings as any)?.slug
-    const currentSchoolId =
-      (user as any)?.schoolId ||
-      (user as any)?.institutionId ||
-      viewingInstitutionId ||
-      (instSettings as any)?.id
-    const currentSchoolName =
-      user?.schoolName ||
-      user?.school?.name ||
-      instSettings?.name
-    const currentSchoolNameBn =
-      instSettings?.nameBn
-
-    return notifications.filter((n) =>
-      isNotificationForSchool(n, {
-        slug: currentSlug,
-        id: currentSchoolId,
-        subdomain: user?.subdomain || user?.schoolDomain,
-        schoolId: (user as any)?.schoolId,
-        name: currentSchoolName,
-        nameBn: currentSchoolNameBn,
-        eiin: instSettings?.eiin,
-      })
-    )
+    const idents = resolveCurrentSchoolIdentifiers(user)
+    return notifications.filter((n) => isNotificationForSchool(n, idents))
   }, [notifications, isSuperAdminView, viewingInstitutionId, user])
 
   const unreadNotifs = visibleNotifications.filter((n) => !n.read).length

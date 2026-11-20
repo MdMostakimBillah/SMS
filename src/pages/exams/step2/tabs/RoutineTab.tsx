@@ -15,9 +15,7 @@ import {
   ChevronDown,
   FileSpreadsheet,
   FileText,
-  Copy,
   ChevronsDown,
-  Sparkles,
 } from 'lucide-react'
 import {
   startOfMonth,
@@ -201,21 +199,6 @@ export default React.memo(function RoutineTab({
     setRoutineFormError('')
   }
 
-  const handleDuplicateRoutineRow = (index: number) => {
-    const target = routineRows[index]
-    if (!target) return
-    const cloned: RoutineRow = {
-      ...target,
-      id: `rt-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      subjectId: '',
-    }
-    setRoutineRows((prev) => {
-      const next = [...prev]
-      next.splice(index + 1, 0, cloned)
-      return next
-    })
-  }
-
   const handleRemoveRoutineRow = (index: number) => {
     if (routineRows.length <= 1) return
     setRoutineRows((prev) => prev.filter((_, i) => i !== index))
@@ -262,24 +245,6 @@ export default React.memo(function RoutineTab({
         }
         return updated
       })
-    )
-  }
-
-  const applyDateTimeRoomToAll = () => {
-    const first = routineRows[0]
-    if (!first) return
-    setRoutineRows((prev) =>
-      prev.map((r, i) =>
-        i === 0
-          ? r
-          : {
-              ...r,
-              date: first.date,
-              startTime: first.startTime,
-              endTime: first.endTime,
-              roomNo: first.roomNo || r.roomNo,
-            }
-      )
     )
   }
 
@@ -729,95 +694,12 @@ export default React.memo(function RoutineTab({
                     </h3>
                     <p className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
                       {isBn
-                        ? 'প্রতিটি সারিতে শ্রেণি, সেকশন, বিষয়, তারিখ, সময় ও কক্ষ নির্ধারণ করুন। কলামের কপি বোতাম দিয়ে যেকোনো তথ্য সব সারিতে প্রয়োগ করতে পারেন।'
-                        : 'Define class, section, subject, date, time & room in a single row. Use column copy buttons to apply values to all rows.'}
+                        ? 'প্রতিটি সারিতে শ্রেণি, সেকশন, বিষয়, তারিখ, সময় ও কক্ষ নির্ধারণ করুন। কলামের তীর চিহ্নে ক্লিক করে তথ্য সব সারিতে প্রয়োগ করা যাবে।'
+                        : 'Define class, section, subject, date, time & room in a single row. Click column arrow icons to copy values down.'}
                     </p>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleAddRoutineRow}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--brand)] text-white text-[0.75rem] font-semibold hover:opacity-90 shadow-xs cursor-pointer transition-all"
-                    title={isBn ? 'নতুন রুটিন সারি যোগ করুন' : 'Add New Routine Row'}
-                  >
-                    <Plus size={14} />
-                    <span>{isBn ? 'রুটিন যোগ' : 'Add Routine'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowRoutineForm(false)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
               </div>
-
-              {/* Toolbar */}
-              {routineRows.length > 1 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 bg-[var(--brand)]/5 border-b border-[var(--border)] text-[0.75rem]">
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={14} className="text-[var(--brand)] shrink-0" />
-                    <span className="text-[var(--text-secondary)] font-medium text-[0.6875rem]">
-                      {isBn
-                        ? 'দ্রুত তথ্য কপি ও প্রয়োগ করুন:'
-                        : 'Quick Copy & Apply Column Values:'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => applyRoutineColumnToAll('classId', 0)}
-                      title={isBn ? '১ম সারির শ্রেণি সব সারিতে কপি করুন' : 'Copy 1st row class to all'}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] hover:border-[var(--brand)] text-[var(--text-secondary)] hover:text-[var(--brand)] text-[0.6875rem] font-medium transition-colors cursor-pointer"
-                    >
-                      <Copy size={11} />
-                      {isBn ? 'শ্রেণি কপি ⬇' : 'Copy Class ⬇'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => applyRoutineColumnToAll('date', 0)}
-                      title={isBn ? '১ম সারির তারিখ সব সারিতে কপি করুন' : 'Copy 1st row date to all'}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] hover:border-[var(--brand)] text-[var(--text-secondary)] hover:text-[var(--brand)] text-[0.6875rem] font-medium transition-colors cursor-pointer"
-                    >
-                      <Copy size={11} />
-                      {isBn ? 'তারিখ কপি ⬇' : 'Copy Date ⬇'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        applyRoutineColumnToAll('startTime', 0)
-                        applyRoutineColumnToAll('endTime', 0)
-                      }}
-                      title={isBn ? '১ম সারির সময় সব সারিতে কপি করুন' : 'Copy 1st row time to all'}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] hover:border-[var(--brand)] text-[var(--text-secondary)] hover:text-[var(--brand)] text-[0.6875rem] font-medium transition-colors cursor-pointer"
-                    >
-                      <Copy size={11} />
-                      {isBn ? 'সময় কপি ⬇' : 'Copy Time ⬇'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => applyRoutineColumnToAll('roomNo', 0)}
-                      title={isBn ? '১ম সারির কক্ষ সব সারিতে কপি করুন' : 'Copy 1st row room to all'}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[var(--bg-primary)] border border-[var(--border)] hover:border-[var(--brand)] text-[var(--text-secondary)] hover:text-[var(--brand)] text-[0.6875rem] font-medium transition-colors cursor-pointer"
-                    >
-                      <Copy size={11} />
-                      {isBn ? 'কক্ষ কপি ⬇' : 'Copy Room ⬇'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={applyDateTimeRoomToAll}
-                      title={isBn ? '১ম সারির তারিখ, সময় ও কক্ষ সবার জন্য প্রয়োগ করুন' : 'Apply 1st row date, time & room to all'}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[var(--brand)]/10 border border-[var(--brand)]/30 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white text-[0.6875rem] font-semibold transition-all cursor-pointer shadow-xs"
-                    >
-                      <ChevronsDown size={13} />
-                      {isBn ? 'তারিখ, সময় ও কক্ষ প্রয়োগ ⬇' : 'Apply Schedule ⬇'}
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* Table Body with Single Row Input Fields */}
               <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -842,10 +724,9 @@ export default React.memo(function RoutineTab({
                                 type="button"
                                 onClick={() => applyRoutineColumnToAll('classId', 0)}
                                 title={isBn ? '১ম সারির শ্রেণি সব সারিতে প্রয়োগ করুন' : 'Apply 1st row class to all'}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                                className="p-1 rounded-md text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/30"
                               >
-                                <Copy size={10} />
-                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                                <ChevronsDown size={13} />
                               </button>
                             )}
                           </div>
@@ -858,10 +739,9 @@ export default React.memo(function RoutineTab({
                                 type="button"
                                 onClick={() => applyRoutineColumnToAll('sectionId', 0)}
                                 title={isBn ? '১ম সারির সেকশন সব সারিতে প্রয়োগ করুন' : 'Apply 1st row section to all'}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                                className="p-1 rounded-md text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/30"
                               >
-                                <Copy size={10} />
-                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                                <ChevronsDown size={13} />
                               </button>
                             )}
                           </div>
@@ -881,10 +761,9 @@ export default React.memo(function RoutineTab({
                                 type="button"
                                 onClick={() => applyRoutineColumnToAll('date', 0)}
                                 title={isBn ? '১ম সারির তারিখ সব সারিতে প্রয়োগ করুন' : 'Apply 1st row date to all'}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                                className="p-1 rounded-md text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/30"
                               >
-                                <Copy size={10} />
-                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                                <ChevronsDown size={13} />
                               </button>
                             )}
                           </div>
@@ -897,10 +776,9 @@ export default React.memo(function RoutineTab({
                                 type="button"
                                 onClick={() => applyRoutineColumnToAll('startTime', 0)}
                                 title={isBn ? '১ম সারির শুরুর সময় সব সারিতে প্রয়োগ করুন' : 'Apply 1st row start time to all'}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                                className="p-1 rounded-md text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/30"
                               >
-                                <Copy size={10} />
-                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                                <ChevronsDown size={13} />
                               </button>
                             )}
                           </div>
@@ -913,10 +791,9 @@ export default React.memo(function RoutineTab({
                                 type="button"
                                 onClick={() => applyRoutineColumnToAll('endTime', 0)}
                                 title={isBn ? '১ম সারির শেষ সময় সব সারিতে প্রয়োগ করুন' : 'Apply 1st row end time to all'}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                                className="p-1 rounded-md text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/30"
                               >
-                                <Copy size={10} />
-                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                                <ChevronsDown size={13} />
                               </button>
                             )}
                           </div>
@@ -929,15 +806,14 @@ export default React.memo(function RoutineTab({
                                 type="button"
                                 onClick={() => applyRoutineColumnToAll('roomNo', 0)}
                                 title={isBn ? '১ম সারির কক্ষ সব সারিতে প্রয়োগ করুন' : 'Apply 1st row room to all'}
-                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-semibold bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/20"
+                                className="p-1 rounded-md text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-colors cursor-pointer border border-[var(--brand)]/30"
                               >
-                                <Copy size={10} />
-                                <span>{isBn ? 'কপি ⬇' : 'Copy ⬇'}</span>
+                                <ChevronsDown size={13} />
                               </button>
                             )}
                           </div>
                         </th>
-                        <th className="py-2.5 px-3 w-20 text-center">{isBn ? 'অ্যাকশন' : 'Action'}</th>
+                        <th className="py-2.5 px-3 w-16 text-center">{isBn ? 'অ্যাকশন' : 'Action'}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
@@ -1057,15 +933,7 @@ export default React.memo(function RoutineTab({
                             </td>
                             {/* Action */}
                             <td className="py-2 px-3 text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => handleDuplicateRoutineRow(idx)}
-                                  title={isBn ? 'সারি অনুলিপি করুন' : 'Duplicate Row'}
-                                  className="p-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)] transition-colors cursor-pointer"
-                                >
-                                  <Copy size={12} />
-                                </button>
+                              <div className="flex items-center justify-center">
                                 <button
                                   type="button"
                                   disabled={routineRows.length <= 1}
