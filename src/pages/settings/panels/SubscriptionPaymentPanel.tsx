@@ -12,7 +12,6 @@ import {
   Calendar,
   HelpCircle,
   Sparkles,
-  ShieldCheck,
 } from 'lucide-react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { useAuth } from '@/contexts/AuthContext'
@@ -22,6 +21,7 @@ import {
   type PaymentMethodType,
   DEFAULT_GATEWAYS_CONFIG,
 } from '@/store/institutionPaymentStore'
+import { PaymentMethodLogo } from '@/components/ui/PaymentMethodLogo'
 
 interface Props {
   isBn: boolean
@@ -254,11 +254,12 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
     setIsSubmitting(true)
     try {
       await submitPayment({
-        schoolId: currentSchool?.id || 'inst-1',
-        schoolName: currentSchool?.name || user?.name || 'Institution',
+        schoolId: currentSchool?.id || user?.schoolId || 'inst-current',
+        schoolName: currentSchool?.name || 'Institution Account',
         schoolSlug: currentSchool?.slug || activeSlug || 'school',
         eiin: currentSchool?.eiin || undefined,
         packageName: activePackage.name,
+        packageId: activePackage.id,
         amount: payableAmount,
         months: selectedMonths,
         senderNumber: cleanSender,
@@ -293,39 +294,42 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
     >
       <div className="space-y-6">
         {/* 1. Current Subscription Status Card */}
-        <div className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
           <div className="flex items-start gap-3.5">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-[var(--brand)]/10 text-[var(--brand)]">
-              <Building2 size={22} />
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-[var(--brand)]/10 text-[var(--brand)] border border-[var(--brand)]/20 shadow-xs">
+              <Building2 size={24} />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-[1rem] font-bold text-[var(--text-primary)] m-0">
+                <h3 className="text-[1.0625rem] font-bold text-[var(--text-primary)] m-0 tracking-tight">
                   {currentSchool?.name || 'Institution Account'}
                 </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold uppercase tracking-wider bg-[var(--brand)]/15 text-[var(--brand)]">
+                <span className="px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold uppercase tracking-wider bg-[var(--brand)]/15 text-[var(--brand)] border border-[var(--brand)]/20">
                   {currentSchool?.package?.name || activePackage.name}
                 </span>
                 {isExpired ? (
-                  <span className="px-2 py-0.5 rounded text-[0.6875rem] font-bold bg-red-500/10 text-red-500 border border-red-500/20">
+                  <span className="px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold bg-red-500/10 text-red-500 border border-red-500/20">
                     {isBn ? 'মেয়াদোত্তীর্ণ' : 'Expired'}
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded text-[0.6875rem] font-bold bg-green-500/10 text-green-500 border border-green-500/20">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold bg-green-500/10 text-green-500 border border-green-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                     {isBn ? 'সক্রিয়' : 'Active'}
                   </span>
                 )}
               </div>
-              <p className="text-[0.75rem] text-[var(--text-muted)] mt-1 mb-0 flex items-center gap-3 flex-wrap">
-                <span>EIIN: {currentSchool?.eiin || 'N/A'}</span>
-                <span>•</span>
+              <p className="text-[0.75rem] text-[var(--text-muted)] mt-1.5 mb-0 flex items-center gap-3 flex-wrap">
+                <span>EIIN: <strong className="font-mono text-[var(--text-primary)]">{currentSchool?.eiin || 'N/A'}</strong></span>
+                <span className="text-[var(--border)]">•</span>
                 <span>
                   {isBn ? 'মেয়াদ শেষ:' : 'Expires:'}{' '}
-                  {expiresAtDate ? expiresAtDate.toLocaleDateString() : (isBn ? 'নির্দিষ্ট নয়' : 'Not set')}
+                  <strong className="text-[var(--text-primary)]">
+                    {expiresAtDate ? expiresAtDate.toLocaleDateString() : (isBn ? 'নির্দিষ্ট নয়' : 'Not set')}
+                  </strong>
                 </span>
                 {daysLeft !== null && !isExpired && (
-                  <span className="text-[var(--brand)] font-semibold">
-                    ({daysLeft} {isBn ? 'দিন বাকি' : 'days left'})
+                  <span className="px-2 py-0.2 rounded-md bg-[var(--brand)]/10 text-[var(--brand)] text-[0.6875rem] font-bold">
+                    {daysLeft} {isBn ? 'দিন বাকি' : 'days left'}
                   </span>
                 )}
               </p>
@@ -337,8 +341,9 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
               <div className="text-[0.6875rem] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
                 {isBn ? 'বর্তমান প্যাকেজ রেট' : 'Current Rate'}
               </div>
-              <div className="text-[1.25rem] font-extrabold text-[var(--text-primary)]">
-                ৳{baseMonthlyPrice.toLocaleString()} / {isBn ? 'মাস' : 'mo'}
+              <div className="text-[1.375rem] font-extrabold text-[var(--text-primary)] tracking-tight">
+                ৳{baseMonthlyPrice.toLocaleString()}
+                <span className="text-[0.75rem] font-normal text-[var(--text-muted)] ml-1">/ {isBn ? 'মাস' : 'mo'}</span>
               </div>
             </div>
           </div>
@@ -366,10 +371,10 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                 <div
                   key={pkg.id || pkg.name}
                   onClick={() => setSelectedPkgName(pkg.name)}
-                  className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative flex flex-col justify-between ${
                     isSelected
-                      ? 'border-[var(--brand)] bg-[var(--brand)]/5 shadow-sm'
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/40'
+                      ? 'border-[var(--brand)] bg-[var(--brand)]/5 shadow-md -translate-y-0.5'
+                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/40 hover:bg-[var(--bg-secondary)]/30'
                   }`}
                 >
                   {isCurrent && (
@@ -383,23 +388,29 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                         {isBn ? pkg.nameBn || pkg.name : pkg.name}
                       </span>
                     </div>
-                    <div className="text-[1.125rem] font-extrabold text-[var(--brand)] mb-2">
+                    <div className="text-[1.25rem] font-extrabold text-[var(--brand)] mb-2.5">
                       ৳{(pkg.price || 1500).toLocaleString()}
-                      <span className="text-[0.6875rem] font-normal text-[var(--text-muted)]"> / {isBn ? 'মাস' : 'mo'}</span>
+                      <span className="text-[0.6875rem] font-normal text-[var(--text-muted)] ml-0.5"> / {isBn ? 'মাস' : 'mo'}</span>
                     </div>
-                    <div className="text-[0.6875rem] text-[var(--text-muted)] space-y-1 mb-2">
-                      <div>👥 {isBn ? 'সর্বোচ্চ শিক্ষার্থী:' : 'Max Students:'} <strong className="text-[var(--text-primary)]">{pkg.maxStudents || 999}</strong></div>
-                      <div>👨‍🏫 {isBn ? 'সর্বোচ্চ শিক্ষক:' : 'Max Teachers:'} <strong className="text-[var(--text-primary)]">{pkg.maxTeachers || 99}</strong></div>
+                    <div className="text-[0.6875rem] text-[var(--text-muted)] space-y-1.5 mb-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[0.75rem]">👥</span>
+                        <span>{isBn ? 'শিক্ষার্থী:' : 'Students:'} <strong className="text-[var(--text-primary)]">{pkg.maxStudents || 999}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[0.75rem]">👨‍🏫</span>
+                        <span>{isBn ? 'শিক্ষক:' : 'Teachers:'} <strong className="text-[var(--text-primary)]">{pkg.maxTeachers || 99}</strong></span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-[var(--border)] text-[0.625rem] font-medium text-[var(--text-secondary)]">
+                  <div className="pt-2.5 border-t border-[var(--border)] text-[0.6875rem] font-medium text-[var(--text-secondary)]">
                     {isSelected ? (
-                      <span className="flex items-center gap-1 text-[var(--brand)] font-bold">
-                        <Check size={12} /> {isBn ? 'নির্বাচিত' : 'Selected'}
+                      <span className="flex items-center gap-1.5 text-[var(--brand)] font-bold">
+                        <Check size={14} /> {isBn ? 'নির্বাচিত প্ল্যান' : 'Selected Plan'}
                       </span>
                     ) : (
-                      <span>{isBn ? 'নির্বাচন করতে ক্লিক করুন' : 'Click to select'}</span>
+                      <span className="text-[var(--text-muted)]">{isBn ? 'নির্বাচন করতে ক্লিক করুন' : 'Click to select'}</span>
                     )}
                   </div>
                 </div>
@@ -408,9 +419,9 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
           </div>
 
           {/* Duration Selector */}
-          <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
             <div>
-              <div className="text-[0.75rem] font-bold text-[var(--text-primary)] mb-0.5">
+              <div className="text-[0.8125rem] font-bold text-[var(--text-primary)] mb-0.5">
                 {isBn ? 'বিলিং চক্র / সময়সীমা নির্বাচন করুন' : 'Select Billing Duration'}
               </div>
               <div className="text-[0.6875rem] text-[var(--text-muted)]">
@@ -431,9 +442,13 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                   }`}
                 >
                   <div className="text-[0.75rem]">{isBn ? opt.labelBn : opt.labelEn}</div>
-                  {opt.discount > 0 && (
-                    <div className="text-[0.5625rem] text-green-500 font-semibold mt-0.5">
+                  {opt.discount > 0 ? (
+                    <div className="text-[0.5625rem] text-green-500 font-bold mt-0.5">
                       {opt.discount}% {isBn ? 'ছাড়' : 'off'}
+                    </div>
+                  ) : (
+                    <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5">
+                      {isBn ? 'রেগুলার' : 'Regular'}
                     </div>
                   )}
                 </button>
@@ -444,13 +459,18 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
 
         {/* 3. Choose Bangladeshi Payment Gateway */}
         <div className="space-y-3">
-          <h4 className="text-[0.9375rem] font-bold text-[var(--text-primary)] m-0 flex items-center gap-2">
-            <CreditCard size={16} className="text-[var(--brand)]" />
-            {isBn ? '২. পেমেন্ট মেথড বা গেটওয়ে বেছে নিন' : '2. Select Bangladeshi Payment Gateway'}
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-[0.9375rem] font-bold text-[var(--text-primary)] m-0 flex items-center gap-2">
+              <CreditCard size={16} className="text-[var(--brand)]" />
+              {isBn ? '২. পেমেন্ট মেথড বা গেটওয়ে বেছে নিন' : '2. Select Bangladeshi Payment Gateway'}
+            </h4>
+            <span className="text-[0.6875rem] text-[var(--text-muted)]">
+              {isBn ? 'বিকাশ, নগদ, রকেট, উপায় বা ব্যাংক ট্রান্সফার' : 'bKash, Nagad, Rocket, Upay or Bank'}
+            </span>
+          </div>
 
-          {/* Gateway Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+          {/* Gateway Cards Grid with Authentic Brand Logos */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {availableGateways.map((gKey) => {
               const meta = GATEWAY_METAS[gKey]
               const isSelected = selectedGateway === gKey
@@ -462,29 +482,26 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                   type="button"
                   key={gKey}
                   onClick={() => setSelectedGateway(gKey)}
-                  className={`p-3 rounded-xl border-2 transition-all cursor-pointer relative flex flex-col items-center text-center ${
+                  className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer relative flex flex-col items-center text-center group ${
                     isSelected
-                      ? `${meta.borderActive} shadow-sm`
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border)]/80'
+                      ? `${meta.borderActive} shadow-md -translate-y-0.5`
+                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--border)]/90 hover:bg-[var(--bg-secondary)]/50'
                   }`}
                   style={{
                     background: isSelected ? meta.bgLight : undefined,
                   }}
                 >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-sm mb-1.5 shadow-xs"
-                    style={{ background: meta.color, color: '#ffffff' }}
-                  >
-                    {meta.iconLabel}
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 shadow-xs transition-transform group-hover:scale-105">
+                    <PaymentMethodLogo method={gKey} size={42} />
                   </div>
-                  <div className="font-bold text-[0.8125rem] text-[var(--text-primary)] leading-tight">
+                  <div className="font-bold text-[0.875rem] text-[var(--text-primary)] leading-tight">
                     {isBn ? meta.nameBn : meta.name}
                   </div>
                   <div className="text-[0.5625rem] text-[var(--text-muted)] mt-0.5 uppercase tracking-wider font-semibold">
                     {meta.tag}
                   </div>
                   {!isActive && (
-                    <span className="mt-1 px-1.5 py-0.2 rounded text-[0.5rem] bg-gray-500/10 text-gray-500">
+                    <span className="mt-1.5 px-2 py-0.2 rounded-full text-[0.5625rem] bg-gray-500/10 text-gray-500 font-medium">
                       {isBn ? 'অফলাইন' : 'Offline'}
                     </span>
                   )}
@@ -495,30 +512,27 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
 
           {/* Super Admin Official Gateway Account Details Box */}
           <div
-            className="p-5 rounded-2xl border-2 transition-all"
+            className="p-5 sm:p-6 rounded-2xl border-2 transition-all shadow-xs"
             style={{
               borderColor: `${currentGatewayMeta.color}40`,
-              background: `linear-gradient(135deg, ${currentGatewayMeta.bgLight} 0%, var(--bg-primary) 50%, ${currentGatewayMeta.bgLight} 100%)`,
+              background: `linear-gradient(135deg, ${currentGatewayMeta.bgLight} 0%, var(--bg-primary) 60%, ${currentGatewayMeta.bgLight} 100%)`,
             }}
           >
-            <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-extrabold text-base shadow-sm shrink-0"
-                  style={{ background: currentGatewayMeta.color }}
-                >
-                  {currentGatewayMeta.iconLabel}
+            <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
+              <div className="flex items-center gap-3.5">
+                <div className="w-13 h-13 rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+                  <PaymentMethodLogo method={selectedGateway} size={48} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-[0.9375rem] font-bold text-[var(--text-primary)] m-0">
+                    <h4 className="text-[1rem] font-bold text-[var(--text-primary)] m-0">
                       {isBn
                         ? `সুপার অ্যাডমিন অফিশিয়াল ${currentGatewayMeta.nameBn} অ্যাকাউন্ট`
                         : `Super Admin Official ${currentGatewayMeta.name} Account`}
                     </h4>
                     {selectedGateway !== 'bank' && (
                       <span
-                        className="px-2 py-0.5 rounded text-[0.625rem] font-bold uppercase tracking-wider"
+                        className="px-2.5 py-0.5 rounded-full text-[0.625rem] font-bold uppercase tracking-wider"
                         style={{
                           background: currentGatewayMeta.bgLight,
                           color: currentGatewayMeta.color,
@@ -528,9 +542,9 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                       </span>
                     )}
                   </div>
-                  <p className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5 mb-0">
+                  <p className="text-[0.75rem] text-[var(--text-muted)] mt-1 mb-0">
                     {isBn
-                      ? 'নির্ধারিত অ্যাকাউন্টে ফি পাঠিয়ে নিচের ফর্মে ট্রানজেকশন আইডি প্রদান করুন।'
+                      ? 'নির্ধারিত অ্যাকাউন্টে ফি পাঠিয়ে নিচের ফর্মে ট্রানজেকশন রেফারেন্স প্রদান করুন।'
                       : 'Send package fee to this account and submit the transaction reference below.'}
                   </p>
                 </div>
@@ -539,18 +553,26 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
               {/* Number / Account Copy Box */}
               {selectedGateway !== 'bank' ? (
                 <div className="flex items-center gap-2">
-                  <div className="px-3.5 py-1.5 rounded-xl border bg-[var(--bg-primary)] flex items-center gap-2 shadow-xs" style={{ borderColor: `${currentGatewayMeta.color}50` }}>
-                    <span className="text-[0.9375rem] font-mono font-bold tracking-wide" style={{ color: currentGatewayMeta.color }}>
-                      {(currentGatewayCfg as any)?.number || '01700-123456'}
-                    </span>
+                  <div
+                    className="px-4 py-2 rounded-xl border bg-[var(--bg-primary)] flex items-center gap-3 shadow-xs"
+                    style={{ borderColor: `${currentGatewayMeta.color}50` }}
+                  >
+                    <div>
+                      <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">
+                        {isBn ? 'প্রাপক অ্যাকাউন্ট' : 'Recipient Account'}
+                      </div>
+                      <span className="text-[1rem] font-mono font-extrabold tracking-wide" style={{ color: currentGatewayMeta.color }}>
+                        {(currentGatewayCfg as any)?.number || '01700-123456'}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       onClick={handleCopyNumber}
-                      className="p-1 rounded text-[var(--text-muted)] transition-colors border-none bg-transparent cursor-pointer"
+                      className="p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--border)] transition-colors border-none bg-transparent cursor-pointer"
                       style={{ color: currentGatewayMeta.color }}
                       title={isBn ? 'নম্বর কপি করুন' : 'Copy Number'}
                     >
-                      {copiedNumber ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                      {copiedNumber ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                     </button>
                   </div>
                 </div>
@@ -559,14 +581,18 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
 
             {/* Bank details card if bank is selected */}
             {selectedGateway === 'bank' && (
-              <div className="mb-4 p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-[0.75rem]">
+              <div className="mb-4 p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 text-[0.75rem]">
                 <div>
                   <span className="text-[var(--text-muted)] block text-[0.6875rem]">{isBn ? 'ব্যাংকের নাম' : 'Bank Name'}</span>
-                  <strong className="text-[var(--text-primary)] font-bold">{gatewaysConfig.bank?.bankName || 'Dutch-Bangla Bank PLC'}</strong>
+                  <strong className="text-[var(--text-primary)] font-bold text-[0.8125rem]">
+                    {gatewaysConfig.bank?.bankName || 'Dutch-Bangla Bank PLC'}
+                  </strong>
                 </div>
                 <div>
                   <span className="text-[var(--text-muted)] block text-[0.6875rem]">{isBn ? 'হিসাবের নাম' : 'Account Name'}</span>
-                  <strong className="text-[var(--text-primary)] font-bold">{gatewaysConfig.bank?.accountName || 'EduTech Pro BD Ltd.'}</strong>
+                  <strong className="text-[var(--text-primary)] font-bold text-[0.8125rem]">
+                    {gatewaysConfig.bank?.accountName || 'EduTech Pro BD Ltd.'}
+                  </strong>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -599,12 +625,12 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
             )}
 
             {/* Payment Steps / Instructions */}
-            <div className="p-3.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.75rem] space-y-1.5">
-              <div className="font-semibold text-[var(--text-primary)] flex items-center gap-1.5 mb-1">
-                <HelpCircle size={14} style={{ color: currentGatewayMeta.color }} />
-                {isBn ? `${currentGatewayMeta.nameBn} পেমেন্টের নিয়মাবলী:` : `How to Pay via ${currentGatewayMeta.name}:`}
+            <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-[0.75rem] space-y-2">
+              <div className="font-semibold text-[var(--text-primary)] flex items-center gap-2 mb-1.5">
+                <HelpCircle size={15} style={{ color: currentGatewayMeta.color }} />
+                <span>{isBn ? `${currentGatewayMeta.nameBn} পেমেন্টের নিয়মাবলী:` : `How to Pay via ${currentGatewayMeta.name}:`}</span>
               </div>
-              <ol className="list-decimal pl-5 space-y-1 text-[var(--text-secondary)] m-0">
+              <ol className="list-decimal pl-5 space-y-1.5 text-[var(--text-secondary)] m-0 leading-relaxed">
                 {selectedGateway !== 'bank' ? (
                   <>
                     <li>
@@ -632,17 +658,17 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                   <strong style={{ color: currentGatewayMeta.color }}>৳{payableAmount.toLocaleString()} BDT</strong>
                 </li>
 
-                <li className="flex items-center gap-1 flex-wrap">
+                <li className="flex items-center gap-1.5 flex-wrap">
                   <span>
                     {isBn ? 'রেফারেন্স কোডে আপনার প্রতিষ্ঠান কোড দিন: ' : 'Enter Reference Code: '}
-                    <strong className="text-[var(--brand)]">
+                    <strong className="text-[var(--brand)] font-mono">
                       {currentSchool?.eiin || currentSchool?.slug || 'SCHOOL'}
                     </strong>
                   </span>
                   <button
                     type="button"
                     onClick={handleCopyRef}
-                    className="px-1.5 py-0.5 rounded text-[0.625rem] font-medium bg-[var(--border)] hover:bg-[var(--brand)] hover:text-white transition-colors border-none cursor-pointer"
+                    className="px-2 py-0.5 rounded text-[0.625rem] font-medium bg-[var(--border)] hover:bg-[var(--brand)] hover:text-white transition-colors border-none cursor-pointer"
                   >
                     {copiedRef ? (isBn ? 'কপি হয়েছে' : 'Copied!') : (isBn ? 'কপি' : 'Copy')}
                   </button>
@@ -659,11 +685,11 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
         </div>
 
         {/* 4. Payment Submission Form */}
-        <form onSubmit={handleSubmit} className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-4">
-          <div className="flex items-center justify-between border-b border-[var(--border)] pb-3">
-            <h4 className="text-[0.9375rem] font-bold text-[var(--text-primary)] m-0 flex items-center gap-2">
-              <ShieldCheck size={18} style={{ color: currentGatewayMeta.color }} />
-              {isBn ? '৩. পেমেন্ট তথ্য ভেরিফিকেশনের জন্য জমা দিন' : '3. Submit Payment for Verification'}
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-[var(--border)] pb-3.5">
+            <h4 className="text-[0.9375rem] font-bold text-[var(--text-primary)] m-0 flex items-center gap-2.5">
+              <PaymentMethodLogo method={selectedGateway} size={24} />
+              <span>{isBn ? '৩. পেমেন্ট তথ্য ভেরিফিকেশনের জন্য জমা দিন' : '3. Submit Payment for Verification'}</span>
             </h4>
             <span
               className="px-2.5 py-0.5 rounded-full text-[0.6875rem] font-bold"
@@ -677,26 +703,26 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[0.75rem] flex items-center gap-2">
+            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[0.75rem] flex items-center gap-2">
               <AlertTriangle size={15} className="shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-[0.75rem] flex items-center gap-2">
+            <div className="p-3.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-[0.75rem] flex items-center gap-2">
               <CheckCircle2 size={15} className="shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
 
           {/* Summary Box */}
-          <div className="p-3.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-between flex-wrap gap-2">
+          <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-between flex-wrap gap-2">
             <div>
               <span className="text-[0.6875rem] text-[var(--text-muted)] uppercase tracking-wider block font-semibold">
                 {isBn ? 'নির্বাচিত প্যাকেজ ও মেয়াদ' : 'Selected Plan & Duration'}
               </span>
-              <span className="text-[0.875rem] font-bold text-[var(--text-primary)]">
+              <span className="text-[0.9375rem] font-bold text-[var(--text-primary)]">
                 {activePackage.name} • {selectedMonths} {isBn ? 'মাস' : 'month(s)'}
               </span>
             </div>
@@ -711,7 +737,7 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                     ৳{subtotal.toLocaleString()}
                   </span>
                 )}
-                <span className="text-[1.125rem] font-extrabold" style={{ color: currentGatewayMeta.color }}>
+                <span className="text-[1.25rem] font-extrabold" style={{ color: currentGatewayMeta.color }}>
                   ৳{payableAmount.toLocaleString()} BDT
                 </span>
               </div>
@@ -732,7 +758,7 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                 value={senderNumber}
                 onChange={(e) => setSenderNumber(e.target.value)}
                 placeholder={selectedGateway === 'bank' ? 'Account No / Depositor Name' : '017xxxxxxxx'}
-                className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-mono outline-none focus:border-[var(--brand)]"
+                className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-mono outline-none focus:border-[var(--brand)] transition-colors"
               />
             </div>
 
@@ -747,7 +773,7 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                 value={trxId}
                 onChange={(e) => setTrxId(e.target.value.toUpperCase())}
                 placeholder="e.g. 9J28AB34XYZ"
-                className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-mono uppercase font-bold outline-none focus:border-[var(--brand)]"
+                className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] font-mono uppercase font-bold outline-none focus:border-[var(--brand)] transition-colors"
               />
             </div>
           </div>
@@ -762,7 +788,7 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder={isBn ? 'যেমন: বার্ষিক রিনিউয়াল বা বিশেষ নোট...' : 'e.g. Annual renewal or payment note...'}
-              className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)]"
+              className="w-full py-2.5 px-3.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-[0.8125rem] outline-none focus:border-[var(--brand)] transition-colors"
             />
           </div>
 
@@ -771,7 +797,7 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-[0.8125rem] font-bold transition-all shadow-md cursor-pointer border-none disabled:opacity-50"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-[0.8125rem] font-bold transition-all shadow-md cursor-pointer border-none disabled:opacity-50 hover:opacity-95"
               style={{ background: currentGatewayMeta.color }}
             >
               <Send size={15} />
@@ -802,17 +828,17 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
+            <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-xs">
               <table className="w-full text-left border-collapse text-[0.8125rem]">
                 <thead>
                   <tr className="border-b border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-muted)] text-[11px] uppercase tracking-wider font-semibold">
-                    <th className="py-2.5 px-3.5">{isBn ? 'তারিখ' : 'Date'}</th>
-                    <th className="py-2.5 px-3.5">{isBn ? 'মেথড' : 'Method'}</th>
-                    <th className="py-2.5 px-3.5">{isBn ? 'প্যাকেজ ও মেয়াদ' : 'Package & Period'}</th>
-                    <th className="py-2.5 px-3.5">{isBn ? 'পরিমাণ' : 'Amount'}</th>
-                    <th className="py-2.5 px-3.5">{isBn ? 'TrxID' : 'TrxID'}</th>
-                    <th className="py-2.5 px-3.5">{isBn ? 'প্রেরক' : 'Sender'}</th>
-                    <th className="py-2.5 px-3.5">{isBn ? 'স্ট্যাটাস' : 'Status'}</th>
+                    <th className="py-3 px-3.5">{isBn ? 'তারিখ' : 'Date'}</th>
+                    <th className="py-3 px-3.5">{isBn ? 'মেথড' : 'Method'}</th>
+                    <th className="py-3 px-3.5">{isBn ? 'প্যাকেজ ও মেয়াদ' : 'Package & Period'}</th>
+                    <th className="py-3 px-3.5">{isBn ? 'পরিমাণ' : 'Amount'}</th>
+                    <th className="py-3 px-3.5">{isBn ? 'TrxID' : 'TrxID'}</th>
+                    <th className="py-3 px-3.5">{isBn ? 'প্রেরক' : 'Sender'}</th>
+                    <th className="py-3 px-3.5">{isBn ? 'স্ট্যাটাস' : 'Status'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -847,15 +873,18 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
                           {new Date(p.submittedAt).toLocaleDateString()}
                         </td>
                         <td className="py-3 px-3.5 whitespace-nowrap">
-                          <span
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[0.6875rem] font-bold"
-                            style={{
-                              background: meta.bgLight,
-                              color: meta.color,
-                            }}
-                          >
-                            {meta.name}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <PaymentMethodLogo method={methodKey} size={20} />
+                            <span
+                              className="inline-flex items-center px-2 py-0.5 rounded-md text-[0.6875rem] font-bold"
+                              style={{
+                                background: meta.bgLight,
+                                color: meta.color,
+                              }}
+                            >
+                              {meta.name}
+                            </span>
+                          </div>
                         </td>
                         <td className="py-3 px-3.5 font-medium text-[var(--text-primary)]">
                           {p.packageName} ({p.months} {isBn ? 'মাস' : 'mo'})

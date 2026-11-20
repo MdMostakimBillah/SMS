@@ -24,6 +24,7 @@ import {
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { GATEWAY_METAS } from '@/pages/settings/panels/SubscriptionPaymentPanel'
+import { PaymentMethodLogo } from '@/components/ui/PaymentMethodLogo'
 
 interface Props {
   isBn: boolean
@@ -332,13 +333,14 @@ export default function PaymentsPage({ isBn }: Props) {
               if (!active) return null
 
               return (
-                <span
+                <div
                   key={k}
-                  className="px-2 py-0.5 rounded text-[0.6875rem] font-bold"
-                  style={{ background: meta.bgLight, color: meta.color }}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[0.6875rem] font-bold border shadow-2xs"
+                  style={{ background: meta.bgLight, color: meta.color, borderColor: `${meta.color}30` }}
                 >
-                  {meta.name}
-                </span>
+                  <PaymentMethodLogo method={k} size={15} />
+                  <span>{meta.name}</span>
+                </div>
               )
             })}
           </div>
@@ -406,16 +408,17 @@ export default function PaymentsPage({ isBn }: Props) {
                 <button
                   key={gk}
                   onClick={() => setGatewayFilter(gk)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-[0.75rem] font-bold border transition-all cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[0.75rem] font-bold border transition-all cursor-pointer ${
                     isSelected
                       ? `${meta.borderActive} shadow-xs`
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)]'
+                      : 'border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:border-[var(--brand)]/40'
                   }`}
                   style={{
                     background: isSelected ? meta.bgLight : undefined,
                     color: isSelected ? meta.color : undefined,
                   }}
                 >
+                  <PaymentMethodLogo method={gk} size={16} />
                   <span>{meta.name}</span>
                 </button>
               )
@@ -480,15 +483,18 @@ export default function PaymentsPage({ isBn }: Props) {
 
                       {/* Method Badge */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span
-                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[0.6875rem] font-bold"
-                          style={{
-                            background: meta.bgLight,
-                            color: meta.color,
-                          }}
-                        >
-                          {meta.name}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <PaymentMethodLogo method={methodKey} size={22} />
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 rounded-md text-[0.6875rem] font-bold"
+                            style={{
+                              background: meta.bgLight,
+                              color: meta.color,
+                            }}
+                          >
+                            {meta.name}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Package & Period */}
@@ -627,13 +633,14 @@ export default function PaymentsPage({ isBn }: Props) {
                     key={gk}
                     type="button"
                     onClick={() => setCfgTab(gk)}
-                    className="px-3 py-2 text-[0.75rem] font-bold border-b-2 transition-all cursor-pointer bg-transparent border-t-0 border-l-0 border-r-0"
+                    className="flex items-center gap-1.5 px-3 py-2 text-[0.75rem] font-bold border-b-2 transition-all cursor-pointer bg-transparent border-t-0 border-l-0 border-r-0 whitespace-nowrap"
                     style={{
                       borderBottomColor: isSelected ? meta.color : 'transparent',
                       color: isSelected ? meta.color : undefined,
                     }}
                   >
-                    {meta.name}
+                    <PaymentMethodLogo method={gk} size={16} />
+                    <span>{meta.name}</span>
                   </button>
                 )
               })}
@@ -641,6 +648,25 @@ export default function PaymentsPage({ isBn }: Props) {
 
             {/* Gateway Configuration Form */}
             <form onSubmit={handleSaveGateways} className="p-5 overflow-y-auto space-y-4 flex-1">
+              {/* Gateway Banner Preview */}
+              <div
+                className="flex items-center gap-3 p-3.5 rounded-xl border"
+                style={{
+                  background: GATEWAY_METAS[cfgTab].bgLight,
+                  borderColor: `${GATEWAY_METAS[cfgTab].color}30`,
+                }}
+              >
+                <PaymentMethodLogo method={cfgTab} size={36} />
+                <div>
+                  <h4 className="text-[0.875rem] font-bold m-0" style={{ color: GATEWAY_METAS[cfgTab].color }}>
+                    {GATEWAY_METAS[cfgTab].name} ({GATEWAY_METAS[cfgTab].nameBn})
+                  </h4>
+                  <span className="text-[0.6875rem] text-[var(--text-muted)]">
+                    {GATEWAY_METAS[cfgTab].tag}
+                  </span>
+                </div>
+              </div>
+
               {/* Active Toggle for this Gateway */}
               <div className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)]">
                 <div>
@@ -967,9 +993,12 @@ export default function PaymentsPage({ isBn }: Props) {
               </div>
 
               <div className="pt-2 border-t border-[var(--border)] space-y-1">
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                   <span className="text-[var(--text-muted)]">{isBn ? 'পেমেন্ট গেটওয়ে:' : 'Gateway:'}</span>
-                  <span className="font-bold uppercase text-[var(--text-primary)]">{approvingPayment.paymentMethod || 'bKash'}</span>
+                  <span className="flex items-center gap-1.5 font-bold uppercase text-[var(--text-primary)]">
+                    <PaymentMethodLogo method={approvingPayment.paymentMethod || 'bkash'} size={18} />
+                    <span>{approvingPayment.paymentMethod || 'bKash'}</span>
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[var(--text-muted)]">{isBn ? 'প্রেরক নম্বর:' : 'Sender:'}</span>
@@ -1134,7 +1163,10 @@ export default function PaymentsPage({ isBn }: Props) {
                 </div>
                 <div>
                   <span className="text-[var(--text-muted)]">{isBn ? 'পেমেন্ট মেথড:' : 'Payment Method:'}</span>
-                  <div className="font-bold uppercase text-[var(--brand)]">{viewPayment.paymentMethod || 'bKash'}</div>
+                  <div className="flex items-center gap-1.5 font-bold uppercase text-[var(--text-primary)] mt-0.5">
+                    <PaymentMethodLogo method={viewPayment.paymentMethod || 'bkash'} size={18} />
+                    <span>{viewPayment.paymentMethod || 'bKash'}</span>
+                  </div>
                 </div>
                 <div>
                   <span className="text-[var(--text-muted)]">{isBn ? 'TrxID / রেফারেন্স:' : 'TrxID / Ref:'}</span>
