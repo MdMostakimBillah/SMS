@@ -12,8 +12,6 @@ import {
   Calendar,
   HelpCircle,
   Sparkles,
-  Users,
-  GraduationCap,
 } from 'lucide-react'
 import { SettingsPanel } from '../components/SettingsPanel'
 import { useAuth } from '@/contexts/AuthContext'
@@ -24,6 +22,7 @@ import {
   DEFAULT_GATEWAYS_CONFIG,
 } from '@/store/institutionPaymentStore'
 import { PaymentMethodLogo } from '@/components/ui/PaymentMethodLogo'
+import { PricingPackageCard } from '@/components/shared/PricingPackageCard'
 
 interface Props {
   isBn: boolean
@@ -438,126 +437,26 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
           </div>
 
           {/* Package Selection Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredPackages.map((pkg) => {
               const isSelected = selectedPkgName.toLowerCase() === pkg.name.toLowerCase()
               const isCurrent = currentPkgName.toLowerCase() === pkg.name.toLowerCase()
 
               return (
-                <div
+                <PricingPackageCard
                   key={pkg.id || pkg.name}
-                  onClick={() => {
+                  pkg={pkg}
+                  isBn={isBn}
+                  mode="institution"
+                  isCurrent={isCurrent}
+                  isSelected={isSelected}
+                  billingMonths={selectedMonths}
+                  discountPercent={durationObj.discount}
+                  onSelect={() => {
                     setSelectedPkgName(pkg.name)
                     setHasManuallySelected(true)
                   }}
-                  className={`group relative rounded-2xl p-4 sm:p-5 border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-                    isSelected
-                      ? 'border-[var(--brand)] bg-[var(--brand)]/[0.04] shadow-md ring-4 ring-[var(--brand)]/10 -translate-y-1'
-                      : 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)]/50 hover:bg-[var(--bg-secondary)]/40 hover:-translate-y-0.5 hover:shadow-xs'
-                  }`}
-                >
-                  <div>
-                    {/* Card Header: Title + Badges + Radio Indicator */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div>
-                        <h5 className="font-bold text-[1rem] text-[var(--text-primary)] m-0 tracking-tight">
-                          {isBn ? pkg.nameBn || pkg.name : pkg.name}
-                        </h5>
-                        <span className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider block mt-0.5">
-                          {pkg.hostingType === 'system_only' || pkg.duration === 0
-                            ? (isBn ? 'আজীবন লাইসেন্স' : 'Lifetime System')
-                            : pkg.hostingType === 'local_pc'
-                            ? (isBn ? 'লোকাল পিসি' : 'Local PC')
-                            : pkg.hostingType === 'personal_vps'
-                            ? (isBn ? 'পার্সোনাল ভিপিএস' : 'Personal VPS')
-                            : (isBn ? 'ক্লাউড হোস্টেড' : 'Cloud Hosted')}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {isCurrent && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                            {isBn ? 'বর্তমান' : 'Current'}
-                          </span>
-                        )}
-
-                        {/* Radio Checkmark Indicator */}
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
-                            isSelected
-                              ? 'bg-[var(--brand)] text-white shadow-2xs'
-                              : 'border-2 border-[var(--border)] group-hover:border-[var(--brand)]/60'
-                          }`}
-                        >
-                          {isSelected && <Check size={12} strokeWidth={3} />}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Price Section */}
-                    <div className="my-3 pb-3 border-b border-[var(--border)]/70">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-[1.5rem] font-extrabold text-[var(--text-primary)] tracking-tight">
-                          ৳{(pkg.price || 1500).toLocaleString()}
-                        </span>
-                        <span className="text-[0.75rem] font-medium text-[var(--text-muted)]">
-                          / {pkg.duration === 0 ? (isBn ? 'এককালীন' : 'lifetime') : (isBn ? 'মাস' : 'mo')}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Capacity & Limits */}
-                    <div className="space-y-2 mb-4 text-[0.75rem]">
-                      <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                        <div className="w-6 h-6 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--brand)] shrink-0">
-                          <Users size={13} />
-                        </div>
-                        <span>
-                          {isBn ? 'শিক্ষার্থী:' : 'Students:'}{' '}
-                          <strong className="text-[var(--text-primary)] font-bold">{pkg.maxStudents || 999}</strong>
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                        <div className="w-6 h-6 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-[var(--brand)] shrink-0">
-                          <GraduationCap size={13} />
-                        </div>
-                        <span>
-                          {isBn ? 'শিক্ষক:' : 'Teachers:'}{' '}
-                          <strong className="text-[var(--text-primary)] font-bold">{pkg.maxTeachers || 99}</strong>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Button at bottom */}
-                  <div className="pt-2">
-                    <div
-                      className={`w-full py-2 px-3 rounded-xl text-[0.75rem] font-bold transition-all flex items-center justify-center gap-1.5 ${
-                        isSelected
-                          ? 'bg-[var(--brand)] text-white shadow-xs'
-                          : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] group-hover:bg-[var(--brand)]/10 group-hover:text-[var(--brand)]'
-                      }`}
-                    >
-                      {isSelected ? (
-                        <>
-                          <Check size={14} strokeWidth={2.5} />
-                          <span>
-                            {isCurrent
-                              ? (isBn ? 'বর্তমান প্ল্যান (নির্বাচিত)' : 'Current Plan (Selected)')
-                              : (isBn ? 'নির্বাচিত প্ল্যান' : 'Selected Plan')}
-                          </span>
-                        </>
-                      ) : (
-                        <span>
-                          {isCurrent
-                            ? (isBn ? 'বর্তমান প্ল্যান বেছে নিন' : 'Select Current Plan')
-                            : (isBn ? 'প্ল্যান নির্বাচন করুন' : 'Select Plan')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                />
               )
             })}
           </div>

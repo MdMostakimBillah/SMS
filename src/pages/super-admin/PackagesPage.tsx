@@ -1,13 +1,12 @@
 import { useState, useMemo, useRef } from 'react'
 import {
-  CreditCard, Plus, Search, Edit3, Trash2, X,
-  Cloud, Laptop, Server, Cpu, CheckCircle2,
-  Building2, Star, RefreshCcw,
-  ShieldCheck, Globe
+  CreditCard, Plus, Search, RefreshCcw,
+  Cloud, Cpu, Building2, X, Laptop, Server, Globe, ShieldCheck
 } from 'lucide-react'
 import { useSuperAdminStore, type InstitutionPackage, type PackageHostingType } from '@/store/superAdminStore'
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { useTabSlider } from '@/hooks/useTabSlider'
+import { PricingPackageCard } from '@/components/shared/PricingPackageCard'
 
 interface Props {
   isBn: boolean
@@ -72,57 +71,6 @@ export default function PackagesPage({ isBn }: Props) {
   const totalPackages = packages.length
   const cloudPackages = packages.filter((p) => !p.hostingType || p.hostingType === 'cloud' || p.hostingType === 'all').length
   const systemPackages = packages.filter((p) => p.hostingType === 'system_only' || p.hostingType === 'local_pc' || p.hostingType === 'personal_vps').length
-
-  const getHostingBadge = (type?: PackageHostingType) => {
-    switch (type) {
-      case 'local_pc':
-        return {
-          icon: <Laptop size={12} />,
-          labelEn: 'Local PC (Vault)',
-          labelBn: 'লোকাল পিসি (ভল্ট)',
-          style: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-          descEn: 'Runs completely offline on local PC computer',
-          descBn: 'লোকাল পিসিতে সম্পূর্ণ অফলাইনে পরিচালিত',
-        }
-      case 'personal_vps':
-        return {
-          icon: <Server size={12} />,
-          labelEn: 'Personal VPS',
-          labelBn: 'নিজস্ব ভিপিএস',
-          style: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20',
-          descEn: 'Institution self-hosted private VPS server',
-          descBn: 'প্রতিষ্ঠানের নিজস্ব প্রাইভেট ভিপিএস সার্ভার',
-        }
-      case 'system_only':
-        return {
-          icon: <Cpu size={12} />,
-          labelEn: 'System Use Only',
-          labelBn: 'শুধুমাত্র সিস্টেম ব্যবহার',
-          style: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-          descEn: 'Software license without provider cloud fees',
-          descBn: 'প্রোভাইডার ক্লাউড খরচ ছাড়া শুধু সিস্টেম সফটওয়্যার লাইসেন্স',
-        }
-      case 'all':
-        return {
-          icon: <Globe size={12} />,
-          labelEn: 'Universal (All)',
-          labelBn: 'সর্বজনীন (সকল)',
-          style: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
-          descEn: 'Applicable to any deployment architecture',
-          descBn: 'যে কোনো ধরনের আর্কিটেকচারে প্রযোজ্য',
-        }
-      case 'cloud':
-      default:
-        return {
-          icon: <Cloud size={12} />,
-          labelEn: 'Provider Cloud',
-          labelBn: 'প্রোভাইডার ক্লাউড',
-          style: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
-          descEn: 'Hosted on central managed cloud cluster',
-          descBn: 'সেন্ট্রাল প্রোভাইডার ক্লাউড ক্লাস্টারে হোস্ট করা',
-        }
-    }
-  }
 
   const handleDelete = (name: string) => {
     deletePackage(name)
@@ -365,204 +313,32 @@ export default function PackagesPage({ isBn }: Props) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredPackages.map((pkg) => {
             const enrolled = packageUsage[pkg.name.toLowerCase()] || 0
-            const badge = getHostingBadge(pkg.hostingType)
             const isSystemType = pkg.hostingType === 'system_only' || pkg.hostingType === 'local_pc' || pkg.hostingType === 'personal_vps'
-            const isLifetime = pkg.duration === 0
             const isDefault = isSystemType ? pkg.isDefaultSystemUse : pkg.isDefaultCloud
 
             return (
-              <div
+              <PricingPackageCard
                 key={pkg.id || pkg.name}
-                className={`group relative rounded-2xl border p-5 flex flex-col justify-between transition-all duration-200 bg-[var(--surface)] ${
-                  pkg.isPopular
-                    ? 'border-[var(--brand)] shadow-md shadow-[var(--brand)]/5 ring-1 ring-[var(--brand)]/20'
-                    : 'border-[var(--border)] hover:border-[var(--border-2)] hover:shadow-md'
-                }`}
-              >
-                <div>
-                  {/* Top Badges */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6875rem] font-semibold border ${badge.style}`}
-                      title={isBn ? badge.descBn : badge.descEn}
-                    >
-                      {badge.icon}
-                      <span>{isBn ? badge.labelBn : badge.labelEn}</span>
-                    </span>
-
-                    <div className="flex items-center gap-1.5">
-                      {pkg.isDefaultCloud && (
-                        <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                          {isBn ? 'ডিফল্ট ক্লাউড' : 'Default Cloud'}
-                        </span>
-                      )}
-                      {pkg.isDefaultSystemUse && (
-                        <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                          {isBn ? 'ডিফল্ট সিস্টেম' : 'Default System'}
-                        </span>
-                      )}
-                      {pkg.isPopular && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.625rem] font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                          <Star size={10} className="fill-current" />
-                          <span>{isBn ? 'জনপ্রিয়' : 'Popular'}</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Title & Description */}
-                  <div className="mb-3">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <h3 className="text-base font-bold text-[var(--text-primary)]">
-                        {isBn ? pkg.nameBn : pkg.name}
-                      </h3>
-                      {isBn && pkg.nameBn !== pkg.name && (
-                        <span className="text-[0.6875rem] text-[var(--text-muted)] font-medium">
-                          {pkg.name}
-                        </span>
-                      )}
-                    </div>
-                    {(pkg.description || pkg.descriptionBn) && (
-                      <p className="text-xs text-[var(--text-muted)] mt-1 line-clamp-2 leading-relaxed min-h-[2rem]">
-                        {isBn ? pkg.descriptionBn || pkg.description : pkg.description || pkg.descriptionBn}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Price Row (Clean & Airy, without heavy nested container) */}
-                  <div className="pb-3 mb-3 border-b border-[var(--border)]/60">
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-2xl font-black text-[var(--text-primary)] tracking-tight">
-                        ৳{pkg.price.toLocaleString()}
-                      </span>
-                      <span className="text-xs text-[var(--text-muted)] font-medium">
-                        {isLifetime
-                          ? (isBn ? '/ এককালীন' : '/ lifetime')
-                          : (pkg.duration === 365
-                              ? (isBn ? '/ বছর' : '/ year')
-                              : (isBn ? '/ মাস' : '/ month'))}
-                      </span>
-                    </div>
-                    {pkg.pricePerStudent > 0 && (
-                      <div className="text-[0.6875rem] text-[var(--brand)] font-semibold mt-1">
-                        + ৳{pkg.pricePerStudent} {isBn ? 'প্রতি শিক্ষার্থী / মাস' : 'per student / month'}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Quotas Compact Ribbon */}
-                  <div className="grid grid-cols-3 gap-1 py-2 px-2 rounded-xl bg-[var(--bg-secondary)]/50 border border-[var(--border)]/50 text-center mb-3.5">
-                    <div>
-                      <div className="text-[0.625rem] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-0.5">
-                        {isBn ? 'শিক্ষার্থী' : 'Students'}
-                      </div>
-                      <div className="text-xs font-bold text-[var(--text-primary)]">
-                        {pkg.maxStudents >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : pkg.maxStudents.toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="border-x border-[var(--border)]/50">
-                      <div className="text-[0.625rem] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-0.5">
-                        {isBn ? 'শিক্ষক' : 'Teachers'}
-                      </div>
-                      <div className="text-xs font-bold text-[var(--text-primary)]">
-                        {pkg.maxTeachers >= 9999 ? (isBn ? 'অসীমিত' : 'Unlimited') : pkg.maxTeachers.toLocaleString()}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[0.625rem] text-[var(--text-muted)] font-medium uppercase tracking-wider mb-0.5">
-                        {isBn ? 'শ্রেণি' : 'Classes'}
-                      </div>
-                      <div className="text-xs font-bold text-[var(--text-primary)]">
-                        {pkg.maxClasses >= 999 ? (isBn ? 'অসীমিত' : 'Unlimited') : pkg.maxClasses}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Clean Features List */}
-                  {pkg.features && pkg.features.length > 0 && (
-                    <div className="space-y-1.5 mb-4">
-                      {pkg.features.slice(0, 4).map((f, idx) => {
-                        const label = isBn && pkg.featuresBn && pkg.featuresBn[idx] ? pkg.featuresBn[idx] : f
-                        return (
-                          <div key={idx} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                            <CheckCircle2 size={13} className="text-emerald-500/90 shrink-0" />
-                            <span className="truncate">{label}</span>
-                          </div>
-                        )
-                      })}
-                      {pkg.features.length > 4 && (
-                        <div className="text-[0.6875rem] text-[var(--text-muted)] font-medium pl-5 pt-0.5">
-                          +{pkg.features.length - 4} {isBn ? 'টি আরো সুবিধা' : 'more features'}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Card Footer (De-cluttered & streamlined) */}
-                <div className="pt-3 border-t border-[var(--border)]/60 space-y-2.5">
-                  {/* Status & Enrolled schools meta row */}
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[var(--text-muted)] flex items-center gap-1.5 text-[0.6875rem] font-medium">
-                      <Building2 size={12} className="text-[var(--text-muted)]" />
-                      <span>{isBn ? 'যুক্ত প্রতিষ্ঠান:' : 'Subscribed:'}</span>
-                      <strong className="text-[var(--text-primary)] font-bold">{enrolled} {isBn ? 'টি' : 'schools'}</strong>
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() => updatePackage(pkg.id || pkg.name, { isActive: pkg.isActive === false ? true : false })}
-                      className="flex items-center gap-1.5 text-[0.6875rem] font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-0 transition-colors"
-                      title={pkg.isActive !== false ? (isBn ? 'নিষ্ক্রিয় করতে ক্লিক করুন' : 'Click to deactivate') : (isBn ? 'সক্রিয় করতে ক্লিক করুন' : 'Click to activate')}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${pkg.isActive !== false ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-                      <span>{pkg.isActive !== false ? (isBn ? 'সক্রিয়' : 'Active') : (isBn ? 'নিষ্ক্রিয়' : 'Inactive')}</span>
-                    </button>
-                  </div>
-
-                  {/* Actions Toolbar */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditingPackage(pkg)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-[var(--brand)] hover:text-[var(--brand)] hover:bg-[var(--brand)]/5 transition-all cursor-pointer shadow-2xs"
-                    >
-                      <Edit3 size={13} />
-                      <span>{isBn ? 'সম্পাদনা' : 'Edit'}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetType = isSystemType ? 'system_only' : 'cloud'
-                        setDefaultPackage(pkg.id || pkg.name, targetType)
-                      }}
-                      className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
-                        isDefault
-                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500 cursor-default'
-                          : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] bg-transparent'
-                      }`}
-                      title={isBn ? 'এই ক্যাটাগরির ডিফল্ট হিসেবে সেট করুন' : 'Set as default for this category'}
-                    >
-                      <ShieldCheck size={13} />
-                      <span>{isBn ? 'ডিফল্ট করুন' : 'Make Default'}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setDeleteTarget(pkg.id || pkg.name)}
-                      className="flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium text-red-500 hover:text-red-600 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all cursor-pointer"
-                      title={isBn ? 'মুছুন' : 'Delete'}
-                    >
-                      <Trash2 size={13} />
-                      <span>{isBn ? 'মুছুন' : 'Delete'}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+                pkg={pkg}
+                isBn={isBn}
+                mode="superadmin"
+                enrolledCount={enrolled}
+                isDefault={Boolean(isDefault)}
+                onEdit={(p) => setEditingPackage(p)}
+                onDelete={(p) => setDeleteTarget(p.id || p.name)}
+                onToggleActive={(p) =>
+                  updatePackage(p.id || p.name, {
+                    isActive: p.isActive === false ? true : false,
+                  })
+                }
+                onSetDefault={(p) => {
+                  const targetType = isSystemType ? 'system_only' : 'cloud'
+                  setDefaultPackage(p.id || p.name, targetType)
+                }}
+              />
             )
           })}
         </div>
