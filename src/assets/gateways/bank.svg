@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" fill="none">
+  <rect width="100" height="40" rx="8" fill="#059669" />
+  <g transform="translate(10, 7)" fill="#FFFFFF">
+    <!-- Classical Bank Facade -->
+    <path d="M12 2L2 8H22L12 2Z" />
+    <rect x="3" y="9" width="18" height="1.5" rx="0.5" fill="#E6FFFA" />
+    <rect x="4.5" y="11.5" width="2.5" height="8" rx="0.5" />
+    <rect x="9.5" y="11.5" width="2.5" height="8" rx="0.5" />
+    <rect x="14.5" y="11.5" width="2.5" height="8" rx="0.5" />
+    <rect x="3" y="20.5" width="18" height="1.5" rx="0.5" fill="#E6FFFA" />
+    <rect x="1" y="23" width="22" height="2" rx="0.8" fill="#CCFBF1" />
+  </g>
+  <text x="38" y="25" fill="#FFFFFF" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="13" letter-spacing="0.5">BANK</text>
+</svg>
