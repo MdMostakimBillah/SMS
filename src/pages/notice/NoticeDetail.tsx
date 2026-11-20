@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { ArrowLeft, Pin, PinOff, Edit3, Trash2, Download, Calendar, Users, Tag, Copy, Check, FileJson } from 'lucide-react'
-import { openPrintWindow } from '@/lib/pdf'
-import { getPDFBranding, pdfLogoHTML, pdfFooterHTML } from '@/lib/pdfBranding'
+import { printNoticePDF } from './noticePdf'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useClassStore } from '@/store/classStore'
 import { sanitizeHtml } from '@/lib/sanitize'
@@ -63,73 +62,7 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
   }
 
   const handleDownloadPDF = () => {
-    const brand = getPDFBranding()
-    const logoHTML = pdfLogoHTML(brand, 36)
-    const now = new Date()
-    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    const css = `
-      @page { size: A4 portrait; margin: 0; }
-      @media print { body { print-color-adjust: exact; -webkit-print-color-adjust: exact; padding: 8mm; } }
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #1e293b; background: #fff; padding: 8mm; font-size: 12px; }
-      .hdr { display: flex; align-items: center; gap: 14px; border-bottom: 3px solid ${brand.brandColor}; padding-bottom: 10px; margin-bottom: 14px; }
-      .sname { font-size: 17px; font-weight: 700; color: ${brand.brandColor}; }
-      .saddr { font-size: 9px; color: #888; line-height: 1.5; }
-      .ttl { text-align: center; font-size: 16px; font-weight: 700; color: ${brand.brandColor}; margin: 12px 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-      .meta-row { display: flex; gap: 16px; margin-bottom: 10px; font-size: 10px; color: #666; flex-wrap: wrap; }
-      .meta-item { display: flex; align-items: center; gap: 5px; }
-      .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; }
-      .content { line-height: 1.7; font-size: 12px; }
-      .content h1 { font-size: 18px; font-weight: 700; margin: 12px 0 6px; }
-      .content h2 { font-size: 16px; font-weight: 700; margin: 10px 0 5px; }
-      .content h3 { font-size: 14px; font-weight: 700; margin: 8px 0 4px; }
-      .content p { margin-bottom: 8px; }
-      .content ul, .content ol { padding-left: 24px; margin-bottom: 8px; list-style-type: disc; }
-      .content ol { list-style-type: decimal; }
-      .content li { margin-bottom: 3px; }
-      .content blockquote { border-left: 4px solid ${brand.brandColor}; padding-left: 12px; margin: 8px 0; font-style: italic; color: #555; }
-      .content code { background: #f0f2f8; padding: 1px 5px; border-radius: 4px; font-size: 11px; color: ${brand.brandColor}; }
-      .content pre { background: #f8f9fc; padding: 10px; border-radius: 8px; overflow-x: auto; margin: 8px 0; }
-      .content pre code { background: none; padding: 0; }
-      .content table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-      .content th { background: ${brand.brandColor}; color: #fff; padding: 6px 10px; text-align: left; font-size: 11px; }
-      .content td { padding: 5px 10px; border-bottom: 1px solid #e0e0e0; font-size: 11px; }
-      .content tr:nth-child(even) { background: #f8f9fc; }
-      .content hr { border: none; border-top: 1px solid #ddd; margin: 10px 0; }
-      .content img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
-      .ftr { margin-top: 14px; padding-top: 8px; border-top: 1px solid #ddd; font-size: 8px; color: #999; display: flex; justify-content: space-between; }
-    `
-    const bodyHTML = `
-      <div class="hdr">
-        ${logoHTML}
-        <div>
-          <div class="sname">${brand.schoolName}</div>
-          ${brand.address ? `<div class="saddr">${brand.address}</div>` : ''}
-          ${brand.phone ? `<div class="saddr">${brand.phone}${brand.email ? ' | ' + brand.email : ''}</div>` : ''}
-        </div>
-        <div style="margin-left:auto;text-align:right;font-size:9px;color:#888;line-height:1.6">
-          <div>Printed: ${dateStr}</div>
-          <div style="font-weight:600;color:${brand.brandColor}">NOTICE</div>
-        </div>
-      </div>
-
-      <div class="ttl">${displayTitle}</div>
-      ${notice.titleBn && notice.titleBn !== notice.title && bn ? `<div style="text-align:center;font-size:13px;color:#555;margin-bottom:10px">${notice.titleBn}</div>` : ''}
-
-      <div class="meta-row">
-        <div class="meta-item"><strong>${bn ? 'প্রকাশকাল:' : 'Published:'}</strong> ${new Date(notice.publishedAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-        <div class="meta-item"><strong>${bn ? 'লেখক:' : 'Author:'}</strong> ${displayAuthor}</div>
-        <div class="meta-item"><strong>${bn ? 'মূল্যায়ন:' : 'Target:'}</strong> ${bn ? target?.labelBn : target?.label}</div>
-        ${notice.category ? `<div class="meta-item"><strong>${bn ? 'ক্যাটাগরি:' : 'Category:'}</strong> <span class="badge" style="background:${brand.brandColor}18;color:${brand.brandColor}">${notice.category}</span></div>` : ''}
-        <div class="meta-item"><strong>${bn ? 'অগ্রাধিকার:' : 'Priority:'}</strong> <span class="badge" style="background:${priority.color}18;color:${priority.color}">${bn ? priority.labelBn : priority.label}</span></div>
-        ${notice.expiresAt ? `<div class="meta-item"><strong>${bn ? 'মেয়াদ:' : 'Expires:'}</strong> ${notice.expiresAt}</div>` : ''}
-      </div>
-
-      <div class="content">${displayContent}</div>
-
-      ${pdfFooterHTML(bn)}
-    `
-    openPrintWindow(displayTitle, bodyHTML, { css })
+    printNoticePDF(notice, bn, logo)
   }
 
   return (
@@ -146,15 +79,8 @@ export function NoticeDetail({ notice, onBack, onEdit, onDelete, onTogglePin, ca
         </div>
       </div>
 
-      {/* Social-media-style card */}
+      {/* Notice Card */}
       <div className="rounded-2xl border border-[var(--border)] overflow-hidden relative" style={{ background: 'var(--bg-primary)' }}>
-        {/* Watermark */}
-        {logo && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
-            <img src={logo} alt="" className="w-[60%] h-[60%] object-contain" />
-          </div>
-        )}
-
         {/* Card header: school logo + author + meta */}
         <div className="relative flex items-start gap-3 p-4 pb-3">
           <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2" style={{ borderColor: 'var(--brand)', background: 'var(--bg-secondary)' }}>
