@@ -987,7 +987,9 @@ export const notificationsApi = {
   },
 }
 
-export interface BkashConfig {
+export type PaymentMethodType = 'bkash' | 'nagad' | 'rocket' | 'upay' | 'bank'
+
+export interface GatewayAccountConfig {
   number: string
   type: 'personal' | 'merchant' | 'agent'
   qrCodeUrl?: string
@@ -996,6 +998,27 @@ export interface BkashConfig {
   active: boolean
 }
 
+export interface BankAccountConfig {
+  bankName: string
+  accountName: string
+  accountNumber: string
+  branch: string
+  routingNumber?: string
+  instructions: string
+  instructionsBn: string
+  active: boolean
+}
+
+export interface PaymentGatewaysConfig {
+  bkash: GatewayAccountConfig
+  nagad: GatewayAccountConfig
+  rocket: GatewayAccountConfig
+  upay: GatewayAccountConfig
+  bank: BankAccountConfig
+}
+
+export type BkashConfig = GatewayAccountConfig
+
 export interface InstitutionPayment {
   id: string
   schoolId: string
@@ -1003,11 +1026,13 @@ export interface InstitutionPayment {
   schoolSlug: string
   eiin?: string
   packageName: string
+  packageId?: string
   amount: number
   months: number
-  senderBkashNumber: string
+  senderNumber: string
+  senderBkashNumber: string // alias for backward compatibility
   trxId: string
-  paymentMethod: 'bkash'
+  paymentMethod: PaymentMethodType
   status: 'pending' | 'approved' | 'rejected'
   submittedAt: string
   reviewedAt?: string
@@ -1017,11 +1042,17 @@ export interface InstitutionPayment {
 }
 
 export const institutionPaymentsApi = {
-  getConfig: () => apiRequest<{ config: BkashConfig }>('/api/institution-payments/config'),
-  updateConfig: (config: Partial<BkashConfig>) =>
-    apiRequest<{ success: boolean; config: BkashConfig }>('/api/institution-payments/config', {
+  getConfig: () =>
+    apiRequest<{ config: BkashConfig; gateways?: PaymentGatewaysConfig }>('/api/institution-payments/config'),
+  updateConfig: (config: Partial<BkashConfig> | { gateways?: Partial<PaymentGatewaysConfig> }) =>
+    apiRequest<{ success: boolean; config: BkashConfig; gateways?: PaymentGatewaysConfig }>('/api/institution-payments/config', {
       method: 'PUT',
       body: config,
+    }),
+  updateGatewaysConfig: (gateways: Partial<PaymentGatewaysConfig>) =>
+    apiRequest<{ success: boolean; gateways: PaymentGatewaysConfig; config: BkashConfig }>('/api/institution-payments/config', {
+      method: 'PUT',
+      body: { gateways },
     }),
   getAll: (schoolIdOrSlug?: string) => {
     const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
@@ -1033,10 +1064,13 @@ export const institutionPaymentsApi = {
       method: 'POST',
       body: data,
     }),
-  approve: (id: string) =>
+  approve: (id: string, override?: { packageName?: string; months?: number }) =>
     apiRequest<{ success: boolean; payment: InstitutionPayment; school?: any }>(
       `/api/institution-payments/${encodeURIComponent(id)}/approve`,
-      { method: 'POST' }
+      {
+        method: 'POST',
+        body: override || {},
+      }
     ),
   reject: (id: string, reason: string) =>
     apiRequest<{ success: boolean; payment: InstitutionPayment }>(

@@ -3,7 +3,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import PaymentsPage from './PaymentsPage'
 import { SubscriptionPaymentPanel } from '@/pages/settings/panels/SubscriptionPaymentPanel'
-import { useInstitutionPaymentStore } from '@/store/institutionPaymentStore'
+import { useInstitutionPaymentStore, DEFAULT_GATEWAYS_CONFIG } from '@/store/institutionPaymentStore'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { AuthContext } from '@/contexts/AuthContext'
 import { institutionPaymentsApi } from '@/lib/api'
@@ -28,7 +28,7 @@ const mockAuthAdmin = {
   checkAuth: async () => {},
 } as any
 
-describe('Institution bKash Payment System', () => {
+describe('Institution Multi-Gateway Payment System', () => {
   beforeEach(() => {
     localStorage.clear()
     sessionStorage.clear()
@@ -76,9 +76,48 @@ describe('Institution bKash Payment System', () => {
           sessions: ['2026'],
         },
       ],
+      packages: [
+        {
+          id: 'pkg-basic',
+          name: 'Basic',
+          nameBn: 'বেসিক',
+          price: 1200,
+          duration: 30,
+          description: 'Basic plan',
+          descriptionBn: 'বেসিক প্ল্যান',
+          features: [],
+          featuresBn: [],
+          isActive: true,
+        },
+        {
+          id: 'pkg-standard',
+          name: 'Standard',
+          nameBn: 'স্ট্যান্ডার্ড',
+          price: 2200,
+          duration: 30,
+          description: 'Standard plan',
+          descriptionBn: 'স্ট্যান্ডার্ড প্ল্যান',
+          features: [],
+          featuresBn: [],
+          isActive: true,
+        },
+        {
+          id: 'pkg-premium',
+          name: 'Premium',
+          nameBn: 'প্রিমিয়াম',
+          price: 3500,
+          duration: 30,
+          description: 'Premium plan',
+          descriptionBn: 'প্রিমিয়াম প্ল্যান',
+          features: [],
+          featuresBn: [],
+          isActive: true,
+        },
+      ],
     })
 
     useInstitutionPaymentStore.setState({
+      gatewaysConfig: JSON.parse(JSON.stringify(DEFAULT_GATEWAYS_CONFIG)),
       bkashConfig: {
         number: '01700-123456',
         type: 'merchant',
@@ -96,6 +135,7 @@ describe('Institution bKash Payment System', () => {
           packageName: 'Standard',
           amount: 2200,
           months: 1,
+          senderNumber: '01799887766',
           senderBkashNumber: '01799887766',
           trxId: 'BLA89DK29P',
           paymentMethod: 'bkash',
@@ -111,9 +151,10 @@ describe('Institution bKash Payment System', () => {
           packageName: 'Standard',
           amount: 6270,
           months: 3,
+          senderNumber: '01811223344',
           senderBkashNumber: '01811223344',
           trxId: 'TRX998877',
-          paymentMethod: 'bkash',
+          paymentMethod: 'nagad',
           status: 'approved',
           submittedAt: '2026-10-15T10:00:00.000Z',
           reviewedAt: '2026-10-15T12:00:00.000Z',
@@ -136,6 +177,7 @@ describe('Institution bKash Payment System', () => {
           packageName: 'Standard',
           amount: 2200,
           months: 1,
+          senderNumber: '01799887766',
           senderBkashNumber: '01799887766',
           trxId: 'BLA89DK29P',
           paymentMethod: 'bkash',
@@ -151,9 +193,10 @@ describe('Institution bKash Payment System', () => {
           packageName: 'Standard',
           amount: 6270,
           months: 3,
+          senderNumber: '01811223344',
           senderBkashNumber: '01811223344',
           trxId: 'TRX998877',
-          paymentMethod: 'bkash',
+          paymentMethod: 'nagad',
           status: 'approved',
           submittedAt: '2026-10-15T10:00:00.000Z',
           reviewedAt: '2026-10-15T12:00:00.000Z',
@@ -170,7 +213,14 @@ describe('Institution bKash Payment System', () => {
         instructionsBn: 'বিকাশ অ্যাপ অথবা *২৪৭# ডায়াল করে পেমেন্ট সম্পন্ন করুন।',
         active: true,
       },
+      gateways: DEFAULT_GATEWAYS_CONFIG,
     })
+
+    vi.spyOn(institutionPaymentsApi, 'updateGatewaysConfig').mockResolvedValue({
+      success: true,
+      gateways: DEFAULT_GATEWAYS_CONFIG,
+    })
+
     vi.spyOn(institutionPaymentsApi, 'submit').mockResolvedValue({
       success: true,
       payment: {
@@ -182,6 +232,7 @@ describe('Institution bKash Payment System', () => {
         packageName: 'Standard',
         amount: 2200,
         months: 1,
+        senderNumber: '01712345678',
         senderBkashNumber: '01712345678',
         trxId: 'NEWTRX1234',
         paymentMethod: 'bkash',
@@ -189,17 +240,19 @@ describe('Institution bKash Payment System', () => {
         submittedAt: new Date().toISOString(),
       },
     })
+
     vi.spyOn(institutionPaymentsApi, 'approve').mockResolvedValue({
       success: true,
       payment: {} as any,
     })
+
     vi.spyOn(institutionPaymentsApi, 'reject').mockResolvedValue({
       success: true,
       payment: {} as any,
     })
   })
 
-  it('renders Super Admin PaymentsPage with metrics and bKash receiving account', async () => {
+  it('renders Super Admin PaymentsPage with multi-gateway metrics and transaction table', async () => {
     render(
       <MemoryRouter>
         <PaymentsPage isBn={false} />
@@ -210,13 +263,19 @@ describe('Institution bKash Payment System', () => {
       await new Promise((r) => setTimeout(r, 50))
     })
 
-    expect(screen.getByText('Institution Payments & bKash Billing')).toBeTruthy()
-    expect(screen.getByText('01700-123456')).toBeTruthy()
-    expect(screen.getByText('৳6,270')).toBeTruthy() // Approved revenue
+    expect(screen.getByText('Institution Subscription Payments & Gateways')).toBeTruthy()
+    expect(screen.getAllByText('৳6,270').length).toBeGreaterThan(0) // Approved revenue
+    expect(screen.getAllByText('৳2,200').length).toBeGreaterThan(0) // Pending amount
     expect(screen.getByText('BLA89DK29P')).toBeTruthy()
+    expect(screen.getByText('TRX998877')).toBeTruthy()
+
+    // Gateway filters exist
+    expect(screen.getByRole('button', { name: /All Gateways/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^bKash/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Nagad/i })).toBeTruthy()
   })
 
-  it('allows Super Admin to approve a pending payment', async () => {
+  it('allows Super Admin to approve a pending payment with package override', async () => {
     render(
       <MemoryRouter>
         <PaymentsPage isBn={false} />
@@ -231,16 +290,20 @@ describe('Institution bKash Payment System', () => {
     const approveBtn = screen.getByTitle('Approve & extend subscription')
     fireEvent.click(approveBtn)
 
-    expect(screen.getByText('Approve Payment Verification')).toBeTruthy()
+    expect(screen.getByText('Approve Payment & Update Package')).toBeTruthy()
 
     // Confirm approve
-    const confirmBtn = screen.getByRole('button', { name: /Confirm & Approve/i })
+    const confirmBtn = screen.getByRole('button', { name: /Confirm & Activate Package/i })
     await act(async () => {
       fireEvent.click(confirmBtn)
     })
 
     const updated = useInstitutionPaymentStore.getState().payments.find((p) => p.id === 'PAY-1')
     expect(updated?.status).toBe('approved')
+
+    // SuperAdminStore institution package should be verified
+    const inst = useSuperAdminStore.getState().institutions.find((i) => i.id === 'inst-daffodil')
+    expect(inst?.status).toBe('active')
   })
 
   it('allows Super Admin to reject a pending payment with reason', async () => {
@@ -269,7 +332,62 @@ describe('Institution bKash Payment System', () => {
     expect(updated?.status).toBe('rejected')
   })
 
-  it('allows an institution to view bKash details and submit payment verification in SubscriptionPaymentPanel', async () => {
+  it('allows Super Admin to configure payment gateways (bKash, Nagad, Rocket, Upay, Bank)', async () => {
+    render(
+      <MemoryRouter>
+        <PaymentsPage isBn={false} />
+      </MemoryRouter>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
+
+    // Open Configure Gateways Modal
+    const configBtn = screen.getByRole('button', { name: /Setup Payment Gateways/i })
+    fireEvent.click(configBtn)
+
+    expect(screen.getByText('Setup Bangladeshi Payment Gateways')).toBeTruthy()
+
+    // Switch tab to Nagad
+    const nagadTabBtns = screen.getAllByRole('button', { name: /Nagad/i })
+    fireEvent.click(nagadTabBtns[nagadTabBtns.length - 1])
+
+    // Save configurations
+    const saveBtn = screen.getByRole('button', { name: /Save All Gateways/i })
+    await act(async () => {
+      fireEvent.click(saveBtn)
+    })
+
+    expect(institutionPaymentsApi.updateGatewaysConfig).toHaveBeenCalled()
+  })
+
+  it('allows Super Admin to directly update an institution package', async () => {
+    render(
+      <MemoryRouter>
+        <PaymentsPage isBn={false} />
+      </MemoryRouter>
+    )
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50))
+    })
+
+    // Open direct update modal
+    const directUpdateBtn = screen.getByRole('button', { name: /Update School Package/i })
+    fireEvent.click(directUpdateBtn)
+
+    expect(screen.getByText('Update Institution Package & Expiry')).toBeTruthy()
+
+    const updateSubmitBtn = screen.getByRole('button', { name: /Apply Package Update/i })
+    await act(async () => {
+      fireEvent.click(updateSubmitBtn)
+    })
+
+    expect(screen.getByText(/Package updated successfully!/i)).toBeTruthy()
+  })
+
+  it('allows an institution to view gateways and submit payment verification in SubscriptionPaymentPanel', async () => {
     render(
       <AuthContext.Provider value={mockAuthAdmin}>
         <SubscriptionPaymentPanel isBn={false} onBack={() => {}} />
@@ -281,20 +399,23 @@ describe('Institution bKash Payment System', () => {
     })
 
     expect(screen.getByText('Daffodil Model High School')).toBeTruthy()
-    expect(screen.getAllByText('01700-123456').length).toBeGreaterThan(0)
-    expect(screen.getByText('Super Admin Official bKash Account')).toBeTruthy()
+    expect(screen.getByText('2. Select Bangladeshi Payment Gateway')).toBeTruthy()
+
+    // Click on Nagad gateway button
+    const nagadGatewayBtn = screen.getByRole('button', { name: /Nagad/i })
+    fireEvent.click(nagadGatewayBtn)
 
     const senderInput = screen.getByPlaceholderText('017xxxxxxxx')
-    const trxInput = screen.getByPlaceholderText('e.g. BLA89DK29P')
+    const trxInput = screen.getByPlaceholderText('e.g. 9J28AB34XYZ')
 
-    fireEvent.change(senderInput, { target: { value: '01712345678' } })
-    fireEvent.change(trxInput, { target: { value: 'NEWTRX1234' } })
+    fireEvent.change(senderInput, { target: { value: '01899887766' } })
+    fireEvent.change(trxInput, { target: { value: 'NAGAD12345' } })
 
     const submitBtn = screen.getByRole('button', { name: /Submit Payment for Verification/i })
     await act(async () => {
       fireEvent.click(submitBtn)
     })
 
-    expect(screen.getByText(/Payment verification submitted successfully!/i)).toBeTruthy()
+    expect(screen.getByText(/payment verification submitted successfully!/i)).toBeTruthy()
   })
 })
