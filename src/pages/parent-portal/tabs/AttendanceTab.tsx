@@ -22,6 +22,7 @@ import {
 } from 'date-fns'
 import type { PortalChild, LeaveRequest } from '../types'
 import { WEEKDAYS_EN, WEEKDAYS_BN } from '@/pages/exams/step2/tabs/types'
+import { AttendanceKpiCards } from './attendance/AttendanceKpiCards'
 
 interface AttendanceTabProps {
   child: PortalChild
@@ -66,38 +67,13 @@ export const AttendanceTab = React.memo(function AttendanceTab({
 
   return (
     <div className="space-y-4">
-      {/* Monthly Stats Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="text-[0.6875rem] text-[var(--text-muted)] font-semibold uppercase">{isBn ? 'মোট কর্মদিবস' : 'Working Days'}</div>
-          <div className="text-[1.25rem] font-extrabold text-[var(--text-primary)] mt-1">22</div>
-        </div>
-        <div className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="text-[0.6875rem] text-emerald-600 font-semibold uppercase">{isBn ? 'উপস্থিত দিন' : 'Present Days'}</div>
-          <div className="text-[1.25rem] font-extrabold text-emerald-600 mt-1">19</div>
-        </div>
-        <div className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="text-[0.6875rem] text-red-500 font-semibold uppercase">{isBn ? 'অনুপস্থিত' : 'Absent Days'}</div>
-          <div className="text-[1.25rem] font-extrabold text-red-500 mt-1">1</div>
-        </div>
-        <div className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="text-[0.6875rem] text-amber-500 font-semibold uppercase">{isBn ? 'দেরিতে প্রবেশ' : 'Late Days'}</div>
-          <div className="text-[1.25rem] font-extrabold text-amber-500 mt-1">2</div>
-        </div>
-        <div className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="text-[0.6875rem] text-blue-500 font-semibold uppercase">{isBn ? 'ছুটি ভোগ' : 'Leave Days'}</div>
-          <div className="text-[1.25rem] font-extrabold text-blue-500 mt-1">2</div>
-        </div>
-        <div className="p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)]">
-          <div className="text-[0.6875rem] text-[var(--brand)] font-semibold uppercase">{isBn ? 'উপস্থিতির হার' : 'Attendance %'}</div>
-          <div className="text-[1.25rem] font-extrabold text-[var(--brand)] mt-1">95.4%</div>
-        </div>
-      </div>
+      {/* Monthly Attendance Summary Row - Dashboard Style Top Cards */}
+      <AttendanceKpiCards isBn={isBn} />
 
       {/* Main Grid & Log Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Calendar (2 spans) */}
-        <div className="lg:col-span-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-xs">
+        <div className="lg:col-span-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xs">
           {/* Calendar Month Header */}
           <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-3">
             <div className="flex items-center gap-2">
@@ -110,7 +86,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
               <button
                 type="button"
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent"
+                className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent"
               >
                 <ChevronLeft size={15} />
               </button>
@@ -124,7 +100,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
               <button
                 type="button"
                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent"
+                className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent"
               >
                 <ChevronRight size={15} />
               </button>
@@ -134,7 +110,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
           {/* Weekdays Row */}
           <div className="grid grid-cols-7 gap-1 mb-1.5">
             {(isBn ? WEEKDAYS_BN : WEEKDAYS_EN).map((day) => (
-              <div key={day} className="text-center text-[0.6875rem] font-semibold text-[var(--text-muted)] py-1.5">
+              <div key={day} className="text-center text-[0.6875rem] font-semibold text-[var(--text-secondary)] py-1.5">
                 {day}
               </div>
             ))}
@@ -148,23 +124,23 @@ export const AttendanceTab = React.memo(function AttendanceTab({
               const isSelected = isSameDay(day, selectedDay)
               const info = getDayStatus(day)
 
-              let bgCls = 'bg-[var(--bg-secondary)]/40 text-[var(--text-muted)]'
+              let bgCls = 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'
               let dotCls = ''
 
               if (info.status === 'present') {
-                bgCls = 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
-                dotCls = 'bg-emerald-500'
+                bgCls = 'bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)]'
+                dotCls = 'bg-[var(--brand)]'
               } else if (info.status === 'absent') {
-                bgCls = 'bg-red-500/10 text-red-600 border-red-500/20'
-                dotCls = 'bg-red-500'
+                bgCls = 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'
+                dotCls = 'bg-neutral-400'
               } else if (info.status === 'late') {
-                bgCls = 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                dotCls = 'bg-amber-500'
+                bgCls = 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'
+                dotCls = 'bg-neutral-500'
               } else if (info.status === 'leave') {
-                bgCls = 'bg-blue-500/10 text-blue-600 border-blue-500/20'
-                dotCls = 'bg-blue-500'
+                bgCls = 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'
+                dotCls = 'bg-neutral-400'
               } else if (info.status === 'weekend') {
-                bgCls = 'bg-[var(--bg-secondary)]/20 text-[var(--text-muted)]/60'
+                bgCls = 'bg-[var(--bg-secondary)]/50 text-[var(--text-muted)] border-transparent'
               }
 
               return (
@@ -188,21 +164,21 @@ export const AttendanceTab = React.memo(function AttendanceTab({
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-3 mt-4 pt-3 border-t border-[var(--border)] text-[0.6875rem] text-[var(--text-muted)] flex-wrap">
+          <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[var(--border)] text-[0.6875rem] text-[var(--text-secondary)] flex-wrap">
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" /> {isBn ? 'উপস্থিত' : 'Present'}
+              <span className="w-2 h-2 rounded-full bg-[var(--brand)]" /> {isBn ? 'উপস্থিত' : 'Present'}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500" /> {isBn ? 'অনুপস্থিত' : 'Absent'}
+              <span className="w-2 h-2 rounded-full bg-neutral-400" /> {isBn ? 'অনুপস্থিত' : 'Absent'}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-500" /> {isBn ? 'দেরি' : 'Late'}
+              <span className="w-2 h-2 rounded-full bg-neutral-500" /> {isBn ? 'দেরি' : 'Late'}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500" /> {isBn ? 'অনুমোদিত ছুটি' : 'Leave'}
+              <span className="w-2 h-2 rounded-full bg-neutral-400" /> {isBn ? 'অনুমোদিত ছুটি' : 'Leave'}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-slate-400" /> {isBn ? 'সাপ্তাহিক ছুটি' : 'Weekend'}
+              <span className="w-2 h-2 rounded-full bg-neutral-300" /> {isBn ? 'সাপ্তাহিক ছুটি' : 'Weekend'}
             </span>
           </div>
         </div>
@@ -210,7 +186,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
         {/* Selected Date Details & Leave Applications (1 span) */}
         <div className="space-y-4">
           {/* Selected Date Details */}
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-xs">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xs">
             <div className="flex items-center justify-between pb-2.5 border-b border-[var(--border)] mb-3">
               <div className="flex items-center gap-2">
                 <Clock size={16} className="text-[var(--brand)]" />
@@ -218,31 +194,31 @@ export const AttendanceTab = React.memo(function AttendanceTab({
                   {format(selectedDay, 'EEEE, MMM d, yyyy')}
                 </h3>
               </div>
-              <span className="text-[0.625rem] font-bold uppercase px-2 py-0.5 rounded-full bg-[var(--brand)]/10 text-[var(--brand)]">
+              <span className="text-[0.625rem] font-bold uppercase px-2 py-0.5 rounded-full border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)]">
                 {selectedStatus.label}
               </span>
             </div>
 
             <div className="space-y-2 text-[0.75rem]">
-              <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--bg-secondary)]">
-                <span className="text-[var(--text-muted)]">{isBn ? 'প্রবেশ (In Time):' : 'In Time:'}</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-secondary)]">
+                <span className="text-[var(--text-secondary)]">{isBn ? 'প্রবেশ (In Time):' : 'In Time:'}</span>
                 <span className="font-bold text-[var(--text-primary)]">{selectedStatus.timeIn || '—'}</span>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--bg-secondary)]">
-                <span className="text-[var(--text-muted)]">{isBn ? 'প্রস্থান (Out Time):' : 'Out Time:'}</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-secondary)]">
+                <span className="text-[var(--text-secondary)]">{isBn ? 'প্রস্থান (Out Time):' : 'Out Time:'}</span>
                 <span className="font-bold text-[var(--text-primary)]">{selectedStatus.timeOut || '—'}</span>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-xl bg-[var(--bg-secondary)]">
-                <span className="text-[var(--text-muted)]">{isBn ? 'ডিভাইস যাচাই:' : 'Verification:'}</span>
-                <span className="font-medium text-emerald-600 flex items-center gap-1">
-                  <ShieldCheck size={13} /> {isBn ? 'আরএফআইডি কার্ড #০১' : 'RFID Smart Card'}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-[var(--bg-secondary)]">
+                <span className="text-[var(--text-secondary)]">{isBn ? 'ডিভাইস যাচাই:' : 'Verification:'}</span>
+                <span className="font-medium text-[var(--text-primary)] flex items-center gap-1">
+                  <ShieldCheck size={13} className="text-[var(--brand)]" /> {isBn ? 'আরএফআইডি কার্ড #০১' : 'RFID Smart Card'}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Leave Application Management */}
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-xs">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xs">
             <div className="flex items-center justify-between pb-2.5 border-b border-[var(--border)] mb-3">
               <div className="flex items-center gap-2">
                 <FileText size={16} className="text-[var(--brand)]" />
@@ -253,7 +229,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
               <button
                 type="button"
                 onClick={onOpenLeaveModal}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.6875rem] font-semibold bg-[var(--brand)] text-white cursor-pointer border-none"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.6875rem] font-semibold bg-[var(--brand)] text-white hover:opacity-90 cursor-pointer border-none"
               >
                 <Plus size={12} />
                 {isBn ? 'নতুন আবেদন' : 'Apply'}
@@ -263,20 +239,12 @@ export const AttendanceTab = React.memo(function AttendanceTab({
             {leaveRequests.length > 0 ? (
               <div className="space-y-2">
                 {leaveRequests.map((req) => (
-                  <div key={req.id} className="p-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50">
+                  <div key={req.id} className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[0.75rem] font-bold text-[var(--text-primary)] capitalize">
                         {req.type} Leave
                       </span>
-                      <span
-                        className={`text-[0.625rem] font-bold px-1.5 py-0.2 rounded-full ${
-                          req.status === 'approved'
-                            ? 'bg-emerald-500/10 text-emerald-600'
-                            : req.status === 'rejected'
-                            ? 'bg-red-500/10 text-red-600'
-                            : 'bg-amber-500/10 text-amber-600'
-                        }`}
-                      >
+                      <span className="text-[0.625rem] font-bold px-2 py-0.5 rounded-md border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)]">
                         {req.status.toUpperCase()}
                       </span>
                     </div>

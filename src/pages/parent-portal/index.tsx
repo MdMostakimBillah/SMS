@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react'
+import { useParams } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   LayoutDashboard,
   CalendarCheck,
@@ -11,14 +13,14 @@ import {
 import { useBn } from '@/hooks/useBn'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useAdmissionStore } from '@/store/admissionStore'
-import type { PortalChild, PortalTab, FeeItem, LeaveRequest } from './types'
+import type { PortalTab, FeeItem, LeaveRequest } from './types'
 import {
-  DEMO_CHILDREN,
   DEMO_FEES,
   DEMO_HOMEWORK,
   DEMO_EXAM_RESULTS,
   DEMO_LEAVE_REQUESTS,
 } from './mockData'
+import { mapAdmittedStudentsToPortalChildren } from './utils/studentMapper'
 import { ChildSelector } from './components/ChildSelector'
 import { StudentIdCardModal } from './components/StudentIdCardModal'
 import { FeePaymentModal } from './components/FeePaymentModal'
@@ -50,49 +52,40 @@ const PORTAL_TABS: Array<{
 
 export default function ParentPortalPage() {
   const isBn = useBn()
+  const { user } = useAuth()
+  const { role } = useParams<{ role?: string }>()
   const admittedStudents = useAdmissionStore((s) => s.students)
 
+  // Determine role: Parent accounts only see their own child without switching
+  const isParentAccount = Boolean(
+    user?.role === 'parent' ||
+    user?.role === 'guardian' ||
+    role === 'parent' ||
+    role === 'guardian' ||
+    window.location.pathname.includes('/parent/') ||
+    window.location.pathname.includes('/guardian/')
+  )
+
+  // Super admin / school admin can inspect and switch students
+  const isSuperAdmin = !isParentAccount && Boolean(
+    !user ||
+    user.role === 'super_admin' ||
+    user.role === 'school_admin' ||
+    user.role === 'admin' ||
+    role === 'admin' ||
+    role === 'super-admin' ||
+    window.location.pathname.includes('/super-admin/')
+  )
+
   // Merge admitted students if available with demo children
-  const childrenList: PortalChild[] = useMemo(() => {
-    if (admittedStudents && admittedStudents.length > 0) {
-      const mapped: PortalChild[] = admittedStudents.slice(0, 3).map((s, idx) => ({
-        id: s.id || `student-${idx}`,
-        nameEn: s.nameEn || `Student ${idx + 1}`,
-        nameBn: s.nameBn || s.nameEn || `শিক্ষার্থী ${idx + 1}`,
-        photo:
-          s.photo ||
-          (idx % 2 === 0
-            ? 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&h=150&fit=crop&crop=faces'
-            : 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=faces'),
-        class: s.class || 'Class 8',
-        section: s.section || 'A',
-        roll: s.roll || `0${idx + 1}`,
-        academicYear: '2026',
-        dob: s.dob || '2012-05-14',
-        gender: s.gender || 'Male',
-        bloodGroup: s.bloodGroup || 'B+',
-        fatherName: s.fatherNameEn || 'Dr. Mahfuzur Rahman',
-        fatherPhone: s.fatherPhone || s.phone || '+880 1711-234567',
-        motherName: s.motherNameEn || 'Nasrin Sultana',
-        motherPhone: s.motherPhone || '+880 1819-345678',
-        guardianName: s.guardianName || s.fatherNameEn || 'Dr. Mahfuzur Rahman',
-        guardianPhone: s.guardianPhone || s.phone || '+880 1711-234567',
-        guardianRelation: s.guardianRelation || 'Father',
-        emergencyContact: s.phone || '+880 1711-234567',
-        presentAddress: s.presentAddress || 'House 14, Road 5, Dhanmondi, Dhaka',
-        classTeacherName: 'Md. Anwar Hossain',
-        classTeacherPhone: '+880 1712-889900',
-        classTeacherEmail: 'anwar.hossain@edutech.edu.bd',
-      }))
-      return mapped
-    }
-    return DEMO_CHILDREN
+  const childrenList = useMemo(() => {
+    return mapAdmittedStudentsToPortalChildren(admittedStudents)
   }, [admittedStudents])
 
   // Active child state
   const [activeChildId, setActiveChildId] = useState<string>(childrenList[0]?.id || 'child-1')
   const activeChild = useMemo(() => {
-    return childrenList.find((c) => c.id === activeChildId) || childrenList[0] || DEMO_CHILDREN[0]
+    return childrenList.find((c) => c.id === activeChildId) || childrenList[0]
   }, [childrenList, activeChildId])
 
   // Portal State
@@ -135,46 +128,38 @@ export default function ParentPortalPage() {
     }
   }
 
-  const handleCreateLeaveRequest = (newLeave: {
-    startDate: string
-    endDate: string
-    type: 'sick' | 'casual' | 'family' | 'other'
-    reason: string
-  }) => {
-    const created: LeaveRequest = {
+  const handleCreateLeaveRequest = (req: Omit<LeaveRequest, 'id' | 'createdAt' | 'status'>) => {
+    const newReq: LeaveRequest = {
+      ...req,
       id: `leave-${Date.now()}`,
-      childId: activeChild.id,
-      startDate: newLeave.startDate,
-      endDate: newLeave.endDate,
-      type: newLeave.type,
-      reason: newLeave.reason,
       status: 'pending',
       createdAt: new Date().toISOString().split('T')[0],
+      childId: activeChild.id,
     }
-    setLeaveRequests((prev) => [created, ...prev])
+    setLeaveRequests((prev) => [newReq, ...prev])
   }
 
   return (
-    <div className="space-y-6 pb-12 animate-in fade-in duration-200">
-      {/* Top Banner / Child Switcher */}
+    <div className="w-full space-y-4 pb-12">
+      {/* Student Identity Bar */}
       <ChildSelector
         childrenList={childrenList}
         activeChild={activeChild}
         onSelectChild={(child) => setActiveChildId(child.id)}
-        onOpenPayModal={() => handleOpenPayModal()}
         onOpenIdCardModal={() => setShowIdCardModal(true)}
-        onOpenMessage={() => setActiveTab('communication')}
+        onOpenPayModal={() => handleOpenPayModal()}
+        onOpenContact={() => setActiveTab('communication')}
         isBn={isBn}
+        isSuperAdmin={isSuperAdmin}
       />
 
-      {/* Modern Tab Bar with useTabSlider */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-1.5 border border-gray-200 dark:border-gray-700 shadow-2xs">
-        <div className="relative flex items-center gap-1 overflow-x-auto no-scrollbar">
-          {/* Sliding indicator */}
+      {/* Tabs Navigation Bar */}
+      <div className="bg-[var(--surface)] p-1 rounded-xl border border-[var(--border)] shadow-xs overflow-x-auto scrollbar-none">
+        <div className="relative flex items-center min-w-max">
+          {/* Animated Slider */}
           <div
             ref={sliderRef}
-            className="absolute top-1 bottom-1 rounded-lg bg-blue-600 transition-all duration-300 ease-out shadow-xs pointer-events-none"
-            style={{ zIndex: 0 }}
+            className="absolute top-0 bottom-0 rounded-lg bg-[var(--brand)] transition-all duration-300 ease-out shadow-xs pointer-events-none"
           />
 
           {PORTAL_TABS.map((tab) => {
@@ -189,13 +174,13 @@ export default function ParentPortalPage() {
                 }}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative z-10 flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors duration-200 ${
+                className={`relative z-10 flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors duration-200 cursor-pointer border-none ${
                   isActive
                     ? 'text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[var(--text-muted)]'}`} />
                 <span>{isBn ? tab.labelBn : tab.labelEn}</span>
               </button>
             )

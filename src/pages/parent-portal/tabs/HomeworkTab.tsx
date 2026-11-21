@@ -52,86 +52,87 @@ export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn
     <div className="space-y-6">
       {/* Top Banner & Quick Counts */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <button
-          type="button"
-          onClick={() => setFilter('all')}
-          className={`p-4 rounded-xl text-left border transition-all ${
-            filter === 'all'
-              ? 'bg-blue-50/70 dark:bg-blue-900/20 border-blue-400 dark:border-blue-600 shadow-xs'
-              : 'bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 hover:border-gray-300'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            <span>{isBn ? 'মোট হোমওয়ার্ক' : 'Total Homework'}</span>
-            <BookOpen className="w-4 h-4 text-blue-500" />
+        {(
+          [
+            { id: 'all', labelBn: 'মোট হোমওয়ার্ক', labelEn: 'Total Homework', count: stats.total, icon: <BookOpen size={16} /> },
+            { id: 'pending', labelBn: 'বাকি রয়েছে', labelEn: 'Pending / Due', count: stats.pending, icon: <Clock size={16} /> },
+            { id: 'submitted', labelBn: 'জমা দেওয়া', labelEn: 'Submitted', count: stats.submitted, icon: <CheckCircle size={16} /> },
+            { id: 'evaluated', labelBn: 'মূল্যায়িত', labelEn: 'Evaluated', count: stats.evaluated, icon: <CheckCircle2 size={16} /> },
+          ] as const
+        ).map((item) => (
+          <div
+            key={item.id}
+            onClick={() => setFilter(item.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.875rem 1rem',
+              background: 'var(--surface)',
+              border: filter === item.id ? '1px solid var(--brand)' : '1px solid var(--border)',
+              borderRadius: '0.625rem',
+              boxShadow: filter === item.id ? 'var(--shadow-sm)' : 'var(--shadow-xs)',
+              cursor: 'pointer',
+              transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+            }}
+          >
+            <div
+              style={{
+                width: '2.25rem',
+                height: '2.25rem',
+                borderRadius: '0.375rem',
+                background: filter === item.id ? 'var(--brand)' : 'var(--bg-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: filter === item.id ? '#ffffff' : 'var(--brand)',
+                flexShrink: 0,
+              }}
+            >
+              {item.icon}
+            </div>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div
+                style={{
+                  fontSize: '1.125rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  lineHeight: 1.2,
+                }}
+              >
+                {item.count}
+              </div>
+              <div
+                style={{
+                  fontSize: '0.6875rem',
+                  color: 'var(--text-secondary)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {isBn ? item.labelBn : item.labelEn}
+              </div>
+            </div>
           </div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilter('pending')}
-          className={`p-4 rounded-xl text-left border transition-all ${
-            filter === 'pending'
-              ? 'bg-amber-50/70 dark:bg-amber-900/20 border-amber-400 dark:border-amber-600 shadow-xs'
-              : 'bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 hover:border-gray-300'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs font-medium text-amber-600 dark:text-amber-400 mb-1">
-            <span>{isBn ? 'বাকি রয়েছে' : 'Pending / Due'}</span>
-            <Clock className="w-4 h-4 text-amber-500" />
-          </div>
-          <div className="text-2xl font-bold text-amber-700 dark:text-amber-300">{stats.pending}</div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilter('submitted')}
-          className={`p-4 rounded-xl text-left border transition-all ${
-            filter === 'submitted'
-              ? 'bg-purple-50/70 dark:bg-purple-900/20 border-purple-400 dark:border-purple-600 shadow-xs'
-              : 'bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 hover:border-gray-300'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">
-            <span>{isBn ? 'জমা দেওয়া হয়েছে' : 'Submitted'}</span>
-            <CheckCircle className="w-4 h-4 text-purple-500" />
-          </div>
-          <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">{stats.submitted}</div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilter('evaluated')}
-          className={`p-4 rounded-xl text-left border transition-all ${
-            filter === 'evaluated'
-              ? 'bg-emerald-50/70 dark:bg-emerald-900/20 border-emerald-400 dark:border-emerald-600 shadow-xs'
-              : 'bg-white dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 hover:border-gray-300'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">
-            <span>{isBn ? 'মূল্যায়িত ও স্কোর' : 'Evaluated'}</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-          </div>
-          <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{stats.evaluated}</div>
-        </button>
+        ))}
       </div>
 
       {/* Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[var(--surface)] p-2.5 rounded-xl border border-[var(--border)]">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={isBn ? 'বিষয়, শিরোনাম বা শিক্ষকের নামে অনুসন্ধান করুন...' : 'Search by subject, title or teacher...'}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--brand)]"
           />
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          <Filter className="w-3.5 h-3.5 text-gray-400 shrink-0 ml-1" />
+          <Filter className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 ml-1" />
           {(['all', 'pending', 'submitted', 'evaluated'] as const).map((tab) => {
             const labels: Record<StatusFilter, { bn: string; en: string }> = {
               all: { bn: 'সবগুলো', en: 'All' },
@@ -144,10 +145,10 @@ export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn
                 key={tab}
                 type="button"
                 onClick={() => setFilter(tab)}
-                className={`px-3 py-1 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                className={`px-3 py-1 text-xs font-medium rounded-lg whitespace-nowrap transition-colors cursor-pointer border-none ${
                   filter === tab
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-[var(--brand)] text-white'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
                 }`}
               >
                 {isBn ? labels[tab].bn : labels[tab].en}
@@ -160,9 +161,9 @@ export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn
       {/* Homework Cards List */}
       <div className="space-y-3">
         {filteredList.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-            <BookOpen className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+          <div className="text-center py-12 bg-[var(--surface)] rounded-xl border border-[var(--border)]">
+            <BookOpen className="w-8 h-8 mx-auto text-[var(--text-muted)] mb-2" />
+            <p className="text-xs font-medium text-[var(--text-secondary)]">
               {isBn ? 'কোনো হোমওয়ার্ক পাওয়া যায়নি' : 'No homework assignments found'}
             </p>
           </div>
@@ -175,36 +176,36 @@ export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn
             return (
               <div
                 key={item.id}
-                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700 transition-all p-4 shadow-2xs"
+                className="bg-[var(--surface)] rounded-xl border border-[var(--border)] hover:border-gray-400 transition-all p-4 shadow-xs"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2.5">
                   <div>
                     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">
+                      <span className="px-2 py-0.5 text-xs font-semibold rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)]">
                         {isBn ? item.subjectBn : item.subject}
                       </span>
 
                       {isPending && (
-                        <span className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {isBn ? 'বাকি রয়েছে' : 'Pending'}
+                        <span className="px-2 py-0.5 text-[0.6875rem] font-medium rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-[var(--text-muted)]" />
+                          {isBn ? 'বাকি' : 'Pending'}
                         </span>
                       )}
                       {isSubmitted && (
-                        <span className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          {isBn ? 'জমা দেওয়া হয়েছে' : 'Submitted'}
+                        <span className="px-2 py-0.5 text-[0.6875rem] font-medium rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3 text-[var(--text-muted)]" />
+                          {isBn ? 'জমা দেওয়া' : 'Submitted'}
                         </span>
                       )}
                       {isEvaluated && (
-                        <span className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1">
+                        <span className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded border border-[var(--brand)]/30 bg-[var(--brand)]/10 text-[var(--brand)] flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" />
                           {isBn ? 'মূল্যায়িত' : 'Evaluated'}
                         </span>
                       )}
                     </div>
 
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                    <h4 className="text-sm font-bold text-[var(--text-primary)]">
                       {isBn ? item.titleBn : item.title}
                     </h4>
                   </div>
@@ -213,10 +214,10 @@ export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn
                   <div className="shrink-0 flex items-center gap-2">
                     {isEvaluated && item.marks !== undefined && (
                       <div className="text-right">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-[0.6875rem] text-[var(--text-muted)]">
                           {isBn ? 'প্রাপ্ত নম্বর' : 'Score'}
                         </div>
-                        <div className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+                        <div className="text-sm font-bold text-[var(--text-primary)]">
                           {item.marks} / {item.maxMarks}
                         </div>
                       </div>
@@ -225,7 +226,7 @@ export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn
                       <button
                         type="button"
                         onClick={() => handleMarkAsDone(item.id)}
-                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-2xs flex items-center gap-1.5"
+                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--brand)] hover:opacity-90 text-white transition-opacity shadow-xs flex items-center gap-1.5 cursor-pointer border-none"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>{isBn ? 'সম্পন্ন চিহ্নিত করুন' : 'Mark Completed'}</span>
@@ -235,14 +236,14 @@ export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn
                 </div>
 
                 {/* Description Body */}
-                <p className="text-xs text-gray-600 dark:text-gray-300 mb-3 leading-relaxed">
+                <p className="text-xs text-[var(--text-secondary)] mb-3 leading-relaxed">
                   {item.description}
                 </p>
 
                 {/* Teacher feedback if evaluated */}
                 {isEvaluated && item.feedback && (
-                  <div className="mb-3 p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 text-xs text-emerald-800 dark:text-emerald-300 flex items-start gap-2">
-                    <FileText className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="mb-3 p-2.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-xs text-[var(--text-primary)] flex items-start gap-2">
+                    <FileText className="w-4 h-4 text-[var(--brand)] shrink-0 mt-0.5" />
                     <div>
                       <span className="font-semibold">{isBn ? 'শিক্ষকের মন্তব্য: ' : "Teacher's Feedback: "}</span>
                       {item.feedback}
@@ -251,21 +252,21 @@ export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn
                 )}
 
                 {/* Footer Dates & Teacher */}
-                <div className="flex flex-wrap items-center justify-between text-[0.6875rem] text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700/60 gap-2">
+                <div className="flex flex-wrap items-center justify-between text-[0.6875rem] text-[var(--text-muted)] pt-2 border-t border-[var(--border)] gap-2">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-gray-400" />
+                      <Calendar className="w-3 h-3" />
                       {isBn ? 'বরাদ্দ:' : 'Assigned:'} {item.assignedDate}
                     </span>
-                    <span className="flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                    <span className="flex items-center gap-1 font-medium text-[var(--text-primary)]">
                       <Clock className="w-3 h-3" />
-                      {isBn ? 'জমার শেষ তারিখ:' : 'Due:'} {item.dueDate}
+                      {isBn ? 'শেষ তারিখ:' : 'Due:'} {item.dueDate}
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-gray-400">{isBn ? 'শিক্ষক: ' : 'Teacher: '}</span>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">{item.teacherName}</span>
+                    <span>{isBn ? 'শিক্ষক: ' : 'Teacher: '}</span>
+                    <span className="font-medium text-[var(--text-secondary)]">{item.teacherName}</span>
                   </div>
                 </div>
               </div>

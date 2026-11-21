@@ -1,13 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import {
-  Users,
   ChevronDown,
   GraduationCap,
   CreditCard,
   FileText,
   MessageSquare,
-  Phone,
-  ShieldCheck,
 } from 'lucide-react'
 import type { PortalChild } from '../types'
 
@@ -21,6 +18,7 @@ interface ChildSelectorProps {
   onOpenContact?: () => void
   onOpenMessage?: () => void
   isBn: boolean
+  isSuperAdmin?: boolean
 }
 
 export const ChildSelector = React.memo(function ChildSelector({
@@ -33,6 +31,7 @@ export const ChildSelector = React.memo(function ChildSelector({
   onOpenContact,
   onOpenMessage,
   isBn,
+  isSuperAdmin = true,
 }: ChildSelectorProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -52,70 +51,68 @@ export const ChildSelector = React.memo(function ChildSelector({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [dropdownOpen])
 
+  // Parents can ONLY see their own child's account and cannot shift to other students
+  const canSwitchStudent = isSuperAdmin && childrenList.length > 1
+
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-xs">
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xs">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Left: Active Child Identity & Switcher */}
-        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+        {/* Left: Single Student Identity */}
+        <div className="flex items-center gap-3.5 min-w-0">
           <div className="relative shrink-0">
             {activeChild.photo ? (
               <img
                 src={activeChild.photo}
                 alt={activeChild.nameEn}
-                className="w-14 h-14 rounded-2xl object-cover border-2 border-[var(--brand)] shadow-xs"
+                className="w-12 h-12 rounded-lg object-cover border border-[var(--border)]"
               />
             ) : (
-              <div className="w-14 h-14 rounded-2xl bg-[var(--brand)]/10 text-[var(--brand)] flex items-center justify-center font-bold text-lg border-2 border-[var(--brand)]">
+              <div className="w-12 h-12 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-primary)] flex items-center justify-center font-bold text-base">
                 {activeChild.nameEn.charAt(0)}
               </div>
             )}
-            <span
-              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[0.625rem] border-2 border-[var(--bg-primary)]"
-              title={isBn ? 'সক্রিয় শিক্ষার্থী' : 'Active Student'}
-            >
-              <ShieldCheck size={11} />
-            </span>
           </div>
 
           <div className="min-w-0 flex-1">
             <div className="relative inline-block" ref={dropdownRef}>
-              <button
-                type="button"
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                aria-label={isBn ? 'সন্তান পরিবর্তন করুন' : 'Switch Child'}
-                className="flex items-center gap-2 text-left cursor-pointer group bg-transparent border-none p-0"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
+              {canSwitchStudent ? (
+                <button
+                  type="button"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  aria-label={isBn ? 'সন্তান পরিবর্তন করুন' : 'Switch Child'}
+                  className="flex items-center gap-2 text-left cursor-pointer group bg-transparent border-none p-0"
+                >
+                  <div className="min-w-0">
                     <h2 className="text-[1.125rem] font-bold text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors truncate">
                       {isBn ? activeChild.nameBn || activeChild.nameEn : activeChild.nameEn}
                     </h2>
-                    {childrenList.length > 1 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.625rem] font-medium bg-[var(--brand)]/10 text-[var(--brand)]">
-                        <Users size={10} />
-                        {isBn ? `${childrenList.length} জন সন্তান` : `${childrenList.length} Children`}
-                      </span>
-                    )}
+                    <p className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5">
+                      {activeChild.class} · {isBn ? 'শাখা' : 'Sec'}: {activeChild.section} · {isBn ? 'রোল' : 'Roll'}: {activeChild.roll}
+                    </p>
                   </div>
-                  <p className="text-[0.75rem] text-[var(--text-muted)] mt-0.5">
-                    {activeChild.class} · {isBn ? 'শাখা' : 'Sec'}: {activeChild.section} · {isBn ? 'রোল' : 'Roll'}: {activeChild.roll}
-                  </p>
-                </div>
-                {childrenList.length > 1 && (
                   <ChevronDown
                     size={16}
                     className={`text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-transform duration-200 ${
                       dropdownOpen ? 'rotate-180' : ''
                     }`}
                   />
-                )}
-              </button>
+                </button>
+              ) : (
+                <div className="min-w-0">
+                  <h2 className="text-[1.125rem] font-bold text-[var(--text-primary)] truncate">
+                    {isBn ? activeChild.nameBn || activeChild.nameEn : activeChild.nameEn}
+                  </h2>
+                  <p className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5">
+                    {activeChild.class} · {isBn ? 'শাখা' : 'Sec'}: {activeChild.section} · {isBn ? 'রোল' : 'Roll'}: {activeChild.roll}
+                  </p>
+                </div>
+              )}
 
-              {/* Child Switcher Dropdown */}
-              {dropdownOpen && childrenList.length > 1 && (
-                <div className="absolute left-0 top-full mt-2 w-72 rounded-xl border border-[var(--border)] bg-[var(--bg-primary)] shadow-lg z-50 overflow-hidden py-1">
-                  <div className="px-3 py-1.5 text-[0.6875rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)] bg-[var(--bg-secondary)]/50">
-                    {isBn ? 'সন্তান পরিবর্তন করুন' : 'Switch Child'}
+              {/* Super Admin Student Switcher Dropdown */}
+              {dropdownOpen && canSwitchStudent && (
+                <div className="absolute left-0 top-full mt-2 w-72 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-lg z-50 overflow-hidden py-1">
+                  <div className="px-3 py-1.5 text-[0.6875rem] font-semibold text-[var(--text-muted)] border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+                    {isBn ? 'শিক্ষার্থী নির্বাচন (সুপার অ্যাডমিন)' : 'Select Student (Super Admin)'}
                   </div>
                   {childrenList.map((c) => (
                     <button
@@ -125,21 +122,21 @@ export const ChildSelector = React.memo(function ChildSelector({
                         onSelectChild(c)
                         setDropdownOpen(false)
                       }}
-                      className={`flex items-center gap-3 w-full px-3 py-2.5 text-left transition-colors cursor-pointer border-none ${
+                      className={`flex items-center gap-3 w-full px-3 py-2 text-left transition-colors cursor-pointer border-none ${
                         c.id === activeChild.id
-                          ? 'bg-[var(--brand)]/10 text-[var(--brand)]'
+                          ? 'bg-[var(--bg-secondary)] text-[var(--brand)] font-semibold'
                           : 'bg-transparent text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
                       }`}
                     >
                       {c.photo ? (
-                        <img src={c.photo} alt={c.nameEn} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                        <img src={c.photo} alt={c.nameEn} className="w-7 h-7 rounded-md object-cover shrink-0" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-[var(--brand)]/20 text-[var(--brand)] flex items-center justify-center font-bold text-xs shrink-0">
+                        <div className="w-7 h-7 rounded-md bg-[var(--bg-secondary)] text-[var(--text-primary)] flex items-center justify-center font-bold text-xs shrink-0">
                           {c.nameEn.charAt(0)}
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="text-[0.8125rem] font-semibold truncate">
+                        <div className="text-[0.8125rem] truncate">
                           {isBn ? c.nameBn || c.nameEn : c.nameEn}
                         </div>
                         <div className="text-[0.6875rem] text-[var(--text-muted)] truncate">
@@ -147,7 +144,7 @@ export const ChildSelector = React.memo(function ChildSelector({
                         </div>
                       </div>
                       {c.id === activeChild.id && (
-                        <span className="w-2 h-2 rounded-full bg-[var(--brand)] shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)] shrink-0" />
                       )}
                     </button>
                   ))}
@@ -155,18 +152,17 @@ export const ChildSelector = React.memo(function ChildSelector({
               )}
             </div>
 
-            {/* Quick Chips */}
+            {/* Subtle Info Chips */}
             <div className="flex items-center gap-2 mt-2 flex-wrap text-[0.6875rem]">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-medium">
-                <GraduationCap size={11} className="text-[var(--brand)]" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
+                <GraduationCap size={11} className="text-[var(--text-muted)]" />
                 {isBn ? 'সেশন:' : 'Session:'} {activeChild.academicYear}
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-medium">
-                {isBn ? 'রক্তের গ্রুপ:' : 'Blood:'} {activeChild.bloodGroup}
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
+                {isBn ? 'রক্ত:' : 'Blood:'} {activeChild.bloodGroup}
               </span>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--bg-secondary)] text-[var(--text-secondary)] font-medium">
-                <Phone size={11} className="text-emerald-500" />
-                {isBn ? 'শিক্ষক:' : 'Teacher:'} {activeChild.classTeacherName}
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
+                {isBn ? 'শিক্ষক:' : 'Teacher:'} {childTeacherShort(activeChild.classTeacherName)}
               </span>
             </div>
           </div>
@@ -177,29 +173,29 @@ export const ChildSelector = React.memo(function ChildSelector({
           <button
             type="button"
             onClick={onOpenPayModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[0.75rem] font-semibold bg-[var(--brand)] text-white shadow-xs hover:opacity-95 transition-all cursor-pointer border-none"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white hover:opacity-90 transition-opacity cursor-pointer border-none"
           >
             <CreditCard size={14} />
-            {isBn ? 'ফি পরিশোধ করুন' : 'Pay Online'}
+            {isBn ? 'ফি পরিশোধ' : 'Pay Online'}
           </button>
 
           <button
             type="button"
             onClick={handleIdCardClick}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--brand)] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-gray-400 transition-colors cursor-pointer"
             title={isBn ? 'শিক্ষার্থীর ডিজিটাল আইডি কার্ড দেখুন' : 'View Student Digital ID Card'}
           >
-            <FileText size={14} className="text-[var(--brand)]" />
+            <FileText size={14} className="text-[var(--text-muted)]" />
             {isBn ? 'আইডি কার্ড' : 'ID Card'}
           </button>
 
           <button
             type="button"
             onClick={handleContactClick}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:border-[var(--brand)] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-gray-400 transition-colors cursor-pointer"
             title={isBn ? 'শ্রেণি শিক্ষককে বার্তা পাঠান' : 'Contact Class Teacher'}
           >
-            <MessageSquare size={14} className="text-blue-500" />
+            <MessageSquare size={14} className="text-[var(--text-muted)]" />
             {isBn ? 'বার্তা পাঠান' : 'Message'}
           </button>
         </div>
@@ -207,3 +203,8 @@ export const ChildSelector = React.memo(function ChildSelector({
     </div>
   )
 })
+
+function childTeacherShort(name: string): string {
+  if (!name) return ''
+  return name.length > 18 ? name.slice(0, 16) + '...' : name
+}

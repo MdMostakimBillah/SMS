@@ -1,11 +1,9 @@
 import React from 'react'
 import {
-  Clock,
   CheckCircle2,
   CreditCard,
   Award,
   BookOpen,
-  TrendingUp,
 } from 'lucide-react'
 import type { FeeItem, HomeworkItem } from '../../types'
 
@@ -21,140 +19,114 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
   fees,
   homeworkList,
   onNavigateTab,
-  onOpenPayModal,
+  onOpenPayModal: _onOpenPayModal,
   isBn,
 }: OverviewKpiCardsProps) {
   const totalDue = fees.reduce((acc, f) => acc + f.due, 0)
   const pendingHw = homeworkList.filter((h) => h.status === 'pending').length
 
+  const cards = [
+    {
+      id: 'attendance',
+      labelBn: 'মাসিক উপস্থিতি হার',
+      labelEn: 'Monthly Attendance',
+      value: '94.5%',
+      icon: <CheckCircle2 size={16} />,
+      tab: 'attendance',
+    },
+    {
+      id: 'fees',
+      labelBn: 'মোট বকেয়া ফি',
+      labelEn: 'Total Fee Dues',
+      value: `৳${totalDue.toLocaleString()}`,
+      icon: <CreditCard size={16} />,
+      tab: 'fees',
+    },
+    {
+      id: 'academics',
+      labelBn: '১ম সাময়িক মূল্যায়ন',
+      labelEn: '1st Term Result',
+      value: 'GPA 5.00',
+      icon: <Award size={16} />,
+      tab: 'academics',
+    },
+    {
+      id: 'homework',
+      labelBn: 'বাকি হোমওয়ার্ক',
+      labelEn: 'Pending Homework',
+      value: `${pendingHw} ${isBn ? 'টি' : 'Tasks'}`,
+      icon: <BookOpen size={16} />,
+      tab: 'homework',
+    },
+  ]
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-      {/* Attendance KPI */}
-      <div
-        onClick={() => onNavigateTab('attendance')}
-        className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-xs hover:border-[var(--brand)]/60 transition-all cursor-pointer group"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-            {isBn ? 'উপস্থিতি হার' : 'Monthly Attendance'}
-          </span>
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-            <CheckCircle2 size={16} />
-          </div>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-[1.5rem] font-extrabold text-[var(--text-primary)]">94.5%</span>
-          <span className="text-[0.6875rem] text-emerald-600 font-semibold flex items-center gap-0.5">
-            <TrendingUp size={11} /> +2.1%
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 mt-2 text-[0.6875rem] text-emerald-600 font-medium">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>{isBn ? 'আজ উপস্থিত (সকাল ৮:১৪)' : 'Present Today (08:14 AM)'}</span>
-        </div>
-      </div>
-
-      {/* Dues KPI */}
-      <div
-        onClick={() => onNavigateTab('fees')}
-        className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-xs hover:border-[var(--brand)]/60 transition-all cursor-pointer group"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-            {isBn ? 'বকেয়া ফি' : 'Fee Dues'}
-          </span>
+      {cards.map((c) => (
+        <div
+          key={c.id}
+          onClick={() => onNavigateTab(c.tab)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.875rem 1rem',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '0.625rem',
+            boxShadow: 'var(--shadow-xs)',
+            cursor: 'pointer',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)'
+            e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
+          }}
+        >
           <div
-            className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-              totalDue > 0
-                ? 'bg-amber-500/10 text-amber-500'
-                : 'bg-emerald-500/10 text-emerald-500'
-            }`}
+            style={{
+              width: '2.25rem',
+              height: '2.25rem',
+              borderRadius: '0.375rem',
+              background: 'var(--bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--brand)',
+              flexShrink: 0,
+            }}
           >
-            <CreditCard size={16} />
+            {c.icon}
           </div>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span
-            className={`text-[1.5rem] font-extrabold ${
-              totalDue > 0
-                ? 'text-amber-600 dark:text-amber-400'
-                : 'text-emerald-600 dark:text-emerald-400'
-            }`}
-          >
-            ৳{totalDue.toLocaleString()}
-          </span>
-          {totalDue > 0 && (
-            <span className="text-[0.6875rem] text-amber-600 font-medium">
-              {isBn ? 'পরিশোধ বাকি' : 'Pending'}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center justify-between mt-2 text-[0.6875rem]">
-          <span className="text-[var(--text-muted)]">
-            {isBn ? 'নভেম্বর বেতন' : 'Nov Tuition'}
-          </span>
-          {totalDue > 0 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onOpenPayModal()
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+              style={{
+                fontSize: '1.125rem',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                lineHeight: 1.2,
               }}
-              className="text-[var(--brand)] font-semibold hover:underline"
             >
-              {isBn ? 'এখনই পে করুন →' : 'Pay Now →'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Results KPI */}
-      <div
-        onClick={() => onNavigateTab('academics')}
-        className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-xs hover:border-[var(--brand)]/60 transition-all cursor-pointer group"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-            {isBn ? 'সর্বশেষ ফলাফল' : 'Latest Result'}
-          </span>
-          <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-            <Award size={16} />
+              {c.value}
+            </div>
+            <div
+              style={{
+                fontSize: '0.6875rem',
+                color: 'var(--text-secondary)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {isBn ? c.labelBn : c.labelEn}
+            </div>
           </div>
         </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-[1.5rem] font-extrabold text-[var(--text-primary)]">GPA 5.00</span>
-          <span className="px-2 py-0.5 rounded-full text-[0.625rem] font-bold bg-purple-500/10 text-purple-600">
-            A+
-          </span>
-        </div>
-        <p className="text-[0.6875rem] text-[var(--text-muted)] mt-2">
-          {isBn ? '১ম সাময়িক মূল্যায়ন · মেধা স্থান: ১ম' : '1st Term Evaluation · Rank: 1st'}
-        </p>
-      </div>
-
-      {/* Homework KPI */}
-      <div
-        onClick={() => onNavigateTab('homework')}
-        className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-4 shadow-xs hover:border-[var(--brand)]/60 transition-all cursor-pointer group"
-      >
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
-            {isBn ? 'হোমওয়ার্ক ডায়েরি' : 'Homework Tasks'}
-          </span>
-          <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-            <BookOpen size={16} />
-          </div>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-[1.5rem] font-extrabold text-[var(--text-primary)]">
-            {pendingHw} {isBn ? 'টি বাকি' : 'Pending'}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 mt-2 text-[0.6875rem] text-blue-600 font-medium">
-          <Clock size={11} />
-          <span>{isBn ? 'গণিত অধ্যায় ৪ (আগামীকাল জমা)' : 'Math Ch 4 due tomorrow'}</span>
-        </div>
-      </div>
+      ))}
     </div>
   )
 })
