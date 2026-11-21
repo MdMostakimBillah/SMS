@@ -108,9 +108,19 @@ export default React.memo(function RoutineTab({
   deleteRoutine,
 }: Props) {
   const { canCreate, canRead, canDelete } = usePermission()
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [showDayDetail, setShowDayDetail] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+    if (calendarRange?.start) return calendarRange.start
+    return null
+  })
+  const [showDayDetail, setShowDayDetail] = useState(Boolean(calendarRange?.start))
   const [showRoutineForm, setShowRoutineForm] = useState(false)
+
+  useEffect(() => {
+    if (!selectedDate && calendarRange?.start) {
+      setSelectedDate(calendarRange.start)
+      setShowDayDetail(true)
+    }
+  }, [calendarRange])
 
   // Single-row batch table state for routines
   const [routineRows, setRoutineRows] = useState<RoutineRow[]>([
@@ -283,20 +293,12 @@ export default React.memo(function RoutineTab({
   }, [selectedExamId, routineRows, bulkAddRoutines, addRoutine, rooms, isBn])
 
   const calendarDays = useMemo(() => {
-    if (!calendarRange) {
-      const monthStart = startOfMonth(currentMonth)
-      const monthEnd = endOfMonth(currentMonth)
-      const calStart = startOfWeek(monthStart, { weekStartsOn: 0 })
-      const calEnd = endOfWeek(monthEnd, { weekStartsOn: 0 })
-      return eachDayOfInterval({ start: calStart, end: calEnd })
-    }
     const monthStart = startOfMonth(currentMonth)
     const monthEnd = endOfMonth(currentMonth)
-    const rangeStart = calendarRange.start < monthStart ? monthStart : calendarRange.start
-    const rangeEnd = calendarRange.end > monthEnd ? monthEnd : calendarRange.end
-    if (rangeStart > rangeEnd) return []
-    return eachDayOfInterval({ start: rangeStart, end: rangeEnd })
-  }, [currentMonth, calendarRange])
+    const calStart = startOfWeek(monthStart, { weekStartsOn: 0 })
+    const calEnd = endOfWeek(monthEnd, { weekStartsOn: 0 })
+    return eachDayOfInterval({ start: calStart, end: calEnd })
+  }, [currentMonth])
 
   const routinesByDate = useMemo(() => {
     const map = new Map<string, ExamRoutine[]>()
@@ -544,6 +546,12 @@ export default React.memo(function RoutineTab({
             const dayRoutines = getRoutinesForDay(day)
             const today = isToday(day)
             const selected = selectedDate && isSameDay(day, selectedDate)
+            const isCurrentMonth = day.getMonth() === currentMonth.getMonth()
+            const isExamDay = Boolean(
+              calendarRange &&
+                day >= startOfDay(calendarRange.start) &&
+                day <= startOfDay(calendarRange.end)
+            )
             const hasRoutine = dayRoutines.length > 0
             const hasCompleted = dayRoutines.some((r) => getAutoStatus(r.date) === 'completed')
             const hasInProgress = dayRoutines.some((r) => getAutoStatus(r.date) === 'in-progress')
@@ -560,9 +568,11 @@ export default React.memo(function RoutineTab({
                 onClick={() => { setSelectedDate(day); setShowDayDetail(true) }}
                 className={`
                   relative min-h-[4.5rem] p-1.5 rounded-xl border-2 cursor-pointer transition-all
-                  ${today ? 'border-[var(--brand)] bg-[var(--brand-light)] shadow-md ring-1 ring-[var(--brand)]/30' : ''}
-                  ${!today && !hasRoutine ? 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)] hover:shadow-sm' : ''}
-                  ${!today && hasRoutine ? `${borderStyle} bg-[var(--bg-primary)] hover:shadow-md` : ''}
+                  ${!isCurrentMonth ? 'opacity-35 bg-[var(--bg-secondary)]/30 border-[var(--border)]/40 hover:opacity-70' : ''}
+                  ${isCurrentMonth && today ? 'border-[var(--brand)] bg-[var(--brand-light)] shadow-md ring-1 ring-[var(--brand)]/30' : ''}
+                  ${isCurrentMonth && !today && !hasRoutine && isExamDay ? 'border-dashed border-[var(--brand)]/40 bg-[var(--brand)]/[0.02] hover:border-[var(--brand)] hover:shadow-sm' : ''}
+                  ${isCurrentMonth && !today && !hasRoutine && !isExamDay ? 'border-[var(--border)] bg-[var(--bg-primary)] hover:border-[var(--brand)] hover:shadow-sm' : ''}
+                  ${isCurrentMonth && !today && hasRoutine ? `${borderStyle} bg-[var(--bg-primary)] hover:shadow-md` : ''}
                   ${selected ? 'ring-2 ring-[var(--brand)] ring-offset-1' : ''}
                 `}
               >
@@ -572,9 +582,22 @@ export default React.memo(function RoutineTab({
                   </div>
                 )}
                 <div className="flex items-center justify-between mb-0.5">
-                  <span className={`text-[0.6875rem] font-semibold ${today ? 'w-5 h-5 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-[0.625rem]' : 'text-[var(--text-primary)]'}`}>
+                  <span
+                    className={`text-[0.6875rem] font-semibold ${
+                      today
+                        ? 'w-5 h-5 rounded-full bg-[var(--brand)] text-white flex items-center justify-center text-[0.625rem]'
+                        : isCurrentMonth
+                        ? 'text-[var(--text-primary)]'
+                        : 'text-[var(--text-muted)]'
+                    }`}
+                  >
                     {format(day, 'd')}
                   </span>
+                  {isCurrentMonth && isExamDay && !hasRoutine && (
+                    <span className="text-[0.5rem] font-medium text-[var(--brand)]/70">
+                      {isBn ? 'পরীক্ষা' : 'Exam'}
+                    </span>
+                  )}
                   {hasRoutine && <span className="text-[0.5625rem] font-bold text-[var(--text-muted)]">{dayRoutines.length}</span>}
                 </div>
                 {hasRoutine && (
