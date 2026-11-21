@@ -4,7 +4,6 @@ import {
   CreditCard,
   Award,
   BookOpen,
-  ArrowUpRight,
   Clock,
   Check,
 } from 'lucide-react'
@@ -34,94 +33,89 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
       {/* 1. Monthly Attendance (Emerald Accent) */}
       <div
         onClick={() => onNavigateTab('attendance')}
-        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3.5 shadow-xs hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col justify-between"
+        className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-xs cursor-pointer hover:border-emerald-500/40 transition-colors"
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2 size={17} />
-          </div>
-          <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            {isBn ? 'নিয়মিত' : 'Regular'}
-          </span>
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+          <CheckCircle2 size={18} />
         </div>
-        <div className="mt-3">
-          <div className="text-xl font-extrabold text-[var(--text-primary)] leading-tight">94.5%</div>
-          <div className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mt-0.5">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-1">
+            <div className="text-[1.125rem] font-bold leading-tight text-[var(--text-primary)]">
+              94.5%
+            </div>
+            <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+              {isBn ? 'নিয়মিত' : 'Regular'}
+            </span>
+          </div>
+          <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5 truncate">
             {isBn ? 'মাসিক উপস্থিতি হার' : 'Monthly Attendance'}
           </div>
         </div>
       </div>
 
-      {/* 2. Fee Dues / Pay Online (THE INVERTED DARK ACCENT CARD - Like Teacher Management Quick Action) */}
+      {/* 2. Fee Dues / Pay Online (THE INVERTED DARK ACCENT CARD - Consistent in Light & Dark Mode) */}
       <div
         onClick={() => {
           if (totalDue > 0 && !hasPendingFee) onOpenPayModal()
           else onNavigateTab('fees')
         }}
-        className="rounded-xl p-3.5 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden group"
-        style={{
-          background: 'var(--highlight-bg)',
-          color: 'var(--highlight-fg)',
-        }}
+        className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] bg-[#1a1d2e] dark:bg-[#1e2337] border border-transparent dark:border-indigo-500/30 text-white shadow-xs cursor-pointer hover:border-amber-400/50 transition-colors"
       >
-        {/* Subtle Decorative Gradient Sheen */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/[0.04] rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none" />
-
-        <div className="flex items-center justify-between gap-2 relative z-10">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/10 text-amber-400 border border-white/10">
-            <CreditCard size={17} />
-          </div>
-          {hasPendingFee ? (
-            <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-amber-500/25 text-amber-300 border border-amber-400/30 flex items-center gap-1 animate-pulse">
-              <Clock size={10} />
-              {isBn ? 'যাচাই অপেক্ষমাণ' : 'Verification Pending'}
-            </span>
-          ) : totalDue > 0 ? (
-            <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-400/20">
-              {isBn ? 'বকেয়া ফি' : 'Fee Due'}
-            </span>
-          ) : (
-            <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/20 flex items-center gap-1">
-              <Check size={10} />
-              {isBn ? 'পরিশোধিত' : 'All Paid'}
-            </span>
-          )}
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/10 text-amber-400 border border-white/10 shrink-0">
+          <CreditCard size={18} />
         </div>
-
-        <div className="mt-3 relative z-10">
-          <div className="flex items-baseline justify-between gap-1">
-            <div className="text-xl font-black text-white leading-tight tracking-tight">
-              {totalDue > 0 ? `৳${totalDue.toLocaleString()}` : isBn ? '৳০ (পরিশোধিত)' : '৳0 (Clear)'}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-1">
+            <div className="text-[1.125rem] font-bold leading-tight text-white tracking-tight">
+              {totalDue > 0 ? `৳${totalDue.toLocaleString()}` : isBn ? '৳০' : '৳0'}
             </div>
-            <ArrowUpRight size={15} className="text-white/60 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-          </div>
-          <div className="text-[0.6875rem] font-medium text-white/70 mt-0.5 flex items-center justify-between">
-            <span>{isBn ? 'ফি ও অনলাইন পেমেন্ট' : 'Fees & Online Pay'}</span>
-            {totalDue > 0 && !hasPendingFee && (
-              <span className="text-[0.625rem] font-bold text-amber-300 underline underline-offset-2">
-                {isBn ? 'এখন পরিশোধ' : 'Pay Now'}
+            {hasPendingFee ? (
+              <span className="text-[0.625rem] font-bold px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-900 flex items-center gap-1 shrink-0 animate-pulse">
+                <Clock size={9} />
+                {isBn ? 'যাচাই' : 'Pending'}
+              </span>
+            ) : totalDue > 0 ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onOpenPayModal()
+                }}
+                className="text-[0.625rem] font-bold px-2 py-0.5 rounded bg-amber-400 hover:bg-amber-300 text-slate-900 cursor-pointer border-none shadow-2xs transition-colors shrink-0"
+              >
+                {isBn ? 'পরিশোধ' : 'Pay'}
+              </button>
+            ) : (
+              <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center gap-1 shrink-0">
+                <Check size={9} />
+                {isBn ? 'পরিশোধিত' : 'Paid'}
               </span>
             )}
+          </div>
+          <div className="text-[0.6875rem] text-slate-300 dark:text-zinc-300 mt-0.5 truncate">
+            {isBn ? 'ফি ও অনলাইন পেমেন্ট' : 'Fees & Online Pay'}
           </div>
         </div>
       </div>
 
-      {/* 3. Academic Result (Indigo / Brand Accent) */}
+      {/* 3. Academic Result (Indigo Accent) */}
       <div
         onClick={() => onNavigateTab('academics')}
-        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3.5 shadow-xs hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col justify-between"
+        className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-xs cursor-pointer hover:border-indigo-500/40 transition-colors"
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-            <Award size={17} />
-          </div>
-          <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-            {isBn ? 'শীর্ষ ৫%' : 'Top 5%'}
-          </span>
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
+          <Award size={18} />
         </div>
-        <div className="mt-3">
-          <div className="text-xl font-extrabold text-[var(--text-primary)] leading-tight">GPA 5.00</div>
-          <div className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mt-0.5">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-1">
+            <div className="text-[1.125rem] font-bold leading-tight text-[var(--text-primary)]">
+              GPA 5.00
+            </div>
+            <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
+              {isBn ? 'শীর্ষ ৫%' : 'Top 5%'}
+            </span>
+          </div>
+          <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5 truncate">
             {isBn ? '১ম সাময়িক মূল্যায়ন' : '1st Term Result'}
           </div>
         </div>
@@ -130,21 +124,21 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
       {/* 4. Homework & Tasks (Purple Accent) */}
       <div
         onClick={() => onNavigateTab('homework')}
-        className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3.5 shadow-xs hover:shadow-sm hover:-translate-y-0.5 transition-all cursor-pointer flex flex-col justify-between"
+        className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-xs cursor-pointer hover:border-purple-500/40 transition-colors"
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-            <BookOpen size={17} />
-          </div>
-          <span className="text-[0.625rem] font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-            {isBn ? 'আজ জমা' : 'Due Today'}
-          </span>
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 shrink-0">
+          <BookOpen size={18} />
         </div>
-        <div className="mt-3">
-          <div className="text-xl font-extrabold text-[var(--text-primary)] leading-tight">
-            {pendingHw} {isBn ? 'টি' : 'Tasks'}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-1">
+            <div className="text-[1.125rem] font-bold leading-tight text-[var(--text-primary)]">
+              {pendingHw} {isBn ? 'টি' : 'Tasks'}
+            </div>
+            <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 shrink-0">
+              {isBn ? 'আজ জমা' : 'Due Today'}
+            </span>
           </div>
-          <div className="text-[0.6875rem] font-medium text-[var(--text-secondary)] mt-0.5">
+          <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5 truncate">
             {isBn ? 'বাকি হোমওয়ার্ক' : 'Pending Homework'}
           </div>
         </div>
