@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, X, Database, HardDrive, Check, Users } from 'lucide-react'
 import type { PortalChild } from '../types'
 
@@ -69,9 +70,11 @@ export const AdminStudentSearchDropdown = React.memo(function AdminStudentSearch
     })
   }, [childrenList, searchQuery, selectedClass])
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-20 p-4 bg-black/40 backdrop-blur-xs"
+      className="modal-overlay fixed inset-0 z-[600] flex items-start justify-center pt-16 sm:pt-20 p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -217,6 +220,7 @@ export const AdminStudentSearchDropdown = React.memo(function AdminStudentSearch
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 })

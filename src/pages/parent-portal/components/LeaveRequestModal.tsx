@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Send, Calendar, AlertCircle } from 'lucide-react'
 import type { PortalChild, LeaveRequest } from '../types'
 
@@ -17,12 +18,23 @@ export const LeaveRequestModal = React.memo(function LeaveRequestModal({
   onSubmit,
   isBn,
 }: LeaveRequestModalProps) {
-  if (isOpen === false) return null
   const [type, setType] = useState<'sick' | 'casual' | 'family' | 'other'>('sick')
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (isOpen === false) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
+  if (isOpen === false) return null
+  if (typeof document === 'undefined') return null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,8 +57,13 @@ export const LeaveRequestModal = React.memo(function LeaveRequestModal({
     onClose()
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+  return createPortal(
+    <div
+      className="modal-overlay fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
       <div className="relative w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-5 shadow-2xl">
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-4">
           <div className="flex items-center gap-2">
@@ -159,6 +176,7 @@ export const LeaveRequestModal = React.memo(function LeaveRequestModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 })

@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, CheckCircle2, ShieldCheck, ArrowRight, Loader2, CreditCard } from 'lucide-react'
 import type { PortalChild, FeeItem } from '../types'
 import { PaymentMethodLogo } from '@/components/ui/PaymentMethodLogo'
@@ -22,17 +23,27 @@ export const FeePaymentModal = React.memo(function FeePaymentModal({
   onSuccess,
   isBn,
 }: FeePaymentModalProps) {
-  if (isOpen === false) return null
-
   const feeList = fees || (fee ? [fee] : [])
   const dueFees = feeList.filter((f) => f.due > 0)
   const [selectedFeeId, setSelectedFeeId] = useState<string>(fee?.id || dueFees[0]?.id || '')
   const [method, setMethod] = useState<'bkash' | 'nagad' | 'rocket' | 'bank'>('bkash')
-  const [phone, setPhone] = useState(child.guardianPhone.replace(/[^0-9]/g, '').slice(-11) || '')
+  const [phone, setPhone] = useState(child?.guardianPhone ? child.guardianPhone.replace(/[^0-9]/g, '').slice(-11) : '')
   const [trxId, setTrxId] = useState('')
   const [processing, setProcessing] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (isOpen === false) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
+
+  if (isOpen === false) return null
+  if (typeof document === 'undefined') return null
 
   const activeFee = feeList.find((f) => f.id === selectedFeeId) || dueFees[0]
   const amountToPay = activeFee ? activeFee.due : 0
@@ -59,8 +70,13 @@ export const FeePaymentModal = React.memo(function FeePaymentModal({
     }, 1200)
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+  return createPortal(
+    <div
+      className="modal-overlay fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
       <div className="relative w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-5 shadow-2xl">
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-4">
           <div className="flex items-center gap-2">
@@ -231,6 +247,7 @@ export const FeePaymentModal = React.memo(function FeePaymentModal({
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 })

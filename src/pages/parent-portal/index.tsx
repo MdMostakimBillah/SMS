@@ -204,30 +204,36 @@ export default function ParentPortalPage() {
       </div>
 
       {/* Global Modals */}
-      <StudentIdCardModal
-        isOpen={showIdCardModal}
-        onClose={() => setShowIdCardModal(false)}
-        child={activeChild}
-        isBn={isBn}
-      />
+      {showIdCardModal && (
+        <StudentIdCardModal
+          isOpen={showIdCardModal}
+          onClose={() => setShowIdCardModal(false)}
+          child={activeChild}
+          isBn={isBn}
+        />
+      )}
 
-      <FeePaymentModal
-        isOpen={showFeeModal}
-        onClose={() => setShowFeeModal(false)}
-        child={activeChild}
-        fees={fees}
-        fee={selectedFeeToPay}
-        onSuccess={handlePaymentSuccess}
-        isBn={isBn}
-      />
+      {showFeeModal && (
+        <FeePaymentModal
+          isOpen={showFeeModal}
+          onClose={() => setShowFeeModal(false)}
+          child={activeChild}
+          fees={fees}
+          fee={selectedFeeToPay}
+          onSuccess={handlePaymentSuccess}
+          isBn={isBn}
+        />
+      )}
 
-      <LeaveRequestModal
-        isOpen={showLeaveModal}
-        child={activeChild}
-        onClose={() => setShowLeaveModal(false)}
-        onSubmit={handleCreateLeaveRequest}
-        isBn={isBn}
-      />
+      {showLeaveModal && (
+        <LeaveRequestModal
+          isOpen={showLeaveModal}
+          child={activeChild}
+          onClose={() => setShowLeaveModal(false)}
+          onSubmit={handleCreateLeaveRequest}
+          isBn={isBn}
+        />
+      )}
     </div>
   )
 }
