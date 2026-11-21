@@ -1,17 +1,7 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import {
-  LayoutDashboard,
-  CalendarCheck,
-  GraduationCap,
-  CreditCard,
-  BookOpen,
-  MessageSquare,
-  UserCheck,
-} from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
-import { useTabSlider } from '@/hooks/useTabSlider'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import type { PortalTab, FeeItem, LeaveRequest } from './types'
@@ -23,6 +13,7 @@ import {
 } from './mockData'
 import { mapAdmittedStudentsToPortalChildren } from './utils/studentMapper'
 import { ChildSelector } from './components/ChildSelector'
+import { PortalTabNav } from './components/PortalTabNav'
 import { StudentIdCardModal } from './components/StudentIdCardModal'
 import { FeePaymentModal } from './components/FeePaymentModal'
 import { LeaveRequestModal } from './components/LeaveRequestModal'
@@ -35,21 +26,6 @@ import { FeesTab } from './tabs/FeesTab'
 import { HomeworkTab } from './tabs/HomeworkTab'
 import { CommunicationTab } from './tabs/CommunicationTab'
 import { ProfileTab } from './tabs/ProfileTab'
-
-const PORTAL_TABS: Array<{
-  id: PortalTab
-  labelEn: string
-  labelBn: string
-  icon: React.ComponentType<{ className?: string }>
-}> = [
-  { id: 'overview', labelEn: 'Overview', labelBn: 'একনজরে', icon: LayoutDashboard },
-  { id: 'attendance', labelEn: 'Attendance', labelBn: 'উপস্থিতি', icon: CalendarCheck },
-  { id: 'academics', labelEn: 'Academics & Results', labelBn: 'ফলাফল ও পরীক্ষা', icon: GraduationCap },
-  { id: 'fees', labelEn: 'Fees & Payments', labelBn: 'ফি ও পেমেন্ট', icon: CreditCard },
-  { id: 'homework', labelEn: 'Homework & Diary', labelBn: 'হোমওয়ার্ক ও ডায়েরি', icon: BookOpen },
-  { id: 'communication', labelEn: 'Notice & Teachers', labelBn: 'যোগাযোগ ও নোটিশ', icon: MessageSquare },
-  { id: 'profile', labelEn: 'Student Profile', labelBn: 'শিক্ষার্থী প্রোফাইল', icon: UserCheck },
-]
 
 export default function ParentPortalPage() {
   const isBn = useBn()
@@ -107,11 +83,6 @@ export default function ParentPortalPage() {
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [selectedFeeToPay, setSelectedFeeToPay] = useState<FeeItem | undefined>(undefined)
 
-  // Tab slider
-  const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
-  const sliderRef = useRef<HTMLDivElement>(null)
-  useTabSlider({ activeTab, tabRefs, sliderRef })
-
   // Handlers
   const handleOpenPayModal = (fee?: FeeItem) => {
     const dueItem = fee || fees.find((f) => f.due > 0) || fees[0]
@@ -163,40 +134,12 @@ export default function ParentPortalPage() {
         isLocalPC={isLocalPC}
       />
 
-      {/* Tabs Navigation Bar */}
-      <div className="bg-[var(--surface)] p-1 rounded-xl border border-[var(--border)] shadow-xs overflow-x-auto scrollbar-none">
-        <div className="relative flex items-center min-w-max">
-          {/* Animated Slider */}
-          <div
-            ref={sliderRef}
-            className="absolute top-0 bottom-0 rounded-lg bg-[var(--brand)] transition-all duration-300 ease-out shadow-xs pointer-events-none"
-          />
-
-          {PORTAL_TABS.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                ref={(el) => {
-                  if (el) tabRefs.current.set(tab.id, el)
-                  else tabRefs.current.delete(tab.id)
-                }}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative z-10 flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors duration-200 cursor-pointer border-none ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-[var(--text-muted)]'}`} />
-                <span>{isBn ? tab.labelBn : tab.labelEn}</span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      {/* Tabs Navigation Bar - HR Management Style */}
+      <PortalTabNav
+        activeTab={activeTab}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        isBn={isBn}
+      />
 
       {/* Tab Panels */}
       <div>

@@ -224,12 +224,13 @@ describe('ParentPortalPage', () => {
     })
 
     // Open search dropdown
-    const switchBtn = screen.getByRole('button', { name: /Switch Child|সন্তান পরিবর্তন/i })
+    const switchBtn = screen.getByRole('button', { name: /Search Student|শিক্ষার্থী খুঁজুন/i })
     await user.click(switchBtn)
 
     // Search bar should be present
-    const searchInput = screen.getByPlaceholderText(/নাম, রোল, শ্রেণি বা আইডি দিয়ে খুঁজুন|Search by name, roll/i)
-    expect(searchInput).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Search by student name|নাম, রোল, শ্রেণি/i)).toBeInTheDocument()
+    })
 
     // Database or Local PC indicator is shown
     expect(screen.getByText(/Database|Local PC|লোকাল পিসি|ডাটাবেস/i)).toBeInTheDocument()

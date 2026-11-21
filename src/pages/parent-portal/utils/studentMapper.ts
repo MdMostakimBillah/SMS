@@ -10,11 +10,7 @@ export function mapAdmittedStudentsToPortalChildren(
       id: s.id || `student-${idx}`,
       nameEn: s.nameEn || `Student ${idx + 1}`,
       nameBn: s.nameBn || s.nameEn || `শিক্ষার্থী ${idx + 1}`,
-      photo:
-        s.photo ||
-        (idx % 2 === 0
-          ? 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&h=150&fit=crop&crop=faces'
-          : 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=faces'),
+      photo: s.photo || '',
       class: s.class || 'Class 8',
       section: s.section || 'A',
       roll: s.roll || `0${idx + 1}`,

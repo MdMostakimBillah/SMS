@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   ChevronDown,
   GraduationCap,
@@ -40,22 +40,9 @@ export const ChildSelector = React.memo(function ChildSelector({
   isLocalPC = false,
 }: ChildSelectorProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const handleIdCardClick = onOpenIdCardModal || onOpenIdCard
   const handleContactClick = onOpenMessage || onOpenContact
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
-    }
-    if (dropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [dropdownOpen])
 
   // Institution Admin and Super Admin can search and select all students.
   // Parents can ONLY see their own child's account and cannot shift to other students.
@@ -81,58 +68,32 @@ export const ChildSelector = React.memo(function ChildSelector({
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="relative inline-block" ref={dropdownRef}>
+            <div className="flex items-center gap-2 flex-wrap">
               {canSwitchStudent ? (
                 <button
                   type="button"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  onClick={() => setDropdownOpen(true)}
                   aria-label={isBn ? 'সন্তান পরিবর্তন করুন' : 'Switch Child'}
-                  className="flex items-center gap-2 text-left cursor-pointer group bg-transparent border-none p-0"
+                  className="flex items-center gap-1.5 text-left cursor-pointer group bg-transparent border-none p-0"
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-[1.125rem] font-bold text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors truncate">
-                        {isBn ? activeChild.nameBn || activeChild.nameEn : activeChild.nameEn}
-                      </h2>
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[0.625rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
-                        <Search size={10} className="text-[var(--brand)]" />
-                        {isBn ? 'অনুসন্ধান' : 'Search'}
-                      </span>
-                    </div>
-                    <p className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5">
-                      {activeChild.class} · {isBn ? 'শাখা' : 'Sec'}: {activeChild.section} · {isBn ? 'রোল' : 'Roll'}: {activeChild.roll}
-                    </p>
-                  </div>
+                  <h2 className="text-[1.125rem] font-bold text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors truncate">
+                    {isBn ? activeChild.nameBn || activeChild.nameEn : activeChild.nameEn}
+                  </h2>
                   <ChevronDown
                     size={16}
-                    className={`text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-transform duration-200 ${
-                      dropdownOpen ? 'rotate-180' : ''
-                    }`}
+                    className="text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-colors"
                   />
                 </button>
               ) : (
-                <div className="min-w-0">
-                  <h2 className="text-[1.125rem] font-bold text-[var(--text-primary)] truncate">
-                    {isBn ? activeChild.nameBn || activeChild.nameEn : activeChild.nameEn}
-                  </h2>
-                  <p className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5">
-                    {activeChild.class} · {isBn ? 'শাখা' : 'Sec'}: {activeChild.section} · {isBn ? 'রোল' : 'Roll'}: {activeChild.roll}
-                  </p>
-                </div>
-              )}
-
-              {/* Institution Admin & Super Admin Searchable Students Dropdown */}
-              {dropdownOpen && canSwitchStudent && (
-                <AdminStudentSearchDropdown
-                  childrenList={childrenList}
-                  activeChild={activeChild}
-                  onSelectChild={onSelectChild}
-                  onClose={() => setDropdownOpen(false)}
-                  isBn={isBn}
-                  isLocalPC={isLocalPC}
-                />
+                <h2 className="text-[1.125rem] font-bold text-[var(--text-primary)] truncate">
+                  {isBn ? activeChild.nameBn || activeChild.nameEn : activeChild.nameEn}
+                </h2>
               )}
             </div>
+
+            <p className="text-[0.75rem] text-[var(--text-secondary)] mt-0.5">
+              {activeChild.class} · {isBn ? 'শাখা' : 'Sec'}: {activeChild.section} · {isBn ? 'রোল' : 'Roll'}: {activeChild.roll}
+            </p>
 
             {/* Subtle Info Chips */}
             <div className="flex items-center gap-2 mt-2 flex-wrap text-[0.6875rem]">
@@ -150,8 +111,22 @@ export const ChildSelector = React.memo(function ChildSelector({
           </div>
         </div>
 
-        {/* Right: Quick Actions */}
+        {/* Right: Actions & Admin Student Search Button */}
         <div className="flex items-center gap-2 flex-wrap shrink-0">
+          {/* Prominent Student Search Button in Perfect Position */}
+          {canSwitchStudent && (
+            <button
+              type="button"
+              onClick={() => setDropdownOpen(true)}
+              aria-label={isBn ? 'শিক্ষার্থী খুঁজুন' : 'Search Student'}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-semibold border border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)] hover:bg-[var(--brand)] hover:text-white transition-all cursor-pointer shadow-xs"
+              title={isBn ? 'অন্যান্য শিক্ষার্থী অনুসন্ধান বা নির্বাচন করুন' : 'Search and select another student'}
+            >
+              <Search size={14} />
+              <span>{isBn ? 'শিক্ষার্থী খুঁজুন' : 'Search Student'}</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onOpenPayModal}
@@ -182,6 +157,18 @@ export const ChildSelector = React.memo(function ChildSelector({
           </button>
         </div>
       </div>
+
+      {/* Admin Student Search Modal in Perfect Centered Position */}
+      {dropdownOpen && canSwitchStudent && (
+        <AdminStudentSearchDropdown
+          childrenList={childrenList}
+          activeChild={activeChild}
+          onSelectChild={onSelectChild}
+          onClose={() => setDropdownOpen(false)}
+          isBn={isBn}
+          isLocalPC={isLocalPC}
+        />
+      )}
     </div>
   )
 })
