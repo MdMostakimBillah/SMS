@@ -4,6 +4,7 @@ import { createNamespacedStorage, registerStoreReset, registerStoreLoad, getSlug
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { feesApi } from '@/lib/api'
+import { useNotificationStore, notificationId } from './notificationStore'
 
 export interface FeeCategory {
   id: string
@@ -48,6 +49,27 @@ export interface FeePayment {
   createdAt: string
   batchId?: string
   forMonth?: string
+  receiptNo?: string
+}
+
+export interface OnlinePaymentRequest {
+  id: string
+  studentId: string
+  studentName?: string
+  studentRoll?: string
+  studentClass?: string
+  feeStructureId: string
+  feeTitle: string
+  feeTitleBn?: string
+  amount: number
+  method: 'bkash' | 'nagad' | 'rocket' | 'bank'
+  phone: string
+  trxId: string
+  status: 'pending' | 'approved' | 'rejected'
+  submittedAt: string
+  reviewedAt?: string
+  reviewedBy?: string
+  rejectionReason?: string
   receiptNo?: string
 }
 
@@ -204,6 +226,11 @@ interface FeeState {
   waiverCategories: WaiverCategory[]
   waiverEntries: WaiverEntry[]
   studentWaivers: StudentWaiver[]
+  onlinePaymentRequests: OnlinePaymentRequest[]
+
+  addOnlinePaymentRequest: (req: OnlinePaymentRequest) => void
+  approveOnlinePaymentRequest: (id: string, reviewedBy?: string) => FeePayment | null
+  rejectOnlinePaymentRequest: (id: string, reason?: string, reviewedBy?: string) => void
 
   addFeeCategory: (c: FeeCategory) => void
   updateFeeCategory: (id: string, data: Partial<FeeCategory>) => void
@@ -309,6 +336,7 @@ export const useFeeStore = create<FeeState>()(
       waiverCategories: [],
       waiverEntries: [],
       studentWaivers: [],
+      onlinePaymentRequests: [],
       serverSynced: false,
       syncing: false,
       syncError: null,
@@ -387,6 +415,159 @@ export const useFeeStore = create<FeeState>()(
           payments: state.payments.filter((p) => p.id !== id),
         }))
         onStateMutated(get)
+      },
+
+      addOnlinePaymentRequest: (req) => {
+        set((state) => ({
+          onlinePaymentRequests: [req, ...(state.onlinePaymentRequests || []).filter((r) => r.id !== req.id)],
+        }))
+        onStateMutated(get)
+      },
+
+      approveOnlinePaymentRequest: (id, reviewedBy = 'Institution Finance') => {
+        const state = get()
+        const req = (state.onlinePaymentRequests || []).find((r) => r.id === id)
+        if (!req) return null
+
+        const reviewedAt = new Date().toISOString()
+        const receiptNo = getNextReceiptNo(state.payments)
+
+        const payment: FeePayment = {
+          id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          studentId: req.studentId,
+          feeStructureId: req.feeStructureId,
+          amount: req.amount,
+          discount: 0,
+          paidAt: reviewedAt.split('T')[0],
+          method: req.method === 'bank' ? 'bank' : 'mobile',
+          reference: req.trxId,
+          note: `Online Payment Approved (${req.method.toUpperCase()}) - ${req.feeTitle}`,
+          collectedBy: reviewedBy,
+          createdAt: reviewedAt,
+          receiptNo,
+        }
+
+        const updatedRequests = (state.onlinePaymentRequests || []).map((r) =>
+          r.id === id ? { ...r, status: 'approved' as const, reviewedAt, reviewedBy, receiptNo } : r
+        )
+
+        set((s) => ({
+          onlinePaymentRequests: updatedRequests,
+          payments: [...s.payments, payment],
+        }))
+        onStateMutated(get)
+
+        // Update child portal fee in localStorage if present
+        try {
+          const childKey = `edutech_parent_portal_fees_${req.studentId}`
+          const raw = localStorage.getItem(childKey)
+          if (raw) {
+            const fees = JSON.parse(raw)
+            if (Array.isArray(fees)) {
+              const updated = fees.map((f: any) =>
+                f.id === req.feeStructureId
+                  ? {
+                      ...f,
+                      paid: (f.paid || 0) + req.amount,
+                      due: Math.max(0, (f.due || req.amount) - req.amount),
+                      status: (f.due || req.amount) - req.amount <= 0 ? 'paid' : 'partial',
+                      pendingTrxId: undefined,
+                      pendingMethod: undefined,
+                    }
+                  : f
+              )
+              localStorage.setItem(childKey, JSON.stringify(updated))
+            }
+          }
+        } catch { /* ignore */ }
+
+        // Dispatch real-time approval notification to parents and institution
+        try {
+          const notifStore = useNotificationStore.getState()
+          notifStore.addNotification({
+            id: notificationId(),
+            title: `Online Fee Payment Approved (৳${req.amount.toLocaleString()})`,
+            titleBn: `অনলাইন ফি পরিশোধ অনুমোদিত (৳${req.amount.toLocaleString()})`,
+            message: `Payment of ৳${req.amount.toLocaleString()} for student ${req.studentName || req.studentId} (TrxID: ${req.trxId}) has been verified and approved by ${reviewedBy}. Invoice is now PAID.`,
+            messageBn: `${req.studentName || req.studentId}-এর ৳${req.amount.toLocaleString()} পেমেন্ট (TrxID: ${req.trxId}) ${reviewedBy} কর্তৃক অনুমোদিত হয়েছে। ফি সফলভাবে পরিশোধিত।`,
+            type: 'success',
+            category: 'billing',
+            read: false,
+            link: '/finance?view=payments',
+            sender: reviewedBy,
+            senderRole: 'institution_admin',
+            broadcastToAll: true,
+            targetType: 'all',
+            createdAt: reviewedAt,
+          })
+        } catch { /* ignore */ }
+
+        return payment
+      },
+
+      rejectOnlinePaymentRequest: (id, reason = 'Transaction ID not verified', reviewedBy = 'Institution Finance') => {
+        const state = get()
+        const req = (state.onlinePaymentRequests || []).find((r) => r.id === id)
+        if (!req) return
+
+        const reviewedAt = new Date().toISOString()
+        const updatedRequests = (state.onlinePaymentRequests || []).map((r) =>
+          r.id === id
+            ? {
+                ...r,
+                status: 'rejected' as const,
+                reviewedAt,
+                reviewedBy,
+                rejectionReason: reason,
+              }
+            : r
+        )
+
+        set({ onlinePaymentRequests: updatedRequests })
+        onStateMutated(get)
+
+        // Revert child portal fee record back to due in localStorage
+        try {
+          const childKey = `edutech_parent_portal_fees_${req.studentId}`
+          const raw = localStorage.getItem(childKey)
+          if (raw) {
+            const fees = JSON.parse(raw)
+            if (Array.isArray(fees)) {
+              const updated = fees.map((f: any) =>
+                f.id === req.feeStructureId
+                  ? {
+                      ...f,
+                      status: f.due > 0 ? 'due' : 'paid',
+                      pendingTrxId: undefined,
+                      pendingMethod: undefined,
+                    }
+                  : f
+              )
+              localStorage.setItem(childKey, JSON.stringify(updated))
+            }
+          }
+        } catch { /* ignore */ }
+
+        // Dispatch rejection notification
+        try {
+          const notifStore = useNotificationStore.getState()
+          notifStore.addNotification({
+            id: notificationId(),
+            title: `Online Fee Payment Rejected (TrxID: ${req.trxId})`,
+            titleBn: `অনলাইন ফি পরিশোধ বাতিল (TrxID: ${req.trxId})`,
+            message: `Payment request of ৳${req.amount.toLocaleString()} for student ${req.studentName || req.studentId} was rejected. Reason: ${reason}. Please re-check the Trx ID.`,
+            messageBn: `${req.studentName || req.studentId}-এর ৳${req.amount.toLocaleString()} পেমেন্ট (TrxID: ${req.trxId}) বাতিল করা হয়েছে। কারণ: ${reason}।`,
+            type: 'error',
+            category: 'billing',
+            read: false,
+            link: '/finance?view=payments',
+            sender: reviewedBy,
+            senderRole: 'institution_admin',
+            broadcastToAll: true,
+            targetType: 'all',
+            createdAt: reviewedAt,
+          })
+        } catch { /* ignore */ }
       },
 
       addWaiverCategory: (c) => {
@@ -857,6 +1038,9 @@ export const useFeeStore = create<FeeState>()(
             type: c.type || 'monthly',
           }))
         }
+        if (version < 9) {
+          persistedState.onlinePaymentRequests = persistedState.onlinePaymentRequests || []
+        }
         return persistedState
       },
         }
@@ -864,7 +1048,18 @@ export const useFeeStore = create<FeeState>()(
 )
 
 registerStoreReset(() => {
-  useFeeStore.setState({ structures: [], payments: [], feeCategories: [], waiverCategories: [], waiverEntries: [], studentWaivers: [], serverSynced: false, syncing: false, syncError: null })
+  useFeeStore.setState({
+    structures: [],
+    payments: [],
+    feeCategories: [],
+    waiverCategories: [],
+    waiverEntries: [],
+    studentWaivers: [],
+    onlinePaymentRequests: [],
+    serverSynced: false,
+    syncing: false,
+    syncError: null,
+  })
 })
 
 registerStoreLoad(() => {

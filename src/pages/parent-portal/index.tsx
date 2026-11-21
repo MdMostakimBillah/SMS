@@ -12,7 +12,7 @@ import {
   DEMO_LEAVE_REQUESTS,
 } from './mockData'
 import { mapAdmittedStudentsToPortalChildren } from './utils/studentMapper'
-import { processParentOnlinePayment } from './utils/paymentHandler'
+import { processParentOnlinePayment, approveStudentFee, rejectStudentFee } from './utils/paymentHandler'
 import { ChildSelector } from './components/ChildSelector'
 import { PortalTabNav } from './components/PortalTabNav'
 import { StudentIdCardModal } from './components/StudentIdCardModal'
@@ -109,17 +109,28 @@ export default function ParentPortalPage() {
     setShowFeeModal(true)
   }
 
-  const handlePaymentSuccess = (paidAmount: number, trxId: string, feeId?: string, method = 'bkash') => {
+  const handlePaymentSuccess = (paidAmount: number, trxId: string, feeId?: string, method = 'bkash', phone = '') => {
     const updated = processParentOnlinePayment({
       activeChild,
       paidAmount,
       trxId,
       feeId,
       method,
+      phone,
       fees,
       selectedFee: selectedFeeToPay,
       isBn,
     })
+    setFees(updated)
+  }
+
+  const handleApproveFee = (fee: FeeItem) => {
+    const updated = approveStudentFee(activeChild, fee, user?.name || undefined)
+    setFees(updated)
+  }
+
+  const handleRejectFee = (fee: FeeItem) => {
+    const updated = rejectStudentFee(activeChild, fee, 'Transaction ID not verified', user?.name || undefined)
     setFees(updated)
   }
 
@@ -191,8 +202,11 @@ export default function ParentPortalPage() {
           <FeesTab
             child={activeChild}
             fees={fees}
-            onOpenPayModal={() => handleOpenPayModal()}
+            onOpenPayModal={(f) => handleOpenPayModal(f)}
             isBn={isBn}
+            isInstitutionAdmin={isInstitutionAdmin}
+            onApproveFee={handleApproveFee}
+            onRejectFee={handleRejectFee}
           />
         )}
 

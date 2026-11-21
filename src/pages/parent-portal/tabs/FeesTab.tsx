@@ -4,6 +4,8 @@ import {
   CheckCircle2,
   Printer,
   Receipt,
+  Clock,
+  X,
 } from 'lucide-react'
 import type { PortalChild, FeeItem } from '../types'
 import { useClassStore } from '@/store/classStore'
@@ -14,6 +16,9 @@ interface FeesTabProps {
   fees: FeeItem[]
   onOpenPayModal: (fee?: FeeItem) => void
   isBn: boolean
+  isInstitutionAdmin?: boolean
+  onApproveFee?: (fee: FeeItem) => void
+  onRejectFee?: (fee: FeeItem) => void
 }
 
 export const FeesTab = React.memo(function FeesTab({
@@ -21,6 +26,9 @@ export const FeesTab = React.memo(function FeesTab({
   fees,
   onOpenPayModal,
   isBn,
+  isInstitutionAdmin,
+  onApproveFee,
+  onRejectFee,
 }: FeesTabProps) {
   const institution = useClassStore((s) => s.institution)
   const totalDue = fees.reduce((acc, f) => acc + f.due, 0)
@@ -157,10 +165,18 @@ export const FeesTab = React.memo(function FeesTab({
                     {isBn ? fee.titleBn : fee.title}
                   </h4>
                 </div>
-                <div className="text-[0.6875rem] text-[var(--text-secondary)] flex items-center gap-2 mt-1">
+                <div className="text-[0.6875rem] text-[var(--text-secondary)] flex items-center gap-2 mt-1 flex-wrap">
                   <span>{isBn ? 'শেষ তারিখ:' : 'Due Date:'} {fee.dueDate}</span>
                   <span>·</span>
                   <span>{isBn ? 'নির্ধারিত:' : 'Total:'} ৳{fee.amount.toLocaleString()}</span>
+                  {fee.status === 'pending' && fee.pendingTrxId && (
+                    <>
+                      <span>·</span>
+                      <span className="text-amber-600 dark:text-amber-400 font-mono font-medium">
+                        TrxID: {fee.pendingTrxId}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -170,7 +186,9 @@ export const FeesTab = React.memo(function FeesTab({
                     {fee.due > 0 ? `৳${fee.due.toLocaleString()}` : `৳${fee.paid.toLocaleString()}`}
                   </div>
                   <div className="text-[0.625rem] font-semibold uppercase mt-0.5">
-                    {fee.due > 0 ? (
+                    {fee.status === 'pending' ? (
+                      <span className="text-amber-500 font-bold">{isBn ? 'যাচাই প্রক্রিয়াধীন' : 'PENDING'}</span>
+                    ) : fee.due > 0 ? (
                       <span className="text-[var(--text-secondary)]">{isBn ? 'বকেয়া' : 'DUE'}</span>
                     ) : (
                       <span className="text-[var(--brand)] font-bold">{isBn ? 'পরিশোধিত' : 'PAID'}</span>
@@ -178,7 +196,34 @@ export const FeesTab = React.memo(function FeesTab({
                   </div>
                 </div>
 
-                {fee.due > 0 ? (
+                {fee.status === 'pending' ? (
+                  isInstitutionAdmin ? (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => onApproveFee?.(fee)}
+                        className="px-2.5 py-1.5 rounded-lg text-[0.75rem] font-semibold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer border-none flex items-center gap-1 shadow-xs"
+                        title={isBn ? 'পেমেন্ট অনুমোদন করুন' : 'Approve Payment'}
+                      >
+                        <CheckCircle2 size={13} />
+                        <span>{isBn ? 'অনুমোদন' : 'Approve'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onRejectFee?.(fee)}
+                        className="px-2 py-1.5 rounded-lg text-[0.75rem] font-medium border border-red-500/30 text-red-500 hover:bg-red-500/10 cursor-pointer bg-transparent"
+                        title={isBn ? 'পেমেন্ট বাতিল করুন' : 'Reject Payment'}
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.6875rem] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                      <Clock size={12} />
+                      <span>{isBn ? 'যাচাই প্রক্রিয়াধীন' : 'Pending'}</span>
+                    </span>
+                  )
+                ) : fee.due > 0 ? (
                   <button
                     type="button"
                     onClick={() => onOpenPayModal(fee)}

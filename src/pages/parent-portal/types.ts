@@ -84,5 +84,9 @@ export interface FeeItem {
   amount: number
   paid: number
   due: number
-  status: 'paid' | 'due' | 'partial' | 'overdue'
+  status: 'paid' | 'due' | 'partial' | 'overdue' | 'pending'
+  pendingRequestId?: string
+  pendingTrxId?: string
+  pendingMethod?: string
+  pendingDate?: string
 }

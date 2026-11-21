@@ -211,10 +211,13 @@ export default function FeeManagementPage() {
 
   useEffect(() => {
     const param = searchParams.get('view') as ActiveView | null
-    if (param !== activeView) {
+    const subParam = searchParams.get('sub')
+    if (subParam === 'online' && activeView !== 'payments') {
+      setActiveView('payments')
+    } else if (param !== activeView) {
       setActiveView(param)
     }
-  }, [searchParams])
+  }, [searchParams, activeView])
 
   const navigateToView = useCallback((view: ActiveView) => {
     if (view) {

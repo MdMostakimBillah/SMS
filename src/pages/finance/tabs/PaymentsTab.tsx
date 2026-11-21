@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import React from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Search, Trash2, Eye, DollarSign, Calendar, CreditCard, FileSpreadsheet, FileText, MoreVertical, Printer, ChevronDown, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { toBnNum } from '@/lib/i18n'
@@ -17,6 +18,7 @@ import { getPDFBranding, pdfLogoHTML } from '@/lib/pdfBranding'
 import ModernCheckbox from '@/components/ui/ModernCheckbox'
 import { PaginationControls } from '@/components/shared/PaginationControls'
 import { PaymentDetailsModal } from '../modals/PaymentDetailsModal'
+import { OnlinePaymentApprovalModal } from '../modals/OnlinePaymentApprovalModal'
 
 const selectCls = 'h-[2.125rem] text-[0.75rem] px-[0.625rem] rounded-[0.5rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] font-medium outline-none focus:border-[var(--brand)] cursor-pointer transition-colors'
 
@@ -56,6 +58,26 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
   const deletePayment = useFeeStore((s) => s.deletePayment)
   const storeProducts = useStoreStore((s) => s.products)
   const storeCategories = useStoreStore((s) => s.categories)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const onlineRequests = useFeeStore((s) => s.onlinePaymentRequests || [])
+  const pendingOnlineCount = useMemo(() => onlineRequests.filter((r) => r.status === 'pending').length, [onlineRequests])
+  const [showOnlineModal, setShowOnlineModal] = useState(false)
+
+  useEffect(() => {
+    if (searchParams.get('sub') === 'online') {
+      setShowOnlineModal(true)
+    }
+  }, [searchParams])
+
+  const handleCloseOnlineModal = useCallback(() => {
+    setShowOnlineModal(false)
+    if (searchParams.get('sub') === 'online') {
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('sub')
+      setSearchParams(nextParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
+
   const [search, setSearch] = useState('')
   const [fMethod, setFMethod] = useState('')
   const [fCollector, setFCollector] = useState('')
@@ -701,6 +723,22 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
             <option value="amount-desc">{bn ? 'পরিমাণ: বেশি → কম' : 'Amount: High to Low'}</option>
             <option value="amount-asc">{bn ? 'পরিমাণ: কম → বেশি' : 'Amount: Low to High'}</option>
           </select>
+
+          {/* Online Payments Verification Button */}
+          <button
+            type="button"
+            onClick={() => setShowOnlineModal(true)}
+            className="h-[2.125rem] px-[0.75rem] rounded-[0.5rem] border border-amber-300 dark:border-amber-700/60 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[0.75rem] font-semibold cursor-pointer flex items-center gap-1.5 transition-colors ml-auto"
+            title={bn ? 'অনলাইন পেমেন্ট আবেদন ও অনুমোদন' : 'Online Payment Verification & Approval'}
+          >
+            <CreditCard size={13} />
+            <span>{bn ? 'অনলাইন ফি যাচাই' : 'Online Verification'}</span>
+            {pendingOnlineCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[0.625rem] font-bold bg-amber-600 text-white animate-pulse">
+                {pendingOnlineCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -1033,6 +1071,13 @@ export const PaymentsTab = React.memo(function PaymentsTab({ onViewReceipt: _onV
             </div>
           </div>
         </div>
+      )}
+
+      {showOnlineModal && (
+        <OnlinePaymentApprovalModal
+          isOpen={showOnlineModal}
+          onClose={handleCloseOnlineModal}
+        />
       )}
     </div>
   )
