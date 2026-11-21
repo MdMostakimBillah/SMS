@@ -233,6 +233,60 @@ describe('ParentPortalPage', () => {
     })
 
     // Database or Local PC indicator is shown
-    expect(screen.getByText(/Database|Local PC|লোকাল পিসি|ডাটাবেস/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Database|Local PC|লোকাল পিসি|ডাটাবেস/i).length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shows local PC notice when in local_computer mode and blocks portal access', async () => {
+    localStorage.setItem('edutech_storage_mode', 'local_computer')
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    // Should render the architectural notice instead of portal tabs
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Parent Portal Requires Online Database Connection|অভিভাবক পোর্টাল ব্যবহারের জন্য অনলাইন ডাটাবেজ প্রয়োজন/i)
+      ).toBeInTheDocument()
+    })
+
+    // Local PC active tag is displayed
+    expect(
+      screen.getByText(/Local PC Storage Active|লোকাল পিসি স্টোরেজ সক্রিয়/i)
+    ).toBeInTheDocument()
+
+    // Portal tabs should NOT be rendered
+    expect(screen.queryByRole('button', { name: /Overview|একনজরে/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Fees|ফি ও পেমেন্ট/i })).not.toBeInTheDocument()
+  })
+
+  it('displays VPS Database badge when running on personal VPS (local_server)', async () => {
+    localStorage.setItem('edutech_storage_mode', 'local_server')
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/VPS Database|ভিপিএস ডাটাবেজ/i)).toBeInTheDocument()
+    })
+  })
+
+  it('displays Cloud Database badge when running on provider cloud', async () => {
+    localStorage.setItem('edutech_storage_mode', 'cloud')
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Cloud Database|ক্লাউড ডাটাবেজ/i)).toBeInTheDocument()
+    })
   })
 })

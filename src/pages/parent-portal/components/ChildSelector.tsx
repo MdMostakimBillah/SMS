@@ -6,6 +6,8 @@ import {
   FileText,
   MessageSquare,
   Search,
+  Cloud,
+  Server,
 } from 'lucide-react'
 import type { PortalChild } from '../types'
 import { AdminStudentSearchDropdown } from './AdminStudentSearchDropdown'
@@ -23,6 +25,7 @@ interface ChildSelectorProps {
   isSuperAdmin?: boolean
   isInstitutionAdmin?: boolean
   isLocalPC?: boolean
+  isLocalServer?: boolean
 }
 
 export const ChildSelector = React.memo(function ChildSelector({
@@ -38,6 +41,7 @@ export const ChildSelector = React.memo(function ChildSelector({
   isSuperAdmin = true,
   isInstitutionAdmin,
   isLocalPC = false,
+  isLocalServer = false,
 }: ChildSelectorProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
@@ -106,6 +110,16 @@ export const ChildSelector = React.memo(function ChildSelector({
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)]">
                 {isBn ? 'শিক্ষক:' : 'Teacher:'} {childTeacherShort(activeChild.classTeacherName)}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-medium ${
+                  isLocalServer
+                    ? 'border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
+                    : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                }`}
+              >
+                {isLocalServer ? <Server size={11} className="text-indigo-500" /> : <Cloud size={11} className="text-emerald-500" />}
+                {isLocalServer ? (isBn ? 'ভিপিএস ডাটাবেজ' : 'VPS Database') : (isBn ? 'ক্লাউড ডাটাবেজ' : 'Cloud Database')}
               </span>
             </div>
           </div>

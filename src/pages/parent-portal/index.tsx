@@ -4,16 +4,18 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useFeeStore } from '@/store/feeStore'
-import { isLocalComputerMode } from '@/lib/storageMode'
+import { isLocalComputerMode, isLocalServerMode } from '@/lib/storageMode'
 import type { PortalTab, FeeItem, LeaveRequest } from './types'
 import {
-  DEMO_FEES,
+  DEMO_CHILDREN,
   DEMO_HOMEWORK,
   DEMO_EXAM_RESULTS,
   DEMO_LEAVE_REQUESTS,
 } from './mockData'
 import { mapAdmittedStudentsToPortalChildren } from './utils/studentMapper'
+import { getChildDatabaseFees } from './utils/feeMapper'
 import { processParentOnlinePayment, approveStudentFee, rejectStudentFee } from './utils/paymentHandler'
+import { ParentPortalLocalPcNotice } from './components/ParentPortalLocalPcNotice'
 import { ChildSelector } from './components/ChildSelector'
 import { PortalTabNav } from './components/PortalTabNav'
 import { StudentIdCardModal } from './components/StudentIdCardModal'
@@ -35,11 +37,15 @@ export default function ParentPortalPage() {
   const { role } = useParams<{ role?: string }>()
   const admittedStudents = useAdmissionStore((s) => s.students)
   const isLocalPC = isLocalComputerMode()
+  const isLocalServer = isLocalServerMode()
 
-  // Sync from server database or local PC storage on mount
+  // Sync from central server database (Cloud / VPS) on mount
   useEffect(() => {
-    useAdmissionStore.getState().syncFromServer?.()
-  }, [])
+    if (!isLocalPC) {
+      void useAdmissionStore.getState().syncFromServer?.()
+      void useFeeStore.getState().syncFromServer?.()
+    }
+  }, [isLocalPC])
 
   // Determine role: Parent accounts only see their own child without switching
   const isParentAccount = Boolean(
@@ -77,26 +83,15 @@ export default function ParentPortalPage() {
   // Portal State
   const [activeTab, setActiveTab] = useState<PortalTab>('overview')
   const [fees, setFees] = useState<FeeItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(`edutech_parent_portal_fees_${childrenList[0]?.id || 'child-1'}`)
-      if (saved) return JSON.parse(saved)
-    } catch { /* ignore */ }
-    return DEMO_FEES
+    return getChildDatabaseFees(childrenList[0] || DEMO_CHILDREN[0])
   })
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(DEMO_LEAVE_REQUESTS)
 
   const feeStoreVersion = useFeeStore((s) => (s.onlinePaymentRequests || []).length + s.payments.length)
 
-  // Sync child-specific fee payment state
+  // Sync child-specific fee state from central database
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(`edutech_parent_portal_fees_${activeChild.id}`)
-      if (saved) {
-        setFees(JSON.parse(saved))
-        return
-      }
-    } catch { /* ignore */ }
-    setFees(DEMO_FEES)
+    setFees(getChildDatabaseFees(activeChild))
   }, [activeChild.id, feeStoreVersion])
 
   // Modals state
@@ -148,6 +143,11 @@ export default function ParentPortalPage() {
     setLeaveRequests((prev) => [newReq, ...prev])
   }
 
+  // Guard: Local computer storage does not support remote parent portal
+  if (isLocalPC) {
+    return <ParentPortalLocalPcNotice isInstitutionAdmin={isInstitutionAdmin} />
+  }
+
   return (
     <div className="w-full space-y-4 pb-12">
       {/* Student Identity Bar */}
@@ -162,6 +162,7 @@ export default function ParentPortalPage() {
         isSuperAdmin={isInstitutionAdmin}
         isInstitutionAdmin={isInstitutionAdmin}
         isLocalPC={isLocalPC}
+        isLocalServer={isLocalServer}
       />
 
       {/* Tabs Navigation Bar - HR Management Style */}

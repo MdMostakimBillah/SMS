@@ -1,5 +1,6 @@
 import { useFeeStore, type OnlinePaymentRequest } from '@/store/feeStore'
 import { useNotificationStore, notificationId, type Notification } from '@/store/notificationStore'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import type { PortalChild, FeeItem } from '../types'
 
 export interface ProcessPaymentParams {
@@ -74,6 +75,9 @@ export function processParentOnlinePayment({
       submittedAt: new Date().toISOString(),
     }
     useFeeStore.getState().addOnlinePaymentRequest(newRequest)
+    if (!isLocalComputerMode()) {
+      void useFeeStore.getState().syncToServer?.()
+    }
   } catch {
     /* ignore fee store errors */
   }
@@ -163,6 +167,10 @@ export function approveStudentFee(child: PortalChild, fee: FeeItem, reviewedBy =
     /* ignore */
   }
 
+  if (!isLocalComputerMode()) {
+    void useFeeStore.getState().syncToServer?.()
+  }
+
   return updatedFees
 }
 
@@ -210,6 +218,10 @@ export function rejectStudentFee(
     localStorage.setItem(childKey, JSON.stringify(updatedFees))
   } catch {
     /* ignore */
+  }
+
+  if (!isLocalComputerMode()) {
+    void useFeeStore.getState().syncToServer?.()
   }
 
   return updatedFees
