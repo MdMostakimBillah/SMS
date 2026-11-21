@@ -61,6 +61,7 @@ const AccountingReportPage = lazyWithRetry(() => import('@/pages/accounting-repo
 const MessagesPage = lazyWithRetry(() => import('@/pages/messages'))
 const NoticeBoardPage = lazyWithRetry(() => import('@/pages/notice'))
 const NotificationsPage = lazyWithRetry(() => import('@/pages/notifications'))
+const ParentPortalPage = lazyWithRetry(() => import('@/pages/parent-portal'))
 const SuperAdminPaymentsPage = lazyWithRetry(() => import('@/pages/super-admin/PaymentsPage'))
 const SettingsPage = lazyWithRetry(() => import('@/pages/settings'))
 
@@ -137,7 +138,7 @@ function AppContent() {
             <Route path="/i/:slug/:role/messages" element={<F><MessagesPage /></F>} />
             <Route path="/i/:slug/:role/notice" element={<F><NoticeBoardPage /></F>} />
             <Route path="/i/:slug/:role/notifications" element={<F><NotificationsPage /></F>} />
-            <Route path="/i/:slug/:role/parent-portal" element={<P name="Parent Portal" />} />
+            <Route path="/i/:slug/:role/parent-portal" element={<F><ParentPortalPage /></F>} />
             <Route path="/i/:slug/:role/student-portal" element={<P name="Student Portal" />} />
             <Route path="/i/:slug/:role/analytics" element={<P name="Analytics" />} />
             <Route path="/i/:slug/:role/reports" element={<P name="Reports" />} />
@@ -217,7 +218,7 @@ function AppContent() {
             <Route path="/super-admin/admin/notice" element={<F><NoticeBoardPage /></F>} />
             <Route path="/super-admin/admin/notifications" element={<F><NotificationsPage /></F>} />
             <Route path="/super-admin/admin/payments" element={<F><SuperAdminPaymentsPage isBn={false} /></F>} />
-            <Route path="/super-admin/admin/parent-portal" element={<P name="Parent Portal" />} />
+            <Route path="/super-admin/admin/parent-portal" element={<F><ParentPortalPage /></F>} />
             <Route path="/super-admin/admin/student-portal" element={<P name="Student Portal" />} />
             <Route path="/super-admin/admin/analytics" element={<P name="Analytics" />} />
             <Route path="/super-admin/admin/reports" element={<P name="Reports" />} />
@@ -269,7 +270,7 @@ function AppContent() {
             <Route path="/super-admin/viewing/:role/messages" element={<F><MessagesPage /></F>} />
             <Route path="/super-admin/viewing/:role/notice" element={<F><NoticeBoardPage /></F>} />
             <Route path="/super-admin/viewing/:role/notifications" element={<F><NotificationsPage /></F>} />
-            <Route path="/super-admin/viewing/:role/parent-portal" element={<P name="Parent Portal" />} />
+            <Route path="/super-admin/viewing/:role/parent-portal" element={<F><ParentPortalPage /></F>} />
             <Route path="/super-admin/viewing/:role/student-portal" element={<P name="Student Portal" />} />
             <Route path="/super-admin/viewing/:role/analytics" element={<P name="Analytics" />} />
             <Route path="/super-admin/viewing/:role/reports" element={<P name="Reports" />} />
