@@ -465,14 +465,16 @@ export const useFeeStore = create<FeeState>()(
             const fees = JSON.parse(raw)
             if (Array.isArray(fees)) {
               const updated = fees.map((f: any) =>
-                f.id === req.feeStructureId
+                (f.id === req.feeStructureId || f.pendingRequestId === req.id)
                   ? {
                       ...f,
                       paid: (f.paid || 0) + req.amount,
                       due: Math.max(0, (f.due || req.amount) - req.amount),
                       status: (f.due || req.amount) - req.amount <= 0 ? 'paid' : 'partial',
+                      pendingRequestId: undefined,
                       pendingTrxId: undefined,
                       pendingMethod: undefined,
+                      pendingDate: undefined,
                     }
                   : f
               )
@@ -534,12 +536,14 @@ export const useFeeStore = create<FeeState>()(
             const fees = JSON.parse(raw)
             if (Array.isArray(fees)) {
               const updated = fees.map((f: any) =>
-                f.id === req.feeStructureId
+                (f.id === req.feeStructureId || f.pendingRequestId === req.id)
                   ? {
                       ...f,
                       status: f.due > 0 ? 'due' : 'paid',
+                      pendingRequestId: undefined,
                       pendingTrxId: undefined,
                       pendingMethod: undefined,
+                      pendingDate: undefined,
                     }
                   : f
               )

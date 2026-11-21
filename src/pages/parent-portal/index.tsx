@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useFeeStore } from '@/store/feeStore'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import type { PortalTab, FeeItem, LeaveRequest } from './types'
 import {
@@ -84,6 +85,8 @@ export default function ParentPortalPage() {
   })
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(DEMO_LEAVE_REQUESTS)
 
+  const feeStoreVersion = useFeeStore((s) => (s.onlinePaymentRequests || []).length + s.payments.length)
+
   // Sync child-specific fee payment state
   useEffect(() => {
     try {
@@ -94,7 +97,7 @@ export default function ParentPortalPage() {
       }
     } catch { /* ignore */ }
     setFees(DEMO_FEES)
-  }, [activeChild.id])
+  }, [activeChild.id, feeStoreVersion])
 
   // Modals state
   const [showIdCardModal, setShowIdCardModal] = useState(false)
