@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TestWrapper } from '@/test-wrapper'
@@ -141,7 +141,7 @@ describe('ParentPortalPage', () => {
     })
   })
 
-  it('allows switching between multiple children', async () => {
+  it('allows institution admin to switch between multiple children', async () => {
     const user = userEvent.setup()
 
     render(
@@ -162,5 +162,76 @@ describe('ParentPortalPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /Samia Rahman|সামিয়া রহমান/i })).toBeInTheDocument()
     })
+  })
+
+  it('allows institution admin to search students from database/local PC', async () => {
+    const user = userEvent.setup()
+
+    // Add admitted students to store (representing database or local PC storage)
+    useAdmissionStore.setState({
+      students: [
+        {
+          id: 'STU-101',
+          nameEn: 'Abrar Fahim',
+          nameBn: 'আবরার ফাহিম',
+          roll: '15',
+          class: 'Class 9',
+          section: 'B',
+          academicYear: '2026',
+          status: 'approved',
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+          photo: '',
+          dob: '2011-03-20',
+          gender: 'Male',
+          bloodGroup: 'A+',
+          religion: 'Islam',
+          nationality: 'Bangladeshi',
+          phone: '+880 1711-998877',
+          email: 'abrar@example.com',
+          previousSchool: '',
+          admissionDate: '2026-01-05',
+          presentAddress: 'Dhaka',
+          permanentAddress: 'Dhaka',
+          district: 'Dhaka',
+          fatherNameEn: 'Rafiqul Islam',
+          fatherNameBn: 'রফিকুল ইসলাম',
+          fatherOccupation: 'Engineer',
+          fatherPhone: '+880 1711-998877',
+          fatherNid: '',
+          motherNameEn: 'Farhana Islam',
+          motherNameBn: 'ফারহানা ইসলাম',
+          motherOccupation: 'Doctor',
+          motherPhone: '+880 1711-887766',
+          motherNid: '',
+          guardianName: 'Rafiqul Islam',
+          guardianRelation: 'Father',
+          guardianPhone: '+880 1711-998877',
+          teacherId: '',
+        },
+      ],
+    })
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    // Active child should default to Abrar Fahim
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /Abrar Fahim|আবরার ফাহিম/i })).toBeInTheDocument()
+    })
+
+    // Open search dropdown
+    const switchBtn = screen.getByRole('button', { name: /Switch Child|সন্তান পরিবর্তন/i })
+    await user.click(switchBtn)
+
+    // Search bar should be present
+    const searchInput = screen.getByPlaceholderText(/নাম, রোল, শ্রেণি বা আইডি দিয়ে খুঁজুন|Search by name, roll/i)
+    expect(searchInput).toBeInTheDocument()
+
+    // Database or Local PC indicator is shown
+    expect(screen.getByText(/Database|Local PC|লোকাল পিসি|ডাটাবেস/i)).toBeInTheDocument()
   })
 })

@@ -6,7 +6,7 @@ export function mapAdmittedStudentsToPortalChildren(
   admittedStudents: StudentAdmission[] | undefined
 ): PortalChild[] {
   if (admittedStudents && admittedStudents.length > 0) {
-    return admittedStudents.slice(0, 5).map((s, idx) => ({
+    return admittedStudents.map((s, idx) => ({
       id: s.id || `student-${idx}`,
       nameEn: s.nameEn || `Student ${idx + 1}`,
       nameBn: s.nameBn || s.nameEn || `শিক্ষার্থী ${idx + 1}`,
@@ -18,7 +18,7 @@ export function mapAdmittedStudentsToPortalChildren(
       class: s.class || 'Class 8',
       section: s.section || 'A',
       roll: s.roll || `0${idx + 1}`,
-      academicYear: '2026',
+      academicYear: s.academicYear || '2026',
       dob: s.dob || '2012-05-14',
       gender: s.gender || 'Male',
       bloodGroup: s.bloodGroup || 'B+',
@@ -29,7 +29,7 @@ export function mapAdmittedStudentsToPortalChildren(
       guardianName: s.guardianName || s.fatherNameEn || 'Dr. Mahfuzur Rahman',
       guardianPhone: s.guardianPhone || s.phone || '+880 1711-234567',
       guardianRelation: s.guardianRelation || 'Father',
-      emergencyContact: s.phone || '+880 1711-234567',
+      emergencyContact: s.phone || s.guardianPhone || '+880 1711-234567',
       presentAddress: s.presentAddress || 'House 14, Road 5, Dhanmondi, Dhaka',
       classTeacherName: 'Md. Anwar Hossain',
       classTeacherPhone: '+880 1712-889900',

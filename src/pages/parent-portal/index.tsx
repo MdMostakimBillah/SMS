@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -13,6 +13,7 @@ import {
 import { useBn } from '@/hooks/useBn'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import type { PortalTab, FeeItem, LeaveRequest } from './types'
 import {
   DEMO_FEES,
@@ -55,6 +56,12 @@ export default function ParentPortalPage() {
   const { user } = useAuth()
   const { role } = useParams<{ role?: string }>()
   const admittedStudents = useAdmissionStore((s) => s.students)
+  const isLocalPC = isLocalComputerMode()
+
+  // Sync from server database or local PC storage on mount
+  useEffect(() => {
+    useAdmissionStore.getState().syncFromServer?.()
+  }, [])
 
   // Determine role: Parent accounts only see their own child without switching
   const isParentAccount = Boolean(
@@ -66,13 +73,14 @@ export default function ParentPortalPage() {
     window.location.pathname.includes('/guardian/')
   )
 
-  // Super admin / school admin can inspect and switch students
-  const isSuperAdmin = !isParentAccount && Boolean(
+  // Institution admin and super admin can inspect and switch/search all students
+  const isInstitutionAdmin = !isParentAccount && Boolean(
     !user ||
     user.role === 'super_admin' ||
     user.role === 'school_admin' ||
     user.role === 'admin' ||
     role === 'admin' ||
+    role === 'school_admin' ||
     role === 'super-admin' ||
     window.location.pathname.includes('/super-admin/')
   )
@@ -150,7 +158,9 @@ export default function ParentPortalPage() {
         onOpenPayModal={() => handleOpenPayModal()}
         onOpenContact={() => setActiveTab('communication')}
         isBn={isBn}
-        isSuperAdmin={isSuperAdmin}
+        isSuperAdmin={isInstitutionAdmin}
+        isInstitutionAdmin={isInstitutionAdmin}
+        isLocalPC={isLocalPC}
       />
 
       {/* Tabs Navigation Bar */}
