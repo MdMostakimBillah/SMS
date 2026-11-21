@@ -12,7 +12,7 @@ import { printFeeReceipt } from './fees/feeReceiptPrint'
 interface FeesTabProps {
   child: PortalChild
   fees: FeeItem[]
-  onOpenPayModal: () => void
+  onOpenPayModal: (fee?: FeeItem) => void
   isBn: boolean
 }
 
@@ -98,7 +98,7 @@ export const FeesTab = React.memo(function FeesTab({
                 {card.hasPayAction && (
                   <button
                     type="button"
-                    onClick={onOpenPayModal}
+                    onClick={() => onOpenPayModal()}
                     className="px-2.5 py-0.5 rounded text-[0.6875rem] font-semibold bg-[var(--brand)] text-white hover:opacity-90 cursor-pointer border-none"
                   >
                     {isBn ? 'পরিশোধ' : 'Pay'}
@@ -134,7 +134,7 @@ export const FeesTab = React.memo(function FeesTab({
           {totalDue > 0 && (
             <button
               type="button"
-              onClick={onOpenPayModal}
+              onClick={() => onOpenPayModal()}
               className="text-[0.75rem] font-semibold text-[var(--brand)] hover:underline cursor-pointer bg-transparent border-none"
             >
               {isBn ? 'সব পরিশোধ করুন' : 'Pay All Dues'}
@@ -181,7 +181,7 @@ export const FeesTab = React.memo(function FeesTab({
                 {fee.due > 0 ? (
                   <button
                     type="button"
-                    onClick={onOpenPayModal}
+                    onClick={() => onOpenPayModal(fee)}
                     className="px-3.5 py-1.5 rounded-lg text-[0.75rem] font-semibold bg-[var(--brand)] text-white shadow-xs hover:opacity-90 cursor-pointer border-none"
                   >
                     {isBn ? 'পরিশোধ' : 'Pay'}

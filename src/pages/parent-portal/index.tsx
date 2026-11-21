@@ -12,6 +12,7 @@ import {
   DEMO_LEAVE_REQUESTS,
 } from './mockData'
 import { mapAdmittedStudentsToPortalChildren } from './utils/studentMapper'
+import { processParentOnlinePayment } from './utils/paymentHandler'
 import { ChildSelector } from './components/ChildSelector'
 import { PortalTabNav } from './components/PortalTabNav'
 import { StudentIdCardModal } from './components/StudentIdCardModal'
@@ -74,8 +75,26 @@ export default function ParentPortalPage() {
 
   // Portal State
   const [activeTab, setActiveTab] = useState<PortalTab>('overview')
-  const [fees, setFees] = useState<FeeItem[]>(DEMO_FEES)
+  const [fees, setFees] = useState<FeeItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(`edutech_parent_portal_fees_${childrenList[0]?.id || 'child-1'}`)
+      if (saved) return JSON.parse(saved)
+    } catch { /* ignore */ }
+    return DEMO_FEES
+  })
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(DEMO_LEAVE_REQUESTS)
+
+  // Sync child-specific fee payment state
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`edutech_parent_portal_fees_${activeChild.id}`)
+      if (saved) {
+        setFees(JSON.parse(saved))
+        return
+      }
+    } catch { /* ignore */ }
+    setFees(DEMO_FEES)
+  }, [activeChild.id])
 
   // Modals state
   const [showIdCardModal, setShowIdCardModal] = useState(false)
@@ -90,21 +109,18 @@ export default function ParentPortalPage() {
     setShowFeeModal(true)
   }
 
-  const handlePaymentSuccess = (paidAmount: number, _trxId: string) => {
-    if (selectedFeeToPay) {
-      setFees((prev) =>
-        prev.map((f) =>
-          f.id === selectedFeeToPay.id
-            ? {
-                ...f,
-                paid: f.paid + paidAmount,
-                due: Math.max(0, f.due - paidAmount),
-                status: f.due - paidAmount <= 0 ? 'paid' : 'partial',
-              }
-            : f
-        )
-      )
-    }
+  const handlePaymentSuccess = (paidAmount: number, trxId: string, feeId?: string, method = 'bkash') => {
+    const updated = processParentOnlinePayment({
+      activeChild,
+      paidAmount,
+      trxId,
+      feeId,
+      method,
+      fees,
+      selectedFee: selectedFeeToPay,
+      isBn,
+    })
+    setFees(updated)
   }
 
   const handleCreateLeaveRequest = (req: Omit<LeaveRequest, 'id' | 'createdAt' | 'status'>) => {

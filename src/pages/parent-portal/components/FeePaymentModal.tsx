@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, CheckCircle2, ShieldCheck, ArrowRight, Loader2, CreditCard } from 'lucide-react'
+import { X, CheckCircle2, ShieldCheck, ArrowRight, Loader2, CreditCard, Printer } from 'lucide-react'
 import type { PortalChild, FeeItem } from '../types'
 import { PaymentMethodLogo } from '@/components/ui/PaymentMethodLogo'
+import { useClassStore } from '@/store/classStore'
+import { printFeeReceipt } from '../tabs/fees/feeReceiptPrint'
 
 interface FeePaymentModalProps {
   isOpen?: boolean
@@ -15,20 +17,16 @@ interface FeePaymentModalProps {
 }
 
 export const FeePaymentModal = React.memo(function FeePaymentModal({
-  isOpen,
-  child,
-  fees,
-  fee,
-  onClose,
-  onSuccess,
-  isBn,
+  isOpen, child, fees, fee, onClose, onSuccess, isBn,
 }: FeePaymentModalProps) {
+  const institution = useClassStore((s) => s.institution)
   const feeList = fees || (fee ? [fee] : [])
   const dueFees = feeList.filter((f) => f.due > 0)
   const [selectedFeeId, setSelectedFeeId] = useState<string>(fee?.id || dueFees[0]?.id || '')
   const [method, setMethod] = useState<'bkash' | 'nagad' | 'rocket' | 'bank'>('bkash')
   const [phone, setPhone] = useState(child?.guardianPhone ? child.guardianPhone.replace(/[^0-9]/g, '').slice(-11) : '')
   const [trxId, setTrxId] = useState('')
+  const [lastTrx, setLastTrx] = useState('')
   const [processing, setProcessing] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [error, setError] = useState('')
@@ -48,6 +46,18 @@ export const FeePaymentModal = React.memo(function FeePaymentModal({
   const activeFee = feeList.find((f) => f.id === selectedFeeId) || dueFees[0]
   const amountToPay = activeFee ? activeFee.due : 0
 
+  const handlePrintReceipt = () => {
+    if (activeFee) {
+      const updatedFeeItem: FeeItem = {
+        ...activeFee,
+        paid: activeFee.paid + amountToPay,
+        due: Math.max(0, activeFee.due - amountToPay),
+        status: activeFee.due - amountToPay <= 0 ? 'paid' : 'partial',
+      }
+      printFeeReceipt(updatedFeeItem, child, institution, isBn)
+    }
+  }
+
   const handlePay = (e: React.FormEvent) => {
     e.preventDefault()
     if (!amountToPay || amountToPay <= 0) {
@@ -62,8 +72,10 @@ export const FeePaymentModal = React.memo(function FeePaymentModal({
     setProcessing(true)
     setError('')
 
+    const generatedTrx = trxId.trim() || `TXN${Date.now().toString().slice(-8)}`
+    setLastTrx(generatedTrx)
+
     setTimeout(() => {
-      const generatedTrx = trxId.trim() || `TXN${Date.now().toString().slice(-8)}`
       setProcessing(false)
       setCompleted(true)
       onSuccess(amountToPay, generatedTrx, activeFee?.id, method)
@@ -95,7 +107,7 @@ export const FeePaymentModal = React.memo(function FeePaymentModal({
         </div>
 
         {completed ? (
-          <div className="text-center py-6 space-y-3">
+          <div className="text-center py-5 space-y-3">
             <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 mx-auto flex items-center justify-center">
               <CheckCircle2 size={32} />
             </div>
@@ -104,14 +116,40 @@ export const FeePaymentModal = React.memo(function FeePaymentModal({
             </h4>
             <p className="text-xs text-[var(--text-muted)] max-w-xs mx-auto">
               {isBn
-                ? `৳${amountToPay.toLocaleString()} টাকা সফলভাবে জমা নেওয়া হয়েছে। রসিদ আপনার ইমেইল ও এসএমএস এ পাঠানো হয়েছে।`
-                : `BDT ${amountToPay.toLocaleString()} has been received. Receipt copy has been sent to guardian contact.`}
+                ? `৳${amountToPay.toLocaleString()} টাকা সফলভাবে গ্রহণ করা হয়েছে এবং অ্যাকাউন্টে সংরক্ষিত হয়েছে।`
+                : `BDT ${amountToPay.toLocaleString()} has been received and verified successfully.`}
             </p>
-            <div className="pt-2">
+
+            {lastTrx && (
+              <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-left text-xs space-y-1.5 max-w-xs mx-auto">
+                <div className="flex justify-between">
+                  <span className="text-[var(--text-muted)]">{isBn ? 'ট্রানজ্যাকশন আইডি:' : 'Trx ID:'}</span>
+                  <span className="font-mono font-bold text-[var(--text-primary)]">{lastTrx}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--text-muted)]">{isBn ? 'পেমেন্ট মাধ্যম:' : 'Method:'}</span>
+                  <span className="capitalize font-semibold text-[var(--brand)]">{method}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[var(--text-muted)]">{isBn ? 'পরিশোধিত টাকা:' : 'Amount:'}</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">৳{amountToPay.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePrintReceipt}
+                className="w-1/2 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:bg-[var(--surface)] text-[var(--text-primary)] font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Printer size={14} />
+                <span>{isBn ? 'রশিদ ডাউনলোড' : 'Download Receipt'}</span>
+              </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-2.5 rounded-xl bg-[var(--brand)] hover:opacity-90 text-white font-semibold text-xs transition-opacity"
+                className="w-1/2 py-2.5 rounded-xl bg-[var(--brand)] hover:opacity-90 text-white font-semibold text-xs transition-opacity cursor-pointer border-none"
               >
                 {isBn ? 'ঠিক আছে' : 'Done'}
               </button>
