@@ -39,95 +39,71 @@ export const FeesTab = React.memo(function FeesTab({
     printFeeReceipt(fee, child, institution, isBn)
   }
 
-  const kpiCards = [
-    {
-      icon: Receipt,
-      label: isBn ? 'মোট নির্ধারিত ফি' : 'Total Invoiced',
-      value: `৳${totalAmount.toLocaleString()}`,
-    },
-    {
-      icon: CheckCircle2,
-      label: isBn ? 'পরিশোধিত ফি' : 'Paid Amount',
-      value: `৳${totalPaid.toLocaleString()}`,
-    },
-    {
-      icon: CreditCard,
-      label: isBn ? 'মোট বকেয়া ফি' : 'Outstanding Dues',
-      value: `৳${totalDue.toLocaleString()}`,
-      hasPayAction: totalDue > 0,
-    },
-  ]
-
   return (
     <div className="space-y-4">
-      {/* Financial Overview Cards - Dashboard Style Top Cards */}
+      {/* Financial Overview Cards - Dashboard Style Top Cards with Hierarchical Accent */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {kpiCards.map((card) => (
-          <div
-            key={card.label}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              padding: '0.875rem 1rem',
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: '0.625rem',
-              boxShadow: 'var(--shadow-xs)',
-            }}
-          >
-            <div
-              style={{
-                width: '2.25rem',
-                height: '2.25rem',
-                borderRadius: '0.375rem',
-                background: 'var(--bg-secondary)',
-                color: 'var(--brand)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <card.icon size={18} />
+        {/* 1. Total Invoiced (Indigo Accent) */}
+        <div className="flex items-center gap-3 p-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
+            <Receipt size={18} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[1.125rem] font-bold leading-tight text-[var(--text-primary)]">
+              ৳{totalAmount.toLocaleString()}
             </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div className="flex items-center justify-between">
-                <div
-                  style={{
-                    fontSize: '1.125rem',
-                    fontWeight: 700,
-                    lineHeight: 1.2,
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {card.value}
-                </div>
-                {card.hasPayAction && (
-                  <button
-                    type="button"
-                    onClick={() => onOpenPayModal()}
-                    className="px-2.5 py-0.5 rounded text-[0.6875rem] font-semibold bg-[var(--brand)] text-white hover:opacity-90 cursor-pointer border-none"
-                  >
-                    {isBn ? 'পরিশোধ' : 'Pay'}
-                  </button>
-                )}
-              </div>
-              <div
-                style={{
-                  fontSize: '0.6875rem',
-                  color: 'var(--text-secondary)',
-                  marginTop: '0.125rem',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {card.label}
-              </div>
+            <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5 truncate">
+              {isBn ? 'মোট নির্ধারিত ফি' : 'Total Invoiced'}
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* 2. Paid Amount (Emerald Accent) */}
+        <div className="flex items-center gap-3 p-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+            <CheckCircle2 size={18} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[1.125rem] font-bold leading-tight text-emerald-600 dark:text-emerald-400">
+              ৳{totalPaid.toLocaleString()}
+            </div>
+            <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5 truncate">
+              {isBn ? 'পরিশোধিত ফি' : 'Paid Amount'}
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Outstanding Dues (THE INVERTED DARK ACCENT CARD - Like Teacher Management Quick Action) */}
+        <div
+          className="flex items-center gap-3 p-3.5 rounded-xl shadow-md transition-all shrink-0"
+          style={{
+            background: 'var(--highlight-bg)',
+            color: 'var(--highlight-fg)',
+          }}
+        >
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/10 text-amber-400 border border-white/10 shrink-0">
+            <CreditCard size={18} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-1">
+              <div className="text-[1.125rem] font-black leading-tight text-white">
+                ৳{totalDue.toLocaleString()}
+              </div>
+              {totalDue > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onOpenPayModal()}
+                  className="px-2.5 py-0.5 rounded text-[0.6875rem] font-bold bg-amber-400 hover:bg-amber-300 text-slate-900 cursor-pointer border-none shadow-xs transition-colors"
+                >
+                  {isBn ? 'পরিশোধ' : 'Pay'}
+                </button>
+              )}
+            </div>
+            <div className="text-[0.6875rem] text-white/70 mt-0.5 truncate">
+              {isBn ? 'মোট বকেয়া ফি' : 'Outstanding Dues'}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Due & Invoiced Fees List */}
