@@ -8,6 +8,7 @@ import {
   Search,
   Cloud,
   Server,
+  Laptop,
 } from 'lucide-react'
 import type { PortalChild } from '../types'
 import { AdminStudentSearchDropdown } from './AdminStudentSearchDropdown'
@@ -113,13 +114,31 @@ export const ChildSelector = React.memo(function ChildSelector({
               </span>
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-medium ${
-                  isLocalServer
+                  isLocalPC
+                    ? 'border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    : isLocalServer
                     ? 'border-indigo-500/20 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400'
                     : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                 }`}
               >
-                {isLocalServer ? <Server size={11} className="text-indigo-500" /> : <Cloud size={11} className="text-emerald-500" />}
-                {isLocalServer ? (isBn ? 'ভিপিএস ডাটাবেজ' : 'VPS Database') : (isBn ? 'ক্লাউড ডাটাবেজ' : 'Cloud Database')}
+                {isLocalPC ? (
+                  <Laptop size={11} className="text-amber-500" />
+                ) : isLocalServer ? (
+                  <Server size={11} className="text-indigo-500" />
+                ) : (
+                  <Cloud size={11} className="text-emerald-500" />
+                )}
+                {isLocalPC
+                  ? isBn
+                    ? 'লোকাল পিসি স্টোরেজ'
+                    : 'Local PC Storage'
+                  : isLocalServer
+                  ? isBn
+                    ? 'ভিপিএস ডাটাবেজ'
+                    : 'VPS Database'
+                  : isBn
+                  ? 'ক্লাউড ডাটাবেজ'
+                  : 'Cloud Database'}
               </span>
             </div>
           </div>

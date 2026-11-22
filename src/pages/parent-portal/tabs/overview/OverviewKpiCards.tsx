@@ -7,9 +7,11 @@ import {
   Clock,
   Check,
 } from 'lucide-react'
-import type { FeeItem, HomeworkItem } from '../../types'
+import type { FeeItem, HomeworkItem, PortalChild } from '../../types'
+import { getChildAttendanceStats, getChildExamResults } from '../../utils/dataMappers'
 
 interface OverviewKpiCardsProps {
+  child: PortalChild
   fees: FeeItem[]
   homeworkList: HomeworkItem[]
   onNavigateTab: (tab: any) => void
@@ -18,6 +20,7 @@ interface OverviewKpiCardsProps {
 }
 
 export const OverviewKpiCards = React.memo(function OverviewKpiCards({
+  child,
   fees,
   homeworkList,
   onNavigateTab,
@@ -27,6 +30,12 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
   const totalDue = fees.reduce((acc, f) => acc + f.due, 0)
   const hasPendingFee = fees.some((f) => f.status === 'pending')
   const pendingHw = homeworkList.filter((h) => h.status === 'pending').length
+  const attendanceStats = getChildAttendanceStats(child.id, new Date())
+  const examResults = getChildExamResults(child)
+  const avgGpa =
+    examResults.length > 0
+      ? (examResults.reduce((acc, r) => acc + (r.point || 0), 0) / examResults.length).toFixed(2)
+      : null
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -41,10 +50,10 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-1">
             <div className="text-[1.125rem] font-bold leading-tight text-[var(--text-primary)]">
-              94.5%
+              {attendanceStats.attendanceRate}
             </div>
             <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
-              {isBn ? 'নিয়মিত' : 'Regular'}
+              {isBn ? 'চলতি মাস' : 'This Month'}
             </span>
           </div>
           <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5 truncate">
@@ -109,14 +118,14 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-1">
             <div className="text-[1.125rem] font-bold leading-tight text-[var(--text-primary)]">
-              GPA 5.00
+              {avgGpa ? `GPA ${avgGpa}` : '—'}
             </div>
             <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
-              {isBn ? 'শীর্ষ ৫%' : 'Top 5%'}
+              {avgGpa ? (isBn ? 'মূল্যায়িত' : 'Evaluated') : isBn ? 'ফলাফল নেই' : 'No result'}
             </span>
           </div>
           <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5 truncate">
-            {isBn ? '১ম সাময়িক মূল্যায়ন' : '1st Term Result'}
+            {isBn ? 'একাডেমিক ফলাফল' : 'Academic Evaluation'}
           </div>
         </div>
       </div>

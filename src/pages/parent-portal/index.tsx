@@ -6,18 +6,13 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useFeeStore } from '@/store/feeStore'
 import { isLocalComputerMode, isLocalServerMode } from '@/lib/storageMode'
 import type { PortalTab, FeeItem, LeaveRequest } from './types'
-import {
-  DEMO_CHILDREN,
-  DEMO_HOMEWORK,
-  DEMO_EXAM_RESULTS,
-  DEMO_LEAVE_REQUESTS,
-} from './mockData'
 import { mapAdmittedStudentsToPortalChildren } from './utils/studentMapper'
 import { getChildDatabaseFees } from './utils/feeMapper'
+import { getChildHomework, getChildExamResults } from './utils/dataMappers'
 import { processParentOnlinePayment, approveStudentFee, rejectStudentFee } from './utils/paymentHandler'
-import { ParentPortalLocalPcNotice } from './components/ParentPortalLocalPcNotice'
 import { ChildSelector } from './components/ChildSelector'
 import { PortalTabNav } from './components/PortalTabNav'
+import { PortalNoStudentsNotice } from './components/PortalNoStudentsNotice'
 import { StudentIdCardModal } from './components/StudentIdCardModal'
 import { FeePaymentModal } from './components/FeePaymentModal'
 import { LeaveRequestModal } from './components/LeaveRequestModal'
@@ -39,7 +34,7 @@ export default function ParentPortalPage() {
   const isLocalPC = isLocalComputerMode()
   const isLocalServer = isLocalServerMode()
 
-  // Sync from central server database (Cloud / VPS) on mount
+  // Sync from server database on mount when not in offline mode
   useEffect(() => {
     if (!isLocalPC) {
       void useAdmissionStore.getState().syncFromServer?.()
@@ -47,7 +42,7 @@ export default function ParentPortalPage() {
     }
   }, [isLocalPC])
 
-  // Determine role: Parent accounts only see their own child without switching
+  // Determine role: Parent accounts only see their own child
   const isParentAccount = Boolean(
     user?.role === 'parent' ||
     user?.role === 'guardian' ||
@@ -69,13 +64,20 @@ export default function ParentPortalPage() {
     window.location.pathname.includes('/super-admin/')
   )
 
-  // Merge admitted students if available with demo children
+  // Pure mapping of actual admitted students
   const childrenList = useMemo(() => {
     return mapAdmittedStudentsToPortalChildren(admittedStudents)
   }, [admittedStudents])
 
   // Active child state
-  const [activeChildId, setActiveChildId] = useState<string>(childrenList[0]?.id || 'child-1')
+  const [activeChildId, setActiveChildId] = useState<string>(childrenList[0]?.id || '')
+
+  useEffect(() => {
+    if (!activeChildId && childrenList.length > 0) {
+      setActiveChildId(childrenList[0].id)
+    }
+  }, [childrenList, activeChildId])
+
   const activeChild = useMemo(() => {
     return childrenList.find((c) => c.id === activeChildId) || childrenList[0]
   }, [childrenList, activeChildId])
@@ -83,16 +85,29 @@ export default function ParentPortalPage() {
   // Portal State
   const [activeTab, setActiveTab] = useState<PortalTab>('overview')
   const [fees, setFees] = useState<FeeItem[]>(() => {
-    return getChildDatabaseFees(childrenList[0] || DEMO_CHILDREN[0])
+    return activeChild ? getChildDatabaseFees(activeChild) : []
   })
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(DEMO_LEAVE_REQUESTS)
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(() => {
+    if (!activeChild?.id) return []
+    try {
+      const saved = localStorage.getItem(`edutech_parent_portal_leave_${activeChild.id}`)
+      if (saved) return JSON.parse(saved)
+    } catch { /* ignore */ }
+    return []
+  })
 
   const feeStoreVersion = useFeeStore((s) => (s.onlinePaymentRequests || []).length + s.payments.length)
 
-  // Sync child-specific fee state from central database
+  // Sync fee state whenever active child or fee store changes
   useEffect(() => {
-    setFees(getChildDatabaseFees(activeChild))
-  }, [activeChild.id, feeStoreVersion])
+    if (activeChild) {
+      setFees(getChildDatabaseFees(activeChild))
+    }
+  }, [activeChild?.id, feeStoreVersion])
+
+  // Real homework and exam results derived from student assignments and marks
+  const homeworkList = useMemo(() => (activeChild ? getChildHomework(activeChild) : []), [activeChild])
+  const examResults = useMemo(() => (activeChild ? getChildExamResults(activeChild) : []), [activeChild])
 
   // Modals state
   const [showIdCardModal, setShowIdCardModal] = useState(false)
@@ -108,6 +123,7 @@ export default function ParentPortalPage() {
   }
 
   const handlePaymentSuccess = (paidAmount: number, trxId: string, feeId?: string, method = 'bkash', phone = '') => {
+    if (!activeChild) return
     const updated = processParentOnlinePayment({
       activeChild,
       paidAmount,
@@ -123,16 +139,19 @@ export default function ParentPortalPage() {
   }
 
   const handleApproveFee = (fee: FeeItem) => {
+    if (!activeChild) return
     const updated = approveStudentFee(activeChild, fee, user?.name || undefined)
     setFees(updated)
   }
 
   const handleRejectFee = (fee: FeeItem) => {
+    if (!activeChild) return
     const updated = rejectStudentFee(activeChild, fee, 'Transaction ID not verified', user?.name || undefined)
     setFees(updated)
   }
 
   const handleCreateLeaveRequest = (req: Omit<LeaveRequest, 'id' | 'createdAt' | 'status'>) => {
+    if (!activeChild) return
     const newReq: LeaveRequest = {
       ...req,
       id: `leave-${Date.now()}`,
@@ -143,9 +162,9 @@ export default function ParentPortalPage() {
     setLeaveRequests((prev) => [newReq, ...prev])
   }
 
-  // Guard: Local computer storage does not support remote parent portal
-  if (isLocalPC) {
-    return <ParentPortalLocalPcNotice isInstitutionAdmin={isInstitutionAdmin} />
+  // Clean empty state when no admitted students exist in the system
+  if (childrenList.length === 0 || !activeChild) {
+    return <PortalNoStudentsNotice isInstitutionAdmin={isInstitutionAdmin} />
   }
 
   return (
@@ -178,7 +197,7 @@ export default function ParentPortalPage() {
           <OverviewTab
             child={activeChild}
             fees={fees}
-            homeworkList={DEMO_HOMEWORK}
+            homeworkList={homeworkList}
             onNavigateTab={(tab) => setActiveTab(tab)}
             onOpenPayModal={() => handleOpenPayModal()}
             isBn={isBn}
@@ -197,7 +216,7 @@ export default function ParentPortalPage() {
         {activeTab === 'academics' && (
           <AcademicsTab
             child={activeChild}
-            results={DEMO_EXAM_RESULTS}
+            results={examResults}
             isBn={isBn}
           />
         )}
@@ -217,6 +236,7 @@ export default function ParentPortalPage() {
         {activeTab === 'homework' && (
           <HomeworkTab
             child={activeChild}
+            homeworkList={homeworkList}
             isBn={isBn}
           />
         )}

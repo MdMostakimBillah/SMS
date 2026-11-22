@@ -5,6 +5,7 @@ import { TestWrapper } from '@/test-wrapper'
 import ParentPortalPage from './index'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
+import { useFeeStore } from '@/store/feeStore'
 
 describe('ParentPortalPage', () => {
   beforeEach(() => {
@@ -12,6 +13,7 @@ describe('ParentPortalPage', () => {
     sessionStorage.clear()
     useAdmissionStore.persist.clearStorage()
     useClassStore.persist.clearStorage()
+    useFeeStore.persist.clearStorage()
 
     useClassStore.setState({
       institution: {
@@ -23,16 +25,89 @@ describe('ParentPortalPage', () => {
         currentSession: '2026-27',
       } as any,
     })
+
+    // Real student records enrolled in institution
+    useAdmissionStore.setState({
+      students: [
+        {
+          id: 'child-1',
+          nameEn: 'Tahmid Rahman',
+          nameBn: 'তাহমিদ রহমান',
+          roll: '01',
+          class: 'Class 8',
+          section: 'A',
+          academicYear: '2026',
+          status: 'approved',
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+          dob: '2012-05-14',
+          gender: 'Male',
+          bloodGroup: 'B+',
+          phone: '+880 1711-234567',
+          fatherNameEn: 'Mahfuzur Rahman',
+          fatherPhone: '+880 1711-234567',
+          motherNameEn: 'Nasrin Sultana',
+          motherPhone: '+880 1819-345678',
+          guardianName: 'Mahfuzur Rahman',
+          guardianPhone: '+880 1711-234567',
+          presentAddress: 'House 14, Road 5, Dhanmondi, Dhaka',
+        } as any,
+        {
+          id: 'child-2',
+          nameEn: 'Samia Rahman',
+          nameBn: 'সামিয়া রহমান',
+          roll: '04',
+          class: 'Class 5',
+          section: 'B',
+          academicYear: '2026',
+          status: 'approved',
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+          dob: '2015-08-22',
+          gender: 'Female',
+          bloodGroup: 'O+',
+          phone: '+880 1711-234567',
+          fatherNameEn: 'Mahfuzur Rahman',
+          fatherPhone: '+880 1711-234567',
+          motherNameEn: 'Nasrin Sultana',
+          motherPhone: '+880 1819-345678',
+          guardianName: 'Mahfuzur Rahman',
+          guardianPhone: '+880 1711-234567',
+          presentAddress: 'House 14, Road 5, Dhanmondi, Dhaka',
+        } as any,
+      ],
+    })
+
+    // Real fee structures for enrolled student
+    useFeeStore.setState({
+      structures: [
+        {
+          id: 'fee-1',
+          name: 'Monthly Tuition Fee - November 2026',
+          nameBn: 'মাসিক বেতন - নভেম্বর ২০২৬',
+          class: 'Class 8',
+          amount: 1500,
+          isActive: true,
+          type: 'monthly',
+          academicYear: '2026',
+          description: '',
+          descriptionBn: '',
+          createdAt: '2026-01-01',
+        },
+      ],
+      payments: [],
+      onlinePaymentRequests: [],
+    })
   })
 
-  it('renders Parent Portal with default child and overview tab', async () => {
+  it('renders Parent Portal with enrolled student and overview tab', async () => {
     render(
       <TestWrapper>
         <ParentPortalPage />
       </TestWrapper>
     )
 
-    // Should render active child (either English or Bengali name)
+    // Should render enrolled student
     await waitFor(() => {
       expect(screen.getByText(/Tahmid Rahman|তাহমিদ রহমান/i)).toBeInTheDocument()
     })
@@ -45,6 +120,22 @@ describe('ParentPortalPage', () => {
     expect(screen.getByRole('button', { name: /Homework|হোমওয়ার্ক/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Notice|যোগাযোগ/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Profile|প্রোফাইল/i })).toBeInTheDocument()
+  })
+
+  it('shows empty state when no students exist in system', async () => {
+    useAdmissionStore.setState({ students: [] })
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/No Students Found in System|সিস্টেমে কোনো শিক্ষার্থী পাওয়া যায়নি/i)
+      ).toBeInTheDocument()
+    })
   })
 
   it('switches tabs properly to Attendance, Academics, and Fees', async () => {
@@ -61,7 +152,7 @@ describe('ParentPortalPage', () => {
     await user.click(attendanceTabBtn)
 
     await waitFor(() => {
-      expect(screen.getByText(/Leave Requests|Leave Applications|ছুটির আবেদন/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/Leave Requests|Leave Applications|ছুটির আবেদন/i).length).toBeGreaterThanOrEqual(1)
     })
 
     // Click Academics Tab
@@ -69,7 +160,7 @@ describe('ParentPortalPage', () => {
     await user.click(academicsTabBtn)
 
     await waitFor(() => {
-      expect(screen.getByText(/Annual Final Exam|বার্ষিক পরীক্ষা/i)).toBeInTheDocument()
+      expect(screen.getByText(/Academic Results & Marksheet|একাডেমিক ফলাফল/i)).toBeInTheDocument()
     })
 
     // Click Fees Tab
@@ -164,10 +255,9 @@ describe('ParentPortalPage', () => {
     })
   })
 
-  it('allows institution admin to search students from database/local PC', async () => {
+  it('allows institution admin to search students from admission records', async () => {
     const user = userEvent.setup()
 
-    // Add admitted students to store (representing database or local PC storage)
     useAdmissionStore.setState({
       students: [
         {
@@ -181,34 +271,8 @@ describe('ParentPortalPage', () => {
           status: 'approved',
           createdAt: '2026-01-01',
           updatedAt: '2026-01-01',
-          photo: '',
-          dob: '2011-03-20',
-          gender: 'Male',
-          bloodGroup: 'A+',
-          religion: 'Islam',
-          nationality: 'Bangladeshi',
           phone: '+880 1711-998877',
-          email: 'abrar@example.com',
-          previousSchool: '',
-          admissionDate: '2026-01-05',
-          presentAddress: 'Dhaka',
-          permanentAddress: 'Dhaka',
-          district: 'Dhaka',
-          fatherNameEn: 'Rafiqul Islam',
-          fatherNameBn: 'রফিকুল ইসলাম',
-          fatherOccupation: 'Engineer',
-          fatherPhone: '+880 1711-998877',
-          fatherNid: '',
-          motherNameEn: 'Farhana Islam',
-          motherNameBn: 'ফারহানা ইসলাম',
-          motherOccupation: 'Doctor',
-          motherPhone: '+880 1711-887766',
-          motherNid: '',
-          guardianName: 'Rafiqul Islam',
-          guardianRelation: 'Father',
-          guardianPhone: '+880 1711-998877',
-          teacherId: '',
-        },
+        } as any,
       ],
     })
 
@@ -231,12 +295,9 @@ describe('ParentPortalPage', () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/Search by student name|নাম, রোল, শ্রেণি/i)).toBeInTheDocument()
     })
-
-    // Database or Local PC indicator is shown
-    expect(screen.getAllByText(/Database|Local PC|লোকাল পিসি|ডাটাবেস/i).length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows local PC notice when in local_computer mode and blocks portal access', async () => {
+  it('allows local PC storage user to access parent portal and displays Local PC Storage badge', async () => {
     localStorage.setItem('edutech_storage_mode', 'local_computer')
 
     render(
@@ -245,21 +306,15 @@ describe('ParentPortalPage', () => {
       </TestWrapper>
     )
 
-    // Should render the architectural notice instead of portal tabs
+    // Portal tabs should be fully accessible
     await waitFor(() => {
-      expect(
-        screen.getByText(/Parent Portal Requires Online Database Connection|অভিভাবক পোর্টাল ব্যবহারের জন্য অনলাইন ডাটাবেজ প্রয়োজন/i)
-      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Overview|একনজরে/i })).toBeInTheDocument()
     })
 
-    // Local PC active tag is displayed
+    // Local PC Storage badge is displayed
     expect(
-      screen.getByText(/Local PC Storage Active|লোকাল পিসি স্টোরেজ সক্রিয়/i)
+      screen.getByText(/Local PC Storage|লোকাল পিসি স্টোরেজ/i)
     ).toBeInTheDocument()
-
-    // Portal tabs should NOT be rendered
-    expect(screen.queryByRole('button', { name: /Overview|একনজরে/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Fees|ফি ও পেমেন্ট/i })).not.toBeInTheDocument()
   })
 
   it('displays VPS Database badge when running on personal VPS (local_server)', async () => {

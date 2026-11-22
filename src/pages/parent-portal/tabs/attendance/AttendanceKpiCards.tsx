@@ -10,41 +10,53 @@ import {
 
 interface AttendanceKpiCardsProps {
   isBn: boolean
+  workingDays?: number
+  presentDays?: number
+  absentDays?: number
+  lateDays?: number
+  leaveDays?: number
+  attendanceRate?: string
 }
 
 export const AttendanceKpiCards = React.memo(function AttendanceKpiCards({
   isBn,
+  workingDays = 0,
+  presentDays = 0,
+  absentDays = 0,
+  lateDays = 0,
+  leaveDays = 0,
+  attendanceRate = '0.0%',
 }: AttendanceKpiCardsProps) {
   const cards = [
     {
       icon: Calendar,
       label: isBn ? 'মোট কর্মদিবস' : 'Working Days',
-      value: '22',
+      value: String(workingDays),
     },
     {
       icon: CheckCircle2,
       label: isBn ? 'উপস্থিত দিন' : 'Present Days',
-      value: '19',
+      value: String(presentDays),
     },
     {
       icon: XCircle,
       label: isBn ? 'অনুপস্থিত' : 'Absent Days',
-      value: '1',
+      value: String(absentDays),
     },
     {
       icon: Clock,
       label: isBn ? 'দেরিতে প্রবেশ' : 'Late Days',
-      value: '2',
+      value: String(lateDays),
     },
     {
       icon: FileText,
       label: isBn ? 'ছুটি ভোগ' : 'Leave Days',
-      value: '2',
+      value: String(leaveDays),
     },
     {
       icon: TrendingUp,
       label: isBn ? 'উপস্থিতির হার' : 'Attendance Rate',
-      value: '95.4%',
+      value: attendanceRate,
     },
   ]
 

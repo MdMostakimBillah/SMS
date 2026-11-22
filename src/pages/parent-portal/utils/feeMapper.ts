@@ -1,11 +1,10 @@
 import type { FeeItem, PortalChild } from '../types'
 import { useFeeStore } from '@/store/feeStore'
-import { DEMO_FEES } from '../mockData'
 
 /**
  * Derives real fees, dues, and payment statuses for a child from the central fee database.
  * If live database structures exist for the student's class, maps them with payments and pending requests.
- * Otherwise falls back to persistent portal state or demo templates.
+ * Otherwise returns saved portal overrides or an empty array (no demo/mock fees).
  */
 export function getChildDatabaseFees(child: PortalChild): FeeItem[] {
   const state = useFeeStore.getState()
@@ -51,5 +50,5 @@ export function getChildDatabaseFees(child: PortalChild): FeeItem[] {
     /* ignore storage errors */
   }
 
-  return DEMO_FEES
+  return []
 }

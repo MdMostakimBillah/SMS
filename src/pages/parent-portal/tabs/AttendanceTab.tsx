@@ -23,6 +23,8 @@ import {
 import type { PortalChild, LeaveRequest } from '../types'
 import { WEEKDAYS_EN, WEEKDAYS_BN } from '@/pages/exams/step2/tabs/types'
 import { AttendanceKpiCards } from './attendance/AttendanceKpiCards'
+import { useAttendanceStore } from '@/store/attendanceStore'
+import { getChildAttendanceStats } from '../utils/dataMappers'
 
 interface AttendanceTabProps {
   child: PortalChild
@@ -32,13 +34,19 @@ interface AttendanceTabProps {
 }
 
 export const AttendanceTab = React.memo(function AttendanceTab({
-  child: _child,
+  child,
   leaveRequests,
   onOpenLeaveModal,
   isBn,
 }: AttendanceTabProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
+  const attendance = useAttendanceStore((s) => s.attendance)
+
+  // Real statistics derived from database / local store
+  const stats = useMemo(() => {
+    return getChildAttendanceStats(child.id, currentMonth)
+  }, [child.id, currentMonth, attendance])
 
   // Calendar dates generation aligned with 7 weekdays
   const calendarDays = useMemo(() => {
@@ -49,18 +57,38 @@ export const AttendanceTab = React.memo(function AttendanceTab({
     return eachDayOfInterval({ start: calStart, end: calEnd })
   }, [currentMonth])
 
-  // Mock status generator for realistic daily view
+  // Real daily attendance resolver for the selected child
   const getDayStatus = (day: Date) => {
     const dayOfWeek = day.getDay()
     const isWeekend = dayOfWeek === 5 || dayOfWeek === 6 // Fri/Sat in BD
     if (isWeekend) return { status: 'weekend', label: isBn ? 'ছুটি' : 'Weekend' }
 
-    const dayNum = day.getDate()
-    if (dayNum === 12 || dayNum === 13) return { status: 'leave', label: isBn ? 'অনুমোদিত ছুটি' : 'Leave', timeIn: '—' }
-    if (dayNum === 18) return { status: 'absent', label: isBn ? 'অনুপস্থিত' : 'Absent', timeIn: '—' }
-    if (dayNum === 5 || dayNum === 20) return { status: 'late', label: isBn ? 'বিলম্বে উপস্থিত' : 'Late', timeIn: '09:20 AM', timeOut: '02:30 PM' }
+    const dateKey = format(day, 'yyyy-MM-dd')
+    const rec = attendance[dateKey]?.[child.id]
+    if (rec) {
+      if (rec.status === 'present') {
+        const inPunch = rec.punches?.find((p) => p.type === 'in')?.time || '09:00 AM'
+        const outPunch = rec.punches?.find((p) => p.type === 'out')?.time || '02:30 PM'
+        return {
+          status: 'present',
+          label: isBn ? 'উপস্থিত' : 'Present',
+          timeIn: inPunch,
+          timeOut: outPunch,
+        }
+      }
+      if (rec.status === 'absent') {
+        return { status: 'absent', label: isBn ? 'অনুপস্থিত' : 'Absent', timeIn: '—' }
+      }
+      if (rec.status === 'on-leave') {
+        return { status: 'leave', label: isBn ? 'অনুমোদিত ছুটি' : 'Leave', timeIn: '—' }
+      }
+    }
 
-    return { status: 'present', label: isBn ? 'উপস্থিত' : 'Present', timeIn: '08:52 AM', timeOut: '02:30 PM' }
+    if (day > new Date()) {
+      return { status: 'upcoming', label: isBn ? 'আসন্ন' : 'Upcoming', timeIn: '—' }
+    }
+
+    return { status: 'unrecorded', label: isBn ? 'লিপিবদ্ধ নয়' : 'Not Recorded', timeIn: '—' }
   }
 
   const selectedStatus = getDayStatus(selectedDay)
@@ -68,7 +96,15 @@ export const AttendanceTab = React.memo(function AttendanceTab({
   return (
     <div className="space-y-4">
       {/* Monthly Attendance Summary Row - Dashboard Style Top Cards */}
-      <AttendanceKpiCards isBn={isBn} />
+      <AttendanceKpiCards
+        isBn={isBn}
+        workingDays={stats.workingDays}
+        presentDays={stats.presentDays}
+        absentDays={stats.absentDays}
+        lateDays={stats.lateDays}
+        leaveDays={stats.leaveDays}
+        attendanceRate={stats.attendanceRate}
+      />
 
       {/* Main Grid & Log Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -124,23 +160,16 @@ export const AttendanceTab = React.memo(function AttendanceTab({
               const isSelected = isSameDay(day, selectedDay)
               const info = getDayStatus(day)
 
-              let bgCls = 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'
-              let dotCls = ''
-
-              if (info.status === 'present') {
-                bgCls = 'bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)]'
-                dotCls = 'bg-[var(--brand)]'
-              } else if (info.status === 'absent') {
-                bgCls = 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'
-                dotCls = 'bg-neutral-400'
-              } else if (info.status === 'late') {
-                bgCls = 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'
-                dotCls = 'bg-neutral-500'
-              } else if (info.status === 'leave') {
-                bgCls = 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]'
-                dotCls = 'bg-neutral-400'
-              } else if (info.status === 'weekend') {
-                bgCls = 'bg-[var(--bg-secondary)]/50 text-[var(--text-muted)] border-transparent'
+              const statusMap: Record<string, { bg: string; dot: string }> = {
+                present: { bg: 'bg-[var(--surface)] text-[var(--text-primary)] border-[var(--border)]', dot: 'bg-[var(--brand)]' },
+                absent: { bg: 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]', dot: 'bg-neutral-400' },
+                late: { bg: 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]', dot: 'bg-neutral-500' },
+                leave: { bg: 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]', dot: 'bg-neutral-400' },
+                weekend: { bg: 'bg-[var(--bg-secondary)]/50 text-[var(--text-muted)] border-transparent', dot: '' },
+              }
+              const { bg: bgCls, dot: dotCls } = statusMap[info.status] || {
+                bg: 'bg-[var(--surface)] text-[var(--text-secondary)] border-[var(--border)]',
+                dot: '',
               }
 
               return (

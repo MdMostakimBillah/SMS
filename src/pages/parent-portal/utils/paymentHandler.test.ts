@@ -2,7 +2,47 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { processParentOnlinePayment, approveStudentFee, rejectStudentFee } from './paymentHandler'
 import { useFeeStore } from '@/store/feeStore'
 import { useNotificationStore } from '@/store/notificationStore'
-import { DEMO_CHILDREN, DEMO_FEES } from '../mockData'
+import type { PortalChild, FeeItem } from '../types'
+
+const testChild: PortalChild = {
+  id: 'child-test-1',
+  nameEn: 'Tahmid Rahman',
+  nameBn: 'তাহমিদ রহমান',
+  photo: '',
+  class: 'Class 8',
+  section: 'A',
+  roll: '01',
+  academicYear: '2026',
+  dob: '2012-05-14',
+  gender: 'Male',
+  bloodGroup: 'B+',
+  fatherName: 'Mahfuzur Rahman',
+  fatherPhone: '+880 1711-234567',
+  motherName: 'Nasrin Sultana',
+  motherPhone: '+880 1819-345678',
+  guardianName: 'Mahfuzur Rahman',
+  guardianPhone: '+880 1711-234567',
+  guardianRelation: 'Father',
+  emergencyContact: '+880 1711-234567',
+  presentAddress: 'Dhaka',
+  classTeacherName: 'Anwar Hossain',
+  classTeacherPhone: '+880 1712-889900',
+  classTeacherEmail: 'anwar@example.com',
+}
+
+const testFees: FeeItem[] = [
+  {
+    id: 'fee-1',
+    title: 'Monthly Tuition Fee',
+    titleBn: 'মাসিক বেতন',
+    category: 'Tuition',
+    dueDate: '2026-11-25',
+    amount: 1500,
+    paid: 0,
+    due: 1500,
+    status: 'due',
+  },
+]
 
 describe('Online Fee Payment Workflow (Pending -> Verify TrxID -> Approve / Reject)', () => {
   beforeEach(() => {
@@ -13,8 +53,8 @@ describe('Online Fee Payment Workflow (Pending -> Verify TrxID -> Approve / Reje
   })
 
   it('submits payment as pending, records online request, and broadcasts notification to admin', () => {
-    const child = DEMO_CHILDREN[0]
-    const initialFees = [...DEMO_FEES]
+    const child = testChild
+    const initialFees = [...testFees]
     const targetFee = initialFees[0] // due: 1500
 
     const updatedFees = processParentOnlinePayment({
@@ -59,8 +99,8 @@ describe('Online Fee Payment Workflow (Pending -> Verify TrxID -> Approve / Reje
   })
 
   it('institution admin/finance verifies TrxID and approves payment -> marks fee paid and generates payment receipt', () => {
-    const child = DEMO_CHILDREN[0]
-    const initialFees = [...DEMO_FEES]
+    const child = testChild
+    const initialFees = [...testFees]
     const targetFee = initialFees[0]
 
     // Step 1: Parent submits payment request
@@ -111,8 +151,8 @@ describe('Online Fee Payment Workflow (Pending -> Verify TrxID -> Approve / Reje
   })
 
   it('institution finance rejects invalid payment -> fee reverts back to due', () => {
-    const child = DEMO_CHILDREN[0]
-    const initialFees = [...DEMO_FEES]
+    const child = testChild
+    const initialFees = [...testFees]
     const targetFee = initialFees[0]
 
     // Step 1: Parent submits payment request

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import type { PortalChild, HomeworkItem } from '../../types'
 import { useNoticeStore } from '@/store/noticeStore'
+import { getTodayPunchInfo } from '../../utils/dataMappers'
 
 interface OverviewActivityCardsProps {
   child: PortalChild
@@ -25,6 +26,7 @@ export const OverviewActivityCards = React.memo(function OverviewActivityCards({
   isBn,
 }: OverviewActivityCardsProps) {
   const notices = useNoticeStore((s) => s.notices)
+  const punch = getTodayPunchInfo(child.id)
   const parentNotices = notices
     .filter((n) => n && n.isActive && (n.target === 'parents' || n.target === 'all'))
     .slice(0, 3)
@@ -50,18 +52,26 @@ export const OverviewActivityCards = React.memo(function OverviewActivityCards({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
               <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'প্রবেশের সময়' : 'In-Time'}</div>
-              <div className="text-[1rem] font-bold text-[var(--text-primary)] mt-1">08:55 AM</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">{isBn ? 'গেট ডিভাইস #০১' : 'Gate Reader #01'}</div>
+              <div className="text-[1rem] font-bold text-[var(--text-primary)] mt-1">{punch.inTime}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
+                {punch.isPresent ? (isBn ? 'উপস্থিত লিপিবদ্ধ' : 'Marked Present') : (isBn ? 'লিপিবদ্ধ নয়' : 'Not logged')}
+              </div>
             </div>
             <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
               <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'ছুটির সময়' : 'Exit Time'}</div>
-              <div className="text-[1rem] font-bold text-[var(--text-primary)] mt-1">02:30 PM</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">{isBn ? 'নিয়মিত শিফট' : 'Regular Shift'}</div>
+              <div className="text-[1rem] font-bold text-[var(--text-primary)] mt-1">{punch.outTime}</div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
+                {punch.outTime !== '—' ? (isBn ? 'প্রস্থান সম্পন্ন' : 'Exit Logged') : (isBn ? 'নিয়মিত কার্যক্রম' : 'Scheduled')}
+              </div>
             </div>
             <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-              <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'আজকের ক্লাস' : "Today's Classes"}</div>
-              <div className="text-[1rem] font-bold text-[var(--text-primary)] mt-1">6 {isBn ? 'টি' : 'Periods'}</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">{isBn ? 'গণিত, বিজ্ঞান, ইংরেজি...' : 'Math, Science...'}</div>
+              <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'শ্রেণি ও শাখা' : 'Class & Section'}</div>
+              <div className="text-[1rem] font-bold text-[var(--text-primary)] mt-1 truncate">
+                {child.class} ({child.section})
+              </div>
+              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
+                {isBn ? 'রোল:' : 'Roll:'} {child.roll}
+              </div>
             </div>
           </div>
         </div>
@@ -86,7 +96,12 @@ export const OverviewActivityCards = React.memo(function OverviewActivityCards({
           </div>
 
           <div className="space-y-2.5">
-            {homeworkList.slice(0, 3).map((hw) => (
+            {homeworkList.length === 0 ? (
+              <div className="py-6 text-center text-xs text-[var(--text-muted)]">
+                {isBn ? 'কোনো সক্রিয় হোমওয়ার্ক নেই।' : 'No pending homework assignments.'}
+              </div>
+            ) : (
+              homeworkList.slice(0, 3).map((hw) => (
               <div
                 key={hw.id}
                 className="flex items-start justify-between gap-3 p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] hover:border-gray-400 transition-colors"
@@ -124,7 +139,7 @@ export const OverviewActivityCards = React.memo(function OverviewActivityCards({
                     : 'Pending'}
                 </span>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       </div>

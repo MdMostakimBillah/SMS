@@ -23,6 +23,7 @@ export const OverviewTab = React.memo(function OverviewTab({
   return (
     <div className="space-y-4">
       <OverviewKpiCards
+        child={child}
         fees={fees}
         homeworkList={homeworkList}
         onNavigateTab={onNavigateTab}

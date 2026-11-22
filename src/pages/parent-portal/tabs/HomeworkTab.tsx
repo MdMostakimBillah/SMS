@@ -1,19 +1,29 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { BookOpen, Calendar, Clock, CheckCircle2, FileText, CheckCircle, Search, Filter } from 'lucide-react'
 import type { PortalChild, HomeworkItem } from '../types'
-import { DEMO_HOMEWORK } from '../mockData'
+import { getChildHomework } from '../utils/dataMappers'
 
 interface HomeworkTabProps {
   child: PortalChild
+  homeworkList?: HomeworkItem[]
   isBn: boolean
 }
 
 type StatusFilter = 'all' | 'pending' | 'submitted' | 'evaluated'
 
-export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn }: HomeworkTabProps) {
+export const HomeworkTab = React.memo(function HomeworkTab({
+  child,
+  homeworkList: initialList,
+  isBn,
+}: HomeworkTabProps) {
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [homeworkList, setHomeworkList] = useState<HomeworkItem[]>(DEMO_HOMEWORK)
+  const realList = useMemo(() => getChildHomework(child), [child])
+  const [homeworkList, setHomeworkList] = useState<HomeworkItem[]>(initialList ?? realList)
+
+  useEffect(() => {
+    setHomeworkList(initialList ?? realList)
+  }, [initialList, realList])
 
   // Filter & Search
   const filteredList = useMemo(() => {
@@ -63,54 +73,22 @@ export const HomeworkTab = React.memo(function HomeworkTab({ child: _child, isBn
           <div
             key={item.id}
             onClick={() => setFilter(item.id)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              padding: '0.875rem 1rem',
-              background: 'var(--surface)',
-              border: filter === item.id ? '1px solid var(--brand)' : '1px solid var(--border)',
-              borderRadius: '0.625rem',
-              boxShadow: filter === item.id ? 'var(--shadow-sm)' : 'var(--shadow-xs)',
-              cursor: 'pointer',
-              transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
-            }}
+            className={`flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] bg-[var(--surface)] border cursor-pointer transition-all ${
+              filter === item.id ? 'border-[var(--brand)] shadow-sm' : 'border-[var(--border)] shadow-xs'
+            }`}
           >
             <div
-              style={{
-                width: '2.25rem',
-                height: '2.25rem',
-                borderRadius: '0.375rem',
-                background: filter === item.id ? 'var(--brand)' : 'var(--bg-secondary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: filter === item.id ? '#ffffff' : 'var(--brand)',
-                flexShrink: 0,
-              }}
+              className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${
+                filter === item.id ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--brand)]'
+              }`}
             >
               {item.icon}
             </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div
-                style={{
-                  fontSize: '1.125rem',
-                  fontWeight: 700,
-                  color: 'var(--text-primary)',
-                  lineHeight: 1.2,
-                }}
-              >
+            <div className="min-w-0 flex-1">
+              <div className="text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight">
                 {item.count}
               </div>
-              <div
-                style={{
-                  fontSize: '0.6875rem',
-                  color: 'var(--text-secondary)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+              <div className="text-[0.6875rem] text-[var(--text-secondary)] truncate">
                 {isBn ? item.labelBn : item.labelEn}
               </div>
             </div>

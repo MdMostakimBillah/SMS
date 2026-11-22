@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { Bell, User, MessageSquare, CheckCircle2 } from 'lucide-react'
 import type { PortalChild } from '../types'
 import { useNoticeStore } from '@/store/noticeStore'
+import { useTeacherStore } from '@/store/teacherStore'
 import { NoticesSection } from './communication/NoticesSection'
 import { TeachersSection } from './communication/TeachersSection'
 import { MessagesSection, type ParentMessage } from './communication/MessagesSection'
@@ -11,29 +12,24 @@ interface CommunicationTabProps {
   isBn: boolean
 }
 
-const INITIAL_MESSAGES: ParentMessage[] = [
-  {
-    id: 'msg-1',
-    subject: 'Regarding Upcoming Science Fair Project',
-    body: 'Could you please confirm if the students need to bring their own presentation board tomorrow?',
-    recipient: 'Md. Anwar Hossain (Class Teacher)',
-    date: '2026-11-18 10:30 AM',
-    status: 'replied',
-    reply: 'Yes, students should bring standard 3x2 ft presentation boards. School will provide markers and adhesives.',
-  },
-]
-
 export const CommunicationTab = React.memo(function CommunicationTab({
   child,
   isBn,
 }: CommunicationTabProps) {
   const notices = useNoticeStore((s) => s.notices)
+  const storeTeachers = useTeacherStore((s) => s.teachers) || []
 
   const [activeSection, setActiveSection] = useState<'notices' | 'teachers' | 'messages'>('notices')
   const [msgSubject, setMsgSubject] = useState('')
   const [msgBody, setMsgBody] = useState('')
-  const [msgRecipient, setMsgRecipient] = useState(child.classTeacherName)
-  const [messages, setMessages] = useState<ParentMessage[]>(INITIAL_MESSAGES)
+  const [msgRecipient, setMsgRecipient] = useState(child.classTeacherName || '')
+  const [messages, setMessages] = useState<ParentMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(`edutech_parent_messages_${child.id}`)
+      if (saved) return JSON.parse(saved)
+    } catch { /* ignore */ }
+    return []
+  })
   const [showSuccessToast, setShowSuccessToast] = useState(false)
 
   const parentNotices = useMemo(() => {
@@ -42,43 +38,32 @@ export const CommunicationTab = React.memo(function CommunicationTab({
       .slice(0, 10)
   }, [notices])
 
-  const teachers = useMemo(
-    () => [
-      {
+  const teachers = useMemo(() => {
+    const list = []
+    if (child.classTeacherName) {
+      list.push({
         name: child.classTeacherName,
-        roleEn: 'Class Teacher & Mathematics',
-        roleBn: 'শ্রেণি শিক্ষক ও গণিত',
-        phone: child.classTeacherPhone,
-        email: child.classTeacherEmail,
+        roleEn: 'Class Teacher',
+        roleBn: 'শ্রেণি শিক্ষক',
+        phone: child.classTeacherPhone || '',
+        email: child.classTeacherEmail || '',
         isClassTeacher: true,
-      },
-      {
-        name: 'Sabrina Yasmin',
-        roleEn: 'English Language & Literature',
-        roleBn: 'ইংরেজি ভাষা ও সাহিত্য',
-        phone: '+880 1819-778899',
-        email: 'sabrina.yasmin@edutech.edu.bd',
-        isClassTeacher: false,
-      },
-      {
-        name: 'Kazi Farhan',
-        roleEn: 'General Science',
-        roleBn: 'সাধারণ বিজ্ঞান',
-        phone: '+880 1912-334455',
-        email: 'farhan.kazi@edutech.edu.bd',
-        isClassTeacher: false,
-      },
-      {
-        name: 'Shamsul Alam',
-        roleEn: 'Bangla Language & Literature',
-        roleBn: 'বাংলা ভাষা ও সাহিত্য',
-        phone: '+880 1713-112233',
-        email: 'shamsul.alam@edutech.edu.bd',
-        isClassTeacher: false,
-      },
-    ],
-    [child]
-  )
+      })
+    }
+    storeTeachers.forEach((t) => {
+      if (t.nameEn !== child.classTeacherName && t.nameBn !== child.classTeacherName) {
+        list.push({
+          name: isBn ? t.nameBn || t.nameEn : t.nameEn,
+          roleEn: t.designation || 'Subject Teacher',
+          roleBn: t.designation || 'বিষয় শিক্ষক',
+          phone: t.phone || '',
+          email: t.email || '',
+          isClassTeacher: false,
+        })
+      }
+    })
+    return list
+  }, [child, storeTeachers, isBn])
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()

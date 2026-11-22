@@ -1,36 +1,73 @@
 import type { PortalChild } from '../types'
-import { DEMO_CHILDREN } from '../mockData'
 import type { StudentAdmission } from '@/store/admissionStore'
+import { useTeacherStore } from '@/store/teacherStore'
+import { useClassStore } from '@/store/classStore'
 
+/**
+ * Maps admitted students to portal child models using genuine student attributes.
+ * Returns an empty array if no students are admitted (never uses mock/demo children).
+ */
 export function mapAdmittedStudentsToPortalChildren(
   admittedStudents: StudentAdmission[] | undefined
 ): PortalChild[] {
-  if (admittedStudents && admittedStudents.length > 0) {
-    return admittedStudents.map((s, idx) => ({
-      id: s.id || `student-${idx}`,
-      nameEn: s.nameEn || `Student ${idx + 1}`,
-      nameBn: s.nameBn || s.nameEn || `শিক্ষার্থী ${idx + 1}`,
-      photo: s.photo || '',
-      class: s.class || 'Class 8',
-      section: s.section || 'A',
-      roll: s.roll || `0${idx + 1}`,
-      academicYear: s.academicYear || '2026',
-      dob: s.dob || '2012-05-14',
-      gender: s.gender || 'Male',
-      bloodGroup: s.bloodGroup || 'B+',
-      fatherName: s.fatherNameEn || 'Dr. Mahfuzur Rahman',
-      fatherPhone: s.fatherPhone || s.phone || '+880 1711-234567',
-      motherName: s.motherNameEn || 'Nasrin Sultana',
-      motherPhone: s.motherPhone || '+880 1819-345678',
-      guardianName: s.guardianName || s.fatherNameEn || 'Dr. Mahfuzur Rahman',
-      guardianPhone: s.guardianPhone || s.phone || '+880 1711-234567',
-      guardianRelation: s.guardianRelation || 'Father',
-      emergencyContact: s.phone || s.guardianPhone || '+880 1711-234567',
-      presentAddress: s.presentAddress || 'House 14, Road 5, Dhanmondi, Dhaka',
-      classTeacherName: 'Md. Anwar Hossain',
-      classTeacherPhone: '+880 1712-889900',
-      classTeacherEmail: 'anwar.hossain@edutech.edu.bd',
-    }))
+  if (!admittedStudents || admittedStudents.length === 0) {
+    return []
   }
-  return DEMO_CHILDREN
+
+  const teachers = useTeacherStore.getState().teachers || []
+  const classes = useClassStore.getState().classes || []
+
+  return admittedStudents.map((s, idx) => {
+    // Resolve class teacher from student teacherId or class section
+    let teacher = s.teacherId ? teachers.find((t) => t.id === s.teacherId) : undefined
+    if (!teacher && s.class) {
+      const sClass = s.class.toLowerCase().trim()
+      const cls = classes.find(
+        (c) =>
+          c.name.toLowerCase().trim() === sClass ||
+          c.name.toLowerCase().trim() === `class ${sClass}` ||
+          sClass === `class ${c.name.toLowerCase().trim()}` ||
+          c.id === s.class
+      )
+      if (cls) {
+        const sec = cls.sections.find(
+          (sc) => sc.name.toLowerCase().trim() === (s.section || '').toLowerCase().trim()
+        )
+        if (sec?.classTeacherId) {
+          teacher = teachers.find((t) => t.id === sec.classTeacherId)
+        }
+      }
+    }
+
+    const father = s.fatherNameEn || s.fatherNameBn || ''
+    const mother = s.motherNameEn || s.motherNameBn || ''
+    const guardian = s.guardianName || father || mother || ''
+    const emergency = s.phone || s.guardianPhone || s.fatherPhone || s.motherPhone || ''
+
+    return {
+      id: s.id || `student-${idx}`,
+      nameEn: s.nameEn || '',
+      nameBn: s.nameBn || s.nameEn || '',
+      photo: s.photo || '',
+      class: s.class || '',
+      section: s.section || '',
+      roll: s.roll || '',
+      academicYear: s.academicYear || '',
+      dob: s.dob || '',
+      gender: s.gender || '',
+      bloodGroup: s.bloodGroup || '',
+      fatherName: father,
+      fatherPhone: s.fatherPhone || '',
+      motherName: mother,
+      motherPhone: s.motherPhone || '',
+      guardianName: guardian,
+      guardianPhone: s.guardianPhone || s.phone || s.fatherPhone || '',
+      guardianRelation: s.guardianRelation || (father ? 'Father' : mother ? 'Mother' : 'Guardian'),
+      emergencyContact: emergency,
+      presentAddress: s.presentAddress || '',
+      classTeacherName: teacher ? teacher.nameEn || teacher.nameBn || '' : '',
+      classTeacherPhone: teacher?.phone || '',
+      classTeacherEmail: teacher?.email || '',
+    }
+  })
 }
