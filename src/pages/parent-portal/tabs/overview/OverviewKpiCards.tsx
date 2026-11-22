@@ -62,20 +62,28 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
         </div>
       </div>
 
-      {/* 2. Fee Dues / Pay Online (THE INVERTED DARK ACCENT CARD - Consistent in Light & Dark Mode) */}
+      {/* 2. Fee Dues / Pay Online (Inverted Accent Card - Dark with white text in light mode, White with black text in dark mode like Student Management) */}
       <div
         onClick={() => {
           if (totalDue > 0 && !hasPendingFee) onOpenPayModal()
           else onNavigateTab('fees')
         }}
-        className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] bg-[#1a1d2e] dark:bg-[#1e2337] border border-transparent dark:border-indigo-500/30 text-white shadow-xs cursor-pointer hover:border-amber-400/50 transition-colors"
+        className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] border border-transparent cursor-pointer transition-colors"
+        style={{
+          background: 'var(--highlight-bg)',
+          color: 'var(--highlight-fg)',
+          boxShadow: 'var(--highlight-shadow)',
+        }}
       >
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/10 text-amber-400 border border-white/10 shrink-0">
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/10 text-white border border-white/10 dark:bg-black/5 dark:text-black dark:border-black/10 shrink-0">
           <CreditCard size={18} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-1">
-            <div className="text-[1.125rem] font-bold leading-tight text-white tracking-tight">
+            <div
+              className="text-[1.125rem] font-bold leading-tight tracking-tight"
+              style={{ color: 'var(--highlight-fg)' }}
+            >
               {totalDue > 0 ? `৳${totalDue.toLocaleString()}` : isBn ? '৳০' : '৳0'}
             </div>
             {hasPendingFee ? (
@@ -95,13 +103,16 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
                 {isBn ? 'পরিশোধ' : 'Pay'}
               </button>
             ) : (
-              <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center gap-1 shrink-0">
+              <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 dark:bg-emerald-100 dark:text-emerald-800 flex items-center gap-1 shrink-0">
                 <Check size={9} />
                 {isBn ? 'পরিশোধিত' : 'Paid'}
               </span>
             )}
           </div>
-          <div className="text-[0.6875rem] text-slate-300 dark:text-zinc-300 mt-0.5 truncate">
+          <div
+            className="text-[0.6875rem] mt-0.5 truncate"
+            style={{ color: 'var(--highlight-fg-muted)' }}
+          >
             {isBn ? 'ফি ও অনলাইন পেমেন্ট' : 'Fees & Online Pay'}
           </div>
         </div>

@@ -73,14 +73,24 @@ export const FeesTab = React.memo(function FeesTab({
           </div>
         </div>
 
-        {/* 3. Outstanding Dues (THE INVERTED DARK ACCENT CARD - Consistent Light & Dark Mode) */}
-        <div className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] bg-[#1a1d2e] dark:bg-[#1e2337] border border-transparent dark:border-indigo-500/30 text-white shadow-xs transition-colors shrink-0">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/10 text-amber-400 border border-white/10 shrink-0">
+        {/* 3. Outstanding Dues (Inverted Accent Card - Dark with white text in light mode, White with black text in dark mode like Student Management) */}
+        <div
+          className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] border border-transparent shadow-xs transition-colors shrink-0"
+          style={{
+            background: 'var(--highlight-bg)',
+            color: 'var(--highlight-fg)',
+            boxShadow: 'var(--highlight-shadow)',
+          }}
+        >
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/10 text-white border border-white/10 dark:bg-black/5 dark:text-black dark:border-black/10 shrink-0">
             <CreditCard size={18} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-1">
-              <div className="text-[1.125rem] font-bold leading-tight text-white">
+              <div
+                className="text-[1.125rem] font-bold leading-tight"
+                style={{ color: 'var(--highlight-fg)' }}
+              >
                 ৳{totalDue.toLocaleString()}
               </div>
               {totalDue > 0 && (
@@ -93,7 +103,10 @@ export const FeesTab = React.memo(function FeesTab({
                 </button>
               )}
             </div>
-            <div className="text-[0.6875rem] text-slate-300 dark:text-zinc-300 mt-0.5 truncate">
+            <div
+              className="text-[0.6875rem] mt-0.5 truncate"
+              style={{ color: 'var(--highlight-fg-muted)' }}
+            >
               {isBn ? 'মোট বকেয়া ফি' : 'Outstanding Dues'}
             </div>
           </div>
