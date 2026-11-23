@@ -1,12 +1,8 @@
 import React from 'react'
 import {
-  Shield,
+  Users,
   Phone,
-  User,
-  Heart,
   AlertCircle,
-  Briefcase,
-  CreditCard,
 } from 'lucide-react'
 import type { PortalChild } from '../../types'
 
@@ -20,53 +16,42 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
   isBn,
 }: ProfileGuardianCardProps) {
   return (
-    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+    <div className="bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 sm:p-5 shadow-2xs flex flex-col justify-between">
       <div>
         {/* Card Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-4">
+        <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
-              <Shield size={16} />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-[var(--text-primary)]">
-                {isBn ? 'পিতামাতা ও অভিভাবকের বিবরণ' : 'Parents & Legal Guardian Profile'}
-              </h3>
-              <p className="text-[0.6875rem] text-[var(--text-muted)]">
-                {isBn ? 'পিতা, মাতা ও আইনগত অভিভাবকের তথ্য' : 'Verified parent & guardian contact records'}
-              </p>
-            </div>
+            <Users size={16} className="text-indigo-500" />
+            <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">
+              {isBn ? 'পিতামাতা ও অভিভাবকের বিবরণ' : 'Parents & Legal Guardian Profile'}
+            </h3>
           </div>
-          <span className="px-2 py-0.5 text-[0.625rem] font-bold rounded-md bg-indigo-500/10 text-indigo-500">
+          <span className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)]">
             {isBn ? 'পরিবার' : 'Family'}
           </span>
         </div>
 
-        {/* Father & Mother Sub-Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          {/* Father Box */}
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] font-bold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1">
-                <User size={12} className="text-[var(--brand)]" />
-                <span>{isBn ? 'পিতার বিবরণ' : "Father's Info"}</span>
-              </span>
-            </div>
+        {/* Father & Mother 2-Column Minimal Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+          {/* Father */}
+          <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/40 space-y-1">
+            <span className="text-[0.6875rem] font-bold text-[var(--text-muted)] uppercase tracking-wider block">
+              {isBn ? 'পিতার বিবরণ' : "Father's Details"}
+            </span>
             <p className="text-xs font-bold text-[var(--text-primary)] truncate">
               {child.fatherName || '—'}
             </p>
             {child.fatherOccupation && (
-              <p className="text-[0.6875rem] text-[var(--text-muted)] flex items-center gap-1">
-                <Briefcase size={11} />
-                <span>{child.fatherOccupation}</span>
+              <p className="text-[0.6875rem] text-[var(--text-muted)] truncate">
+                {child.fatherOccupation}
               </p>
             )}
             {child.fatherPhone ? (
               <a
                 href={`tel:${child.fatherPhone}`}
-                className="inline-flex items-center gap-1 text-[0.6875rem] text-[var(--brand)] hover:underline pt-1"
+                className="inline-flex items-center gap-1 text-[0.6875rem] text-[var(--brand)] hover:underline pt-0.5"
               >
-                <Phone size={11} />
+                <Phone size={10} />
                 <span>{child.fatherPhone}</span>
               </a>
             ) : (
@@ -75,36 +60,31 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
               </p>
             )}
             {child.fatherNid && (
-              <p className="text-[0.625rem] text-[var(--text-muted)] flex items-center gap-1 font-mono">
-                <CreditCard size={10} />
-                <span>NID: {child.fatherNid}</span>
+              <p className="text-[0.625rem] text-[var(--text-muted)] font-mono">
+                NID: {child.fatherNid}
               </p>
             )}
           </div>
 
-          {/* Mother Box */}
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)]/50 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[0.6875rem] font-bold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1">
-                <Heart size={12} className="text-rose-500" />
-                <span>{isBn ? 'মাতার বিবরণ' : "Mother's Info"}</span>
-              </span>
-            </div>
+          {/* Mother */}
+          <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)]/40 space-y-1">
+            <span className="text-[0.6875rem] font-bold text-[var(--text-muted)] uppercase tracking-wider block">
+              {isBn ? 'মাতার বিবরণ' : "Mother's Details"}
+            </span>
             <p className="text-xs font-bold text-[var(--text-primary)] truncate">
               {child.motherName || '—'}
             </p>
             {child.motherOccupation && (
-              <p className="text-[0.6875rem] text-[var(--text-muted)] flex items-center gap-1">
-                <Briefcase size={11} />
-                <span>{child.motherOccupation}</span>
+              <p className="text-[0.6875rem] text-[var(--text-muted)] truncate">
+                {child.motherOccupation}
               </p>
             )}
             {child.motherPhone ? (
               <a
                 href={`tel:${child.motherPhone}`}
-                className="inline-flex items-center gap-1 text-[0.6875rem] text-[var(--brand)] hover:underline pt-1"
+                className="inline-flex items-center gap-1 text-[0.6875rem] text-[var(--brand)] hover:underline pt-0.5"
               >
-                <Phone size={11} />
+                <Phone size={10} />
                 <span>{child.motherPhone}</span>
               </a>
             ) : (
@@ -113,27 +93,29 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
               </p>
             )}
             {child.motherNid && (
-              <p className="text-[0.625rem] text-[var(--text-muted)] flex items-center gap-1 font-mono">
-                <CreditCard size={10} />
-                <span>NID: {child.motherNid}</span>
+              <p className="text-[0.625rem] text-[var(--text-muted)] font-mono">
+                NID: {child.motherNid}
               </p>
             )}
           </div>
         </div>
 
-        {/* Legal Guardian Summary Row */}
-        <div className="p-3 rounded-xl border border-[var(--border)]/70 bg-[var(--surface)] text-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[var(--text-muted)] font-medium">
-              {isBn ? 'আইনগত অভিভাবক' : 'Authorized Guardian'}
+        {/* Authorized Guardian Row */}
+        <div className="divide-y divide-[var(--border)]/40 text-xs">
+          <div className="flex items-center justify-between py-2">
+            <span className="text-[var(--text-muted)] font-normal">
+              {isBn ? 'আইনগত অভিভাবক' : 'Legal Guardian'}
             </span>
             <span className="font-semibold text-[var(--text-primary)]">
-              {child.guardianName} ({child.guardianRelation})
+              {child.guardianName} {child.guardianRelation ? `(${child.guardianRelation})` : ''}
             </span>
           </div>
+
           {child.guardianPhone && (
-            <div className="flex items-center justify-between pt-1 border-t border-[var(--border)]/40 text-[0.6875rem]">
-              <span className="text-[var(--text-muted)]">{isBn ? 'অভিভাবকের নম্বর' : 'Guardian Contact'}</span>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-[var(--text-muted)] font-normal">
+                {isBn ? 'অভিভাবকের নম্বর' : 'Guardian Contact'}
+              </span>
               <a href={`tel:${child.guardianPhone}`} className="text-[var(--brand)] font-medium hover:underline">
                 {child.guardianPhone}
               </a>
@@ -142,29 +124,25 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
         </div>
       </div>
 
-      {/* Emergency Contact Highlight Box */}
-      <div className="mt-4 p-3 rounded-xl border border-amber-500/30 bg-amber-500/10 text-xs flex items-center justify-between gap-3 shadow-2xs">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <AlertCircle size={16} />
-          </div>
-          <div className="min-w-0">
-            <p className="font-bold text-[var(--text-primary)] text-xs truncate">
-              {isBn ? 'জরুরি যোগাযোগ নম্বর' : 'Emergency Contact'}
-            </p>
-            <p className="text-[0.6875rem] text-[var(--text-muted)] truncate">
-              {child.emergencyContact || child.guardianPhone || child.fatherPhone || child.motherPhone || '—'}
-            </p>
-          </div>
+      {/* Emergency Contact Minimal Strip */}
+      <div className="mt-4 p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-xs flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <AlertCircle size={14} className="text-amber-500 shrink-0" />
+          <span className="text-[0.6875rem] text-[var(--text-muted)] font-medium">
+            {isBn ? 'জরুরি যোগাযোগ:' : 'Emergency Contact:'}
+          </span>
+          <span className="font-bold text-[var(--text-primary)] truncate font-mono text-xs">
+            {child.emergencyContact || child.guardianPhone || child.fatherPhone || '—'}
+          </span>
         </div>
 
         {(child.emergencyContact || child.guardianPhone || child.fatherPhone) && (
           <a
             href={`tel:${child.emergencyContact || child.guardianPhone || child.fatherPhone}`}
-            className="px-3 py-1.5 rounded-lg bg-amber-500 text-white font-semibold text-xs hover:bg-amber-600 transition-colors flex items-center gap-1.5 shrink-0 shadow-2xs no-underline"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[0.6875rem] font-medium border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors shrink-0"
           >
-            <Phone size={12} />
-            <span>{isBn ? 'জরুরি কল' : 'Call'}</span>
+            <Phone size={10} />
+            <span>{isBn ? 'কল' : 'Call'}</span>
           </a>
         )}
       </div>
