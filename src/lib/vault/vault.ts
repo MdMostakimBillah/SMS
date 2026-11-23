@@ -130,7 +130,7 @@ export function getItemCount(content: string): number {
       return state.length
     }
 
-    // 2. Object with domain arrays (e.g. teachers.json, classes.json, admissions.json, fees.json)
+    // 2. Object with domain arrays (e.g. teachers.json, classes.json, admissions.json, fees.json, library.json, etc.)
     if (typeof state === 'object' && state !== null) {
       let count = 0
       let hasDomainField = false
@@ -171,9 +171,9 @@ export function getItemCount(content: string): number {
         hasDomainField = true
         count += state.payments.length
       }
-      if (Array.isArray(state.waiverEntries)) {
+      if (Array.isArray(state.waiverEntries) || Array.isArray(state.waivers)) {
         hasDomainField = true
-        count += state.waiverEntries.length
+        count += (state.waiverEntries || state.waivers).length
       }
       if (Array.isArray(state.designations)) {
         hasDomainField = true
@@ -215,6 +215,80 @@ export function getItemCount(content: string): number {
         hasDomainField = true
         count += state.rooms.length
       }
+      if (Array.isArray(state.notices)) {
+        hasDomainField = true
+        count += state.notices.length
+      }
+      if (Array.isArray(state.expenses)) {
+        hasDomainField = true
+        count += state.expenses.length
+      }
+      if (Array.isArray(state.books)) {
+        hasDomainField = true
+        count += state.books.length
+      }
+      if (Array.isArray(state.syllabi)) {
+        hasDomainField = true
+        count += state.syllabi.length
+      }
+      if (Array.isArray(state.notifications)) {
+        hasDomainField = true
+        count += state.notifications.length
+      }
+      if (Array.isArray(state.attendance) || (state.attendance && typeof state.attendance === 'object')) {
+        hasDomainField = true
+        if (Array.isArray(state.attendance)) {
+          count += state.attendance.length
+        } else {
+          for (const v of Object.values(state.attendance)) {
+            if (Array.isArray(v)) count += v.length
+            else if (v && typeof v === 'object') {
+              for (const sub of Object.values(v)) {
+                if (Array.isArray(sub)) count += sub.length
+              }
+            }
+          }
+        }
+      }
+      if (Array.isArray(state.examConfigs) || Array.isArray(state.configs)) {
+        hasDomainField = true
+        count += (state.examConfigs || state.configs).length
+      }
+      if (state.studentMarks && typeof state.studentMarks === 'object') {
+        hasDomainField = true
+        for (const v of Object.values(state.studentMarks)) {
+          if (Array.isArray(v)) count += v.length
+          else if (v && typeof v === 'object') count += Object.keys(v).length
+        }
+      }
+      if (Array.isArray(state.submissions)) {
+        hasDomainField = true
+        count += state.submissions.length
+      }
+      if (Array.isArray(state.todos)) {
+        hasDomainField = true
+        count += state.todos.length
+      }
+
+      // Generic scan for any unmapped store domain arrays
+      if (!hasDomainField) {
+        for (const [k, v] of Object.entries(state)) {
+          if (k === 'version' || k === 'institution' || k === 'settings' || k === 'storageSettings' || k === 'serverSynced' || k === 'lastSyncAt') {
+            continue
+          }
+          if (Array.isArray(v)) {
+            hasDomainField = true
+            count += v.length
+          } else if (v && typeof v === 'object') {
+            for (const sub of Object.values(v)) {
+              if (Array.isArray(sub)) {
+                hasDomainField = true
+                count += sub.length
+              }
+            }
+          }
+        }
+      }
 
       if (hasDomainField) {
         return count
@@ -246,6 +320,13 @@ export interface DomainCounts {
   assignments: number
   rooms: number
   notices: number
+  expenses: number
+  books: number
+  syllabi: number
+  notifications: number
+  attendance: number
+  examConfigs: number
+  studentMarks: number
 }
 
 export function extractDomainCounts(text: string, path = ''): DomainCounts {
@@ -268,6 +349,13 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
     assignments: -1,
     rooms: -1,
     notices: -1,
+    expenses: -1,
+    books: -1,
+    syllabi: -1,
+    notifications: -1,
+    attendance: -1,
+    examConfigs: -1,
+    studentMarks: -1,
   }
   if (!text || !text.trim()) return counts
 
@@ -295,6 +383,12 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       else if (base.includes('assignment')) counts.assignments = state.length
       else if (base.includes('room')) counts.rooms = state.length
       else if (base.includes('notice')) counts.notices = state.length
+      else if (base.includes('expense')) counts.expenses = state.length
+      else if (base.includes('book') || base.includes('library')) counts.books = state.length
+      else if (base.includes('syllabus') || base.includes('syllabi')) counts.syllabi = state.length
+      else if (base.includes('notification')) counts.notifications = state.length
+      else if (base.includes('attendance')) counts.attendance = state.length
+      else if (base.includes('exam')) counts.examConfigs = state.length
       return counts
     }
 
@@ -335,6 +429,35 @@ export function extractDomainCounts(text: string, path = ''): DomainCounts {
       if (Array.isArray(state.assignments)) counts.assignments = state.assignments.length
       if (Array.isArray(state.rooms)) counts.rooms = state.rooms.length
       if (Array.isArray(state.notices)) counts.notices = state.notices.length
+      if (Array.isArray(state.expenses)) counts.expenses = state.expenses.length
+      if (Array.isArray(state.books)) counts.books = state.books.length
+      if (Array.isArray(state.syllabi)) counts.syllabi = state.syllabi.length
+      if (Array.isArray(state.notifications)) counts.notifications = state.notifications.length
+      if (Array.isArray(state.attendance) || (state.attendance && typeof state.attendance === 'object')) {
+        let attCount = Array.isArray(state.attendance) ? state.attendance.length : 0
+        if (state.attendance && typeof state.attendance === 'object' && !Array.isArray(state.attendance)) {
+          for (const v of Object.values(state.attendance)) {
+            if (Array.isArray(v)) attCount += v.length
+            else if (v && typeof v === 'object') {
+              for (const sub of Object.values(v)) {
+                if (Array.isArray(sub)) attCount += sub.length
+              }
+            }
+          }
+        }
+        counts.attendance = attCount
+      }
+      if (Array.isArray(state.examConfigs) || Array.isArray(state.configs)) {
+        counts.examConfigs = (state.examConfigs || state.configs).length
+      }
+      if (state.studentMarks && typeof state.studentMarks === 'object') {
+        let markCount = 0
+        for (const v of Object.values(state.studentMarks)) {
+          if (Array.isArray(v)) markCount += v.length
+          else if (v && typeof v === 'object') markCount += Object.keys(v).length
+        }
+        counts.studentMarks = markCount
+      }
     }
   } catch {
     /* ignore parse error */
@@ -421,6 +544,27 @@ export function shouldBlockDomainOverwrite(subPath: string, incomingText: string
   }
   if (diskCounts.notices > 0 && inCounts.notices === 0) {
     return { blocked: true, reason: `notices on disk (${diskCounts.notices}) vs incoming (0)` }
+  }
+  if (diskCounts.expenses > 0 && inCounts.expenses === 0) {
+    return { blocked: true, reason: `expenses on disk (${diskCounts.expenses}) vs incoming (0)` }
+  }
+  if (diskCounts.books > 0 && inCounts.books === 0) {
+    return { blocked: true, reason: `books on disk (${diskCounts.books}) vs incoming (0)` }
+  }
+  if (diskCounts.syllabi > 0 && inCounts.syllabi === 0) {
+    return { blocked: true, reason: `syllabi on disk (${diskCounts.syllabi}) vs incoming (0)` }
+  }
+  if (diskCounts.notifications > 0 && inCounts.notifications === 0) {
+    return { blocked: true, reason: `notifications on disk (${diskCounts.notifications}) vs incoming (0)` }
+  }
+  if (diskCounts.attendance > 0 && inCounts.attendance === 0) {
+    return { blocked: true, reason: `attendance on disk (${diskCounts.attendance}) vs incoming (0)` }
+  }
+  if (diskCounts.examConfigs > 0 && inCounts.examConfigs === 0) {
+    return { blocked: true, reason: `exam configs on disk (${diskCounts.examConfigs}) vs incoming (0)` }
+  }
+  if (diskCounts.studentMarks > 0 && inCounts.studentMarks === 0) {
+    return { blocked: true, reason: `student marks on disk (${diskCounts.studentMarks}) vs incoming (0)` }
   }
 
   const inItemCount = getItemCount(incomingText)
@@ -1023,7 +1167,7 @@ async function writeVaultFile(subPath: string, content: string): Promise<void> {
     const candidatePaths = [subPath, ...getTwinPaths(subPath, slug)]
     for (const candPath of candidatePaths) {
       try {
-        const diskText = fileContentCache.get(candPath) ?? (await readTextFile(handle, candPath))
+        const diskText = await readTextFile(handle, candPath)
         if (diskText !== null) {
           const check = shouldBlockDomainOverwrite(subPath, content, diskText)
           if (check.blocked) {

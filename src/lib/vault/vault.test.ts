@@ -797,6 +797,107 @@ describe('vault — Mode C (local-first browser sync)', () => {
     expect(restored?.state?.teachers[0].nameEn).toBe('Master Teacher')
   })
 
+  it('safeguards expenses, library books, and notices on disk against empty overwrite when browser storage is wiped', async () => {
+    await vaultConnectFolder()
+
+    // 1. Setup disk files for expenses, library, and notices
+    await writeTextFile(
+      pickHandle,
+      'expenses.json',
+      JSON.stringify({
+        state: {
+          expenses: [{ id: 'EXP-001', categoryId: 'CAT-1', amount: 500, description: 'Office Supplies' }],
+          categories: [{ id: 'CAT-1', name: 'Supplies' }],
+        },
+      })
+    )
+    await writeTextFile(
+      pickHandle,
+      'demo/library.json',
+      JSON.stringify({
+        state: {
+          books: [{ id: 'BK-001', title: 'Introduction to Algorithms' }],
+        },
+      })
+    )
+    await writeTextFile(
+      pickHandle,
+      'demo/notices.json',
+      JSON.stringify({
+        state: {
+          notices: [{ id: 'NOT-001', title: 'Annual Sports Day' }],
+        },
+      })
+    )
+
+    // 2. Simulate empty store payload write (like after clearing browser cache/storage)
+    const emptyExpenses = JSON.stringify({ state: { expenses: [], categories: [] } })
+    const emptyLibrary = JSON.stringify({ state: { books: [], members: [] } })
+    const emptyNotices = JSON.stringify({ state: { notices: [] } })
+
+    localStorage.setItem('edutech-expenses_demo', emptyExpenses)
+    notifyVaultWrite('edutech-expenses_demo', emptyExpenses)
+    localStorage.setItem('edutech-library_demo', emptyLibrary)
+    notifyVaultWrite('edutech-library_demo', emptyLibrary)
+    localStorage.setItem('edutech-notices_demo', emptyNotices)
+    notifyVaultWrite('edutech-notices_demo', emptyNotices)
+
+    await flushVaultWrites()
+
+    // 3. Verify disk files were strictly protected and NOT overwritten with empty arrays
+    const expensesDisk = await readTextFile(pickHandle, 'expenses.json')
+    expect(expensesDisk).toContain('Office Supplies')
+
+    const libraryDisk = await readTextFile(pickHandle, 'demo/library.json')
+    expect(libraryDisk).toContain('Introduction to Algorithms')
+
+    const noticesDisk = await readTextFile(pickHandle, 'demo/notices.json')
+    expect(noticesDisk).toContain('Annual Sports Day')
+
+    // 4. Verify localStorage was restored from disk
+    const restoredExpenses = JSON.parse(localStorage.getItem('edutech-expenses_demo') || '{}')
+    expect(restoredExpenses?.state?.expenses).toHaveLength(1)
+  })
+
+  it('queries and reloads manual file edits directly from disk without overwriting user data', async () => {
+    await vaultConnectFolder()
+
+    // 1. Initial file on disk
+    await writeTextFile(
+      pickHandle,
+      'teachers.json',
+      JSON.stringify([{ id: 'ET0001', nameEn: 'Initial Teacher', designation: 'Lecturer' }])
+    )
+
+    await vaultInit()
+    const initialStore = JSON.parse(localStorage.getItem('edutech-teachers_demo') || '{}')
+    expect(initialStore?.state?.teachers[0].nameEn).toBe('Initial Teacher')
+
+    // 2. User manually edits teachers.json in Notepad/VS Code on disk
+    await writeTextFile(
+      pickHandle,
+      'teachers.json',
+      JSON.stringify([
+        { id: 'ET0001', nameEn: 'Manually Edited Teacher', designation: 'Head Professor' },
+        { id: 'ET0002', nameEn: 'New Manual Teacher', designation: 'Instructor' },
+      ])
+    )
+
+    // 3. watchTick runs (triggered automatically on focus or timer)
+    await watchTick()
+
+    // 4. Verify the manual edits were queried directly from the file into the store
+    const updatedStore = JSON.parse(localStorage.getItem('edutech-teachers_demo') || '{}')
+    expect(updatedStore?.state?.teachers).toHaveLength(2)
+    expect(updatedStore?.state?.teachers[0].nameEn).toBe('Manually Edited Teacher')
+    expect(updatedStore?.state?.teachers[1].nameEn).toBe('New Manual Teacher')
+
+    // 5. Verify disk file remains intact with user manual changes
+    const diskContent = await readTextFile(pickHandle, 'teachers.json')
+    expect(diskContent).toContain('Manually Edited Teacher')
+    expect(diskContent).toContain('New Manual Teacher')
+  })
+
   it('disconnects and clears status', async () => {
     await vaultConnectFolder()
     await vaultDisconnect()
