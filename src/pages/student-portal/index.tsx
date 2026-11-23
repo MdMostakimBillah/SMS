@@ -102,8 +102,9 @@ export default function StudentPortalPage() {
   const [showLeaveModal, setShowLeaveModal] = useState(false)
 
   // Real derived data
+  const assignmentVersion = useAssignmentStore((s) => s.assignments.length + s.submissions.length)
   const weeklyRoutine = useMemo(() => (activeStudent ? getStudentWeeklyRoutine(activeStudent) : []), [activeStudent])
-  const homeworkList = useMemo(() => (activeStudent ? getStudentHomework(activeStudent) : []), [activeStudent])
+  const homeworkList = useMemo(() => (activeStudent ? getStudentHomework(activeStudent) : []), [activeStudent, assignmentVersion])
   const [fees, setFees] = useState<StudentFee[]>(() => (activeStudent ? getStudentFees(activeStudent) : []))
 
   // Update fees when active student changes

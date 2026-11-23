@@ -59,6 +59,7 @@ export interface LeaveRequest {
 
 export interface HomeworkItem {
   id: string
+  type?: 'homework' | 'assignment'
   subject: string
   subjectBn: string
   title: string
@@ -71,6 +72,7 @@ export interface HomeworkItem {
   marks?: number
   maxMarks?: number
   feedback?: string
+  attachments?: string[]
 }
 
 export interface ExamResultItem {

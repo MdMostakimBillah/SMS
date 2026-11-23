@@ -6,6 +6,7 @@ import { useAssignmentStore } from '@/store/assignmentStore'
 import { useExamStore } from '@/store/examStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useAttendanceStore } from '@/store/attendanceStore'
+import { matchAssignmentToStudent } from '@/lib/assignmentUtils'
 import { startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns'
 
 export { getStudentWeeklyRoutine } from './routineMapper'
@@ -89,20 +90,10 @@ export function getStudentHomework(student: StudentProfile): StudentHomework[] {
   const submissions = state.submissions || []
   const teachers = useTeacherStore.getState().teachers || []
   const subjects = useTeacherStore.getState().subjects || []
-
-  const sClass = (student.class || '').toLowerCase().trim()
-  const sSec = (student.section || '').toLowerCase().trim()
+  const classes = useClassStore.getState().classes || []
 
   const matched = assignments.filter((a) => {
-    if (!a.classId) return true
-    const aClass = a.classId.toLowerCase().trim()
-    const matchesClass =
-      aClass === sClass ||
-      aClass === `class ${sClass}` ||
-      sClass === `class ${aClass}`
-    if (!matchesClass) return false
-    if (!a.sectionId) return true
-    return a.sectionId.toLowerCase().trim() === sSec
+    return matchAssignmentToStudent(a, student.class, student.section, classes)
   })
 
   return matched.map((a) => {
@@ -112,20 +103,26 @@ export function getStudentHomework(student: StudentProfile): StudentHomework[] {
     const teacher = teachers.find((t) => t.id === a.teacherId)
     const subject = subjects.find((s) => s.id === a.subjectId)
 
+    const isHw = a.type === 'homework'
+    const defaultSubj = isHw ? 'Diary / Homework' : 'Assignment'
+    const defaultSubjBn = isHw ? 'ডায়েরি / গৃহকাজ' : 'অ্যাসাইনমেন্ট'
+
     return {
       id: a.id,
-      subject: subject?.name || a.subjectId || 'General',
-      subjectBn: subject?.nameBn || subject?.name || a.subjectId || 'সাধারণ',
+      type: a.type || 'homework',
+      subject: subject?.name || a.subjectId || defaultSubj,
+      subjectBn: subject?.nameBn || subject?.name || a.subjectId || defaultSubjBn,
       title: a.title,
       titleBn: a.titleBn || a.title,
       assignedDate: a.createdAt?.split('T')[0] || '',
       dueDate: a.dueDate?.split('T')[0] || '',
       teacherName: teacher?.nameEn || teacher?.nameBn || student.classTeacherName || '',
-      description: a.description || '',
+      description: a.description || a.descriptionBn || '',
       status: sub ? (sub.status === 'reviewed' ? 'evaluated' : 'submitted') : 'pending',
       marks: sub?.marks ?? undefined,
       maxMarks: a.maxMarks,
-      feedback: sub?.feedback,
+      feedback: sub?.feedback || sub?.feedbackBn,
+      attachments: a.attachments || [],
       submission: sub ? {
         fileUrl: sub.fileUrl,
         notes: sub.feedbackBn || sub.feedback,

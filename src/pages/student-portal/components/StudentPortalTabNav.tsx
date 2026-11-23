@@ -20,7 +20,7 @@ export const STUDENT_PORTAL_TABS: Array<{
   { id: 'overview', labelEn: 'Overview', labelBn: 'একনজরে', icon: LayoutDashboard },
   { id: 'routine', labelEn: 'Class Routine', labelBn: 'ক্লাস রুটিন', icon: Calendar },
   { id: 'academics', labelEn: 'Results & Grades', labelBn: 'ফলাফল ও গ্রেড', icon: GraduationCap },
-  { id: 'homework', labelEn: 'Homework', labelBn: 'হোমওয়ার্ক', icon: BookOpen },
+  { id: 'homework', labelEn: 'Homework & Diary', labelBn: 'হোমওয়ার্ক ও ডায়েরি', icon: BookOpen },
   { id: 'attendance', labelEn: 'Attendance', labelBn: 'উপস্থিতি', icon: CalendarCheck },
   { id: 'fees', labelEn: 'Fees & Payments', labelBn: 'ফি ও পেমেন্ট', icon: CreditCard },
   { id: 'profile', labelEn: 'My Profile', labelBn: 'আমার প্রোফাইল', icon: UserCheck },

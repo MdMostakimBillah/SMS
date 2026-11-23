@@ -6,6 +6,8 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useNoticeStore } from '@/store/noticeStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useClassStore } from '@/store/classStore'
+import { useAssignmentStore } from '@/store/assignmentStore'
 import { isLocalComputerMode, isLocalServerMode } from '@/lib/storageMode'
 import type { PortalTab, FeeItem, LeaveRequest } from './types'
 import { mapAdmittedStudentsToPortalChildren } from './utils/studentMapper'
@@ -40,6 +42,8 @@ export default function ParentPortalPage() {
   useEffect(() => {
     if (!isLocalPC) {
       void useAdmissionStore.getState().syncFromServer?.()
+      void useClassStore.getState().syncFromServer?.()
+      void useAssignmentStore.getState().syncFromServer?.()
       void useFeeStore.getState().syncFromServer?.()
       void useNoticeStore.getState().syncFromServer?.()
       void useTeacherStore.getState().syncFromServer?.()
@@ -94,6 +98,7 @@ export default function ParentPortalPage() {
   })
 
   const feeStoreVersion = useFeeStore((s) => (s.onlinePaymentRequests || []).length + s.payments.length)
+  const assignmentVersion = useAssignmentStore((s) => s.assignments.length + s.submissions.length)
 
   // Sync fee state whenever active child or fee store changes
   useEffect(() => {
@@ -103,7 +108,7 @@ export default function ParentPortalPage() {
   }, [activeChild?.id, feeStoreVersion])
 
   // Real homework and exam results derived from student assignments and marks
-  const homeworkList = useMemo(() => (activeChild ? getChildHomework(activeChild) : []), [activeChild])
+  const homeworkList = useMemo(() => (activeChild ? getChildHomework(activeChild) : []), [activeChild, assignmentVersion])
   const examResults = useMemo(() => (activeChild ? getChildExamResults(activeChild) : []), [activeChild])
 
   // Modals state

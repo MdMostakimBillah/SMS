@@ -67,6 +67,7 @@ export interface StudentDayRoutine {
 
 export interface StudentHomework {
   id: string
+  type?: 'homework' | 'assignment'
   subject: string
   subjectBn: string
   title: string
@@ -79,6 +80,7 @@ export interface StudentHomework {
   marks?: number
   maxMarks?: number
   feedback?: string
+  attachments?: string[]
   submission?: {
     fileUrl?: string
     notes?: string

@@ -1,7 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { BookOpen, Calendar, Clock, CheckCircle2, FileText, CheckCircle, Search, Filter } from 'lucide-react'
+import {
+  BookOpen,
+  Clock,
+  CheckCircle2,
+  CheckCircle,
+  Search,
+  Filter,
+} from 'lucide-react'
 import type { PortalChild, HomeworkItem } from '../types'
 import { getChildHomework } from '../utils/dataMappers'
+import { useAssignmentStore } from '@/store/assignmentStore'
+import { HomeworkCard } from './homework/HomeworkCard'
 
 interface HomeworkTabProps {
   child: PortalChild
@@ -10,6 +19,7 @@ interface HomeworkTabProps {
 }
 
 type StatusFilter = 'all' | 'pending' | 'submitted' | 'evaluated'
+type TypeFilter = 'all' | 'homework' | 'assignment'
 
 export const HomeworkTab = React.memo(function HomeworkTab({
   child,
@@ -17,6 +27,7 @@ export const HomeworkTab = React.memo(function HomeworkTab({
   isBn,
 }: HomeworkTabProps) {
   const [filter, setFilter] = useState<StatusFilter>('all')
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const realList = useMemo(() => getChildHomework(child), [child])
   const [homeworkList, setHomeworkList] = useState<HomeworkItem[]>(initialList ?? realList)
@@ -29,6 +40,7 @@ export const HomeworkTab = React.memo(function HomeworkTab({
   const filteredList = useMemo(() => {
     return homeworkList.filter((item) => {
       const matchesFilter = filter === 'all' || item.status === filter
+      const matchesType = typeFilter === 'all' || (item.type || 'homework') === typeFilter
       const q = searchQuery.toLowerCase().trim()
       const matchesSearch =
         !q ||
@@ -37,9 +49,9 @@ export const HomeworkTab = React.memo(function HomeworkTab({
         item.title.toLowerCase().includes(q) ||
         item.titleBn.includes(q) ||
         item.teacherName.toLowerCase().includes(q)
-      return matchesFilter && matchesSearch
+      return matchesFilter && matchesType && matchesSearch
     })
-  }, [homeworkList, filter, searchQuery])
+  }, [homeworkList, filter, typeFilter, searchQuery])
 
   // Count summaries
   const stats = useMemo(() => {
@@ -51,6 +63,35 @@ export const HomeworkTab = React.memo(function HomeworkTab({
   }, [homeworkList])
 
   const handleMarkAsDone = (id: string) => {
+    try {
+      const assignmentStore = useAssignmentStore.getState()
+      const existingSub = assignmentStore.submissions.find(
+        (s) => s.assignmentId === id && s.studentId === child.id
+      )
+
+      if (existingSub) {
+        assignmentStore.updateSubmission(existingSub.id, {
+          status: 'submitted',
+          submittedAt: new Date().toISOString(),
+        })
+      } else {
+        assignmentStore.addSubmission({
+          assignmentId: id,
+          studentId: child.id,
+          studentName: child.nameEn,
+          studentNameBn: child.nameBn || child.nameEn,
+          submittedAt: new Date().toISOString(),
+          fileUrl: '',
+          marks: null,
+          feedback: isBn ? 'অভিভাবক কর্তৃক সম্পন্ন হিসেবে চিহ্নিত' : 'Marked completed by parent',
+          feedbackBn: isBn ? 'অভিভাবক কর্তৃক সম্পন্ন হিসেবে চিহ্নিত' : 'Marked completed by parent',
+          status: 'submitted',
+        })
+      }
+    } catch {
+      /* ignore */
+    }
+
     setHomeworkList((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, status: 'submitted' as const } : item
@@ -59,12 +100,12 @@ export const HomeworkTab = React.memo(function HomeworkTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Top Banner & Quick Counts */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
         {(
           [
-            { id: 'all', labelBn: 'মোট হোমওয়ার্ক', labelEn: 'Total Homework', count: stats.total, icon: <BookOpen size={16} /> },
+            { id: 'all', labelBn: 'মোট কাজ ও ডায়েরি', labelEn: 'Total Tasks & Diary', count: stats.total, icon: <BookOpen size={16} /> },
             { id: 'pending', labelBn: 'বাকি রয়েছে', labelEn: 'Pending / Due', count: stats.pending, icon: <Clock size={16} /> },
             { id: 'submitted', labelBn: 'জমা দেওয়া', labelEn: 'Submitted', count: stats.submitted, icon: <CheckCircle size={16} /> },
             { id: 'evaluated', labelBn: 'মূল্যায়িত', labelEn: 'Evaluated', count: stats.evaluated, icon: <CheckCircle2 size={16} /> },
@@ -73,22 +114,22 @@ export const HomeworkTab = React.memo(function HomeworkTab({
           <div
             key={item.id}
             onClick={() => setFilter(item.id)}
-            className={`flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] bg-[var(--surface)] border cursor-pointer transition-all ${
+            className={`flex items-center gap-2.5 sm:gap-3 p-3 sm:p-[0.875rem_1rem] rounded-[0.625rem] bg-[var(--surface)] border cursor-pointer transition-all ${
               filter === item.id ? 'border-[var(--brand)] shadow-sm' : 'border-[var(--border)] shadow-xs'
             }`}
           >
             <div
-              className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${
+              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-md flex items-center justify-center shrink-0 ${
                 filter === item.id ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--brand)]'
               }`}
             >
               {item.icon}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight">
+              <div className="text-[1rem] sm:text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight">
                 {item.count}
               </div>
-              <div className="text-[0.6875rem] text-[var(--text-secondary)] truncate">
+              <div className="text-[0.625rem] sm:text-[0.6875rem] text-[var(--text-secondary)] truncate">
                 {isBn ? item.labelBn : item.labelEn}
               </div>
             </div>
@@ -97,42 +138,38 @@ export const HomeworkTab = React.memo(function HomeworkTab({
       </div>
 
       {/* Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[var(--surface)] p-2.5 rounded-xl border border-[var(--border)]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-[var(--surface)] p-2.5 rounded-xl border border-[var(--border)]">
         <div className="relative flex-1">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isBn ? 'বিষয়, শিরোনাম বা শিক্ষকের নামে অনুসন্ধান করুন...' : 'Search by subject, title or teacher...'}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-hidden focus:ring-1 focus:ring-[var(--brand)]"
+            placeholder={isBn ? 'বিষয়, শিরোনাম বা শিক্ষকের নামে খুঁজুন...' : 'Search by subject, title or teacher...'}
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-hidden focus:border-[var(--brand)]"
           />
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <Filter className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 ml-1" />
-          {(['all', 'pending', 'submitted', 'evaluated'] as const).map((tab) => {
-            const labels: Record<StatusFilter, { bn: string; en: string }> = {
-              all: { bn: 'সবগুলো', en: 'All' },
-              pending: { bn: 'বাকি', en: 'Pending' },
-              submitted: { bn: 'জমা দেওয়া', en: 'Submitted' },
-              evaluated: { bn: 'মূল্যায়িত', en: 'Evaluated' },
-            }
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setFilter(tab)}
-                className={`px-3 py-1 text-xs font-medium rounded-lg whitespace-nowrap transition-colors cursor-pointer border-none ${
-                  filter === tab
-                    ? 'bg-[var(--brand)] text-white'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
-                }`}
-              >
-                {isBn ? labels[tab].bn : labels[tab].en}
-              </button>
-            )
-          })}
+          {(['all', 'homework', 'assignment'] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTypeFilter(t)}
+              className={`px-2.5 py-1 text-[0.6875rem] font-medium rounded-lg whitespace-nowrap transition-colors cursor-pointer border-none ${
+                typeFilter === t
+                  ? 'bg-[var(--brand)] text-white shadow-2xs font-semibold'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
+              }`}
+            >
+              {t === 'all'
+                ? isBn ? 'সকল ধরণ' : 'All Types'
+                : t === 'homework'
+                ? isBn ? 'ডায়েরি ও গৃহকাজ' : 'Diary & Homework'
+                : isBn ? 'অ্যাসাইনমেন্ট' : 'Assignments'}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -141,115 +178,24 @@ export const HomeworkTab = React.memo(function HomeworkTab({
         {filteredList.length === 0 ? (
           <div className="text-center py-12 bg-[var(--surface)] rounded-xl border border-[var(--border)]">
             <BookOpen className="w-8 h-8 mx-auto text-[var(--text-muted)] mb-2" />
-            <p className="text-xs font-medium text-[var(--text-secondary)]">
-              {isBn ? 'কোনো হোমওয়ার্ক পাওয়া যায়নি' : 'No homework assignments found'}
+            <p className="text-xs font-semibold text-[var(--text-primary)]">
+              {isBn ? 'কোনো হোমওয়ার্ক বা ডায়েরি পাওয়া যায়নি' : 'No homework or diary tasks found'}
+            </p>
+            <p className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
+              {isBn
+                ? 'শিক্ষক বা প্রতিষ্ঠান অ্যাডমিন থেকে অ্যাসাইনমেন্ট প্রকাশ করা হলে এখানে দেখা যাবে।'
+                : 'Assignments and daily diary published by teachers will appear here.'}
             </p>
           </div>
         ) : (
-          filteredList.map((item) => {
-            const isPending = item.status === 'pending'
-            const isSubmitted = item.status === 'submitted'
-            const isEvaluated = item.status === 'evaluated'
-
-            return (
-              <div
-                key={item.id}
-                className="bg-[var(--surface)] rounded-xl border border-[var(--border)] hover:border-gray-400 transition-all p-4 shadow-xs"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2.5">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <span className="px-2 py-0.5 text-xs font-semibold rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)]">
-                        {isBn ? item.subjectBn : item.subject}
-                      </span>
-
-                      {isPending && (
-                        <span className="px-2 py-0.5 text-[0.6875rem] font-medium rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-[var(--text-muted)]" />
-                          {isBn ? 'বাকি' : 'Pending'}
-                        </span>
-                      )}
-                      {isSubmitted && (
-                        <span className="px-2 py-0.5 text-[0.6875rem] font-medium rounded border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3 text-[var(--text-muted)]" />
-                          {isBn ? 'জমা দেওয়া' : 'Submitted'}
-                        </span>
-                      )}
-                      {isEvaluated && (
-                        <span className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded border border-[var(--brand)]/30 bg-[var(--brand)]/10 text-[var(--brand)] flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
-                          {isBn ? 'মূল্যায়িত' : 'Evaluated'}
-                        </span>
-                      )}
-                    </div>
-
-                    <h4 className="text-sm font-bold text-[var(--text-primary)]">
-                      {isBn ? item.titleBn : item.title}
-                    </h4>
-                  </div>
-
-                  {/* Submission Marks or Action */}
-                  <div className="shrink-0 flex items-center gap-2">
-                    {isEvaluated && item.marks !== undefined && (
-                      <div className="text-right">
-                        <div className="text-[0.6875rem] text-[var(--text-muted)]">
-                          {isBn ? 'প্রাপ্ত নম্বর' : 'Score'}
-                        </div>
-                        <div className="text-sm font-bold text-[var(--text-primary)]">
-                          {item.marks} / {item.maxMarks}
-                        </div>
-                      </div>
-                    )}
-                    {isPending && (
-                      <button
-                        type="button"
-                        onClick={() => handleMarkAsDone(item.id)}
-                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--brand)] hover:opacity-90 text-white transition-opacity shadow-xs flex items-center gap-1.5 cursor-pointer border-none"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{isBn ? 'সম্পন্ন চিহ্নিত করুন' : 'Mark Completed'}</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Description Body */}
-                <p className="text-xs text-[var(--text-secondary)] mb-3 leading-relaxed">
-                  {item.description}
-                </p>
-
-                {/* Teacher feedback if evaluated */}
-                {isEvaluated && item.feedback && (
-                  <div className="mb-3 p-2.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-xs text-[var(--text-primary)] flex items-start gap-2">
-                    <FileText className="w-4 h-4 text-[var(--brand)] shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-semibold">{isBn ? 'শিক্ষকের মন্তব্য: ' : "Teacher's Feedback: "}</span>
-                      {item.feedback}
-                    </div>
-                  </div>
-                )}
-
-                {/* Footer Dates & Teacher */}
-                <div className="flex flex-wrap items-center justify-between text-[0.6875rem] text-[var(--text-muted)] pt-2 border-t border-[var(--border)] gap-2">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      {isBn ? 'বরাদ্দ:' : 'Assigned:'} {item.assignedDate}
-                    </span>
-                    <span className="flex items-center gap-1 font-medium text-[var(--text-primary)]">
-                      <Clock className="w-3 h-3" />
-                      {isBn ? 'শেষ তারিখ:' : 'Due:'} {item.dueDate}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span>{isBn ? 'শিক্ষক: ' : 'Teacher: '}</span>
-                    <span className="font-medium text-[var(--text-secondary)]">{item.teacherName}</span>
-                  </div>
-                </div>
-              </div>
-            )
-          })
+          filteredList.map((item) => (
+            <HomeworkCard
+              key={item.id}
+              item={item}
+              onMarkAsDone={handleMarkAsDone}
+              isBn={isBn}
+            />
+          ))
         )}
       </div>
     </div>

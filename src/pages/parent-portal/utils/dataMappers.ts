@@ -4,10 +4,12 @@ import { useAssignmentStore } from '@/store/assignmentStore'
 import { useExamStore } from '@/store/examStore'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useClassStore } from '@/store/classStore'
+import { matchAssignmentToStudent } from '@/lib/assignmentUtils'
 
 /**
- * Derives homework and assignments assigned to the student's class & section.
- * Returns empty array if none exist in the system (no mock data).
+ * Derives homework, diary, and assignments assigned to the student's class & section
+ * directly from the institution admin assignment page / useAssignmentStore.
  */
 export function getChildHomework(child: PortalChild): HomeworkItem[] {
   if (!child || !child.id) return []
@@ -17,21 +19,10 @@ export function getChildHomework(child: PortalChild): HomeworkItem[] {
   const submissions = state.submissions || []
   const teachers = useTeacherStore.getState().teachers || []
   const subjects = useTeacherStore.getState().subjects || []
-
-  const childClassName = (child.class || '').toLowerCase().trim()
-  const childSection = (child.section || '').toLowerCase().trim()
+  const classes = useClassStore.getState().classes || []
 
   const matched = assignments.filter((a) => {
-    if (!a.classId) return true
-    const aClass = a.classId.toLowerCase().trim()
-    const matchesClass =
-      aClass === childClassName ||
-      aClass === `class ${childClassName}` ||
-      childClassName === `class ${aClass}`
-
-    if (!matchesClass) return false
-    if (!a.sectionId) return true
-    return a.sectionId.toLowerCase().trim() === childSection
+    return matchAssignmentToStudent(a, child.class, child.section, classes)
   })
 
   return matched.map((a) => {
@@ -41,20 +32,26 @@ export function getChildHomework(child: PortalChild): HomeworkItem[] {
     const teacher = teachers.find((t) => t.id === a.teacherId)
     const subject = subjects.find((s) => s.id === a.subjectId)
 
+    const isHw = a.type === 'homework'
+    const defaultSubj = isHw ? 'Diary / Homework' : 'Assignment'
+    const defaultSubjBn = isHw ? 'ডায়েরি / গৃহকাজ' : 'অ্যাসাইনমেন্ট'
+
     return {
       id: a.id,
-      subject: subject?.name || a.subjectId || 'General',
-      subjectBn: subject?.nameBn || subject?.name || a.subjectId || 'সাধারণ',
+      type: a.type || 'homework',
+      subject: subject?.name || a.subjectId || defaultSubj,
+      subjectBn: subject?.nameBn || subject?.name || a.subjectId || defaultSubjBn,
       title: a.title,
       titleBn: a.titleBn || a.title,
       assignedDate: a.createdAt?.split('T')[0] || '',
       dueDate: a.dueDate?.split('T')[0] || '',
       teacherName: teacher?.nameEn || teacher?.nameBn || child.classTeacherName || '',
-      description: a.description || '',
+      description: a.description || a.descriptionBn || '',
       status: sub ? (sub.status === 'reviewed' ? 'evaluated' : 'submitted') : 'pending',
       marks: sub?.marks ?? undefined,
       maxMarks: a.maxMarks,
-      feedback: sub?.feedback,
+      feedback: sub?.feedback || sub?.feedbackBn,
+      attachments: a.attachments || [],
     }
   })
 }

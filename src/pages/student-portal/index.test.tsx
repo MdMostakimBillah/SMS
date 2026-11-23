@@ -236,7 +236,7 @@ describe('StudentPortalPage', () => {
     // Switch to Homework tab
     const homeworkTabBtn = screen.getByRole('button', { name: /Homework/i })
     await user.click(homeworkTabBtn)
-    expect(screen.getByText(/Homework & Class Assignments/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Homework & Diary/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Algebra Exercise 3.2')).toBeInTheDocument()
 
     // Switch to Attendance tab

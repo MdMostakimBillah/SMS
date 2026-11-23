@@ -7,6 +7,7 @@ import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useTeacherStore } from '@/store/teacherStore'
+import { useAssignmentStore } from '@/store/assignmentStore'
 
 describe('ParentPortalPage', () => {
   beforeEach(() => {
@@ -16,6 +17,7 @@ describe('ParentPortalPage', () => {
     useClassStore.persist.clearStorage()
     useFeeStore.persist.clearStorage()
     useTeacherStore.persist.clearStorage()
+    useAssignmentStore.persist.clearStorage()
 
     useTeacherStore.setState({
       teachers: [
@@ -458,5 +460,102 @@ describe('ParentPortalPage', () => {
 
     // Verify actions exist
     expect(screen.getAllByRole('button', { name: /Digital ID Card|ডিজিটাল আইডি কার্ড/i }).length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('renders homework and diary tasks from the institution admin assignment page and persists completion', async () => {
+    const user = userEvent.setup()
+
+    // Setup class and section in classStore matching student's "Class 8" and "A"
+    useClassStore.setState({
+      classes: [
+        {
+          id: 'cls-8',
+          name: 'Class 8',
+          nameBn: '৮ম শ্রেণি',
+          sections: [{ id: 'sec-a', name: 'A', seatQuantity: 40, classTeacherId: 't-1', subjectIds: [] }],
+          subjectIds: ['sub-math'],
+          startTime: '08:00',
+          endTime: '13:30',
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+        },
+      ],
+    })
+
+    // Populate assignmentStore with a homework/diary task and a formal assignment
+    useAssignmentStore.setState({
+      assignments: [
+        {
+          id: 'ASN-2026-001',
+          type: 'homework',
+          title: 'Mathematics Chapter 3 Exercise 3.2',
+          titleBn: 'গণিত ৩য় অধ্যায় অনুশীলন ৩.২',
+          description: 'Solve questions 1 through 10 in your class diary.',
+          descriptionBn: '',
+          subjectId: 'Mathematics',
+          classId: 'cls-8',
+          sectionId: 'sec-a',
+          teacherId: 't-1',
+          dueDate: '2026-11-30',
+          maxMarks: 0,
+          status: 'active',
+          attachments: ['https://example.com/math-hw.pdf'],
+          createdAt: '2026-11-20',
+          updatedAt: '2026-11-20',
+        },
+        {
+          id: 'ASN-2026-002',
+          type: 'assignment',
+          title: 'Physics Lab Report on Motion',
+          titleBn: 'পদার্থবিজ্ঞান গতি সংক্রান্ত ল্যাব রিপোর্ট',
+          description: 'Submit written report with observation table.',
+          descriptionBn: '',
+          subjectId: 'Physics',
+          classId: 'cls-8',
+          sectionId: 'sec-a',
+          teacherId: 't-1',
+          dueDate: '2026-12-05',
+          maxMarks: 25,
+          status: 'active',
+          attachments: [],
+          createdAt: '2026-11-22',
+          updatedAt: '2026-11-22',
+        },
+      ],
+      submissions: [],
+    })
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    // Switch to Homework tab
+    const hwTabBtn = screen.getByRole('button', { name: /Homework|ডায়েরি/i })
+    await user.click(hwTabBtn)
+
+    // Verify both items appear with appropriate badges
+    await waitFor(() => {
+      expect(screen.getByText(/Mathematics Chapter 3 Exercise 3.2/i)).toBeInTheDocument()
+      expect(screen.getByText(/Physics Lab Report on Motion/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/ডায়েরি \/ গৃহকাজ|Diary \/ Homework/i).length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByText(/অ্যাসাইনমেন্ট|Assignment/i).length).toBeGreaterThanOrEqual(1)
+    })
+
+    // Verify attachment link exists
+    expect(screen.getByText(/সংযুক্তি #1|Attachment #1/i)).toBeInTheDocument()
+
+    // Mark homework as completed
+    const markDoneBtn = screen.getAllByRole('button', { name: /Mark Completed|সম্পন্ন চিহ্নিত করুন/i })[0]
+    await user.click(markDoneBtn)
+
+    // Verify submission recorded in assignmentStore
+    await waitFor(() => {
+      const submissions = useAssignmentStore.getState().submissions
+      expect(submissions.length).toBe(1)
+      expect(submissions[0].assignmentId).toBe('ASN-2026-001')
+      expect(submissions[0].status).toBe('submitted')
+    })
   })
 })
