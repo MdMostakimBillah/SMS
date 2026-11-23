@@ -113,6 +113,9 @@ export function keyToVaultPath(key: string, fallbackSlug?: string | null): strin
   if (key === 'edutech-notices' || key === 'edutech_notices') {
     return effSlug ? `${effSlug}/notices.json` : 'notices.json'
   }
+  if (key === 'edutech-user-accounts' || key === 'edutech_user_accounts' || key === 'edutech-accounts') {
+    return effSlug ? `${effSlug}/accounts.json` : 'accounts.json'
+  }
   return null
 }
 
@@ -136,6 +139,7 @@ export function vaultPathToKey(
     }
     let storeBase = base
     if (base === 'students') storeBase = 'admissions'
+    else if (base === 'accounts' || base === 'user_accounts' || base === 'credentials' || base === 'user-accounts') storeBase = 'user-accounts'
     else if (base === 'routines' || base === 'sections' || base === 'institution') storeBase = 'classes'
     else if (base === 'staff' || base === 'departments' || base === 'subjects' || base === 'designations') storeBase = 'teachers'
     else if (base === 'fee_structures' || base === 'payments' || base === 'waivers') storeBase = 'fees'
@@ -2258,6 +2262,42 @@ export function normalizeVaultJsonForStore(
       syncError: null,
     }
     return JSON.stringify({ state: finalState, version: existingVersion || 2 })
+  }
+
+  if (key.includes('user-accounts') || key.includes('accounts')) {
+    const inner = (parsed && typeof parsed === 'object' && parsed.state) ? parsed.state : parsed
+    const rawAccounts = Array.isArray(inner)
+      ? inner
+      : (Array.isArray(inner?.accounts) ? inner.accounts : [])
+
+    const normalized = rawAccounts.map((a: any, idx: number) => ({
+      id: String(a.id || `acc-${Date.now()}-${idx}`).trim(),
+      schoolId: String(a.schoolId || '').trim(),
+      schoolName: String(a.schoolName || '').trim(),
+      role: (a.role === 'parent' ? 'parent' : 'student') as 'student' | 'parent',
+      studentId: String(a.studentId || '').trim(),
+      studentNameEn: String(a.studentNameEn || a.nameEn || '').trim(),
+      studentNameBn: String(a.studentNameBn || a.nameBn || '').trim(),
+      guardianName: a.guardianName ? String(a.guardianName).trim() : undefined,
+      guardianRelation: a.guardianRelation ? String(a.guardianRelation).trim() : undefined,
+      class: String(a.class || '').trim(),
+      section: String(a.section || '').trim(),
+      roll: String(a.roll || '').trim(),
+      username: String(a.username || a.studentId || '').trim(),
+      password: String(a.password || '123456').trim(),
+      phone: String(a.phone || '').trim(),
+      email: String(a.email || '').trim(),
+      status: (a.status === 'locked' ? 'locked' : a.status === 'pending' ? 'pending' : 'active') as 'active' | 'locked' | 'pending',
+      createdAt: String(a.createdAt || new Date().toISOString().split('T')[0]),
+      updatedAt: String(a.updatedAt || new Date().toISOString().split('T')[0]),
+      lastLogin: a.lastLogin ? String(a.lastLogin) : undefined,
+    }))
+
+    const finalState = {
+      ...existingState,
+      accounts: normalized,
+    }
+    return JSON.stringify({ state: finalState, version: existingVersion || 1 })
   }
 
   // Fallback generic handler: ensure state wrapper exists

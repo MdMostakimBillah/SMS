@@ -5,7 +5,7 @@ import {
   Users, GraduationCap, Calendar, Mail, Phone, Globe,
   MapPin, CheckCircle, XCircle, Pause, Clock, Crown,
   CreditCard, Shield, Trash2, ExternalLink, Lock, Copy, Check, Plus, HardDrive,
-  Cloud, Laptop, Server, Database,
+  Cloud, Laptop, Server, Database, KeyRound,
 } from 'lucide-react'
 import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionStatus } from '@/store/superAdminStore'
 import { useClassStore, generateLightColors, generateDarkColors } from '@/store/classStore'
@@ -103,6 +103,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
   onOpen: () => void
   onManageLicense: () => void
 }) {
+  const navigate = useNavigate()
   const status = statusConfig(inst.status, isBn)
   const isExpired = inst.expiresAt ? new Date(inst.expiresAt).getTime() < Date.now() : false
   const daysRemaining = inst.expiresAt ? Math.ceil((new Date(inst.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
@@ -275,6 +276,17 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
             >
               <Shield size={13} className="text-[var(--brand)]" />
               {isBn ? 'লাইসেন্স' : 'License'}
+            </button>
+            <button
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[0.75rem] font-semibold bg-[var(--surface)] hover:bg-[var(--surface-2)] text-[var(--text-primary)] border border-[var(--border)] transition-all cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate(`/super-admin/accounts?school=${inst.id}`)
+              }}
+              title={isBn ? 'শিক্ষার্থী ও অভিভাবক অ্যাকাউন্ট নিয়ন্ত্রণ' : 'Manage Student & Parent Credentials'}
+            >
+              <KeyRound size={13} className="text-purple-500" />
+              {isBn ? 'অ্যাকাউন্টস' : 'Accounts'}
             </button>
             {!isSystemAccount && (
               <button

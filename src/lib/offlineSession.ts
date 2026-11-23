@@ -11,6 +11,7 @@ export interface OfflineUser {
   school?: any
   staffId?: string
   photo?: string | null
+  studentId?: string
 }
 
 export interface OfflineSessionData {

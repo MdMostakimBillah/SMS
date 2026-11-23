@@ -12,6 +12,7 @@ export interface SuperAdminRoute {
 
 export const SUPER_ADMIN_ROUTES: SuperAdminRoute[] = [
   { id: 'account', path: '/super-admin/account', label: 'Account', labelBn: 'অ্যাকাউন্ট', icon: 'lock', color: '#6366f1', desc: 'Email & password', descBn: 'ইমেইল ও পাসওয়ার্ড', functional: true },
+  { id: 'accounts', path: '/super-admin/accounts', label: 'User Accounts', labelBn: 'শিক্ষার্থী ও অভিভাবক', icon: 'key-round', color: '#8b5cf6', desc: 'Student & Parent Credentials', descBn: 'ইউজারনেম ও পাসওয়ার্ড ব্যবস্থাপনা', functional: true },
   { id: 'schools', path: '/super-admin/schools', label: 'Schools', labelBn: 'স্কুল', icon: 'building-2', color: '#14b8a6', desc: 'Registered', descBn: 'নিবন্ধিত', functional: true },
   { id: 'requests', path: '/super-admin/requests', label: 'Requests', labelBn: 'অনুরোধ', icon: 'users', color: '#f59e0b', desc: 'Pending', descBn: 'পেন্ডিং', functional: false },
   { id: 'subscriptions', path: '/super-admin/subscriptions', label: 'Packages', labelBn: 'প্যাকেজ', icon: 'credit-card', color: '#ec4899', desc: 'Subscriptions & System Packages', descBn: 'সাবস্ক্রিপশন ও সিস্টেম প্যাকেজ', functional: true },

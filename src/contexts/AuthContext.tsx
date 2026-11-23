@@ -5,6 +5,7 @@ import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, gen
 import { useAppStore } from '@/store/appStore'
 import { applyThemeColors } from '@/hooks/useThemeColors'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useUserAccountStore } from '@/store/userAccountStore'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import {
   saveOfflineSession,
@@ -478,6 +479,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       return userObj
     } catch (err) {
+      // Local/offline credential fallback for student & parent accounts
+      const matchedAccount = useUserAccountStore.getState().findAccount(email)
+      if (matchedAccount && matchedAccount.password === password) {
+        if (matchedAccount.status === 'locked') {
+          const lockMsg = 'This account has been locked. Please contact your institution.'
+          setError(lockMsg)
+          throw new Error(lockMsg)
+        }
+        const userObj: User = {
+          id: matchedAccount.id,
+          email: matchedAccount.email || `${matchedAccount.username}@portal.local`,
+          name:
+            matchedAccount.role === 'student'
+              ? matchedAccount.studentNameBn || matchedAccount.studentNameEn
+              : matchedAccount.guardianName || 'Guardian',
+          role: matchedAccount.role,
+          schoolId: matchedAccount.schoolId,
+          schoolName: matchedAccount.schoolName,
+          avatar: null,
+          subdomain: matchedAccount.schoolId,
+          schoolDomain: matchedAccount.schoolId,
+          staffId: undefined,
+          photo: null,
+          studentId: matchedAccount.studentId,
+        }
+        setUser(userObj)
+        setSessionSource('offline_cache')
+        loginTimestampRef.current = Date.now()
+        setUserId(userObj.email)
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem('edutech_user_role', userObj.role)
+        }
+        clearLoginAttempts()
+        saveOfflineSession({
+          user: userObj,
+          savedAt: Date.now(),
+          slug: matchedAccount.schoolId,
+          role: userObj.role,
+        })
+        return userObj
+      }
+
       const msg = applyError(err, 'Invalid credentials', setLockoutState)
       setError(msg)
       throw err

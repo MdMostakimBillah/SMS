@@ -64,6 +64,7 @@ const NotificationsPage = lazyWithRetry(() => import('@/pages/notifications'))
 const ParentPortalPage = lazyWithRetry(() => import('@/pages/parent-portal'))
 const StudentPortalPage = lazyWithRetry(() => import('@/pages/student-portal'))
 const SuperAdminPaymentsPage = lazyWithRetry(() => import('@/pages/super-admin/PaymentsPage'))
+const SuperAdminAccountsPage = lazyWithRetry(() => import('@/pages/super-admin/accounts'))
 const SettingsPage = lazyWithRetry(() => import('@/pages/settings'))
 
 function P({ name }: { name: string }) {
@@ -221,6 +222,7 @@ function AppContent() {
             <Route path="/super-admin/admin/payments" element={<F><SuperAdminPaymentsPage isBn={false} /></F>} />
             <Route path="/super-admin/admin/parent-portal" element={<F><ParentPortalPage /></F>} />
             <Route path="/super-admin/admin/student-portal" element={<F><StudentPortalPage /></F>} />
+            <Route path="/super-admin/admin/accounts" element={<F><SuperAdminAccountsPage isBn={false} /></F>} />
             <Route path="/super-admin/admin/analytics" element={<P name="Analytics" />} />
             <Route path="/super-admin/admin/reports" element={<P name="Reports" />} />
             <Route path="/super-admin/admin/settings" element={<F><SettingsPage /></F>} />
@@ -273,6 +275,7 @@ function AppContent() {
             <Route path="/super-admin/viewing/:role/notifications" element={<F><NotificationsPage /></F>} />
             <Route path="/super-admin/viewing/:role/parent-portal" element={<F><ParentPortalPage /></F>} />
             <Route path="/super-admin/viewing/:role/student-portal" element={<F><StudentPortalPage /></F>} />
+            <Route path="/super-admin/viewing/:role/accounts" element={<F><SuperAdminAccountsPage isBn={false} /></F>} />
             <Route path="/super-admin/viewing/:role/analytics" element={<P name="Analytics" />} />
             <Route path="/super-admin/viewing/:role/reports" element={<P name="Reports" />} />
             <Route path="/super-admin/viewing/:role/settings" element={<F><SettingsPage /></F>} />

@@ -434,6 +434,18 @@ export default function InstitutionLogin({ subdomain, institution: propInstituti
         return
       }
 
+      if (userRole === 'student') {
+        navigate(`/i/${targetSlug}/student/student-portal`)
+        setLoading(false)
+        return
+      }
+
+      if (userRole === 'parent' || userRole === 'guardian') {
+        navigate(`/i/${targetSlug}/parent/parent-portal`)
+        setLoading(false)
+        return
+      }
+
       navigate(`/i/${targetSlug}/${targetRole}/dashboard`)
       setLoading(false)
     } catch (err: any) {

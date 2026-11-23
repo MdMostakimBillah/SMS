@@ -16,9 +16,11 @@ import CreateSchool from './CreateSchool'
 import SMSPage from './SMSPage'
 import PackagesPage from './PackagesPage'
 import PaymentsPage from './PaymentsPage'
+import SuperAdminAccountsPage from './accounts'
 
 const iconMap: Record<string, React.ReactNode> = {
   lock: <Lock size={20} />,
+  'key-round': <KeyRound size={20} />,
   'building-2': <Building2 size={20} />,
   users: <Users size={20} />,
   'credit-card': <CreditCard size={20} />,
@@ -32,6 +34,7 @@ const iconMap: Record<string, React.ReactNode> = {
 
 const iconMapLg: Record<string, React.ReactNode> = {
   lock: <Lock size={28} />,
+  'key-round': <KeyRound size={28} />,
   'building-2': <Building2 size={28} />,
   users: <Users size={28} />,
   'credit-card': <CreditCard size={28} />,
@@ -121,6 +124,8 @@ export default function SuperAdminPage() {
 
       {currentPage === 'account' && <AccountSettings isBn={isBn} />}
 
+      {currentPage === 'accounts' && <SuperAdminAccountsPage isBn={isBn} />}
+
       {currentPage === 'schools' && <SchoolsPage isBn={isBn} />}
 
       {currentPage === 'add-school' && <CreateSchool />}
@@ -131,7 +136,7 @@ export default function SuperAdminPage() {
 
       {currentPage === 'payments' && <PaymentsPage isBn={isBn} />}
 
-      {currentPage !== 'home' && currentPage !== 'account' && currentPage !== 'schools' && currentPage !== 'add-school' && currentPage !== 'sms' && currentPage !== 'subscriptions' && currentPage !== 'payments' && (() => {
+      {currentPage !== 'home' && currentPage !== 'account' && currentPage !== 'accounts' && currentPage !== 'schools' && currentPage !== 'add-school' && currentPage !== 'sms' && currentPage !== 'subscriptions' && currentPage !== 'payments' && (() => {
         const route = SUPER_ADMIN_ROUTES.find((r) => r.id === currentPage)
         if (!route) return null
         return <Placeholder title={isBn ? route.labelBn : route.label} icon={iconMapLg[route.icon]} color={route.color} isBn={isBn} />
