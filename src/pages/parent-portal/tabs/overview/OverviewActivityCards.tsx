@@ -7,6 +7,9 @@ import {
   ChevronRight,
   Phone,
   Mail,
+  LogIn,
+  LogOut,
+  GraduationCap,
 } from 'lucide-react'
 import type { PortalChild, HomeworkItem } from '../../types'
 import { useNoticeStore } from '@/store/noticeStore'
@@ -49,28 +52,75 @@ export const OverviewActivityCards = React.memo(function OverviewActivityCards({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-              <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'প্রবেশের সময়' : 'In-Time'}</div>
-              <div className="text-[1rem] font-bold text-[var(--text-primary)] mt-1">{punch.inTime}</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                {punch.isPresent ? (isBn ? 'উপস্থিত লিপিবদ্ধ' : 'Marked Present') : (isBn ? 'লিপিবদ্ধ নয়' : 'Not logged')}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+            {/* 1. In-Time */}
+            <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-between sm:block shadow-2xs">
+              <div className="flex items-center gap-2.5 sm:block">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 sm:mb-2">
+                  <LogIn size={15} />
+                </div>
+                <div>
+                  <div className="text-[0.6875rem] text-[var(--text-muted)] font-medium">
+                    {isBn ? 'প্রবেশের সময়' : 'In-Time'}
+                  </div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] hidden sm:block mt-0.5">
+                    {punch.isPresent ? (isBn ? 'উপস্থিত লিপিবদ্ধ' : 'Marked Present') : (isBn ? 'লিপিবদ্ধ নয়' : 'Not logged')}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right sm:text-left sm:mt-1">
+                <div className="text-[1.0625rem] font-bold text-[var(--text-primary)] leading-tight">{punch.inTime}</div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] sm:hidden mt-0.5">
+                  {punch.isPresent ? (isBn ? 'উপস্থিত' : 'Present') : (isBn ? 'লিপিবদ্ধ নয়' : 'Not logged')}
+                </div>
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-              <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'ছুটির সময়' : 'Exit Time'}</div>
-              <div className="text-[1rem] font-bold text-[var(--text-primary)] mt-1">{punch.outTime}</div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                {punch.outTime !== '—' ? (isBn ? 'প্রস্থান সম্পন্ন' : 'Exit Logged') : (isBn ? 'নিয়মিত কার্যক্রম' : 'Scheduled')}
+
+            {/* 2. Exit Time */}
+            <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-between sm:block shadow-2xs">
+              <div className="flex items-center gap-2.5 sm:block">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 sm:mb-2">
+                  <LogOut size={15} />
+                </div>
+                <div>
+                  <div className="text-[0.6875rem] text-[var(--text-muted)] font-medium">
+                    {isBn ? 'ছুটির সময়' : 'Exit Time'}
+                  </div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] hidden sm:block mt-0.5">
+                    {punch.outTime !== '—' ? (isBn ? 'প্রস্থান সম্পন্ন' : 'Exit Logged') : (isBn ? 'নিয়মিত কার্যক্রম' : 'Scheduled')}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right sm:text-left sm:mt-1">
+                <div className="text-[1.0625rem] font-bold text-[var(--text-primary)] leading-tight">{punch.outTime}</div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] sm:hidden mt-0.5">
+                  {punch.outTime !== '—' ? (isBn ? 'প্রস্থান সম্পন্ন' : 'Exit Logged') : (isBn ? 'নিয়মিত কার্যক্রম' : 'Scheduled')}
+                </div>
               </div>
             </div>
-            <div className="p-3 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]">
-              <div className="text-[0.6875rem] text-[var(--text-muted)]">{isBn ? 'শ্রেণি ও শাখা' : 'Class & Section'}</div>
-              <div className="text-[1rem] font-bold text-[var(--text-primary)] mt-1 truncate">
-                {child.class} ({child.section})
+
+            {/* 3. Class & Section */}
+            <div className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-between sm:block shadow-2xs">
+              <div className="flex items-center gap-2.5 sm:block min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 sm:mb-2">
+                  <GraduationCap size={15} />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[0.6875rem] text-[var(--text-muted)] font-medium">
+                    {isBn ? 'শ্রেণি ও শাখা' : 'Class & Section'}
+                  </div>
+                  <div className="text-[0.625rem] text-[var(--text-muted)] hidden sm:block mt-0.5">
+                    {isBn ? 'রোল:' : 'Roll:'} {child.roll}
+                  </div>
+                </div>
               </div>
-              <div className="text-[0.625rem] text-[var(--text-muted)] mt-0.5">
-                {isBn ? 'রোল:' : 'Roll:'} {child.roll}
+              <div className="text-right sm:text-left sm:mt-1 min-w-0">
+                <div className="text-[1.0625rem] font-bold text-[var(--text-primary)] leading-tight truncate">
+                  {child.class} ({child.section})
+                </div>
+                <div className="text-[0.625rem] text-[var(--text-muted)] sm:hidden mt-0.5">
+                  {isBn ? 'রোল:' : 'Roll:'} {child.roll}
+                </div>
               </div>
             </div>
           </div>

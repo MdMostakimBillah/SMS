@@ -47,7 +47,8 @@ export const StudentPortalTabNav = React.memo(function StudentPortalTabNav({
     <div className="relative glass rounded-xl mb-3 w-full overflow-hidden">
       <div
         ref={stripRef}
-        className="relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] overflow-x-auto scrollbar-hide w-full"
+        className="relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] overflow-x-auto scrollbar-hide w-full touch-pan-x scroll-smooth"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {/* Sliding indicator */}
         <div

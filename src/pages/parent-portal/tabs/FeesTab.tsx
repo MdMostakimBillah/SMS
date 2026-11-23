@@ -73,40 +73,27 @@ export const FeesTab = React.memo(function FeesTab({
           </div>
         </div>
 
-        {/* 3. Outstanding Dues (Inverted Accent Card - Dark with white text in light mode, White with black text in dark mode like Student Management) */}
-        <div
-          className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] border border-transparent shadow-xs transition-colors shrink-0"
-          style={{
-            background: 'var(--highlight-bg)',
-            color: 'var(--highlight-fg)',
-            boxShadow: 'var(--highlight-shadow)',
-          }}
-        >
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/10 text-white border border-white/10 dark:bg-black/5 dark:text-black dark:border-black/10 shrink-0">
+        {/* 3. Outstanding Dues (Amber Accent) */}
+        <div className="flex items-center gap-3 p-[0.875rem_1rem] rounded-[0.625rem] border border-[var(--border)] bg-[var(--surface)] shadow-xs hover:border-amber-500/40 transition-colors">
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
             <CreditCard size={18} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-1">
-              <div
-                className="text-[1.125rem] font-bold leading-tight"
-                style={{ color: 'var(--highlight-fg)' }}
-              >
+              <div className="text-[1.125rem] font-bold leading-tight text-amber-600 dark:text-amber-400">
                 ৳{totalDue.toLocaleString()}
               </div>
               {totalDue > 0 && (
                 <button
                   type="button"
                   onClick={() => onOpenPayModal()}
-                  className="px-2.5 py-0.5 rounded text-[0.6875rem] font-bold bg-amber-400 hover:bg-amber-300 text-slate-900 cursor-pointer border-none shadow-xs transition-colors"
+                  className="px-2.5 py-0.5 rounded text-[0.6875rem] font-bold bg-amber-500 hover:bg-amber-400 text-white cursor-pointer border-none shadow-2xs transition-colors"
                 >
                   {isBn ? 'পরিশোধ' : 'Pay'}
                 </button>
               )}
             </div>
-            <div
-              className="text-[0.6875rem] mt-0.5 truncate"
-              style={{ color: 'var(--highlight-fg-muted)' }}
-            >
+            <div className="text-[0.6875rem] text-[var(--text-secondary)] mt-0.5 truncate">
               {isBn ? 'মোট বকেয়া ফি' : 'Outstanding Dues'}
             </div>
           </div>

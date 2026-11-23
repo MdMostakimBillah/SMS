@@ -93,37 +93,23 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
         </p>
       </div>
 
-      {/* Due Fees (Inverted Accent Card - Dark with white text in light mode, White with black text in dark mode like Student Management) */}
+      {/* Due Fees */}
       <div
         onClick={() => onNavigateTab('fees')}
-        className="rounded-2xl p-4 cursor-pointer transition-all shadow-2xs border border-transparent"
-        style={{
-          background: 'var(--highlight-bg)',
-          color: 'var(--highlight-fg)',
-          boxShadow: 'var(--highlight-shadow)',
-        }}
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-4 cursor-pointer hover:border-amber-500/40 transition-colors shadow-2xs"
       >
         <div className="flex items-center justify-between mb-2">
-          <span
-            className="text-xs font-medium"
-            style={{ color: 'var(--highlight-fg-muted, var(--highlight-fg))', opacity: 0.85 }}
-          >
+          <span className="text-xs text-[var(--text-secondary)] font-medium">
             {isBn ? 'মোট বকেয়া ফি' : 'Outstanding Fees'}
           </span>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 text-white border border-white/10 dark:bg-black/5 dark:text-black dark:border-black/10">
+          <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <CreditCard size={16} />
           </div>
         </div>
-        <div
-          className="text-xl sm:text-2xl font-bold"
-          style={{ color: 'var(--highlight-fg)' }}
-        >
+        <div className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
           ৳{totalDue.toLocaleString()}
         </div>
-        <p
-          className="text-[0.6875rem] mt-1 font-medium truncate"
-          style={{ color: 'var(--highlight-fg-muted, var(--highlight-fg))', opacity: 0.9 }}
-        >
+        <p className="text-[0.6875rem] text-amber-600 dark:text-amber-400 mt-1 font-medium truncate">
           {totalDue > 0 ? (isBn ? 'অনলাইন পেমেন্ট করুন' : 'Pay Online Now') : (isBn ? 'কোনো বকেয়া নেই' : 'Clear Balance')}
         </p>
       </div>

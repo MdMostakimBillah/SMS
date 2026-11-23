@@ -120,7 +120,7 @@ export const StudentPortalHeader = React.memo(function StudentPortalHeader({
         </div>
 
         {/* Right: Storage Badge + Actions */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap lg:justify-end">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap lg:justify-end w-full lg:w-auto pt-3 border-t border-[var(--border)]/70 lg:border-t-0 lg:pt-0">
           {/* Storage Mode Badge */}
           <div
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-colors ${

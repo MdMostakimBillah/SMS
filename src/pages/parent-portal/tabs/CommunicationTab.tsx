@@ -89,11 +89,11 @@ export const CommunicationTab = React.memo(function CommunicationTab({
   return (
     <div className="space-y-4">
       {/* Sub-navigation tabs: Notice Board & Teacher Directory */}
-      <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
+      <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3 overflow-x-auto scrollbar-hide w-full">
         <button
           type="button"
           onClick={() => setActiveSection('notices')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer border-none ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer border-none whitespace-nowrap shrink-0 ${
             activeSection === 'notices'
               ? 'bg-[var(--brand)] text-white shadow-xs'
               : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
@@ -117,7 +117,7 @@ export const CommunicationTab = React.memo(function CommunicationTab({
         <button
           type="button"
           onClick={() => setActiveSection('teachers')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer border-none ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer border-none whitespace-nowrap shrink-0 ${
             activeSection === 'teachers'
               ? 'bg-[var(--brand)] text-white shadow-xs'
               : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'

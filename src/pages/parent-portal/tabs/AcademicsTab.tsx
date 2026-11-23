@@ -102,11 +102,11 @@ export const AcademicsTab = React.memo(function AcademicsTab({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             value={selectedExam}
             onChange={(e) => setSelectedExam(e.target.value)}
-            className="px-3 py-1.5 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer"
+            className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] cursor-pointer"
           >
             {examConfigs.length > 0 ? (
               examConfigs.map((cfg) => (
@@ -123,14 +123,14 @@ export const AcademicsTab = React.memo(function AcademicsTab({
             type="button"
             onClick={handlePrintMarksheet}
             disabled={results.length === 0}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[0.75rem] font-semibold border-none ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[0.75rem] font-semibold border-none ${
               results.length > 0
                 ? 'bg-[var(--brand)] text-white shadow-xs hover:opacity-90 cursor-pointer'
                 : 'bg-[var(--bg-secondary)] text-[var(--text-muted)] cursor-not-allowed opacity-60'
             }`}
           >
             <Printer size={13} />
-            {isBn ? 'মার্কশিট ডাউনলোড' : 'Download Marksheet'}
+            <span className="truncate">{isBn ? 'মার্কশিট ডাউনলোড' : 'Download Marksheet'}</span>
           </button>
         </div>
       </div>

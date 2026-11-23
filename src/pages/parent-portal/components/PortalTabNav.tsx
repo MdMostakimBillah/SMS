@@ -59,7 +59,8 @@ export const PortalTabNav = React.memo(function PortalTabNav({
       <div
         ref={stripRef}
         onScroll={handleStripScroll}
-        className="relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] overflow-x-auto scrollbar-hide w-full"
+        className="relative flex gap-[0.375rem] p-[0.3125rem] rounded-[inherit] overflow-x-auto scrollbar-hide w-full touch-pan-x scroll-smooth"
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {/* HR-Style Sliding indicator */}
         <div
@@ -83,14 +84,14 @@ export const PortalTabNav = React.memo(function PortalTabNav({
               }}
               type="button"
               onClick={() => onSelectTab(tab.id)}
-              className={`relative z-10 flex-1 min-w-max flex items-center justify-center gap-[0.375rem] py-2 px-3 sm:px-4 rounded-[0.5625rem] border-none cursor-pointer text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${
+              className={`relative z-10 flex-1 min-w-max flex items-center justify-center gap-[0.375rem] py-2 px-3 sm:px-3.5 rounded-[0.5625rem] border-none cursor-pointer text-[0.75rem] sm:text-[0.8125rem] font-medium font-[inherit] transition-colors duration-200 whitespace-nowrap ${
                 isActive
-                  ? 'text-white'
+                  ? 'text-white font-semibold'
                   : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
               style={{ background: 'transparent' }}
             >
-              <Icon size={15} />
+              <Icon size={14} className="shrink-0" />
               <span>{isBn ? tab.labelBn : tab.labelEn}</span>
             </button>
           )
