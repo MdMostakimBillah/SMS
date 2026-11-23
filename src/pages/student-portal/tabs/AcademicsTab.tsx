@@ -193,6 +193,22 @@ export const AcademicsTab = React.memo(function AcademicsTab({
           </div>
         )}
       </div>
+
+      {/* Grading Scale Reference */}
+      {results.length > 0 && (
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-3.5 shadow-2xs text-xs">
+          <div className="flex items-center justify-between gap-2 flex-wrap text-[0.6875rem] text-[var(--text-secondary)]">
+            <span className="font-semibold text-[var(--text-primary)]">{isBn ? 'গ্রেডিং স্কেল:' : 'Grading Scale:'}</span>
+            <span>A+ (80-100% • 5.00)</span>
+            <span>A (70-79% • 4.00)</span>
+            <span>A- (60-69% • 3.50)</span>
+            <span>B (50-59% • 3.00)</span>
+            <span>C (40-49% • 2.00)</span>
+            <span>D (33-39% • 1.00)</span>
+            <span className="text-rose-500 font-medium">F (0-32% • 0.00)</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 })

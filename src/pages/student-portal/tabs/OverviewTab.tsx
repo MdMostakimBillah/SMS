@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   BookOpen,
   Calendar,
@@ -8,8 +8,9 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import type { StudentDayRoutine, StudentHomework, StudentFee } from '../types'
-import { useNoticeStore } from '@/store/noticeStore'
+import { useNoticeStore, type Notice } from '@/store/noticeStore'
 import { OverviewKpiCards } from './overview/OverviewKpiCards'
+import { NoticeDetailModal } from '@/pages/parent-portal/tabs/communication/NoticeDetailModal'
 
 interface OverviewTabProps {
   routine: StudentDayRoutine[]
@@ -31,6 +32,7 @@ export const OverviewTab = React.memo(function OverviewTab({
   isBn,
 }: OverviewTabProps) {
   const notices = useNoticeStore((s) => s.notices)
+  const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null)
 
   // Find today's routine
   const todayRoutine = useMemo(() => {
@@ -203,7 +205,8 @@ export const OverviewTab = React.memo(function OverviewTab({
               return (
                 <div
                   key={n.id}
-                  className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-xs space-y-1.5 flex flex-col justify-between"
+                  onClick={() => setSelectedNotice(n)}
+                  className="p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] hover:border-[var(--brand)] text-xs space-y-1.5 flex flex-col justify-between cursor-pointer transition-colors"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-1">
@@ -226,6 +229,14 @@ export const OverviewTab = React.memo(function OverviewTab({
             })}
           </div>
         </div>
+      )}
+      {/* Notice Detail Modal */}
+      {selectedNotice && (
+        <NoticeDetailModal
+          notice={selectedNotice}
+          onClose={() => setSelectedNotice(null)}
+          isBn={isBn}
+        />
       )}
     </div>
   )

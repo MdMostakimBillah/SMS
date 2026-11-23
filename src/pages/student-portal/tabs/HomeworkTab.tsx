@@ -159,9 +159,18 @@ export const HomeworkTab = React.memo(function HomeworkTab({
                       <Upload size={13} />
                       <span>{isBn ? 'জমা দিন' : 'Submit'}</span>
                     </button>
+                  ) : isSubmitted ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenSubmitModal(hw)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--brand)] text-[0.6875rem] font-medium cursor-pointer shrink-0"
+                    >
+                      <Upload size={12} />
+                      <span>{isBn ? 'আপডেট করুন' : 'Edit Submission'}</span>
+                    </button>
                   ) : (
-                    <span className="text-[0.6875rem] text-[var(--text-muted)] font-medium">
-                      {isBn ? 'নথিভুক্ত' : 'Recorded'}
+                    <span className="text-[0.6875rem] text-emerald-600 dark:text-emerald-400 font-medium">
+                      {isBn ? 'মূল্যায়ন সম্পন্ন' : 'Graded'}
                     </span>
                   )}
                 </div>

@@ -13,6 +13,7 @@ import {
   endOfWeek,
   eachDayOfInterval,
   format,
+  isSameDay,
   addMonths,
   subMonths,
 } from 'date-fns'
@@ -37,6 +38,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
   isBn,
 }: AttendanceTabProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectedDay, setSelectedDay] = useState<Date>(new Date())
   const attendance = useAttendanceStore((s) => s.attendance)
 
   // Real stats
@@ -141,6 +143,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
             {calendarDays.map((day, idx) => {
               const status = getDayStatus(day)
               const isCurrMonth = day.getMonth() === currentMonth.getMonth()
+              const isSelected = isSameDay(day, selectedDay)
 
               let bgClass = 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'
               if (status === 'present') bgClass = 'bg-emerald-500 text-white font-bold'
@@ -149,17 +152,69 @@ export const AttendanceTab = React.memo(function AttendanceTab({
               else if (status === 'weekend') bgClass = 'bg-slate-100 dark:bg-slate-800/60 text-slate-400 font-normal'
 
               return (
-                <div
+                <button
                   key={idx}
-                  className={`h-10 rounded-xl flex flex-col items-center justify-center text-xs transition-transform ${
+                  type="button"
+                  onClick={() => setSelectedDay(day)}
+                  className={`h-10 rounded-xl flex flex-col items-center justify-center text-xs transition-all cursor-pointer ${
                     isCurrMonth ? 'opacity-100' : 'opacity-30'
-                  } ${bgClass}`}
+                  } ${bgClass} ${
+                    isSelected ? 'ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-[var(--surface)] scale-105 z-10' : ''
+                  }`}
                 >
                   <span>{format(day, 'd')}</span>
-                </div>
+                </button>
               )
             })}
           </div>
+
+          {/* Selected Day Status Details */}
+          {(() => {
+            const dateKey = format(selectedDay, 'yyyy-MM-dd')
+            const rec = attendance[dateKey]?.[student.id]
+            const status = getDayStatus(selectedDay)
+            const inPunch = rec?.punches?.find((p) => p.type === 'in')
+            const outPunch = rec?.punches?.find((p) => p.type === 'out')
+
+            return (
+              <div className="mt-3 p-2.5 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-semibold text-[var(--text-primary)]">
+                    {format(selectedDay, 'dd MMMM yyyy')}
+                  </span>
+                  <span className="text-[var(--text-secondary)] ml-2">
+                    • {format(selectedDay, 'EEEE')}
+                  </span>
+                </div>
+                <div>
+                  {status === 'present' ? (
+                    <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      {isBn ? 'উপস্থিত' : 'Present'} {inPunch?.time ? `(${inPunch.time}${outPunch?.time ? ` - ${outPunch.time}` : ''})` : ''}
+                    </span>
+                  ) : status === 'absent' ? (
+                    <span className="text-rose-500 font-semibold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
+                      {isBn ? 'অনুপস্থিত' : 'Absent'}
+                    </span>
+                  ) : status === 'leave' ? (
+                    <span className="text-amber-500 font-semibold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      {isBn ? 'অনুমোদিত ছুটি' : 'On Leave'}
+                    </span>
+                  ) : status === 'weekend' ? (
+                    <span className="text-slate-500 font-medium">
+                      {isBn ? 'সাপ্তাহিক ছুটি' : 'Weekend'}
+                    </span>
+                  ) : (
+                    <span className="text-[var(--text-muted)]">
+                      {isBn ? 'কোনো তথ্য নেই' : 'No Record'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Legend */}
           <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-[var(--border)] text-[0.6875rem] text-[var(--text-secondary)] flex-wrap">

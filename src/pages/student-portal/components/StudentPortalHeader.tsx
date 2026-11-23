@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import {
   HardDrive,
   Cloud,
@@ -33,6 +33,18 @@ export const StudentPortalHeader = React.memo(function StudentPortalHeader({
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedClassFilter, setSelectedClassFilter] = useState('all')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!dropdownOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [dropdownOpen])
 
   const classes = useClassStore((s) => s.classes)
 
@@ -151,7 +163,7 @@ export const StudentPortalHeader = React.memo(function StudentPortalHeader({
 
           {/* Admin Student Switcher Dropdown */}
           {isInstitutionAdmin && studentsList.length > 1 && (
-            <div className="relative">
+            <div ref={dropdownRef} className="relative">
               <button
                 type="button"
                 onClick={() => setDropdownOpen(!dropdownOpen)}

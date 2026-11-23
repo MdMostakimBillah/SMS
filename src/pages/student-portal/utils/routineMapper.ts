@@ -43,7 +43,19 @@ export function getStudentWeeklyRoutine(student: StudentProfile): StudentDayRout
   )
 
   const classId = matchedClass?.id || student.class
-  const routine = routines.find((r) => r.classId === classId)
+  const sSec = (student.section || '').toLowerCase().trim()
+  const matchedSection = matchedClass?.sections?.find(
+    (sec) => sec.name.toLowerCase().trim() === sSec || sec.id === student.section
+  )
+  const sectionId = matchedSection?.id || student.section
+
+  // Match section-specific routine first, otherwise match class routine
+  const routine =
+    routines.find(
+      (r) =>
+        r.classId === classId &&
+        (r.sectionId === sectionId || r.sectionId?.toLowerCase() === sSec)
+    ) || routines.find((r) => r.classId === classId)
 
   const defaultDuration = routine?.periodDuration || 40
   const startMins = parseTimeToMinutes(institution?.startTime, 480)

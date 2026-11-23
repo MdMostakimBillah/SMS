@@ -1,9 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   User,
   GraduationCap,
   Users,
   IdCard,
+  Copy,
+  Check,
 } from 'lucide-react'
 import type { StudentProfile } from '../types'
 
@@ -18,6 +20,14 @@ export const ProfileTab = React.memo(function ProfileTab({
   onOpenIdCard,
   isBn,
 }: ProfileTabProps) {
+  const [copiedId, setCopiedId] = useState(false)
+
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(student.id).then(() => {
+      setCopiedId(true)
+      setTimeout(() => setCopiedId(false), 2000)
+    })
+  }
   return (
     <div className="space-y-4">
       {/* Hero Card */}
@@ -45,9 +55,15 @@ export const ProfileTab = React.memo(function ProfileTab({
               {isBn ? 'রোল:' : 'Roll:'} <strong className="text-[var(--text-primary)]">{student.roll}</strong>
             </p>
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className="text-[0.6875rem] font-mono bg-[var(--bg-secondary)] px-2 py-0.5 rounded border border-[var(--border)] text-[var(--brand)]">
-                ID: {student.id}
-              </span>
+              <button
+                type="button"
+                onClick={handleCopyId}
+                className="inline-flex items-center gap-1 text-[0.6875rem] font-mono bg-[var(--bg-secondary)] hover:bg-[var(--surface)] px-2 py-0.5 rounded border border-[var(--border)] text-[var(--brand)] cursor-pointer transition-colors"
+                title={isBn ? 'আইডি কপি করুন' : 'Click to copy ID'}
+              >
+                <span>ID: {student.id}</span>
+                {copiedId ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} className="text-[var(--text-muted)]" />}
+              </button>
               {student.bloodGroup && (
                 <span className="text-[0.6875rem] px-2 py-0.5 rounded bg-rose-50 dark:bg-rose-950/30 text-rose-600 font-semibold border border-rose-200 dark:border-rose-900/40">
                   {student.bloodGroup}
