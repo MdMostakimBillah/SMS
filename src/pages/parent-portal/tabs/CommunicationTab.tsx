@@ -1,111 +1,114 @@
-import React, { useState, useMemo } from 'react'
-import { Bell, User, MessageSquare, CheckCircle2 } from 'lucide-react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { Bell, User } from 'lucide-react'
 import type { PortalChild } from '../types'
 import { useNoticeStore } from '@/store/noticeStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { NoticesSection } from './communication/NoticesSection'
-import { TeachersSection } from './communication/TeachersSection'
-import { MessagesSection, type ParentMessage } from './communication/MessagesSection'
+import { TeachersSection, type TeacherEntry } from './communication/TeachersSection'
 
 interface CommunicationTabProps {
   child: PortalChild
   isBn: boolean
+  initialSection?: 'notices' | 'teachers'
 }
 
 export const CommunicationTab = React.memo(function CommunicationTab({
   child,
   isBn,
+  initialSection = 'notices',
 }: CommunicationTabProps) {
   const notices = useNoticeStore((s) => s.notices)
   const storeTeachers = useTeacherStore((s) => s.teachers) || []
+  const departments = useTeacherStore((s) => s.departments) || []
+  const subjects = useTeacherStore((s) => s.subjects) || []
 
-  const [activeSection, setActiveSection] = useState<'notices' | 'teachers' | 'messages'>('notices')
-  const [msgSubject, setMsgSubject] = useState('')
-  const [msgBody, setMsgBody] = useState('')
-  const [msgRecipient, setMsgRecipient] = useState(child.classTeacherName || '')
-  const [messages, setMessages] = useState<ParentMessage[]>(() => {
-    try {
-      const saved = localStorage.getItem(`edutech_parent_messages_${child.id}`)
-      if (saved) return JSON.parse(saved)
-    } catch { /* ignore */ }
-    return []
-  })
-  const [showSuccessToast, setShowSuccessToast] = useState(false)
+  const [activeSection, setActiveSection] = useState<'notices' | 'teachers'>(initialSection)
 
+  useEffect(() => {
+    if (initialSection) {
+      setActiveSection(initialSection)
+    }
+  }, [initialSection])
+
+  // Institution notices targeted to parents, students, or all (excludes internal-only teacher notices)
   const parentNotices = useMemo(() => {
     return notices
-      .filter((n) => n && n.isActive && (n.target === 'parents' || n.target === 'all'))
-      .slice(0, 10)
+      .filter((n) => n && n.isActive !== false && n.target !== 'teachers')
+      .sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1
+        if (!a.pinned && b.pinned) return 1
+        return new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime()
+      })
   }, [notices])
 
-  const teachers = useMemo(() => {
-    const list = []
+  // Structured teacher entries mapped from teacher store
+  const teachers = useMemo<TeacherEntry[]>(() => {
+    const list: TeacherEntry[] = []
+    const deptMap = new Map(departments.map((d) => [d.id, isBn ? d.nameBn || d.name : d.name]))
+    const subjMap = new Map(subjects.map((s) => [s.id, isBn ? s.nameBn || s.name : s.name]))
+
+    // Class teacher from student record
     if (child.classTeacherName) {
+      const match = storeTeachers.find(
+        (t) => t.nameEn === child.classTeacherName || t.nameBn === child.classTeacherName
+      )
       list.push({
         name: child.classTeacherName,
         roleEn: 'Class Teacher',
         roleBn: 'শ্রেণি শিক্ষক',
-        phone: child.classTeacherPhone || '',
-        email: child.classTeacherEmail || '',
+        phone: child.classTeacherPhone || match?.phone || '',
+        email: child.classTeacherEmail || match?.email || '',
         isClassTeacher: true,
+        department: match?.departmentId ? deptMap.get(match.departmentId) : undefined,
+        subjects: match?.subjectIds ? match.subjectIds.map((id) => subjMap.get(id) || '').filter(Boolean) : undefined,
+        photo: match?.photo,
       })
     }
+
+    // Other teachers
     storeTeachers.forEach((t) => {
-      if (t.nameEn !== child.classTeacherName && t.nameBn !== child.classTeacherName) {
+      const isAlreadyAdded = list.some((item) => item.name === t.nameEn || item.name === t.nameBn)
+      if (!isAlreadyAdded) {
         list.push({
-          name: isBn ? t.nameBn || t.nameEn : t.nameEn,
+          name: isBn ? t.nameBn || t.nameEn : t.nameEn || t.nameBn,
           roleEn: t.designation || 'Subject Teacher',
           roleBn: t.designation || 'বিষয় শিক্ষক',
           phone: t.phone || '',
           email: t.email || '',
           isClassTeacher: false,
+          department: t.departmentId ? deptMap.get(t.departmentId) : undefined,
+          subjects: t.subjectIds ? t.subjectIds.map((id) => subjMap.get(id) || '').filter(Boolean) : undefined,
+          photo: t.photo,
         })
       }
     })
+
     return list
-  }, [child, storeTeachers, isBn])
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!msgSubject.trim() || !msgBody.trim()) return
-
-    const newMsg: ParentMessage = {
-      id: `msg-${Date.now()}`,
-      subject: msgSubject,
-      body: msgBody,
-      recipient: msgRecipient,
-      date:
-        new Date().toLocaleDateString('en-GB') +
-        ' ' +
-        new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'sent',
-    }
-
-    setMessages([newMsg, ...messages])
-    setMsgSubject('')
-    setMsgBody('')
-    setShowSuccessToast(true)
-    setTimeout(() => setShowSuccessToast(false), 4000)
-    setActiveSection('messages')
-  }
+  }, [child, storeTeachers, departments, subjects, isBn])
 
   return (
-    <div className="space-y-6">
-      {/* Sub-navigation pills */}
-      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-3">
+    <div className="space-y-4">
+      {/* Sub-navigation tabs: Notice Board & Teacher Directory */}
+      <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
         <button
           type="button"
           onClick={() => setActiveSection('notices')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer border-none ${
             activeSection === 'notices'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'bg-[var(--brand)] text-white shadow-xs'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
           }`}
         >
           <Bell className="w-3.5 h-3.5" />
           <span>{isBn ? 'নোটিশ বোর্ড' : 'Notice Board'}</span>
           {parentNotices.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 text-[0.625rem] rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+            <span
+              className={`ml-1 px-1.5 py-0.2 text-[0.625rem] rounded-full font-bold ${
+                activeSection === 'notices'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-[var(--brand)]/10 text-[var(--brand)]'
+              }`}
+            >
               {parentNotices.length}
             </span>
           )}
@@ -114,79 +117,35 @@ export const CommunicationTab = React.memo(function CommunicationTab({
         <button
           type="button"
           onClick={() => setActiveSection('teachers')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer border-none ${
             activeSection === 'teachers'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'bg-[var(--brand)] text-white shadow-xs'
+              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
           }`}
         >
           <User className="w-3.5 h-3.5" />
           <span>{isBn ? 'শিক্ষক পরিচিতি ও যোগাযোগ' : 'Teacher Directory'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveSection('messages')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
-            activeSection === 'messages'
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-          }`}
-        >
-          <MessageSquare className="w-3.5 h-3.5" />
-          <span>{isBn ? 'বার্তা ও অনুসন্ধান' : 'Messages & Inquiries'}</span>
+          {teachers.length > 0 && (
+            <span
+              className={`ml-1 px-1.5 py-0.2 text-[0.625rem] rounded-full font-bold ${
+                activeSection === 'teachers'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]'
+              }`}
+            >
+              {teachers.length}
+            </span>
+          )}
         </button>
       </div>
 
-      {showSuccessToast && (
-        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between shadow-2xs">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>
-              {isBn
-                ? 'আপনার বার্তা সফলভাবে শিক্ষকের নিকট পাঠানো হয়েছে।'
-                : 'Your message has been sent successfully to the teacher.'}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowSuccessToast(false)}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
+      {/* Sections */}
       {activeSection === 'notices' && (
         <NoticesSection parentNotices={parentNotices} isBn={isBn} />
       )}
 
       {activeSection === 'teachers' && (
-        <TeachersSection
-          child={child}
-          teachers={teachers}
-          onSelectTeacherForMessage={(tName) => {
-            setMsgRecipient(tName)
-            setActiveSection('messages')
-          }}
-          isBn={isBn}
-        />
-      )}
-
-      {activeSection === 'messages' && (
-        <MessagesSection
-          messages={messages}
-          teachers={teachers}
-          msgSubject={msgSubject}
-          setMsgSubject={setMsgSubject}
-          msgBody={msgBody}
-          setMsgBody={setMsgBody}
-          msgRecipient={msgRecipient}
-          setMsgRecipient={setMsgRecipient}
-          onSendMessage={handleSendMessage}
-          isBn={isBn}
-        />
+        <TeachersSection child={child} teachers={teachers} isBn={isBn} />
       )}
     </div>
   )

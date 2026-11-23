@@ -4,7 +4,7 @@ import {
   GraduationCap,
   CreditCard,
   FileText,
-  MessageSquare,
+  UserCheck,
   Search,
   Cloud,
   Server,
@@ -183,10 +183,10 @@ export const ChildSelector = React.memo(function ChildSelector({
             type="button"
             onClick={handleContactClick}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.75rem] font-medium border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-gray-400 transition-colors cursor-pointer"
-            title={isBn ? 'শ্রেণি শিক্ষককে বার্তা পাঠান' : 'Contact Class Teacher'}
+            title={isBn ? 'শ্রেণি ও বিষয়ভিত্তিক শিক্ষকদের তালিকা ও যোগাযোগ' : 'Class & Subject Teachers Directory'}
           >
-            <MessageSquare size={14} className="text-[var(--text-muted)]" />
-            {isBn ? 'বার্তা পাঠান' : 'Message'}
+            <UserCheck size={14} className="text-[var(--text-muted)]" />
+            {isBn ? 'শিক্ষক পরিচিতি' : 'Teachers'}
           </button>
         </div>
       </div>

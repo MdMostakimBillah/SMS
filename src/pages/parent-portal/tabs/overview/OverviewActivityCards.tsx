@@ -28,7 +28,7 @@ export const OverviewActivityCards = React.memo(function OverviewActivityCards({
   const notices = useNoticeStore((s) => s.notices)
   const punch = getTodayPunchInfo(child.id)
   const parentNotices = notices
-    .filter((n) => n && n.isActive && (n.target === 'parents' || n.target === 'all'))
+    .filter((n) => n && n.isActive !== false && n.target !== 'teachers')
     .slice(0, 3)
 
   return (

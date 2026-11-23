@@ -6,6 +6,7 @@ import ParentPortalPage from './index'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useClassStore } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
+import { useTeacherStore } from '@/store/teacherStore'
 
 describe('ParentPortalPage', () => {
   beforeEach(() => {
@@ -14,6 +15,20 @@ describe('ParentPortalPage', () => {
     useAdmissionStore.persist.clearStorage()
     useClassStore.persist.clearStorage()
     useFeeStore.persist.clearStorage()
+    useTeacherStore.persist.clearStorage()
+
+    useTeacherStore.setState({
+      teachers: [
+        {
+          id: 't-1',
+          nameEn: 'Rafiqul Islam',
+          nameBn: 'রফিকুল ইসলাম',
+          designation: 'Mathematics Teacher',
+          phone: '+880 1711-889900',
+          email: 'rafiqul@school.edu',
+        } as any,
+      ],
+    })
 
     useClassStore.setState({
       institution: {
@@ -342,6 +357,43 @@ describe('ParentPortalPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Cloud Database|ক্লাউড ডাটাবেজ/i)).toBeInTheDocument()
+    })
+  })
+
+  it('renders institution notices cleanly without raw HTML tags, allows reading full notice modal, and removes message inquiry page', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    // Switch to Communication tab
+    const commTabBtn = screen.getByRole('button', { name: /Notice|যোগাযোগ/i })
+    await user.click(commTabBtn)
+
+    // Verify sub-nav only contains Notice Board and Teacher Directory (no Messages & Inquiries)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Notice Board|নোটিশ বোর্ড/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Teacher Directory|শিক্ষক পরিচিতি/i })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Messages & Inquiries|বার্তা ও অনুসন্ধান/i })).not.toBeInTheDocument()
+    })
+
+    // Raw HTML markup like <h2> or <p> should NOT be visible as raw text
+    expect(screen.queryByText(/<h2>Annual Final Examination Schedule/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/<p>Dear Students/i)).not.toBeInTheDocument()
+
+    // Clean text preview should be present
+    expect(screen.getAllByText(/Annual Final Examination Schedule 2026|বার্ষিক সমাপনী পরীক্ষা ২০২৬/i).length).toBeGreaterThanOrEqual(1)
+
+    // Switch to Teacher Directory
+    const teacherTabBtn = screen.getByRole('button', { name: /Teacher Directory|শিক্ষক পরিচিতি/i })
+    await user.click(teacherTabBtn)
+
+    // Teachers should be rendered with contact options
+    await waitFor(() => {
+      expect(screen.getAllByText(/Call|কল করুন/i).length).toBeGreaterThanOrEqual(1)
     })
   })
 })

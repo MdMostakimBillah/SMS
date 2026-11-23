@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useFeeStore } from '@/store/feeStore'
+import { useNoticeStore } from '@/store/noticeStore'
+import { useTeacherStore } from '@/store/teacherStore'
 import { isLocalComputerMode, isLocalServerMode } from '@/lib/storageMode'
 import type { PortalTab, FeeItem, LeaveRequest } from './types'
 import { mapAdmittedStudentsToPortalChildren } from './utils/studentMapper'
@@ -39,28 +41,22 @@ export default function ParentPortalPage() {
     if (!isLocalPC) {
       void useAdmissionStore.getState().syncFromServer?.()
       void useFeeStore.getState().syncFromServer?.()
+      void useNoticeStore.getState().syncFromServer?.()
+      void useTeacherStore.getState().syncFromServer?.()
     }
   }, [isLocalPC])
 
   // Determine role: Parent accounts only see their own child
   const isParentAccount = Boolean(
-    user?.role === 'parent' ||
-    user?.role === 'guardian' ||
-    role === 'parent' ||
-    role === 'guardian' ||
-    window.location.pathname.includes('/parent/') ||
-    window.location.pathname.includes('/guardian/')
+    user?.role === 'parent' || user?.role === 'guardian' ||
+    role === 'parent' || role === 'guardian' ||
+    window.location.pathname.includes('/parent/') || window.location.pathname.includes('/guardian/')
   )
 
   // Institution admin and super admin can inspect and switch/search all students
   const isInstitutionAdmin = !isParentAccount && Boolean(
-    !user ||
-    user.role === 'super_admin' ||
-    user.role === 'school_admin' ||
-    user.role === 'admin' ||
-    role === 'admin' ||
-    role === 'school_admin' ||
-    role === 'super-admin' ||
+    !user || user.role === 'super_admin' || user.role === 'school_admin' || user.role === 'admin' ||
+    role === 'admin' || role === 'school_admin' || role === 'super-admin' ||
     window.location.pathname.includes('/super-admin/')
   )
 
@@ -84,6 +80,7 @@ export default function ParentPortalPage() {
 
   // Portal State
   const [activeTab, setActiveTab] = useState<PortalTab>('overview')
+  const [commSection, setCommSection] = useState<'notices' | 'teachers'>('notices')
   const [fees, setFees] = useState<FeeItem[]>(() => {
     return activeChild ? getChildDatabaseFees(activeChild) : []
   })
@@ -176,7 +173,10 @@ export default function ParentPortalPage() {
         onSelectChild={(child) => setActiveChildId(child.id)}
         onOpenIdCardModal={() => setShowIdCardModal(true)}
         onOpenPayModal={() => handleOpenPayModal()}
-        onOpenContact={() => setActiveTab('communication')}
+        onOpenContact={() => {
+          setCommSection('teachers')
+          setActiveTab('communication')
+        }}
         isBn={isBn}
         isSuperAdmin={isInstitutionAdmin}
         isInstitutionAdmin={isInstitutionAdmin}
@@ -187,7 +187,10 @@ export default function ParentPortalPage() {
       {/* Tabs Navigation Bar - HR Management Style */}
       <PortalTabNav
         activeTab={activeTab}
-        onSelectTab={(tab) => setActiveTab(tab)}
+        onSelectTab={(tab) => {
+          if (tab === 'communication') setCommSection('notices')
+          setActiveTab(tab)
+        }}
         isBn={isBn}
       />
 
@@ -245,6 +248,7 @@ export default function ParentPortalPage() {
           <CommunicationTab
             child={activeChild}
             isBn={isBn}
+            initialSection={commSection}
           />
         )}
 
