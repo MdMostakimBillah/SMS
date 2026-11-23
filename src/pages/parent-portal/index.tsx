@@ -8,6 +8,7 @@ import { useNoticeStore } from '@/store/noticeStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { useAssignmentStore } from '@/store/assignmentStore'
+import { useAttendanceStore } from '@/store/attendanceStore'
 import { isLocalComputerMode, isLocalServerMode } from '@/lib/storageMode'
 import type { PortalTab, FeeItem, LeaveRequest } from './types'
 import { mapAdmittedStudentsToPortalChildren } from './utils/studentMapper'
@@ -17,9 +18,7 @@ import { processParentOnlinePayment, approveStudentFee, rejectStudentFee } from 
 import { ChildSelector } from './components/ChildSelector'
 import { PortalTabNav } from './components/PortalTabNav'
 import { PortalNoStudentsNotice } from './components/PortalNoStudentsNotice'
-import { StudentIdCardModal } from './components/StudentIdCardModal'
-import { FeePaymentModal } from './components/FeePaymentModal'
-import { LeaveRequestModal } from './components/LeaveRequestModal'
+import { ParentPortalModals } from './components/ParentPortalModals'
 
 // Tabs
 import { OverviewTab } from './tabs/OverviewTab'
@@ -47,6 +46,7 @@ export default function ParentPortalPage() {
       void useFeeStore.getState().syncFromServer?.()
       void useNoticeStore.getState().syncFromServer?.()
       void useTeacherStore.getState().syncFromServer?.()
+      void useAttendanceStore.getState().syncFromServer?.()
     }
   }, [isLocalPC])
 
@@ -267,36 +267,20 @@ export default function ParentPortalPage() {
       </div>
 
       {/* Global Modals */}
-      {showIdCardModal && (
-        <StudentIdCardModal
-          isOpen={showIdCardModal}
-          onClose={() => setShowIdCardModal(false)}
-          child={activeChild}
-          isBn={isBn}
-        />
-      )}
-
-      {showFeeModal && (
-        <FeePaymentModal
-          isOpen={showFeeModal}
-          onClose={() => setShowFeeModal(false)}
-          child={activeChild}
-          fees={fees}
-          fee={selectedFeeToPay}
-          onSuccess={handlePaymentSuccess}
-          isBn={isBn}
-        />
-      )}
-
-      {showLeaveModal && (
-        <LeaveRequestModal
-          isOpen={showLeaveModal}
-          child={activeChild}
-          onClose={() => setShowLeaveModal(false)}
-          onSubmit={handleCreateLeaveRequest}
-          isBn={isBn}
-        />
-      )}
+      <ParentPortalModals
+        showIdCardModal={showIdCardModal}
+        setShowIdCardModal={setShowIdCardModal}
+        showFeeModal={showFeeModal}
+        setShowFeeModal={setShowFeeModal}
+        showLeaveModal={showLeaveModal}
+        setShowLeaveModal={setShowLeaveModal}
+        child={activeChild}
+        fees={fees}
+        selectedFeeToPay={selectedFeeToPay}
+        onPaymentSuccess={handlePaymentSuccess}
+        onCreateLeaveRequest={handleCreateLeaveRequest}
+        isBn={isBn}
+      />
     </div>
   )
 }

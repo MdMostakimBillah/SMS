@@ -6,6 +6,7 @@ import { useAttendanceStore } from '@/store/attendanceStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
 import { matchAssignmentToStudent } from '@/lib/assignmentUtils'
+import { matchRoutineForStudent, isDateRoutineWeekend } from '@/lib/routineUtils'
 
 /**
  * Derives homework, diary, and assignments assigned to the student's class & section
@@ -101,10 +102,19 @@ export function getChildExamResults(child: PortalChild, examId?: string): ExamRe
 }
 
 /**
- * Calculates real monthly attendance metrics for the child from attendanceStore.
+ * Calculates real monthly attendance metrics for the child from attendanceStore and routine.
  */
-export function getChildAttendanceStats(childId: string, month: Date) {
+export function getChildAttendanceStats(
+  childId: string,
+  month: Date,
+  childClass?: string,
+  childSection?: string
+) {
   const attendance = useAttendanceStore.getState().attendance || {}
+  const classes = useClassStore.getState().classes || []
+  const routines = useClassStore.getState().routines || []
+  const routine = matchRoutineForStudent(childClass || '', childSection, classes, routines)
+
   const start = startOfMonth(month)
   const end = endOfMonth(month)
   const days = eachDayOfInterval({ start, end })
@@ -114,13 +124,16 @@ export function getChildAttendanceStats(childId: string, month: Date) {
   let leaveDays = 0
   let lateDays = 0
   let workingDays = 0
+  let weekendDays = 0
 
   days.forEach((day) => {
-    const dayOfWeek = day.getDay()
-    const isWeekend = dayOfWeek === 5 || dayOfWeek === 6 // Fri/Sat in BD
-    if (!isWeekend) {
-      workingDays++
+    const isWeekend = isDateRoutineWeekend(day, routine)
+    if (isWeekend) {
+      weekendDays++
+      return
     }
+
+    workingDays++
 
     const dateKey = format(day, 'yyyy-MM-dd')
     const rec = attendance[dateKey]?.[childId]
@@ -149,6 +162,7 @@ export function getChildAttendanceStats(childId: string, month: Date) {
     absentDays,
     leaveDays,
     lateDays,
+    weekendDays,
     attendanceRate,
   }
 }

@@ -30,7 +30,7 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
   const totalDue = fees.reduce((acc, f) => acc + f.due, 0)
   const hasPendingFee = fees.some((f) => f.status === 'pending')
   const pendingHw = homeworkList.filter((h) => h.status === 'pending').length
-  const attendanceStats = getChildAttendanceStats(child.id, new Date())
+  const attendanceStats = getChildAttendanceStats(child.id, new Date(), child.class, child.section)
   const examResults = getChildExamResults(child)
   const avgGpa =
     examResults.length > 0

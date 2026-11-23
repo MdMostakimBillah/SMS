@@ -8,6 +8,8 @@ import { useClassStore } from '@/store/classStore'
 import { useFeeStore } from '@/store/feeStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAssignmentStore } from '@/store/assignmentStore'
+import { useAttendanceStore } from '@/store/attendanceStore'
+import { format } from 'date-fns'
 
 describe('ParentPortalPage', () => {
   beforeEach(() => {
@@ -18,6 +20,7 @@ describe('ParentPortalPage', () => {
     useFeeStore.persist.clearStorage()
     useTeacherStore.persist.clearStorage()
     useAssignmentStore.persist.clearStorage()
+    useAttendanceStore.persist.clearStorage()
 
     useTeacherStore.setState({
       teachers: [
@@ -557,5 +560,78 @@ describe('ParentPortalPage', () => {
       expect(submissions[0].assignmentId).toBe('ASN-2026-001')
       expect(submissions[0].status).toBe('submitted')
     })
+  })
+
+  it('renders specific student attendance from attendanceStore and derives calendar weekends from class routine', async () => {
+    const user = userEvent.setup()
+
+    // Configure class and routine with weekend on Saturday (0) and Friday (6)
+    useClassStore.setState({
+      classes: [
+        {
+          id: 'cls-8',
+          name: 'Class 8',
+          nameBn: '৮ম শ্রেণি',
+          sections: [{ id: 'sec-a', name: 'A', seatQuantity: 40, classTeacherId: 't-1', subjectIds: [] }],
+          subjectIds: [],
+          startTime: '08:00',
+          endTime: '14:00',
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+        },
+      ],
+      routines: [
+        {
+          classId: 'cls-8',
+          sectionId: 'sec-a',
+          periodDuration: 45,
+          weekendDays: [0, 6], // Saturday and Friday
+          periods: [],
+        },
+      ],
+    })
+
+    // Mark real attendance for child-1 (as marked from /attendance page)
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    useAttendanceStore.setState({
+      attendance: {
+        [todayStr]: {
+          'child-1': {
+            status: 'present',
+            punches: [
+              { time: '08:45 AM', type: 'in', method: 'rfid', deviceId: 'DEV-01' },
+              { time: '02:00 PM', type: 'out', method: 'rfid', deviceId: 'DEV-01' },
+            ],
+            note: 'Attended on time',
+          },
+        },
+      },
+    })
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    // Switch to Attendance tab
+    const attendanceTabBtn = screen.getByRole('button', { name: /Attendance|উপস্থিতি/i })
+    await user.click(attendanceTabBtn)
+
+    // Verify Attendance KPI cards are rendered with Present Days
+    await waitFor(() => {
+      expect(screen.getByText(/Working Days|মোট কর্মদিবস/i)).toBeInTheDocument()
+      expect(screen.getByText(/Present Days|উপস্থিত দিন/i)).toBeInTheDocument()
+    })
+
+    // Verify today's attendance details in SelectedDateCard
+    await waitFor(() => {
+      expect(screen.getByText('08:45 AM')).toBeInTheDocument()
+      expect(screen.getByText('02:00 PM')).toBeInTheDocument()
+      expect(screen.getAllByText(/RFID Smart Card|আরএফআইডি স্মার্ট কার্ড/i).length).toBeGreaterThanOrEqual(1)
+    })
+
+    // Verify calendar weekend badges are rendered according to routine
+    expect(screen.getAllByText(/Weekend|সাপ্তাহিক ছুটি/i).length).toBeGreaterThanOrEqual(1)
   })
 })
