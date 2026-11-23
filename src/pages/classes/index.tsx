@@ -11,7 +11,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { useTabSlider } from '@/hooks/useTabSlider'
 import { usePermission } from '@/hooks/usePermission'
 import { useNavChain, useNavChainClearOnMount } from '@/hooks/useNavChain'
-import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, generateDarkColors } from '@/store/classStore'
+import { useClassStore, mapSchoolToInstitutionSettings, generateLightColors, generateDarkColors, populateClassesFromStudents } from '@/store/classStore'
 import { useShallow } from 'zustand/shallow'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -133,6 +133,18 @@ export default function ClassesPage() {
     useTeacherStore.getState().syncFromServer().catch(() => {})
     useAdmissionStore.getState().syncFromServer().catch(() => {})
   }, [user?.subdomain, user?.schoolId, user?.role])
+
+  // Automatically recover and populate classes from enrolled student records if classes are empty
+  useEffect(() => {
+    if (classes.length === 0 && students.length > 0) {
+      const recovered = populateClassesFromStudents(students, institution.startTime, institution.endTime)
+      if (recovered.length > 0) {
+        recovered.forEach((cls) => addClass(cls))
+        flushPendingWrites()
+        void flushVaultWrites()
+      }
+    }
+  }, [classes.length, students, addClass, institution.startTime, institution.endTime])
 
   const handleSaveInstitution = async () => {
     updateInstitution(instForm)

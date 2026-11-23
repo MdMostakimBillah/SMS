@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, X, Database, HardDrive, Check, Users } from 'lucide-react'
+import { useClassStore } from '@/store/classStore'
 import type { PortalChild } from '../types'
 
 interface AdminStudentSearchDropdownProps {
@@ -39,21 +40,34 @@ export const AdminStudentSearchDropdown = React.memo(function AdminStudentSearch
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
-  // Extract unique classes for quick filter
+  const storeClasses = useClassStore((s) => s.classes)
+  const sessionClasses = useClassStore((s) => s.sessionClasses)
+  const currentSession = useClassStore((s) => s.institution.currentSession)
+
+  // Classes strictly from Classes & Sections page (useClassStore)
   const uniqueClasses = useMemo(() => {
-    const set = new Set<string>()
-    childrenList.forEach((c) => {
-      if (c.class) set.add(c.class)
-    })
-    return Array.from(set).sort()
-  }, [childrenList])
+    const classList = storeClasses.length > 0
+      ? storeClasses
+      : (sessionClasses?.[currentSession] || [])
+    return classList.map((c) => ({
+      name: c.name,
+      label: isBn && c.nameBn ? c.nameBn : c.name,
+    }))
+  }, [storeClasses, sessionClasses, currentSession, isBn])
 
   // Filter students by query & class
   const filteredStudents = useMemo(() => {
     const q = searchQuery.toLowerCase().trim()
+    const selNorm = selectedClass.toLowerCase().replace(/^class\s*/i, '').trim()
     return childrenList.filter((c) => {
-      const matchesClass = selectedClass === 'all' || c.class === selectedClass
-      if (!matchesClass) return false
+      if (selectedClass !== 'all') {
+        const studentClassNorm = (c.class || '').toLowerCase().replace(/^class\s*/i, '').trim()
+        const matchesClass =
+          c.class === selectedClass ||
+          (c.class || '').toLowerCase() === selectedClass.toLowerCase() ||
+          studentClassNorm === selNorm
+        if (!matchesClass) return false
+      }
       if (!q) return true
 
       return (
@@ -154,7 +168,7 @@ export const AdminStudentSearchDropdown = React.memo(function AdminStudentSearch
               {filteredStudents.length} / {childrenList.length} {isBn ? 'শিক্ষার্থী পাওয়া গেছে' : 'students found'}
             </span>
 
-            {uniqueClasses.length > 1 && (
+            {uniqueClasses.length > 0 && (
               <select
                 value={selectedClass}
                 onChange={(e) => setSelectedClass(e.target.value)}
@@ -162,8 +176,8 @@ export const AdminStudentSearchDropdown = React.memo(function AdminStudentSearch
               >
                 <option value="all">{isBn ? 'সব শ্রেণি (All Classes)' : 'All Classes'}</option>
                 {uniqueClasses.map((cls) => (
-                  <option key={cls} value={cls}>
-                    {cls}
+                  <option key={cls.name} value={cls.name}>
+                    {cls.label}
                   </option>
                 ))}
               </select>

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TestWrapper } from '@/test-wrapper'
 import ParentPortalPage from './index'
@@ -309,6 +309,40 @@ describe('ParentPortalPage', () => {
     // Search bar should be present
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/Search by student name|নাম, রোল, শ্রেণি/i)).toBeInTheDocument()
+    })
+  })
+
+  it('populates student search dropdown classes strictly from useClassStore (Classes & Sections page)', async () => {
+    const user = userEvent.setup()
+    useClassStore.setState({
+      classes: [
+        { id: 'CLS-08', name: 'Class 8', nameBn: 'শ্রেণি ৮', sections: [], subjectIds: [] },
+        { id: 'CLS-09', name: 'Class 9', nameBn: 'শ্রেণি ৯', sections: [], subjectIds: [] },
+      ],
+      sessionClasses: {
+        '2025-26': [
+          { id: 'CLS-08', name: 'Class 8', nameBn: 'শ্রেণি ৮', sections: [], subjectIds: [] },
+          { id: 'CLS-09', name: 'Class 9', nameBn: 'শ্রেণি ৯', sections: [], subjectIds: [] },
+        ],
+      },
+    })
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    // Open search dropdown
+    const switchBtn = screen.getByRole('button', { name: /Search Student|শিক্ষার্থী খুঁজুন/i })
+    await user.click(switchBtn)
+
+    // Dropdown should contain options from useClassStore (Class 8 and Class 9)
+    await waitFor(() => {
+      const select = screen.getByRole('combobox')
+      expect(select).toBeInTheDocument()
+      expect(within(select).getByRole('option', { name: 'Class 8' })).toBeInTheDocument()
+      expect(within(select).getByRole('option', { name: 'Class 9' })).toBeInTheDocument()
     })
   })
 

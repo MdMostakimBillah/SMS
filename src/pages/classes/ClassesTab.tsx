@@ -20,6 +20,8 @@ import { BulkSubjectModal } from './modals/BulkSubjectModal'
 import { BulkSectionModal } from './modals/BulkSectionModal'
 import { SubjectSelectionModal, type SubjectModalTarget } from './modals/SubjectSelectionModal'
 import { CopySectionModal } from './modals/CopySectionModal'
+import { EmptyClassesCard } from './components/EmptyClassesCard'
+import { generateStandardClasses } from '@/store/classStore'
 
 interface ClassesTabProps {
   institution: InstitutionSettings
@@ -244,6 +246,14 @@ export default function ClassesTab({
     setShowBulkSection(false); setSelectedClasses([]); setBulkMode(false)
   }
 
+  const handleAddStandardClasses = () => {
+    const stdClasses = generateStandardClasses(institution.startTime, institution.endTime)
+    stdClasses.forEach((cls) => addClass(cls))
+    flushPendingWrites()
+    void flushVaultWrites()
+    void useClassStore.getState().syncToServer()
+  }
+
   return (
     <>
       {/* Session indicator */}
@@ -380,6 +390,15 @@ export default function ClassesTab({
             </span>
           )}
         </div>
+      )}
+
+      {/* Empty State */}
+      {classes.length === 0 && (
+        <EmptyClassesCard
+          onAddClass={() => setShowAddClass(true)}
+          onAddStandardClasses={handleAddStandardClasses}
+          isBn={isBn}
+        />
       )}
 
       {/* Class cards */}

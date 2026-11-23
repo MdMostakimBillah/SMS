@@ -478,10 +478,17 @@ export function shouldBlockDomainOverwrite(subPath: string, incomingText: string
       try {
         const cs = JSON.parse(classStoreRaw)
         const st = cs?.state ?? cs
-        if (
-          (st?.sessionClasses && Object.keys(st.sessionClasses).length > 0) ||
-          (st?.institution?.sessions && st.institution.sessions.length > 0)
-        ) {
+        let hasAnyClassesAcrossSessions = false
+        if (st?.sessionClasses && typeof st.sessionClasses === 'object') {
+          hasAnyClassesAcrossSessions = Object.values(st.sessionClasses).some(
+            (arr: any) => Array.isArray(arr) && arr.length > 0
+          )
+        }
+        if (Array.isArray(st?.classes) && st.classes.length > 0) {
+          hasAnyClassesAcrossSessions = true
+        }
+        const inCounts = extractDomainCounts(incomingText, subPath)
+        if (inCounts.classes > 0 || hasAnyClassesAcrossSessions) {
           return { blocked: false }
         }
       } catch { /* ignore */ }
@@ -1270,7 +1277,7 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
 
       // 1. routines.json
       const routines = state.routines ?? []
-      if (routines.length > 0 || isRecentExplicitDelete() || state.sessionRoutines) {
+      if (routines.length > 0 || isRecentExplicitDelete()) {
         const routinesPretty = JSON.stringify(routines, null, 2)
         if (slug) await writeVaultFile(`${slug}/routines.json`, routinesPretty)
         await writeVaultFile('routines.json', routinesPretty)
@@ -1286,7 +1293,7 @@ async function syncIndividualDomainFiles(slug: string, path: string, rawJson: st
           subjectIds: Array.isArray(s.subjectIds) ? s.subjectIds : (Array.isArray(s.subjects) ? s.subjects : []),
         }))
       )
-      if (sections.length > 0 || isRecentExplicitDelete() || state.sessionClasses) {
+      if (sections.length > 0 || isRecentExplicitDelete()) {
         const sectionsPretty = JSON.stringify(sections, null, 2)
         if (slug) await writeVaultFile(`${slug}/sections.json`, sectionsPretty)
         await writeVaultFile('sections.json', sectionsPretty)

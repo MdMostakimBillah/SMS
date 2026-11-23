@@ -379,4 +379,28 @@ describe('ClassesTab Component', () => {
       subjectIds: ['SUB-01'],
     })
   })
+
+  it('renders EmptyClassesCard when classes is empty and generates standard classes 1-10 on button click', () => {
+    const addClass = vi.fn()
+    render(<ClassesTab {...baseProps} classes={[]} addClass={addClass} />)
+
+    expect(screen.getByText('No Classes Found')).toBeInTheDocument()
+    const addStdBtn = screen.getByRole('button', { name: /Add Standard Classes \(1 - 10\)/i })
+    fireEvent.click(addStdBtn)
+
+    expect(addClass).toHaveBeenCalledTimes(10)
+    expect(addClass).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Class 1',
+        nameBn: 'শ্রেণি ১',
+        sections: [expect.objectContaining({ name: 'A' })],
+      })
+    )
+    expect(addClass).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Class 10',
+        nameBn: 'শ্রেণি ১০',
+      })
+    )
+  })
 })

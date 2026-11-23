@@ -4,6 +4,7 @@ import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPe
 import { flushVaultWrites } from '@/lib/vault/vault'
 import { markExplicitUserDelete, isRecentExplicitDelete } from '@/lib/vault/bridge'
 import { classesApi } from '@/lib/api'
+import { isLocalComputerMode } from '@/lib/storageMode'
 import { getPermanentStorageModeSync, getPermanentTelegramSync } from '@/lib/permanentConfig'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 
@@ -343,6 +344,91 @@ export function getAllSections(classes: ClassInfo[]): string[] {
   return Array.from(sectionSet).sort()
 }
 
+export const STANDARD_CLASSES_SEED: Array<{ name: string; nameBn: string }> = [
+  { name: 'Class 1', nameBn: 'শ্রেণি ১' },
+  { name: 'Class 2', nameBn: 'শ্রেণি ২' },
+  { name: 'Class 3', nameBn: 'শ্রেণি ৩' },
+  { name: 'Class 4', nameBn: 'শ্রেণি ৪' },
+  { name: 'Class 5', nameBn: 'শ্রেণি ৫' },
+  { name: 'Class 6', nameBn: 'শ্রেণি ৬' },
+  { name: 'Class 7', nameBn: 'শ্রেণি ৭' },
+  { name: 'Class 8', nameBn: 'শ্রেণি ৮' },
+  { name: 'Class 9', nameBn: 'শ্রেণি ৯' },
+  { name: 'Class 10', nameBn: 'শ্রেণি ১০' },
+]
+
+export function generateStandardClasses(startTime = '07:30', endTime = '14:30'): ClassInfo[] {
+  const today = new Date().toISOString().split('T')[0]
+  return STANDARD_CLASSES_SEED.map((sc, index) => {
+    const id = `CLS-${String(index + 1).padStart(2, '0')}`
+    return {
+      id,
+      name: sc.name,
+      nameBn: sc.nameBn,
+      startTime,
+      endTime,
+      sections: [
+        {
+          id: `SEC-${id}-A`,
+          name: 'A',
+          seatQuantity: 40,
+          classTeacherId: '',
+          subjectIds: [],
+        },
+      ],
+      subjectIds: [],
+      createdAt: today,
+      updatedAt: today,
+    }
+  })
+}
+
+export function populateClassesFromStudents(
+  students: Array<{ class?: string; section?: string }>,
+  startTime = '07:30',
+  endTime = '14:30'
+): ClassInfo[] {
+  if (!students || students.length === 0) return []
+  const classMap = new Map<string, Set<string>>()
+  for (const s of students) {
+    const rawClass = (s.class || '').trim()
+    if (!rawClass) continue
+    const rawSec = (s.section || '').trim() || 'A'
+    if (!classMap.has(rawClass)) {
+      classMap.set(rawClass, new Set<string>())
+    }
+    classMap.get(rawClass)!.add(rawSec)
+  }
+  if (classMap.size === 0) return []
+
+  const today = new Date().toISOString().split('T')[0]
+  const result: ClassInfo[] = []
+  let idx = 1
+  for (const [className, sectionsSet] of classMap.entries()) {
+    const classId = `CLS-${String(idx).padStart(2, '0')}`
+    const sections: ClassSection[] = Array.from(sectionsSet).sort().map((secName) => ({
+      id: `SEC-${classId}-${secName}`,
+      name: secName,
+      seatQuantity: 40,
+      classTeacherId: '',
+      subjectIds: [],
+    }))
+    result.push({
+      id: classId,
+      name: className,
+      nameBn: className,
+      startTime,
+      endTime,
+      sections: sections.length > 0 ? sections : [{ id: `SEC-${classId}-A`, name: 'A', seatQuantity: 40, classTeacherId: '', subjectIds: [] }],
+      subjectIds: [],
+      createdAt: today,
+      updatedAt: today,
+    })
+    idx++
+  }
+  return result
+}
+
 interface ClassState {
   institution: InstitutionSettings
   classes: ClassInfo[]
@@ -371,6 +457,7 @@ interface ClassState {
 
 let serverSyncTimer: any = null
 function queueServerSync(get: () => ClassState) {
+  if (isLocalComputerMode()) return
   try {
     const state = get()
     const hasAnyClasses = state.classes.length > 0 || Object.values(state.sessionClasses || {}).some((c) => c && c.length > 0)
@@ -810,6 +897,34 @@ export const useClassStore = create<ClassState>()(
       },
 
       syncFromServer: async (slugOrId?: string) => {
+        // In Local Computer mode, local PC storage is authoritative — do not make server network calls
+        if (isLocalComputerMode()) {
+          const slug = getSlug()
+          const key = slug ? `edutech-classes_${slug}` : 'edutech-classes'
+          const raw = localStorage.getItem(key) || (slug ? localStorage.getItem('edutech-classes') : null)
+          if (raw) {
+            try {
+              const parsed = JSON.parse(raw)
+              const st = parsed?.state ?? parsed
+              if (st && ((st.classes && st.classes.length > 0) || (st.sessionClasses && Object.keys(st.sessionClasses).length > 0))) {
+                const currentSess = st.institution?.currentSession || _get().institution.currentSession || '2025-26'
+                const activeClasses = (st.classes && st.classes.length > 0)
+                  ? st.classes
+                  : (st.sessionClasses?.[currentSess] || Object.values(st.sessionClasses || {})[0] || [])
+                set({
+                  classes: activeClasses,
+                  routines: st.routines || [],
+                  sessionClasses: st.sessionClasses || { [currentSess]: activeClasses },
+                  sessionRoutines: st.sessionRoutines || {},
+                  ...(st.institution ? { institution: { ..._get().institution, ...st.institution } } : {}),
+                })
+              }
+            } catch {}
+          }
+          set({ serverSynced: true, syncing: false })
+          return
+        }
+
         set({ syncing: true })
         try {
           const state = _get()
@@ -1048,6 +1163,7 @@ export const useClassStore = create<ClassState>()(
       },
 
       syncToServer: async () => {
+        if (isLocalComputerMode()) return
         set({ syncing: true })
         try {
           const state = _get()
@@ -1160,7 +1276,18 @@ registerStoreLoad(() => {
     const raw = localStorage.getItem(key) || (slug ? localStorage.getItem('edutech-classes') : null)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (parsed?.state) useClassStore.setState(parsed.state)
+      if (parsed?.state) {
+        const st = parsed.state
+        const curSession = st.institution?.currentSession || '2025-26'
+        let effectiveClasses = st.classes || []
+        if (effectiveClasses.length === 0 && st.sessionClasses) {
+          effectiveClasses = st.sessionClasses[curSession] || Object.values(st.sessionClasses)[0] || []
+        }
+        useClassStore.setState({
+          ...st,
+          classes: effectiveClasses,
+        })
+      }
     }
     const permMode = getPermanentStorageModeSync()
     const permTg = getPermanentTelegramSync()
