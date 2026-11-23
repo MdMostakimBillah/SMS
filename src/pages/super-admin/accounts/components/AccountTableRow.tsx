@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  GraduationCap, Users, Eye, EyeOff, Copy, Check,
+  GraduationCap, Users, UserCheck, Eye, EyeOff, Copy, Check,
   Edit2, KeyRound, Lock, Unlock, CheckCircle2, AlertCircle
 } from 'lucide-react'
 import type { AccountTableRowProps } from '../types'
@@ -18,6 +18,7 @@ export function AccountTableRow({
   const [copiedUser, setCopiedUser] = useState(false)
   const [copiedPass, setCopiedPass] = useState(false)
 
+  const isTeacher = account.role === 'teacher'
   const isStudent = account.role === 'student'
   const isLocked = account.status === 'locked'
 
@@ -53,15 +54,19 @@ export function AccountTableRow({
         <div className="flex items-center gap-3">
           <div
             className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-[0.75rem] ${
-              isStudent ? 'bg-blue-500/15 text-blue-500' : 'bg-purple-500/15 text-purple-500'
+              isTeacher
+                ? 'bg-teal-500/15 text-teal-500'
+                : isStudent
+                ? 'bg-blue-500/15 text-blue-500'
+                : 'bg-purple-500/15 text-purple-500'
             }`}
           >
-            {isStudent ? <GraduationCap size={18} /> : <Users size={18} />}
+            {isTeacher ? <UserCheck size={18} /> : isStudent ? <GraduationCap size={18} /> : <Users size={18} />}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[0.8125rem] font-semibold text-[var(--text-primary)] truncate">
-                {isStudent
+                {isTeacher || isStudent
                   ? isBn && account.studentNameBn
                     ? account.studentNameBn
                     : account.studentNameEn
@@ -69,34 +74,61 @@ export function AccountTableRow({
               </span>
               <span
                 className={`px-1.5 py-0.2 rounded text-[0.625rem] font-semibold uppercase ${
-                  isStudent ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'
+                  isTeacher
+                    ? 'bg-teal-500/10 text-teal-500'
+                    : isStudent
+                    ? 'bg-blue-500/10 text-blue-500'
+                    : 'bg-purple-500/10 text-purple-500'
                 }`}
               >
-                {isStudent ? (isBn ? 'ছাত্র' : 'Student') : (isBn ? 'অভিভাবক' : 'Parent')}
+                {isTeacher
+                  ? isBn
+                    ? 'শিক্ষক'
+                    : 'Teacher'
+                  : isStudent
+                  ? isBn
+                    ? 'ছাত্র'
+                    : 'Student'
+                  : isBn
+                  ? 'অভিভাবক'
+                  : 'Parent'}
               </span>
             </div>
-            {!isStudent && (
+            {isTeacher && (
+              <div className="text-[0.6875rem] text-[var(--text-muted)] truncate">
+                {account.designation || 'Teacher'}
+                {account.department ? ` • ${account.department}` : ''}
+              </div>
+            )}
+            {!isStudent && !isTeacher && (
               <div className="text-[0.6875rem] text-[var(--text-muted)] truncate">
                 {isBn ? 'শিক্ষার্থী: ' : 'Student: '}
                 {isBn && account.studentNameBn ? account.studentNameBn : account.studentNameEn}
               </div>
             )}
             <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
-              ID: <span className="font-mono">{account.studentId}</span>
+              {isTeacher ? 'Staff ID: ' : 'ID: '}
+              <span className="font-mono">{account.staffId || account.studentId}</span>
             </div>
           </div>
         </div>
       </td>
 
-      {/* Institution, Class & Roll */}
+      {/* Institution, Class & Roll / Department */}
       <td className="p-3.5">
         <div className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate max-w-[160px]">
           {account.schoolName || 'Institution'}
         </div>
         <div className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
-          {account.class ? `${account.class}` : ''}
-          {account.section ? ` - ${account.section}` : ''}
-          {account.roll ? ` • ${isBn ? 'রোল' : 'Roll'}: ${account.roll}` : ''}
+          {isTeacher ? (
+            account.department ? `${account.department}` : account.phone || account.email
+          ) : (
+            <>
+              {account.class ? `${account.class}` : ''}
+              {account.section ? ` - ${account.section}` : ''}
+              {account.roll ? ` • ${isBn ? 'রোল' : 'Roll'}: ${account.roll}` : ''}
+            </>
+          )}
         </div>
       </td>
 

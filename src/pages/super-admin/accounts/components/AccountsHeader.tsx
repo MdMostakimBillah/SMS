@@ -1,4 +1,4 @@
-import { Users, GraduationCap, ShieldAlert, KeyRound, Printer, Sparkles, CheckCircle2 } from 'lucide-react'
+import { Users, GraduationCap, ShieldAlert, KeyRound, Printer, Sparkles, CheckCircle2, UserCheck } from 'lucide-react'
 import type { AccountsHeaderProps } from '../types'
 
 export function AccountsHeader({
@@ -6,6 +6,7 @@ export function AccountsHeader({
   totalCount,
   studentCount,
   parentCount,
+  teacherCount,
   activeCount,
   lockedCount,
   selectedCount,
@@ -31,7 +32,7 @@ export function AccountsHeader({
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-[1.25rem] font-bold text-white">
-                  {isBn ? 'শিক্ষার্থী ও অভিভাবক অ্যাকাউন্ট নিয়ন্ত্রণ' : 'Student & Parent Credentials'}
+                  {isBn ? 'শিক্ষার্থী, অভিভাবক ও শিক্ষক অ্যাকাউন্ট নিয়ন্ত্রণ' : 'Student, Parent & Teacher Credentials'}
                 </h1>
                 <span className="px-2 py-0.5 rounded-full text-[0.6875rem] font-semibold bg-white/15 text-white/90 border border-white/20">
                   {isBn ? 'সুপার অ্যাডমিন' : 'Super Admin'}
@@ -39,8 +40,8 @@ export function AccountsHeader({
               </div>
               <p className="text-[0.8125rem] text-white/70 mt-1 max-w-xl">
                 {isBn
-                  ? 'সকল প্রতিষ্ঠানের শিক্ষার্থী ও অভিভাবকদের ইউজারনেম ও পাসওয়ার্ড দেখুন, পরিবর্তন বা রিসেট করুন এবং স্লিপ প্রিন্ট করুন।'
-                  : 'Manage, inspect, reset, and export usernames and passwords for all students and parents across all institutions.'}
+                  ? 'সকল প্রতিষ্ঠানের শিক্ষার্থী, অভিভাবক ও শিক্ষকদের ইউজারনেম ও পাসওয়ার্ড দেখুন, পরিবর্তন বা রিসেট করুন এবং স্লিপ প্রিন্ট করুন।'
+                  : 'Manage, inspect, reset, and export usernames and passwords for all students, parents, and teachers across all institutions.'}
               </p>
             </div>
           </div>
@@ -75,7 +76,7 @@ export function AccountsHeader({
       </div>
 
       {/* Metrics Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-3.5 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-indigo-500/10 text-indigo-500">
             <KeyRound size={18} />
@@ -96,7 +97,7 @@ export function AccountsHeader({
           </div>
           <div className="min-w-0">
             <div className="text-[0.6875rem] font-medium text-[var(--text-muted)] truncate">
-              {isBn ? 'শিক্ষার্থী অ্যাকাউন্ট' : 'Student Accounts'}
+              {isBn ? 'শিক্ষার্থী' : 'Students'}
             </div>
             <div className="text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight">
               {studentCount.toLocaleString()}
@@ -110,10 +111,24 @@ export function AccountsHeader({
           </div>
           <div className="min-w-0">
             <div className="text-[0.6875rem] font-medium text-[var(--text-muted)] truncate">
-              {isBn ? 'অভিভাবক অ্যাকাউন্ট' : 'Parent Accounts'}
+              {isBn ? 'অভিভাবক' : 'Parents'}
             </div>
             <div className="text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight">
               {parentCount.toLocaleString()}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-3.5 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-teal-500/10 text-teal-500">
+            <UserCheck size={18} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[0.6875rem] font-medium text-[var(--text-muted)] truncate">
+              {isBn ? 'শিক্ষক' : 'Teachers'}
+            </div>
+            <div className="text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight">
+              {teacherCount.toLocaleString()}
             </div>
           </div>
         </div>
@@ -124,7 +139,7 @@ export function AccountsHeader({
           </div>
           <div className="min-w-0">
             <div className="text-[0.6875rem] font-medium text-[var(--text-muted)] truncate">
-              {isBn ? 'সক্রিয় অ্যাকাউন্ট' : 'Active Accounts'}
+              {isBn ? 'সক্রিয়' : 'Active'}
             </div>
             <div className="text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight">
               {activeCount.toLocaleString()}

@@ -14,12 +14,13 @@ export function ExportCredentialsModal({
   }
 
   const handleDownloadCsv = () => {
-    const headers = ['Account Type', 'Student ID', 'Student Name', 'Guardian Name', 'Institution', 'Class', 'Section', 'Roll', 'Username', 'Password', 'Status']
+    const headers = ['Account Type', 'ID / Staff ID', 'Name', 'Guardian / Department', 'Designation', 'Institution', 'Class', 'Section', 'Roll', 'Username', 'Password', 'Status']
     const rows = accounts.map((a) => [
-      a.role === 'student' ? 'Student' : 'Parent',
-      `"${a.studentId}"`,
+      a.role === 'teacher' ? 'Teacher' : a.role === 'student' ? 'Student' : 'Parent',
+      `"${a.staffId || a.studentId}"`,
       `"${a.studentNameEn}"`,
-      `"${a.guardianName || ''}"`,
+      `"${a.role === 'teacher' ? (a.department || '') : (a.guardianName || '')}"`,
+      `"${a.designation || ''}"`,
       `"${a.schoolName}"`,
       `"${a.class}"`,
       `"${a.section}"`,
@@ -102,12 +103,14 @@ export function ExportCredentialsModal({
                   </div>
                   <span
                     className={`px-1.5 py-0.2 rounded text-[0.5625rem] font-bold uppercase shrink-0 ${
-                      acc.role === 'student'
+                      acc.role === 'teacher'
+                        ? 'bg-teal-500/15 text-teal-600 print:bg-gray-100 print:text-black'
+                        : acc.role === 'student'
                         ? 'bg-blue-500/15 text-blue-500 print:bg-gray-100 print:text-black'
                         : 'bg-purple-500/15 text-purple-500 print:bg-gray-100 print:text-black'
                     }`}
                   >
-                    {acc.role === 'student' ? 'Student Portal' : 'Parent Portal'}
+                    {acc.role === 'teacher' ? 'Teacher Portal' : acc.role === 'student' ? 'Student Portal' : 'Parent Portal'}
                   </span>
                 </div>
 
@@ -115,12 +118,26 @@ export function ExportCredentialsModal({
                 <div className="space-y-1 text-[0.6875rem]">
                   <div className="flex justify-between">
                     <span className="text-[var(--text-muted)] print:text-gray-600">
-                      {acc.role === 'student' ? (isBn ? 'শিক্ষার্থী:' : 'Student:') : (isBn ? 'অভিভাবক:' : 'Guardian:')}
+                      {acc.role === 'teacher' ? (isBn ? 'শিক্ষক:' : 'Teacher:') : acc.role === 'student' ? (isBn ? 'শিক্ষার্থী:' : 'Student:') : (isBn ? 'অভিভাবক:' : 'Guardian:')}
                     </span>
                     <span className="font-semibold text-[var(--text-primary)] print:text-black truncate max-w-[130px]">
-                      {acc.role === 'student' ? acc.studentNameEn : acc.guardianName || 'Guardian'}
+                      {acc.role === 'parent' ? acc.guardianName || 'Guardian' : acc.studentNameEn}
                     </span>
                   </div>
+                  {acc.role === 'teacher' && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)] print:text-gray-600">{isBn ? 'পদবী ও বিভাগ:' : 'Designation:'}</span>
+                        <span className="font-medium text-[var(--text-primary)] print:text-black truncate max-w-[130px]">
+                          {acc.designation || 'Teacher'} {acc.department ? `(${acc.department})` : ''}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)] print:text-gray-600">Staff ID:</span>
+                        <span className="font-mono font-medium text-[var(--text-primary)] print:text-black">{acc.staffId || acc.studentId}</span>
+                      </div>
+                    </>
+                  )}
                   {acc.role === 'parent' && (
                     <div className="flex justify-between">
                       <span className="text-[var(--text-muted)] print:text-gray-600">{isBn ? 'ছাত্র/ছাত্রী:' : 'Child:'}</span>
@@ -129,16 +146,20 @@ export function ExportCredentialsModal({
                       </span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)] print:text-gray-600">{isBn ? 'শ্রেণি / রোল:' : 'Class / Roll:'}</span>
-                    <span className="font-medium text-[var(--text-primary)] print:text-black">
-                      {acc.class} {acc.section ? `(${acc.section})` : ''} • Roll: {acc.roll || '-'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)] print:text-gray-600">{isBn ? 'স্টুডেন্ট আইডি:' : 'Student ID:'}</span>
-                    <span className="font-mono font-medium text-[var(--text-primary)] print:text-black">{acc.studentId}</span>
-                  </div>
+                  {acc.role !== 'teacher' && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)] print:text-gray-600">{isBn ? 'শ্রেণি / রোল:' : 'Class / Roll:'}</span>
+                        <span className="font-medium text-[var(--text-primary)] print:text-black">
+                          {acc.class} {acc.section ? `(${acc.section})` : ''} • Roll: {acc.roll || '-'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[var(--text-muted)] print:text-gray-600">{isBn ? 'স্টুডেন্ট আইডি:' : 'Student ID:'}</span>
+                        <span className="font-mono font-medium text-[var(--text-primary)] print:text-black">{acc.studentId}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Credentials Box */}

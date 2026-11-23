@@ -491,7 +491,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: matchedAccount.id,
           email: matchedAccount.email || `${matchedAccount.username}@portal.local`,
           name:
-            matchedAccount.role === 'student'
+            matchedAccount.role === 'teacher' || matchedAccount.role === 'student'
               ? matchedAccount.studentNameBn || matchedAccount.studentNameEn
               : matchedAccount.guardianName || 'Guardian',
           role: matchedAccount.role,
@@ -500,7 +500,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           avatar: null,
           subdomain: matchedAccount.schoolId,
           schoolDomain: matchedAccount.schoolId,
-          staffId: undefined,
+          staffId: matchedAccount.staffId,
           photo: null,
           studentId: matchedAccount.studentId,
         }

@@ -66,6 +66,28 @@ describe('SuperAdminAccountsPage', () => {
       createdAt: '2026-01-02',
       updatedAt: '2026-01-02',
     },
+    {
+      id: 'acc-tch-TCH-001',
+      schoolId: 'school-1',
+      schoolName: 'Ideal School',
+      role: 'teacher',
+      studentId: 'TCH-001',
+      staffId: 'TCH-001',
+      studentNameEn: 'Mohammad Faruk',
+      studentNameBn: 'মোহাম্মদ ফারুক',
+      department: 'Mathematics',
+      designation: 'Senior Teacher',
+      class: '',
+      section: '',
+      roll: '',
+      username: '01711999999',
+      password: 'teacherPassword1',
+      phone: '01711999999',
+      email: 'faruk@school.com',
+      status: 'active',
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+    },
   ]
 
   beforeEach(() => {
@@ -114,13 +136,14 @@ describe('SuperAdminAccountsPage', () => {
     )
 
     // Check header and cards
-    expect(screen.getByText(/Student & Parent Credentials/i)).toBeInTheDocument()
+    expect(screen.getByText(/Student, Parent & Teacher Credentials/i)).toBeInTheDocument()
     expect(screen.getByText('Rahim Ahmed')).toBeInTheDocument()
     expect(screen.getByText('Kabir Ahmed')).toBeInTheDocument()
     expect(screen.getByText('Fatima Begum')).toBeInTheDocument()
+    expect(screen.getByText('Mohammad Faruk')).toBeInTheDocument()
   })
 
-  it('filters by role (Students vs Parents)', () => {
+  it('filters by role (Students, Parents, Teachers)', () => {
     render(
       <BrowserRouter>
         <SuperAdminAccountsPage />
@@ -134,6 +157,7 @@ describe('SuperAdminAccountsPage', () => {
     expect(screen.getByText('Rahim Ahmed')).toBeInTheDocument()
     expect(screen.getByText('Fatima Begum')).toBeInTheDocument()
     expect(screen.queryByText('Kabir Ahmed')).not.toBeInTheDocument()
+    expect(screen.queryByText('Mohammad Faruk')).not.toBeInTheDocument()
 
     // Click "Parents" pill
     const parentBtn = screen.getByRole('button', { name: /^Parents$/i })
@@ -141,6 +165,16 @@ describe('SuperAdminAccountsPage', () => {
 
     expect(screen.getByText('Kabir Ahmed')).toBeInTheDocument()
     expect(screen.queryByText('Fatima Begum')).not.toBeInTheDocument()
+    expect(screen.queryByText('Mohammad Faruk')).not.toBeInTheDocument()
+
+    // Click "Teachers" pill
+    const teacherBtn = screen.getByRole('button', { name: /^Teachers$/i })
+    fireEvent.click(teacherBtn)
+
+    expect(screen.getByText('Mohammad Faruk')).toBeInTheDocument()
+    expect(screen.getByText(/Senior Teacher/i)).toBeInTheDocument()
+    expect(screen.queryByText('Rahim Ahmed')).not.toBeInTheDocument()
+    expect(screen.queryByText('Kabir Ahmed')).not.toBeInTheDocument()
   })
 
   it('searches accounts by student ID or name', () => {
@@ -255,7 +289,7 @@ describe('SuperAdminAccountsPage', () => {
     fireEvent.click(exportBtn)
 
     expect(screen.getByText('Credential Slips & Export')).toBeInTheDocument()
-    expect(screen.getByText(/3 account credential slips ready/i)).toBeInTheDocument()
+    expect(screen.getByText(/4 account credential slips ready/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Download CSV/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^Print Slips$/i })).toBeInTheDocument()
   })

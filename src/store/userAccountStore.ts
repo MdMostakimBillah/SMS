@@ -2,8 +2,15 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { createNamespacedStorage, registerStoreReset, registerStoreLoad, flushPendingWrites, getSlug } from '@/lib/storage'
 import type { StudentAdmission } from '@/pages/students/admission/types'
+import type { Teacher, Department } from '@/pages/teachers/types'
+import {
+  generateRandomPin,
+  generateRandomPassword,
+  buildStudentAndParentAccounts,
+  buildTeacherAccounts,
+} from './userAccountUtils'
 
-export type AccountRole = 'student' | 'parent'
+export type AccountRole = 'student' | 'parent' | 'teacher'
 export type AccountStatus = 'active' | 'locked' | 'pending'
 
 export interface UserAccount {
@@ -12,10 +19,13 @@ export interface UserAccount {
   schoolName: string
   role: AccountRole
   studentId: string
+  staffId?: string
   studentNameEn: string
   studentNameBn: string
   guardianName?: string
   guardianRelation?: string
+  department?: string
+  designation?: string
   class: string
   section: string
   roll: string
@@ -40,24 +50,8 @@ interface UserAccountState {
   bulkResetPasswords: (accountIds: string[], mode: 'random_pin' | 'random_pass' | 'default' | 'custom', customValue?: string) => void
   bulkSetStatus: (accountIds: string[], status: AccountStatus) => void
   syncFromStudents: (students: StudentAdmission[], school: { id: string; name: string; slug?: string }) => void
+  syncFromTeachers: (teachers: Teacher[], school: { id: string; name: string; slug?: string }, departments?: Department[]) => void
   findAccount: (identifier: string, schoolId?: string) => UserAccount | undefined
-}
-
-function generateRandomPin(length = 6): string {
-  let pin = ''
-  for (let i = 0; i < length; i++) {
-    pin += Math.floor(Math.random() * 10).toString()
-  }
-  return pin
-}
-
-function generateRandomPassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
-  let res = 'Edu#'
-  for (let i = 0; i < 4; i++) {
-    res += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return res
 }
 
 export const useUserAccountStore = create<UserAccountState>()(
@@ -85,14 +79,17 @@ export const useUserAccountStore = create<UserAccountState>()(
             schoolName: data.schoolName || '',
             role: data.role || 'student',
             studentId: data.studentId || '',
+            staffId: data.staffId,
             studentNameEn: data.studentNameEn || '',
             studentNameBn: data.studentNameBn || '',
             guardianName: data.guardianName,
             guardianRelation: data.guardianRelation,
+            department: data.department,
+            designation: data.designation,
             class: data.class || '',
             section: data.section || '',
             roll: data.roll || '',
-            username: (data.username || data.studentId || '').trim(),
+            username: (data.username || data.studentId || data.staffId || '').trim(),
             password: data.password || '123456',
             phone: data.phone || '',
             email: data.email || '',
@@ -177,73 +174,23 @@ export const useUserAccountStore = create<UserAccountState>()(
 
       syncFromStudents: (students, school) => {
         if (!students || students.length === 0) return
-        const now = new Date().toISOString().split('T')[0]
-        const sId = school.id || school.slug || 'INST'
-        const sName = school.name || 'Institution'
-
         set((state) => {
           const map = new Map<string, UserAccount>()
           state.accounts.forEach((acc) => map.set(acc.id, acc))
+          const generated = buildStudentAndParentAccounts(students, school, map)
+          generated.forEach((g) => map.set(g.id, g))
+          return { accounts: Array.from(map.values()) }
+        })
+        flushPendingWrites()
+      },
 
-          students.forEach((s) => {
-            const stuAccId = `acc-stu-${s.id}`
-            const parAccId = `acc-par-${s.id}`
-
-            const existingStu = map.get(stuAccId)
-            const stuUsername = existingStu?.username || (s.id || `stu_${s.roll || '1'}`).trim()
-            const stuPassword = existingStu?.password || '123456'
-
-            map.set(stuAccId, {
-              id: stuAccId,
-              schoolId: existingStu?.schoolId || sId,
-              schoolName: existingStu?.schoolName || sName,
-              role: 'student',
-              studentId: s.id,
-              studentNameEn: s.nameEn || '',
-              studentNameBn: s.nameBn || s.nameEn || '',
-              guardianName: s.guardianName,
-              guardianRelation: s.guardianRelation,
-              class: s.class || '',
-              section: s.section || '',
-              roll: s.roll || '',
-              username: stuUsername,
-              password: stuPassword,
-              phone: s.phone || '',
-              email: s.email || '',
-              status: existingStu?.status || (s.status === 'approved' ? 'active' : 'pending'),
-              createdAt: existingStu?.createdAt || s.admissionDate || now,
-              updatedAt: existingStu ? existingStu.updatedAt : now,
-              lastLogin: existingStu?.lastLogin,
-            })
-
-            const existingPar = map.get(parAccId)
-            const parUsername = existingPar?.username || (s.guardianPhone || s.fatherPhone || `p_${s.id}`).trim()
-            const parPassword = existingPar?.password || '123456'
-
-            map.set(parAccId, {
-              id: parAccId,
-              schoolId: existingPar?.schoolId || sId,
-              schoolName: existingPar?.schoolName || sName,
-              role: 'parent',
-              studentId: s.id,
-              studentNameEn: s.nameEn || '',
-              studentNameBn: s.nameBn || s.nameEn || '',
-              guardianName: s.guardianName || s.fatherNameEn || '',
-              guardianRelation: s.guardianRelation || 'Parent',
-              class: s.class || '',
-              section: s.section || '',
-              roll: s.roll || '',
-              username: parUsername,
-              password: parPassword,
-              phone: s.guardianPhone || s.fatherPhone || '',
-              email: s.email || '',
-              status: existingPar?.status || (s.status === 'approved' ? 'active' : 'pending'),
-              createdAt: existingPar?.createdAt || s.admissionDate || now,
-              updatedAt: existingPar ? existingPar.updatedAt : now,
-              lastLogin: existingPar?.lastLogin,
-            })
-          })
-
+      syncFromTeachers: (teachers, school, departments) => {
+        if (!teachers || teachers.length === 0) return
+        set((state) => {
+          const map = new Map<string, UserAccount>()
+          state.accounts.forEach((acc) => map.set(acc.id, acc))
+          const generated = buildTeacherAccounts(teachers, school, departments, map)
+          generated.forEach((g) => map.set(g.id, g))
           return { accounts: Array.from(map.values()) }
         })
         flushPendingWrites()
@@ -258,6 +205,7 @@ export const useUserAccountStore = create<UserAccountState>()(
           return (
             a.username.toLowerCase() === clean ||
             a.studentId.toLowerCase() === clean ||
+            (a.staffId && a.staffId.toLowerCase() === clean) ||
             (a.phone && a.phone.trim() === clean) ||
             (a.email && a.email.toLowerCase() === clean)
           )

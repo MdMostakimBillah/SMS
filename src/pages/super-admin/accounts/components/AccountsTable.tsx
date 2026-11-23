@@ -39,7 +39,7 @@ export function AccountsTable({
                 />
               </th>
               <th className="p-3.5">{isBn ? 'ব্যবহারকারী ও রোল' : 'Account Holder & Role'}</th>
-              <th className="p-3.5">{isBn ? 'প্রতিষ্ঠান ও শ্রেণি' : 'Institution & Class'}</th>
+              <th className="p-3.5">{isBn ? 'প্রতিষ্ঠান ও বিবরণ' : 'Institution & Details'}</th>
               <th className="p-3.5">{isBn ? 'ইউজারনেম' : 'Username'}</th>
               <th className="p-3.5">{isBn ? 'পাসওয়ার্ড' : 'Password'}</th>
               <th className="p-3.5">{isBn ? 'স্ট্যাটাস' : 'Status'}</th>

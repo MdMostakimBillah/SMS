@@ -14,6 +14,7 @@ export interface AccountsHeaderProps {
   totalCount: number
   studentCount: number
   parentCount: number
+  teacherCount: number
   activeCount: number
   lockedCount: number
   selectedCount: number
@@ -28,6 +29,7 @@ export interface AccountsFilterBarProps {
   schools: Array<{ id: string; name: string; nameBn?: string; slug?: string }>
   availableClasses: string[]
   availableSections: string[]
+  availableDepartments?: string[]
   onResetFilters: () => void
 }
 

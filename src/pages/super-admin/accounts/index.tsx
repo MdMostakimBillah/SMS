@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useBn } from '@/hooks/useBn'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { useAdmissionStore } from '@/store/admissionStore'
+import { useTeacherStore } from '@/store/teacherStore'
 import { useUserAccountStore, type UserAccount, type AccountStatus } from '@/store/userAccountStore'
 import type { AccountFilters } from './types'
 import { AccountsHeader } from './components/AccountsHeader'
@@ -20,6 +21,8 @@ export default function SuperAdminAccountsPage({ isBn: propIsBn }: { isBn?: bool
 
   const institutions = useSuperAdminStore((s) => s.institutions) || []
   const admissionStudents = useAdmissionStore((s) => s.students) || []
+  const teachers = useTeacherStore((s) => s.teachers) || []
+  const departments = useTeacherStore((s) => s.departments) || []
 
   const {
     accounts,
@@ -29,15 +32,19 @@ export default function SuperAdminAccountsPage({ isBn: propIsBn }: { isBn?: bool
     bulkResetPasswords,
     bulkSetStatus,
     syncFromStudents,
+    syncFromTeachers,
   } = useUserAccountStore()
 
-  // Auto-sync students from active institution or store into accounts
+  // Auto-sync students and teachers from active institution or store into accounts
   useEffect(() => {
+    const activeSchool = institutions[0] || { id: 'default', name: 'Demo School', slug: 'demo' }
     if (admissionStudents.length > 0) {
-      const activeSchool = institutions[0] || { id: 'default', name: 'Demo School', slug: 'demo' }
       syncFromStudents(admissionStudents, activeSchool)
     }
-  }, [admissionStudents, institutions, syncFromStudents])
+    if (teachers.length > 0) {
+      syncFromTeachers(teachers, activeSchool, departments)
+    }
+  }, [admissionStudents, teachers, departments, institutions, syncFromStudents, syncFromTeachers])
 
   // Filters State
   const initialSchool = searchParams.get('school') || 'all'
@@ -111,9 +118,12 @@ export default function SuperAdminAccountsPage({ isBn: propIsBn }: { isBn?: bool
         const matches =
           a.username.toLowerCase().includes(q) ||
           a.studentId.toLowerCase().includes(q) ||
+          (a.staffId && a.staffId.toLowerCase().includes(q)) ||
           a.studentNameEn.toLowerCase().includes(q) ||
           a.studentNameBn.toLowerCase().includes(q) ||
           (a.guardianName && a.guardianName.toLowerCase().includes(q)) ||
+          (a.department && a.department.toLowerCase().includes(q)) ||
+          (a.designation && a.designation.toLowerCase().includes(q)) ||
           a.roll.toLowerCase().includes(q) ||
           a.phone.includes(q)
         if (!matches) return false
@@ -132,15 +142,17 @@ export default function SuperAdminAccountsPage({ isBn: propIsBn }: { isBn?: bool
   const metrics = useMemo(() => {
     let studentCount = 0
     let parentCount = 0
+    let teacherCount = 0
     let activeCount = 0
     let lockedCount = 0
     accounts.forEach((a) => {
       if (a.role === 'student') studentCount++
-      if (a.role === 'parent') parentCount++
+      else if (a.role === 'parent') parentCount++
+      else if (a.role === 'teacher') teacherCount++
       if (a.status === 'active') activeCount++
       else lockedCount++
     })
-    return { total: accounts.length, studentCount, parentCount, activeCount, lockedCount }
+    return { total: accounts.length, studentCount, parentCount, teacherCount, activeCount, lockedCount }
   }, [accounts])
 
   // Selection handlers
@@ -194,6 +206,7 @@ export default function SuperAdminAccountsPage({ isBn: propIsBn }: { isBn?: bool
         totalCount={metrics.total}
         studentCount={metrics.studentCount}
         parentCount={metrics.parentCount}
+        teacherCount={metrics.teacherCount}
         activeCount={metrics.activeCount}
         lockedCount={metrics.lockedCount}
         selectedCount={selectedIds.size}

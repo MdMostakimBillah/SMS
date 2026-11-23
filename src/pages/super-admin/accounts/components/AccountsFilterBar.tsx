@@ -77,6 +77,16 @@ export function AccountsFilterBar({
           >
             {isBn ? 'অভিভাবক' : 'Parents'}
           </button>
+          <button
+            onClick={() => onFilterChange('role', 'teacher')}
+            className={`px-3 py-1.5 rounded-lg text-[0.75rem] font-semibold transition-all cursor-pointer border-none ${
+              filters.role === 'teacher'
+                ? 'bg-teal-500 text-white shadow-sm'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] bg-transparent'
+            }`}
+          >
+            {isBn ? 'শিক্ষক' : 'Teachers'}
+          </button>
         </div>
       </div>
 
