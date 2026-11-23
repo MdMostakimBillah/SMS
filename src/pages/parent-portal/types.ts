@@ -19,6 +19,19 @@ export interface PortalChild {
   guardianRelation: string
   emergencyContact: string
   presentAddress: string
+  permanentAddress?: string
+  district?: string
+  religion?: string
+  nationality?: string
+  admissionDate?: string
+  previousSchool?: string
+  fatherOccupation?: string
+  motherOccupation?: string
+  fatherNid?: string
+  motherNid?: string
+  studentPhone?: string
+  studentEmail?: string
+  status?: string
   classTeacherName: string
   classTeacherPhone: string
   classTeacherEmail: string

@@ -396,4 +396,33 @@ describe('ParentPortalPage', () => {
       expect(screen.getAllByText(/Call|কল করুন/i).length).toBeGreaterThanOrEqual(1)
     })
   })
+
+  it('renders redesigned Student Profile page with hero banner, academic records, guardian contacts, and personal information', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    // Switch to Profile tab
+    const profileTabBtn = screen.getByRole('button', { name: /Profile|প্রোফাইল/i })
+    await user.click(profileTabBtn)
+
+    // Verify Hero card & sections render
+    await waitFor(() => {
+      expect(screen.getByText(/Active Enrolled Student|নিয়মিত ও সক্রিয় শিক্ষার্থী/i)).toBeInTheDocument()
+      expect(screen.getByText(/Academic & Enrollment Profile|একাডেমিক ও প্রাতিষ্ঠানিক তথ্য/i)).toBeInTheDocument()
+      expect(screen.getByText(/Parents & Legal Guardian Profile|পিতামাতা ও অভিভাবকের বিবরণ/i)).toBeInTheDocument()
+      expect(screen.getByText(/Personal & Residence Records|ব্যক্তিগত ও বাসস্থান বিবরণ/i)).toBeInTheDocument()
+    })
+
+    // Verify father & mother info from admission record
+    expect(screen.getAllByText(/Mahfuzur Rahman/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/Nasrin Sultana/i).length).toBeGreaterThanOrEqual(1)
+
+    // Verify actions exist
+    expect(screen.getAllByRole('button', { name: /Digital ID Card|ডিজিটাল আইডি কার্ড/i }).length).toBeGreaterThanOrEqual(1)
+  })
 })
