@@ -66,21 +66,17 @@ export const PortalTabNav = React.memo(function PortalTabNav({
   }
 
   return (
-    <div className="relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs w-full overflow-hidden">
+    <div className="relative border-t border-[var(--border)] px-3 sm:px-5 w-full overflow-hidden">
       <div
         ref={stripRef}
         onScroll={handleStripScroll}
-        className="relative flex gap-1.5 p-1.5 rounded-[inherit] overflow-x-auto scrollbar-hide w-full touch-pan-x scroll-smooth"
+        className="relative flex items-center gap-1 overflow-x-auto scrollbar-hide w-full touch-pan-x scroll-smooth"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        {/* Sliding active indicator */}
+        {/* Sliding underline indicator */}
         <div
           ref={sliderRef}
-          className="absolute top-1.5 bottom-1.5 rounded-xl [transition:width_280ms_ease-out,transform_280ms_ease-out,background-color_280ms_ease-out] z-0"
-          style={{
-            background: 'var(--brand)',
-            boxShadow: 'var(--shadow-sm)',
-          }}
+          className="pointer-events-none absolute bottom-0 h-[2px] rounded-full bg-[var(--brand)] [transition:width_240ms_ease-out,transform_240ms_ease-out] z-10"
         />
 
         {PORTAL_TABS.map((tab) => {
@@ -96,24 +92,26 @@ export const PortalTabNav = React.memo(function PortalTabNav({
               }}
               type="button"
               onClick={() => onSelectTab(tab.id)}
-              className={`relative z-10 flex-1 min-w-max flex items-center justify-center gap-1.5 py-2 px-3.5 rounded-xl border-none cursor-pointer text-xs sm:text-[0.8125rem] font-[inherit] transition-colors duration-200 whitespace-nowrap ${
+              className={`relative z-10 min-w-max flex items-center gap-1.5 py-3 px-3 border-none bg-transparent cursor-pointer text-xs sm:text-[0.8125rem] font-[inherit] transition-colors whitespace-nowrap ${
                 isActive
-                  ? 'text-white font-semibold'
-                  : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium'
+                  ? 'text-[var(--text-primary)] font-semibold'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium'
               }`}
-              style={{ background: 'transparent' }}
             >
-              <Icon size={15} className="shrink-0" />
+              <Icon
+                size={14}
+                className={`shrink-0 ${
+                  isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'
+                }`}
+              />
               <span>{isBn ? tab.labelBn : tab.labelEn}</span>
               {badge > 0 && (
                 <span
                   aria-hidden="true"
-                  className={`ml-0.5 px-1.5 py-0.5 rounded-full text-[0.6875rem] leading-none font-semibold tabular-nums ${
+                  className={`px-1.5 py-0.5 rounded-full text-[0.6875rem] leading-none font-medium tabular-nums ${
                     isActive
-                      ? 'bg-white/20 text-white'
-                      : tab.id === 'fees'
-                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                      : 'bg-[var(--brand-light)] text-[var(--brand)]'
+                      ? 'bg-[var(--brand-light)] text-[var(--brand)]'
+                      : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]'
                   }`}
                 >
                   {badge}
@@ -124,18 +122,19 @@ export const PortalTabNav = React.memo(function PortalTabNav({
         })}
       </div>
 
-      {/* Left-edge fade */}
+      {/* Edge fade hints on mobile overflow */}
       {!stripAtStart && (
         <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-7 bg-gradient-to-r from-[var(--surface)] to-transparent z-20"
+          aria-hidden="true"
+          className="pointer-events-none absolute top-0 left-0 bottom-0 w-6 z-20 sm:hidden"
+          style={{ background: 'linear-gradient(to right, var(--surface), transparent)' }}
         />
       )}
-      {/* Right-edge fade */}
       {!stripAtEnd && (
         <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-7 bg-gradient-to-l from-[var(--surface)] to-transparent z-20"
+          aria-hidden="true"
+          className="pointer-events-none absolute top-0 right-0 bottom-0 w-6 z-20 sm:hidden"
+          style={{ background: 'linear-gradient(to left, var(--surface), transparent)' }}
         />
       )}
     </div>

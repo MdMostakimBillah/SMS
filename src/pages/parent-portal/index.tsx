@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { eachDayOfInterval, format, parseISO } from 'date-fns'
+import { GraduationCap, Users, Laptop, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -77,8 +78,10 @@ export default function ParentPortalPage() {
   const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
   const examConfigs = useExamStore((s) => s.examConfigs)
 
+  const institution = useClassStore((s) => s.institution)
   const isLocalPC = isLocalComputerMode()
   const isLocalServer = isLocalServerMode()
+  const [showLocalNotice, setShowLocalNotice] = useState(true)
 
   // Sync from server database on mount when not in offline mode
   useEffect(() => {
@@ -339,38 +342,108 @@ export default function ParentPortalPage() {
     return <PortalNoStudentsNotice isInstitutionAdmin={isInstitutionAdmin} />
   }
 
+  const institutionName = (isBn ? institution.nameBn || institution.name : institution.name) || 'EduTech School'
+
   return (
     <div className="w-full space-y-4 pb-10">
-      {/* Student Identity Bar */}
-      <ChildSelector
-        childrenList={childrenList}
-        activeChild={activeChild}
-        onSelectChild={(child) => setActiveChildId(child.id)}
-        onOpenIdCardModal={() => setShowIdCardModal(true)}
-        onOpenPayModal={() => handleOpenPayModal()}
-        onOpenContact={() => {
-          setCommSection('teachers')
-          setActiveTab('communication')
-        }}
-        isBn={isBn}
-        isSuperAdmin={isInstitutionAdmin}
-        isInstitutionAdmin={isInstitutionAdmin}
-        isLocalPC={isLocalPC}
-        isLocalServer={isLocalServer}
-      />
+      {/* Portal Top Context Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-primary)] flex items-center justify-center shrink-0 shadow-2xs border border-[var(--border)]">
+            <GraduationCap size={18} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-base sm:text-lg font-bold text-[var(--text-primary)] tracking-tight">
+                {isBn ? 'অভিভাবক পোর্টাল' : 'Parent Portal'}
+              </h1>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6875rem] font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
+                <Users size={11} className="text-[var(--text-muted)]" />
+                <span>
+                  {isParentAccount
+                    ? isBn ? 'অভিভাবক ড্যাশবোর্ড' : 'Guardian Access'
+                    : isBn ? 'অ্যাডমিন প্রিভিউ মোড' : 'Admin Preview Mode'}
+                </span>
+              </span>
+            </div>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              {isBn
+                ? 'শিক্ষার্থীর উপস্থিতি, রেজাল্ট, বকেয়া ফি ও হোমওয়ার্ক ড্যাশবোর্ড'
+                : 'Student daily attendance, exam marksheets, fee invoices & homework diary'}
+            </p>
+          </div>
+        </div>
 
-      {/* Tabs Navigation Bar */}
-      <PortalTabNav
-        activeTab={activeTab}
-        onSelectTab={(tab) => {
-          if (tab === 'communication') setCommSection('notices')
-          setActiveTab(tab)
-        }}
-        isBn={isBn}
-        dueFeesCount={dueFeesCount}
-        pendingHwCount={pendingHwCount}
-        noticeCount={noticeCount}
-      />
+        {/* Quick status info / Institution session */}
+        <div className="text-xs text-[var(--text-secondary)] flex items-center gap-2 self-start sm:self-auto">
+          <span className="hidden md:inline font-medium text-[var(--text-primary)]">
+            {institutionName}
+          </span>
+          <span className="hidden md:inline text-[var(--text-muted)]">·</span>
+          <span className="text-[0.6875rem] text-[var(--text-muted)]">
+            {isBn ? 'সেশন:' : 'Session:'} <strong className="text-[var(--text-primary)] font-medium">{activeChild.academicYear || institution.currentSession || '2026'}</strong>
+          </span>
+        </div>
+      </div>
+
+      {/* Local PC Storage Gentle Notification */}
+      {isLocalPC && isInstitutionAdmin && showLocalNotice && (
+        <div className="p-3 sm:p-3.5 rounded-2xl border border-amber-500/25 bg-amber-500/5 flex items-start justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <Laptop size={15} className="text-amber-500 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <span className="font-semibold text-[var(--text-primary)]">
+                {isBn ? 'লোকাল কম্পিউটার স্টোরেজ মোড সক্রিয়' : 'Local Computer Storage Active'}
+              </span>
+              <p className="text-[var(--text-secondary)] text-[0.6875rem] mt-0.5 leading-relaxed">
+                {isBn
+                  ? 'আপনি এই কম্পিউটারে লোকাল ডাটা প্রিভিউ করছেন। অভিভাবকরা দূরবর্তী মোবাইল থেকে সরাসরি পোর্টাল ব্যবহার করার জন্য ক্লাউড বা ভিপিএস ডাটাবেজ সংযোগ প্রয়োজন।'
+                  : 'You are previewing local records on this machine. Remote parent access from mobile devices requires Provider Cloud or a VPS database.'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowLocalNotice(false)}
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-1 shrink-0"
+            title={isBn ? 'লুকান' : 'Dismiss'}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Unified Header & Tab Navigation */}
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
+        <ChildSelector
+          childrenList={childrenList}
+          activeChild={activeChild}
+          onSelectChild={(child) => setActiveChildId(child.id)}
+          onOpenIdCardModal={() => setShowIdCardModal(true)}
+          onOpenPayModal={() => handleOpenPayModal()}
+          onOpenContact={() => {
+            setCommSection('teachers')
+            setActiveTab('communication')
+          }}
+          isBn={isBn}
+          isSuperAdmin={isInstitutionAdmin}
+          isInstitutionAdmin={isInstitutionAdmin}
+          isLocalPC={isLocalPC}
+          isLocalServer={isLocalServer}
+        />
+
+        <PortalTabNav
+          activeTab={activeTab}
+          onSelectTab={(tab) => {
+            if (tab === 'communication') setCommSection('notices')
+            setActiveTab(tab)
+          }}
+          isBn={isBn}
+          dueFeesCount={dueFeesCount}
+          pendingHwCount={pendingHwCount}
+          noticeCount={noticeCount}
+        />
+      </div>
 
       {/* Tab Panels */}
       <div>

@@ -32,37 +32,37 @@ export const AttendanceKpiCards = React.memo(function AttendanceKpiCards({
       icon: Calendar,
       label: isBn ? 'মোট কর্মদিবস' : 'Working Days',
       value: String(workingDays),
-      iconCls: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+      iconCls: 'text-[var(--text-secondary)]',
     },
     {
       icon: CheckCircle2,
       label: isBn ? 'উপস্থিত দিন' : 'Present Days',
       value: String(presentDays),
-      iconCls: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+      iconCls: 'text-[var(--text-secondary)]',
     },
     {
       icon: XCircle,
       label: isBn ? 'অনুপস্থিত' : 'Absent Days',
       value: String(absentDays),
-      iconCls: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+      iconCls: 'text-[var(--text-secondary)]',
     },
     {
       icon: Clock,
       label: isBn ? 'দেরিতে প্রবেশ' : 'Late Days',
       value: String(lateDays),
-      iconCls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+      iconCls: 'text-[var(--text-secondary)]',
     },
     {
       icon: FileText,
       label: isBn ? 'ছুটি ভোগ' : 'Leave Days',
       value: String(leaveDays),
-      iconCls: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+      iconCls: 'text-[var(--text-secondary)]',
     },
     {
       icon: TrendingUp,
       label: isBn ? 'উপস্থিতির হার' : 'Attendance Rate',
       value: attendanceRate,
-      iconCls: 'bg-[var(--brand-light)] text-[var(--brand)] border-[var(--border)]',
+      iconCls: 'text-[var(--text-secondary)]',
     },
   ]
 
@@ -71,20 +71,16 @@ export const AttendanceKpiCards = React.memo(function AttendanceKpiCards({
       {cards.map((card) => (
         <div
           key={card.label}
-          className="flex items-center gap-3 p-3.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs min-w-0"
+          className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] min-w-0"
         >
-          <div
-            className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${card.iconCls}`}
-          >
-            <card.icon size={16} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-lg font-bold text-[var(--text-primary)] leading-tight tabular-nums">
-              {card.value}
-            </div>
-            <div className="text-xs font-medium text-[var(--text-secondary)] mt-0.5 truncate">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
               {card.label}
-            </div>
+            </span>
+            <card.icon size={14} className={`${card.iconCls} shrink-0`} />
+          </div>
+          <div className="text-xl font-semibold text-[var(--text-primary)] leading-none tabular-nums mt-2.5">
+            {card.value}
           </div>
         </div>
       ))}

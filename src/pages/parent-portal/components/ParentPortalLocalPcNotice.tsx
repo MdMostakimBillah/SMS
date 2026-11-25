@@ -103,14 +103,14 @@ export const ParentPortalLocalPcNotice = React.memo(function ParentPortalLocalPc
           </div>
 
           {/* 3. Personal VPS Server */}
-          <div className="p-4 rounded-xl border border-indigo-500/25 bg-indigo-500/5 flex flex-col justify-between">
+          <div className="p-4 rounded-xl border border-[var(--brand)]/25 bg-[var(--brand-light)] flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between gap-1 mb-2">
-                <div className="flex items-center gap-1.5 font-semibold text-xs text-indigo-600 dark:text-indigo-400">
+                <div className="flex items-center gap-1.5 font-semibold text-xs text-[var(--brand)]">
                   <Server size={15} />
                   <span>{isBn ? 'পার্সোনাল ভিপিএস' : 'Personal VPS'}</span>
                 </div>
-                <CheckCircle2 size={15} className="text-indigo-500" />
+                <CheckCircle2 size={15} className="text-[var(--brand)]" />
               </div>
               <p className="text-[0.6875rem] text-[var(--text-secondary)] leading-relaxed">
                 {isBn
@@ -118,7 +118,7 @@ export const ParentPortalLocalPcNotice = React.memo(function ParentPortalLocalPc
                   : 'Self-hosted VPS server. Full control over data with secure online portal access.'}
               </p>
             </div>
-            <span className="text-[0.6875rem] font-semibold text-indigo-600 dark:text-indigo-400 mt-3 block">
+            <span className="text-[0.6875rem] font-semibold text-[var(--brand)] mt-3 block">
               {isBn ? 'সম্পূর্ণ সক্রিয়' : 'Fully Supported'}
             </span>
           </div>

@@ -85,27 +85,21 @@ export const CommunicationTab = React.memo(function CommunicationTab({
 
   return (
     <div className="space-y-4">
-      {/* Sub-navigation tabs */}
-      <div className="inline-flex items-center gap-1.5 p-1.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs overflow-x-auto scrollbar-hide max-w-full">
+      {/* Sub-navigation segmented switcher */}
+      <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 dark:bg-white/[0.04] overflow-x-auto scrollbar-hide max-w-full">
         <button
           type="button"
           onClick={() => setActiveSection('notices')}
-          className={`h-9 flex items-center gap-2 px-4 text-xs rounded-xl transition-colors cursor-pointer border-none whitespace-nowrap shrink-0 ${
+          className={`h-8 flex items-center gap-1.5 px-3.5 text-xs rounded-lg transition-colors cursor-pointer border-none whitespace-nowrap shrink-0 ${
             activeSection === 'notices'
-              ? 'bg-[var(--brand)] text-white font-semibold shadow-xs'
+              ? 'bg-[var(--surface)] text-[var(--text-primary)] shadow-xs font-semibold'
               : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium'
           }`}
         >
           <Bell className="w-3.5 h-3.5" />
           <span>{isBn ? 'নোটিশ বোর্ড' : 'Notice Board'}</span>
           {parentNotices.length > 0 && (
-            <span
-              className={`px-1.5 py-0.5 text-[0.6875rem] leading-none rounded-full font-semibold tabular-nums ${
-                activeSection === 'notices'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-[var(--brand-light)] text-[var(--brand)]'
-              }`}
-            >
+            <span className="text-[0.6875rem] text-[var(--text-muted)] tabular-nums">
               {parentNotices.length}
             </span>
           )}
@@ -114,22 +108,16 @@ export const CommunicationTab = React.memo(function CommunicationTab({
         <button
           type="button"
           onClick={() => setActiveSection('teachers')}
-          className={`h-9 flex items-center gap-2 px-4 text-xs rounded-xl transition-colors cursor-pointer border-none whitespace-nowrap shrink-0 ${
+          className={`h-8 flex items-center gap-1.5 px-3.5 text-xs rounded-lg transition-colors cursor-pointer border-none whitespace-nowrap shrink-0 ${
             activeSection === 'teachers'
-              ? 'bg-[var(--brand)] text-white font-semibold shadow-xs'
+              ? 'bg-[var(--surface)] text-[var(--text-primary)] shadow-xs font-semibold'
               : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium'
           }`}
         >
           <User className="w-3.5 h-3.5" />
           <span>{isBn ? 'শিক্ষক পরিচিতি ও যোগাযোগ' : 'Teacher Directory'}</span>
           {teachers.length > 0 && (
-            <span
-              className={`px-1.5 py-0.5 text-[0.6875rem] leading-none rounded-full font-semibold tabular-nums ${
-                activeSection === 'teachers'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]'
-              }`}
-            >
+            <span className="text-[0.6875rem] text-[var(--text-muted)] tabular-nums">
               {teachers.length}
             </span>
           )}

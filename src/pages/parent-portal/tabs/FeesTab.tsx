@@ -74,91 +74,77 @@ export const FeesTab = React.memo(function FeesTab({
   return (
     <div className="space-y-4">
       {/* Financial Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* 1. Total Invoiced */}
-        <div className="flex items-center gap-3 p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 shrink-0">
-            <Receipt size={18} />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-[var(--text-secondary)]">
+              {isBn ? 'মোট নির্ধারিত ফি' : 'Total Invoiced'}
+            </span>
+            <Receipt size={15} className="text-[var(--text-secondary)] shrink-0" />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-lg sm:text-xl font-bold leading-tight text-[var(--text-primary)] tabular-nums">
-              ৳{totalAmount.toLocaleString()}
-            </div>
-            <div className="text-xs font-medium text-[var(--text-secondary)] mt-0.5 flex items-center gap-2 flex-wrap">
-              <span>{isBn ? 'মোট নির্ধারিত ফি' : 'Total Invoiced'}</span>
-              {totalWaived > 0 && (
-                <span className="text-[0.6875rem] font-semibold text-teal-600 dark:text-teal-400">
-                  ({isBn ? 'ছাড়:' : 'Waived:'} ৳{totalWaived.toLocaleString()})
-                </span>
-              )}
-            </div>
+          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-nums mt-2 leading-none">
+            ৳{totalAmount.toLocaleString()}
           </div>
+          {totalWaived > 0 && (
+            <div className="text-xs text-[var(--text-muted)] mt-2">
+              {isBn ? 'মোট ছাড়:' : 'Total Waived:'} ৳{totalWaived.toLocaleString()}
+            </div>
+          )}
         </div>
 
-        {/* 2. Paid Amount */}
-        <div className="flex items-center gap-3 p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
-            <CheckCircle2 size={18} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-lg sm:text-xl font-bold leading-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
-              ৳{totalPaid.toLocaleString()}
-            </div>
-            <div className="text-xs font-medium text-[var(--text-secondary)] mt-0.5 truncate">
+        <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-[var(--text-secondary)]">
               {isBn ? 'পরিশোধিত ফি' : 'Paid Amount'}
-            </div>
+            </span>
+            <CheckCircle2 size={15} className="text-[var(--text-secondary)] shrink-0" />
+          </div>
+          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-nums mt-2 leading-none">
+            ৳{totalPaid.toLocaleString()}
           </div>
         </div>
 
-        {/* 3. Outstanding Dues */}
-        <div className="flex items-center gap-3 p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-xs hover:border-amber-500/40 transition-colors">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
-            <CreditCard size={18} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-lg sm:text-xl font-bold leading-tight text-amber-600 dark:text-amber-400 tabular-nums">
-                ৳{totalDue.toLocaleString()}
-              </div>
-              {totalDue > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onOpenPayModal()}
-                  className="h-7 px-3 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white cursor-pointer border-none transition-colors shrink-0"
-                >
-                  {isBn ? 'পরিশোধ' : 'Pay'}
-                </button>
-              )}
-            </div>
-            <div className="text-xs font-medium text-[var(--text-secondary)] mt-0.5 truncate">
+        <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-medium text-[var(--text-secondary)]">
               {isBn ? 'মোট বকেয়া ফি' : 'Outstanding Dues'}
+            </span>
+            <CreditCard size={15} className="text-[var(--text-secondary)] shrink-0" />
+          </div>
+          <div className="flex items-center justify-between gap-2 mt-2">
+            <div className={`text-2xl font-semibold ${totalDue > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--text-primary)]'} tabular-nums leading-none`}>
+              ৳{totalDue.toLocaleString()}
             </div>
+            {totalDue > 0 && (
+              <button
+                type="button"
+                onClick={() => onOpenPayModal()}
+                className="h-7 px-3 rounded-lg text-xs font-semibold bg-[var(--brand)] hover:opacity-90 text-white cursor-pointer border-none transition-opacity shrink-0"
+              >
+                {isBn ? 'পরিশোধ' : 'Pay'}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Invoices Card */}
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-[var(--border)]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center shrink-0">
-              <CreditCard size={16} />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-                {isBn ? 'বকেয়া ও পরিশোধযোগ্য ফি' : 'Current Due Invoices'}
-              </h3>
-              <p className="text-[0.6875rem] text-[var(--text-secondary)]">
-                {isBn ? `মোট ${filteredFees.length}টি ইনভয়েস` : `${filteredFees.length} invoices listed`}
-              </p>
-            </div>
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+              {isBn ? 'বকেয়া ও পরিশোধযোগ্য ফি' : 'Current Due Invoices'}
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              {isBn ? `মোট ${filteredFees.length}টি ইনভয়েস` : `${filteredFees.length} invoices listed`}
+            </p>
           </div>
 
           {totalDue > 0 && (
             <button
               type="button"
               onClick={() => onOpenPayModal()}
-              className="h-8 px-3.5 rounded-xl text-xs font-semibold bg-[var(--brand)] text-white hover:opacity-90 transition-opacity cursor-pointer border-none self-start sm:self-auto"
+              className="h-8 px-3.5 rounded-lg text-xs font-semibold bg-[var(--brand)] hover:opacity-90 text-white transition-opacity cursor-pointer border-none shadow-xs self-start sm:self-auto"
             >
               {isBn ? 'সব পরিশোধ করুন' : 'Pay All Dues'}
             </button>
@@ -175,11 +161,11 @@ export const FeesTab = React.memo(function FeesTab({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={isBn ? 'ফি বা TrxID খুঁজুন...' : 'Search fee or TrxID...'}
-                className="w-full h-9 pl-9 pr-3 text-xs rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--brand)] transition-colors"
+                className="w-full h-9 pl-9 pr-3 text-xs rounded-lg border border-[var(--border)] bg-slate-50/80 dark:bg-white/[0.03] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--brand)] transition-colors"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
+            <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100/80 dark:bg-white/[0.04] overflow-x-auto scrollbar-hide">
               {(
                 [
                   { id: 'all', en: 'All', bn: 'সকল', count: counts.all },
@@ -192,20 +178,14 @@ export const FeesTab = React.memo(function FeesTab({
                   key={tab.id}
                   type="button"
                   onClick={() => setStatusFilter(tab.id)}
-                  className={`h-8 px-3 rounded-xl text-xs font-medium whitespace-nowrap flex items-center gap-1.5 cursor-pointer border transition-colors ${
+                  className={`h-7 px-3 rounded-lg text-xs font-medium whitespace-nowrap flex items-center gap-1.5 cursor-pointer border-none transition-colors ${
                     statusFilter === tab.id
-                      ? 'bg-[var(--brand)] text-white border-[var(--brand)] font-semibold'
-                      : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]'
+                      ? 'bg-[var(--surface)] text-[var(--text-primary)] shadow-xs font-semibold'
+                      : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   <span>{isBn ? tab.bn : tab.en}</span>
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[0.6875rem] leading-none font-semibold tabular-nums ${
-                      statusFilter === tab.id
-                        ? 'bg-white/20 text-white'
-                        : 'bg-[var(--surface)] text-[var(--text-secondary)]'
-                    }`}
-                  >
+                  <span className="text-[0.6875rem] text-[var(--text-muted)] tabular-nums">
                     {tab.count}
                   </span>
                 </button>
@@ -217,8 +197,8 @@ export const FeesTab = React.memo(function FeesTab({
         {/* Invoices List or Empty State */}
         {filteredFees.length === 0 ? (
           <div className="py-12 text-center text-xs text-[var(--text-muted)]">
-            <Receipt size={32} className="mx-auto mb-2.5 opacity-40" />
-            <p className="text-sm font-semibold text-[var(--text-primary)]">
+            <Receipt size={28} className="mx-auto mb-2 opacity-35" />
+            <p className="text-sm font-medium text-[var(--text-primary)]">
               {fees.length === 0
                 ? isBn
                   ? 'কোনো ফি কাঠামো নির্ধারিত নেই'
@@ -238,29 +218,27 @@ export const FeesTab = React.memo(function FeesTab({
             </p>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="divide-y divide-[var(--border)]">
             {filteredFees.map((fee) => {
               const isPending = fee.status === 'pending'
               const isPaid = fee.due <= 0 && !isPending
               const isPartial = fee.due > 0 && fee.paid > 0 && !isPending
 
               return (
-                <div
-                  key={fee.id}
-                  className="p-3.5 sm:p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] hover:border-[var(--border-2)] transition-colors space-y-2"
-                >
+                <div key={fee.id} className="py-3.5 first:pt-1 last:pb-1 space-y-2">
                   <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2 py-0.5 rounded-md text-[0.6875rem] font-semibold border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)]">
+                        <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">
                           {(isBn ? fee.categoryBn : fee.category) || fee.category}
                         </span>
-                        <h4 className="text-[0.8125rem] sm:text-sm font-semibold text-[var(--text-primary)] truncate">
+                        <span className="text-[var(--text-muted)] text-xs">·</span>
+                        <h4 className="text-[0.8125rem] sm:text-sm font-medium text-[var(--text-primary)] truncate">
                           {isBn ? fee.titleBn : fee.title}
                         </h4>
                       </div>
-                      <div className="text-[0.6875rem] text-[var(--text-secondary)] flex items-center gap-2 mt-1.5 flex-wrap tabular-nums">
-                        <span>{isBn ? 'তারিখ:' : 'Due Date:'} {fee.dueDate}</span>
+                      <div className="text-[0.6875rem] text-[var(--text-muted)] flex items-center gap-2 mt-1 flex-wrap tabular-nums">
+                        <span>{isBn ? 'তারিখ:' : 'Due:'} {fee.dueDate}</span>
                         <span>·</span>
                         <span>{isBn ? 'নির্ধারিত:' : 'Total:'} ৳{fee.amount.toLocaleString()}</span>
                         {fee.waived && fee.waived > 0 && (
@@ -282,7 +260,7 @@ export const FeesTab = React.memo(function FeesTab({
                         {isPending && fee.pendingTrxId && (
                           <>
                             <span>·</span>
-                            <span className="text-amber-600 dark:text-amber-400 font-mono font-semibold">
+                            <span className="text-amber-600 dark:text-amber-400 font-mono">
                               TrxID: {fee.pendingTrxId}
                             </span>
                           </>
@@ -292,24 +270,24 @@ export const FeesTab = React.memo(function FeesTab({
 
                     <div className="flex items-center gap-3 shrink-0">
                       <div className="text-right">
-                        <div className="text-sm sm:text-base font-bold text-[var(--text-primary)] tabular-nums">
+                        <div className="text-sm font-semibold text-[var(--text-primary)] tabular-nums">
                           {fee.due > 0 ? `৳${fee.due.toLocaleString()}` : `৳${fee.paid.toLocaleString()}`}
                         </div>
-                        <div className="mt-0.5">
+                        <div className="mt-0.5 text-[0.6875rem] font-semibold">
                           {isPending ? (
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[0.6875rem] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            <span className="text-amber-600 dark:text-amber-400">
                               {isBn ? 'যাচাই প্রক্রিয়াধীন' : 'PENDING'}
                             </span>
                           ) : isPartial ? (
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[0.6875rem] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                            <span className="text-[var(--brand)]">
                               {isBn ? 'আংশিক' : 'PARTIAL'}
                             </span>
                           ) : fee.due > 0 ? (
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[0.6875rem] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                            <span className="text-rose-600 dark:text-rose-400">
                               {isBn ? 'বকেয়া' : 'DUE'}
                             </span>
                           ) : (
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-[0.6875rem] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            <span className="text-emerald-600 dark:text-emerald-400">
                               {isBn ? 'পরিশোধিত' : 'PAID'}
                             </span>
                           )}
@@ -323,7 +301,7 @@ export const FeesTab = React.memo(function FeesTab({
                               <button
                                 type="button"
                                 onClick={() => onApproveFee?.(fee)}
-                                className="h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer border-none flex items-center gap-1 transition-colors"
+                                className="h-8 px-3 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 cursor-pointer border-none flex items-center gap-1 transition-colors"
                                 title={isBn ? 'পেমেন্ট অনুমোদন করুন' : 'Approve Payment'}
                               >
                                 <CheckCircle2 size={13} />
@@ -332,16 +310,16 @@ export const FeesTab = React.memo(function FeesTab({
                               <button
                                 type="button"
                                 onClick={() => onRejectFee?.(fee)}
-                                className="h-8 w-8 rounded-lg flex items-center justify-center border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 cursor-pointer transition-colors"
+                                className="h-8 w-8 rounded-lg flex items-center justify-center border-none bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 cursor-pointer transition-colors"
                                 title={isBn ? 'পেমেন্ট বাতিল করুন' : 'Reject Payment'}
                               >
                                 <X size={14} />
                               </button>
                             </>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.6875rem] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.6875rem] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
                               <Clock size={12} />
-                              <span>{isBn ? 'যাচাই প্রক্রিয়াধীন' : 'Pending'}</span>
+                              <span>{isBn ? 'যাচাইাধীন' : 'Pending'}</span>
                             </span>
                           )
                         ) : (
@@ -350,7 +328,7 @@ export const FeesTab = React.memo(function FeesTab({
                               <button
                                 type="button"
                                 onClick={() => onOpenPayModal(fee)}
-                                className="h-8 px-3.5 rounded-lg text-xs font-semibold bg-[var(--brand)] text-white hover:opacity-90 cursor-pointer border-none transition-opacity"
+                                className="h-8 px-3.5 rounded-lg text-xs font-semibold bg-[var(--brand)] hover:opacity-90 text-white cursor-pointer border-none transition-opacity shadow-xs"
                               >
                                 {isBn ? 'পরিশোধ' : 'Pay'}
                               </button>
@@ -359,7 +337,7 @@ export const FeesTab = React.memo(function FeesTab({
                               <button
                                 type="button"
                                 onClick={() => handlePrintReceipt(fee)}
-                                className="h-8 w-8 rounded-lg flex items-center justify-center border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] hover:text-[var(--brand)] hover:border-[var(--brand)] transition-colors cursor-pointer"
+                                className="h-8 w-8 rounded-lg flex items-center justify-center border border-[var(--border)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
                                 title={isBn ? 'রশিদ ডাউনলোড করুন' : 'Download Receipt'}
                               >
                                 <Printer size={14} />
@@ -372,7 +350,7 @@ export const FeesTab = React.memo(function FeesTab({
                   </div>
 
                   {fee.rejectedReason && fee.due > 0 && !isPending && (
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[0.6875rem] text-rose-600 dark:text-rose-400 font-medium">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-rose-500/10 text-[0.6875rem] text-rose-600 dark:text-rose-400 font-medium">
                       <AlertTriangle size={13} className="shrink-0" />
                       <span>
                         {isBn ? 'পূর্ববর্তী পেমেন্ট বাতিল হয়েছে:' : 'Previous payment rejected:'} {fee.rejectedReason}

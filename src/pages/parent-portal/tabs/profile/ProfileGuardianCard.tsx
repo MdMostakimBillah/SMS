@@ -1,6 +1,5 @@
 import React from 'react'
 import {
-  Users,
   Phone,
   AlertCircle,
 } from 'lucide-react'
@@ -18,28 +17,21 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
   const emergencyNum = child.emergencyContact || child.guardianPhone || child.fatherPhone || ''
 
   return (
-    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
+    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] p-5 flex flex-col justify-between">
       <div>
-        {/* Card Header */}
-        <div className="flex items-center justify-between gap-2 pb-3 border-b border-[var(--border)] mb-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-              <Users size={16} />
-            </div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">
-              {isBn ? 'পিতামাতা ও অভিভাবকের বিবরণ' : 'Parents & Legal Guardian Profile'}
-            </h3>
-          </div>
-          <span className="px-2 py-0.5 text-[0.6875rem] font-semibold rounded-md bg-[var(--bg-secondary)] border border-[var(--border)] text-[var(--text-secondary)] shrink-0">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">
+            {isBn ? 'পিতামাতা ও অভিভাবকের বিবরণ' : 'Parents & Legal Guardian Profile'}
+          </h3>
+          <span className="text-xs text-[var(--text-muted)] shrink-0">
             {isBn ? 'পরিবার' : 'Family'}
           </span>
         </div>
 
-        {/* Father & Mother 2-Column Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-          {/* Father */}
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] space-y-1">
-            <span className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider block">
+        {/* Father & Mother 2-Column Tonal Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
+          <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] space-y-1">
+            <span className="text-[0.6875rem] font-medium text-[var(--text-muted)] block">
               {isBn ? 'পিতার বিবরণ' : "Father's Details"}
             </span>
             <p className="text-xs font-semibold text-[var(--text-primary)] truncate">
@@ -53,9 +45,9 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
             {child.fatherPhone ? (
               <a
                 href={`tel:${child.fatherPhone}`}
-                className="inline-flex items-center gap-1 text-[0.6875rem] font-medium text-[var(--brand)] hover:underline pt-0.5 no-underline"
+                className="inline-flex items-center gap-1 text-[0.6875rem] font-medium text-[var(--brand)] hover:underline pt-0.5 no-underline tabular-nums"
               >
-                <Phone size={11} />
+                <Phone size={10} />
                 <span>{child.fatherPhone}</span>
               </a>
             ) : (
@@ -70,9 +62,8 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
             )}
           </div>
 
-          {/* Mother */}
-          <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] space-y-1">
-            <span className="text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider block">
+          <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-white/[0.03] space-y-1">
+            <span className="text-[0.6875rem] font-medium text-[var(--text-muted)] block">
               {isBn ? 'মাতার বিবরণ' : "Mother's Details"}
             </span>
             <p className="text-xs font-semibold text-[var(--text-primary)] truncate">
@@ -86,9 +77,9 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
             {child.motherPhone ? (
               <a
                 href={`tel:${child.motherPhone}`}
-                className="inline-flex items-center gap-1 text-[0.6875rem] font-medium text-[var(--brand)] hover:underline pt-0.5 no-underline"
+                className="inline-flex items-center gap-1 text-[0.6875rem] font-medium text-[var(--brand)] hover:underline pt-0.5 no-underline tabular-nums"
               >
-                <Phone size={11} />
+                <Phone size={10} />
                 <span>{child.motherPhone}</span>
               </a>
             ) : (
@@ -110,7 +101,7 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
             <span className="text-[var(--text-secondary)]">
               {isBn ? 'আইনগত অভিভাবক' : 'Legal Guardian'}
             </span>
-            <span className="font-semibold text-[var(--text-primary)] text-right">
+            <span className="font-medium text-[var(--text-primary)] text-right">
               {child.guardianName || '—'} {child.guardianRelation ? `(${child.guardianRelation})` : ''}
             </span>
           </div>
@@ -120,7 +111,7 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
               <span className="text-[var(--text-secondary)]">
                 {isBn ? 'অভিভাবকের নম্বর' : 'Guardian Contact'}
               </span>
-              <a href={`tel:${child.guardianPhone}`} className="text-[var(--brand)] font-semibold hover:underline no-underline">
+              <a href={`tel:${child.guardianPhone}`} className="text-[var(--brand)] font-medium hover:underline no-underline tabular-nums">
                 {child.guardianPhone}
               </a>
             </div>
@@ -129,13 +120,13 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
       </div>
 
       {/* Emergency Contact Strip */}
-      <div className="mt-4 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-xs flex items-center justify-between gap-2">
+      <div className="mt-4 p-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-xs flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <AlertCircle size={14} className="text-amber-500 shrink-0" />
+          <AlertCircle size={13} className="text-[var(--text-secondary)] shrink-0" />
           <span className="text-[0.6875rem] text-[var(--text-secondary)] font-medium shrink-0">
             {isBn ? 'জরুরি:' : 'Emergency:'}
           </span>
-          <span className="font-semibold text-[var(--text-primary)] truncate font-mono text-xs">
+          <span className="font-semibold text-[var(--text-primary)] truncate font-mono text-xs tabular-nums">
             {emergencyNum || '—'}
           </span>
         </div>
@@ -143,7 +134,7 @@ export const ProfileGuardianCard = React.memo(function ProfileGuardianCard({
         {emergencyNum && (
           <a
             href={`tel:${emergencyNum}`}
-            className="h-7 inline-flex items-center gap-1 px-2.5 rounded-lg text-[0.6875rem] font-semibold border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors shrink-0 no-underline"
+            className="h-7 inline-flex items-center gap-1 px-2.5 rounded-lg text-[0.6875rem] font-semibold bg-[var(--surface)] text-[var(--text-primary)] hover:text-[var(--brand)] transition-colors shrink-0 no-underline"
           >
             <Phone size={11} />
             <span>{isBn ? 'কল' : 'Call'}</span>
