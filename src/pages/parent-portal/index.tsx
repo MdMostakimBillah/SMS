@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { eachDayOfInterval, format, parseISO } from 'date-fns'
-import { GraduationCap, Users, Laptop, X } from 'lucide-react'
+import { GraduationCap, Users } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -81,7 +81,6 @@ export default function ParentPortalPage() {
   const institution = useClassStore((s) => s.institution)
   const isLocalPC = isLocalComputerMode()
   const isLocalServer = isLocalServerMode()
-  const [showLocalNotice, setShowLocalNotice] = useState(true)
 
   // Sync from server database on mount when not in offline mode
   useEffect(() => {
@@ -385,33 +384,6 @@ export default function ParentPortalPage() {
           </span>
         </div>
       </div>
-
-      {/* Local PC Storage Gentle Notification */}
-      {isLocalPC && isInstitutionAdmin && showLocalNotice && (
-        <div className="p-3 sm:p-3.5 rounded-2xl border border-amber-500/25 bg-amber-500/5 flex items-start justify-between gap-3 text-xs">
-          <div className="flex items-start gap-2.5 min-w-0">
-            <Laptop size={15} className="text-amber-500 shrink-0 mt-0.5" />
-            <div className="min-w-0">
-              <span className="font-semibold text-[var(--text-primary)]">
-                {isBn ? 'লোকাল কম্পিউটার স্টোরেজ মোড সক্রিয়' : 'Local Computer Storage Active'}
-              </span>
-              <p className="text-[var(--text-secondary)] text-[0.6875rem] mt-0.5 leading-relaxed">
-                {isBn
-                  ? 'আপনি এই কম্পিউটারে লোকাল ডাটা প্রিভিউ করছেন। অভিভাবকরা দূরবর্তী মোবাইল থেকে সরাসরি পোর্টাল ব্যবহার করার জন্য ক্লাউড বা ভিপিএস ডাটাবেজ সংযোগ প্রয়োজন।'
-                  : 'You are previewing local records on this machine. Remote parent access from mobile devices requires Provider Cloud or a VPS database.'}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowLocalNotice(false)}
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer bg-transparent border-none p-1 shrink-0"
-            title={isBn ? 'লুকান' : 'Dismiss'}
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
 
       {/* Unified Header & Tab Navigation */}
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
