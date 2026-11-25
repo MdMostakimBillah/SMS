@@ -1,4 +1,4 @@
-import { useFeeStore, type OnlinePaymentRequest } from '@/store/feeStore'
+import { useFeeStore, type OnlinePaymentRequest, type FeePayment } from '@/store/feeStore'
 import { useNotificationStore, notificationId, type Notification } from '@/store/notificationStore'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import type { PortalChild, FeeItem } from '../types'
@@ -46,6 +46,8 @@ export function processParentOnlinePayment({
           pendingTrxId: trxId,
           pendingMethod: method,
           pendingDate: new Date().toISOString(),
+          rejectedReason: undefined,
+          rejectedDate: undefined,
         }
       : f
   )
@@ -68,7 +70,7 @@ export function processParentOnlinePayment({
       feeTitle: feeTitleEn,
       feeTitleBn,
       amount: paidAmount,
-      method: (method === 'bank' ? 'bank' : method) as any,
+      method: (method === 'bank' || method === 'nagad' || method === 'rocket' ? method : 'bkash') as OnlinePaymentRequest['method'],
       phone: phone || activeChild.guardianPhone,
       trxId,
       status: 'pending',
@@ -90,7 +92,7 @@ export function processParentOnlinePayment({
       title: `Pending Online Payment: ৳${paidAmount.toLocaleString()} (${method.toUpperCase()})`,
       titleBn: `অনলাইন পেমেন্ট যাচাই অপেক্ষমাণ: ৳${paidAmount.toLocaleString()} (${method.toUpperCase()})`,
       message: `Parent of ${activeChild.nameEn} (Class: ${activeChild.class}, Roll: ${activeChild.roll}, ID: ${activeChild.id}) submitted payment of ৳${paidAmount.toLocaleString()} via ${method.toUpperCase()} (TrxID: ${trxId}). Check balance and approve.`,
-      messageBn: `${childDisplayName}-এর অভিভাবক ৳${paidAmount.toLocaleString()} ফি পরিশোধের রিকোয়েস্ট জমা দিয়েছেন (${method.toUpperCase()}, TrxID: ${trxId})। অনুগ্রহ করে ব্যালেন্স যাচাই করে অনুমোদন দিন।`,
+      messageBn: `${childDisplayName}-এর অভিভাবক ৳${paidAmount.toLocaleString()} ফি পরিশোধের রিকোয়েস্ট জমা দিয়েছেন (${method.toUpperCase()}, TrxID: ${trxId})। অনুগ্রহ করে ব্যালেন্স যাচাই করে অনুমোদন দিন।`,
       type: 'warning',
       category: 'billing',
       read: false,
@@ -111,32 +113,9 @@ export function processParentOnlinePayment({
 
 /**
  * Approves a pending fee payment for a student.
- * Updates feeStore, creates official payment receipt, and marks fee paid.
+ * Updates feeStore, creates official payment receipt, and marks fee paid/partial.
  */
 export function approveStudentFee(child: PortalChild, fee: FeeItem, reviewedBy = 'Institution Admin'): FeeItem[] {
-  const req = useFeeStore.getState().onlinePaymentRequests.find(
-    (r) => r.studentId === child.id && (r.id === fee.pendingRequestId || r.feeStructureId === fee.id) && r.status === 'pending'
-  )
-
-  if (req) {
-    useFeeStore.getState().approveOnlinePaymentRequest(req.id, reviewedBy)
-  } else {
-    // Fallback if request record was cleared
-    useFeeStore.getState().addPayment({
-      id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      studentId: child.id,
-      feeStructureId: fee.id,
-      amount: fee.due,
-      discount: 0,
-      paidAt: new Date().toISOString().split('T')[0],
-      method: (fee.pendingMethod === 'bank' ? 'bank' : 'mobile') as any,
-      reference: fee.pendingTrxId || `TRX${Date.now().toString().slice(-8)}`,
-      note: `Online Payment Approved - ${fee.title}`,
-      collectedBy: reviewedBy,
-      createdAt: new Date().toISOString(),
-    })
-  }
-
   const childKey = `edutech_parent_portal_fees_${child.id}`
   let currentFees: FeeItem[] = []
   try {
@@ -146,20 +125,48 @@ export function approveStudentFee(child: PortalChild, fee: FeeItem, reviewedBy =
     /* ignore */
   }
 
-  const updatedFees = (currentFees.length > 0 ? currentFees : [fee]).map((f) =>
-    f.id === fee.id
-      ? {
-          ...f,
-          paid: (f.paid || 0) + (f.due || 0),
-          due: 0,
-          status: 'paid' as const,
-          pendingRequestId: undefined,
-          pendingTrxId: undefined,
-          pendingMethod: undefined,
-          pendingDate: undefined,
-        }
-      : f
+  const req = useFeeStore.getState().onlinePaymentRequests.find(
+    (r) => r.studentId === child.id && (r.id === fee.pendingRequestId || r.feeStructureId === fee.id) && r.status === 'pending'
   )
+
+  const approvedAmount = req?.amount ?? fee.due
+
+  if (req) {
+    useFeeStore.getState().approveOnlinePaymentRequest(req.id, reviewedBy)
+  } else {
+    // Fallback if request record was cleared
+    useFeeStore.getState().addPayment({
+      id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      studentId: child.id,
+      feeStructureId: fee.id,
+      amount: approvedAmount,
+      discount: 0,
+      paidAt: new Date().toISOString().split('T')[0],
+      method: (fee.pendingMethod === 'bank' ? 'bank' : 'mobile') as FeePayment['method'],
+      reference: fee.pendingTrxId || `TRX${Date.now().toString().slice(-8)}`,
+      note: `Online Payment Approved - ${fee.title}`,
+      collectedBy: reviewedBy,
+      createdAt: new Date().toISOString(),
+    })
+  }
+
+  const updatedFees = (currentFees.length > 0 ? currentFees : [fee]).map((f) => {
+    if (f.id !== fee.id) return f
+    const nextPaid = (f.paid || 0) + approvedAmount
+    const nextDue = Math.max(0, (f.due || 0) - approvedAmount)
+    return {
+      ...f,
+      paid: nextPaid,
+      due: nextDue,
+      status: nextDue <= 0 ? ('paid' as const) : ('partial' as const),
+      pendingRequestId: undefined,
+      pendingTrxId: undefined,
+      pendingMethod: undefined,
+      pendingDate: undefined,
+      rejectedReason: undefined,
+      rejectedDate: undefined,
+    }
+  })
 
   try {
     localStorage.setItem(childKey, JSON.stringify(updatedFees))
@@ -176,7 +183,7 @@ export function approveStudentFee(child: PortalChild, fee: FeeItem, reviewedBy =
 
 /**
  * Rejects a pending fee payment for a student with a given reason.
- * Reverts fee back to due and updates feeStore.
+ * Reverts fee back to due/partial and updates feeStore.
  */
 export function rejectStudentFee(
   child: PortalChild,
@@ -201,15 +208,18 @@ export function rejectStudentFee(
     /* ignore */
   }
 
+  const nowIso = new Date().toISOString()
   const updatedFees = (currentFees.length > 0 ? currentFees : [fee]).map((f) =>
     f.id === fee.id
       ? {
           ...f,
-          status: f.due > 0 ? ('due' as const) : ('paid' as const),
+          status: f.due > 0 ? (f.paid > 0 ? ('partial' as const) : ('due' as const)) : ('paid' as const),
           pendingRequestId: undefined,
           pendingTrxId: undefined,
           pendingMethod: undefined,
           pendingDate: undefined,
+          rejectedReason: reason,
+          rejectedDate: nowIso,
         }
       : f
   )

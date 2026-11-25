@@ -68,6 +68,7 @@ export interface HomeworkItem {
   dueDate: string
   teacherName: string
   description: string
+  descriptionBn?: string
   status: 'pending' | 'submitted' | 'evaluated'
   marks?: number
   maxMarks?: number
@@ -76,6 +77,9 @@ export interface HomeworkItem {
 }
 
 export interface ExamResultItem {
+  examId?: string
+  examName?: string
+  examNameBn?: string
   subject: string
   subjectBn: string
   code: string
@@ -95,8 +99,10 @@ export interface FeeItem {
   title: string
   titleBn: string
   category: string
+  categoryBn?: string
   dueDate: string
   amount: number
+  waived?: number
   paid: number
   due: number
   status: 'paid' | 'due' | 'partial' | 'overdue' | 'pending'
@@ -104,4 +110,9 @@ export interface FeeItem {
   pendingTrxId?: string
   pendingMethod?: string
   pendingDate?: string
+  rejectedReason?: string
+  rejectedDate?: string
+  lastPaymentMethod?: string
+  lastPaidAt?: string
+  receiptNo?: string
 }

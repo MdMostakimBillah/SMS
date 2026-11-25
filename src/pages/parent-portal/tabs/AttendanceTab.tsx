@@ -15,13 +15,15 @@ import { SelectedDateCard } from './attendance/SelectedDateCard'
 import { LeaveRequestsCard } from './attendance/LeaveRequestsCard'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import { useClassStore } from '@/store/classStore'
-import { getChildAttendanceStats } from '../utils/dataMappers'
+import { getChildAttendanceStats, isPunchLate } from '../utils/dataMappers'
 import { matchRoutineForStudent, isDateRoutineWeekend, formatPunchMethod } from '@/lib/routineUtils'
 
 interface AttendanceTabProps {
   child: PortalChild
   leaveRequests: LeaveRequest[]
   onOpenLeaveModal: () => void
+  onUpdateLeaveStatus?: (leaveId: string, status: 'approved' | 'rejected') => void
+  onCancelLeave?: (leaveId: string) => void
   isBn: boolean
 }
 
@@ -29,6 +31,8 @@ export const AttendanceTab = React.memo(function AttendanceTab({
   child,
   leaveRequests,
   onOpenLeaveModal,
+  onUpdateLeaveStatus,
+  onCancelLeave,
   isBn,
 }: AttendanceTabProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
@@ -38,17 +42,16 @@ export const AttendanceTab = React.memo(function AttendanceTab({
   const classes = useClassStore((s) => s.classes)
   const routines = useClassStore((s) => s.routines)
 
-  // Resolve child's class routine to derive accurate weekends
   const routine = useMemo(() => {
     return matchRoutineForStudent(child.class, child.section, classes, routines)
   }, [child.class, child.section, classes, routines])
 
-  // Real statistics derived from attendanceStore and routine
   const stats = useMemo(() => {
+    void attendance
+    void routine
     return getChildAttendanceStats(child.id, currentMonth, child.class, child.section)
   }, [child.id, currentMonth, child.class, child.section, attendance, routine])
 
-  // Calendar dates generation aligned with 7 weekdays
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth)
     const monthEnd = endOfMonth(currentMonth)
@@ -57,7 +60,6 @@ export const AttendanceTab = React.memo(function AttendanceTab({
     return eachDayOfInterval({ start: calStart, end: calEnd })
   }, [currentMonth])
 
-  // Real daily attendance resolver for the selected child with routine weekends
   const getDayStatus = useCallback(
     (day: Date): AttendanceDayInfo => {
       const isWeekend = isDateRoutineWeekend(day, routine)
@@ -77,13 +79,14 @@ export const AttendanceTab = React.memo(function AttendanceTab({
         if (rec.status === 'present') {
           const inPunch = rec.punches?.find((p) => p.type === 'in')
           const outPunch = [...(rec.punches || [])].reverse().find((p) => p.type === 'out')
-          const isLate = inPunch?.time && inPunch.time > '09:15'
+          const isLate = isPunchLate(inPunch?.time)
           return {
             status: isLate ? 'late' : 'present',
             label: isLate ? (isBn ? 'দেরি' : 'Late') : (isBn ? 'উপস্থিত' : 'Present'),
             timeIn: inPunch?.time || (rec.punches?.length ? '09:00 AM' : '—'),
             timeOut: outPunch?.time || '—',
             verification: formatPunchMethod(inPunch?.method, isBn),
+            note: rec.note,
           }
         }
         if (rec.status === 'absent') {
@@ -93,6 +96,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
             timeIn: '—',
             timeOut: '—',
             verification: isBn ? 'অনুপস্থিত' : 'Absent',
+            note: rec.note,
           }
         }
         if (rec.status === 'on-leave') {
@@ -102,6 +106,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
             timeIn: '—',
             timeOut: '—',
             verification: formatPunchMethod('leave', isBn),
+            note: rec.note,
           }
         }
       }
@@ -131,7 +136,6 @@ export const AttendanceTab = React.memo(function AttendanceTab({
 
   return (
     <div className="space-y-4">
-      {/* Monthly Attendance Summary Row */}
       <AttendanceKpiCards
         isBn={isBn}
         workingDays={stats.workingDays}
@@ -142,9 +146,7 @@ export const AttendanceTab = React.memo(function AttendanceTab({
         attendanceRate={stats.attendanceRate}
       />
 
-      {/* Main Grid & Log Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Calendar View (2 spans) */}
         <AttendanceCalendarView
           currentMonth={currentMonth}
           setCurrentMonth={setCurrentMonth}
@@ -155,7 +157,6 @@ export const AttendanceTab = React.memo(function AttendanceTab({
           isBn={isBn}
         />
 
-        {/* Selected Date Details & Leave Applications (1 span) */}
         <div className="space-y-4">
           <SelectedDateCard
             selectedDay={selectedDay}
@@ -166,6 +167,8 @@ export const AttendanceTab = React.memo(function AttendanceTab({
           <LeaveRequestsCard
             leaveRequests={leaveRequests}
             onOpenLeaveModal={onOpenLeaveModal}
+            onUpdateLeaveStatus={onUpdateLeaveStatus}
+            onCancelLeave={onCancelLeave}
             isBn={isBn}
           />
         </div>

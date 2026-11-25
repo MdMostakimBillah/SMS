@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Send, Calendar, AlertCircle } from 'lucide-react'
 import type { PortalChild, LeaveRequest } from '../types'
+import { selectCls } from '@/lib/styles'
 
 interface LeaveRequestModalProps {
   isOpen?: boolean
@@ -18,9 +19,10 @@ export const LeaveRequestModal = React.memo(function LeaveRequestModal({
   onSubmit,
   isBn,
 }: LeaveRequestModalProps) {
+  const todayStr = new Date().toISOString().split('T')[0]
   const [type, setType] = useState<'sick' | 'casual' | 'family' | 'other'>('sick')
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0])
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0])
+  const [startDate, setStartDate] = useState(todayStr)
+  const [endDate, setEndDate] = useState(todayStr)
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
 
@@ -59,23 +61,28 @@ export const LeaveRequestModal = React.memo(function LeaveRequestModal({
 
   return createPortal(
     <div
-      className="modal-overlay fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+      className="modal-overlay modal-backdrop-animate fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="relative w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--bg-primary)] p-5 shadow-2xl">
-        <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-4">
-          <div className="flex items-center gap-2">
-            <Calendar size={18} className="text-[var(--brand)]" />
-            <h3 className="text-[0.9375rem] font-bold text-[var(--text-primary)]">
+      <div className="modal-card-animate relative w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-lg">
+        <div className="flex items-center justify-between pb-3.5 border-b border-[var(--border)] mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center shrink-0">
+              <Calendar size={16} />
+            </div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
               {isBn ? 'ছুটির আবেদন ফরম' : 'Apply for Leave of Absence'}
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
+            aria-label={isBn ? 'বন্ধ করুন' : 'Close'}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer border-none bg-transparent"
           >
             <X size={16} />
           </button>
@@ -83,29 +90,29 @@ export const LeaveRequestModal = React.memo(function LeaveRequestModal({
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {error && (
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-red-500/10 text-red-500 text-[0.75rem]">
+            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium">
               <AlertCircle size={14} className="shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           <div>
-            <label className="block text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">
+            <label className="block text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
               {isBn ? 'শিক্ষার্থী' : 'Student'}
             </label>
-            <div className="px-3 py-2 rounded-xl bg-[var(--bg-secondary)] text-[0.8125rem] font-semibold text-[var(--text-primary)]">
+            <div className="px-3 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.8125rem] font-semibold text-[var(--text-primary)]">
               {isBn ? child.nameBn || child.nameEn : child.nameEn} · {child.class} ({isBn ? 'রোল:' : 'Roll:'} {child.roll})
             </div>
           </div>
 
           <div>
-            <label className="block text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">
+            <label className="block text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
               {isBn ? 'ছুটির ধরন' : 'Leave Type'}
             </label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as any)}
-              className="w-full px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors cursor-pointer"
+              onChange={(e) => setType(e.target.value as 'sick' | 'casual' | 'family' | 'other')}
+              className={`${selectCls} w-full h-9 rounded-xl`}
             >
               <option value="sick">{isBn ? 'অসুস্থতাজনিত ছুটি (Medical/Sick)' : 'Sick / Medical Leave'}</option>
               <option value="casual">{isBn ? 'নৈমিত্তিক ছুটি (Casual)' : 'Casual Leave'}</option>
@@ -116,33 +123,33 @@ export const LeaveRequestModal = React.memo(function LeaveRequestModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">
+              <label className="block text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
                 {isBn ? 'শুরুর তারিখ' : 'Start Date'}
               </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
+                className="w-full h-9 px-3 rounded-xl text-xs border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
                 required
               />
             </div>
             <div>
-              <label className="block text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">
+              <label className="block text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
                 {isBn ? 'শেষের তারিখ' : 'End Date'}
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
+                className="w-full h-9 px-3 rounded-xl text-xs border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-[0.6875rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">
+            <label className="block text-[0.6875rem] font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
               {isBn ? 'ছুটির বিস্তারিত কারণ' : 'Detailed Reason'}
             </label>
             <textarea
@@ -153,25 +160,25 @@ export const LeaveRequestModal = React.memo(function LeaveRequestModal({
                 setError('')
               }}
               placeholder={isBn ? 'ছুটির বিস্তারিত কারণ লিখুন...' : 'State the reason for leave clearly...'}
-              className="w-full p-3 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors resize-none"
+              className="w-full p-3 rounded-xl text-[0.8125rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--brand)] transition-colors resize-none"
               required
             />
           </div>
 
-          <div className="pt-2 flex items-center justify-end gap-2 border-t border-[var(--border)]">
+          <div className="pt-3 flex items-center justify-end gap-2 border-t border-[var(--border)]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-[0.8125rem] font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
+              className="h-9 px-4 rounded-xl text-xs font-medium border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer transition-colors"
             >
               {isBn ? 'বাতিল' : 'Cancel'}
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[0.8125rem] font-semibold bg-[var(--brand)] text-white shadow-xs hover:opacity-95 cursor-pointer border-none"
+              className="h-9 flex items-center gap-1.5 px-4 rounded-xl text-xs font-semibold bg-[var(--brand)] text-white shadow-xs hover:opacity-90 cursor-pointer border-none transition-opacity"
             >
-              <Send size={14} />
-              {isBn ? 'আবেদন জমা দিন' : 'Submit Application'}
+              <Send size={13} />
+              <span>{isBn ? 'আবেদন জমা দিন' : 'Submit Application'}</span>
             </button>
           </div>
         </form>

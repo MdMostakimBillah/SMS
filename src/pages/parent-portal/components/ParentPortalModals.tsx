@@ -46,6 +46,7 @@ export const ParentPortalModals = React.memo(function ParentPortalModals({
 
       {showFeeModal && (
         <FeePaymentModal
+          key={`${child.id}-${selectedFeeToPay?.id || 'default'}`}
           isOpen={showFeeModal}
           onClose={() => setShowFeeModal(false)}
           child={child}
@@ -58,6 +59,7 @@ export const ParentPortalModals = React.memo(function ParentPortalModals({
 
       {showLeaveModal && (
         <LeaveRequestModal
+          key={`leave-${child.id}`}
           isOpen={showLeaveModal}
           child={child}
           onClose={() => setShowLeaveModal(false)}

@@ -29,14 +29,20 @@ export const HomeworkTab = React.memo(function HomeworkTab({
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const realList = useMemo(() => getChildHomework(child), [child])
+  const assignments = useAssignmentStore((s) => s.assignments)
+  const submissions = useAssignmentStore((s) => s.submissions)
+
+  const realList = useMemo(() => {
+    void assignments
+    void submissions
+    return getChildHomework(child)
+  }, [child, assignments, submissions])
   const [homeworkList, setHomeworkList] = useState<HomeworkItem[]>(initialList ?? realList)
 
   useEffect(() => {
     setHomeworkList(initialList ?? realList)
   }, [initialList, realList])
 
-  // Filter & Search
   const filteredList = useMemo(() => {
     return homeworkList.filter((item) => {
       const matchesFilter = filter === 'all' || item.status === filter
@@ -53,7 +59,6 @@ export const HomeworkTab = React.memo(function HomeworkTab({
     })
   }, [homeworkList, filter, typeFilter, searchQuery])
 
-  // Count summaries
   const stats = useMemo(() => {
     const total = homeworkList.length
     const pending = homeworkList.filter((h) => h.status === 'pending').length
@@ -102,65 +107,97 @@ export const HomeworkTab = React.memo(function HomeworkTab({
   return (
     <div className="space-y-4">
       {/* Top Banner & Quick Counts */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {(
           [
-            { id: 'all', labelBn: 'মোট কাজ ও ডায়েরি', labelEn: 'Total Tasks & Diary', count: stats.total, icon: <BookOpen size={16} /> },
-            { id: 'pending', labelBn: 'বাকি রয়েছে', labelEn: 'Pending / Due', count: stats.pending, icon: <Clock size={16} /> },
-            { id: 'submitted', labelBn: 'জমা দেওয়া', labelEn: 'Submitted', count: stats.submitted, icon: <CheckCircle size={16} /> },
-            { id: 'evaluated', labelBn: 'মূল্যায়িত', labelEn: 'Evaluated', count: stats.evaluated, icon: <CheckCircle2 size={16} /> },
+            {
+              id: 'all',
+              labelBn: 'মোট কাজ ও ডায়েরি',
+              labelEn: 'Total Tasks & Diary',
+              count: stats.total,
+              icon: <BookOpen size={18} />,
+              inactiveCls: 'bg-[var(--brand-light)] text-[var(--brand)] border-[var(--border)]',
+            },
+            {
+              id: 'pending',
+              labelBn: 'বাকি রয়েছে',
+              labelEn: 'Pending / Due',
+              count: stats.pending,
+              icon: <Clock size={18} />,
+              inactiveCls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+            },
+            {
+              id: 'submitted',
+              labelBn: 'জমা দেওয়া',
+              labelEn: 'Submitted',
+              count: stats.submitted,
+              icon: <CheckCircle size={18} />,
+              inactiveCls: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+            },
+            {
+              id: 'evaluated',
+              labelBn: 'মূল্যায়িত',
+              labelEn: 'Evaluated',
+              count: stats.evaluated,
+              icon: <CheckCircle2 size={18} />,
+              inactiveCls: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+            },
           ] as const
-        ).map((item) => (
-          <div
-            key={item.id}
-            onClick={() => setFilter(item.id)}
-            className={`flex items-center gap-2.5 sm:gap-3 p-3 sm:p-[0.875rem_1rem] rounded-[0.625rem] bg-[var(--surface)] border cursor-pointer transition-all ${
-              filter === item.id ? 'border-[var(--brand)] shadow-sm' : 'border-[var(--border)] shadow-xs'
-            }`}
-          >
-            <div
-              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-md flex items-center justify-center shrink-0 ${
-                filter === item.id ? 'bg-[var(--brand)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--brand)]'
+        ).map((item) => {
+          const isActive = filter === item.id
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setFilter(item.id)}
+              className={`flex items-center gap-3 p-3.5 sm:p-4 rounded-2xl bg-[var(--surface)] border text-left cursor-pointer transition-all shadow-xs ${
+                isActive ? 'border-[var(--brand)] ring-1 ring-[var(--brand)]' : 'border-[var(--border)] hover:border-[var(--border-2)]'
               }`}
             >
-              {item.icon}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[1rem] sm:text-[1.125rem] font-bold text-[var(--text-primary)] leading-tight">
-                {item.count}
+              <div
+                className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 transition-colors ${
+                  isActive ? 'bg-[var(--brand)] text-white border-[var(--brand)]' : item.inactiveCls
+                }`}
+              >
+                {item.icon}
               </div>
-              <div className="text-[0.625rem] sm:text-[0.6875rem] text-[var(--text-secondary)] truncate">
-                {isBn ? item.labelBn : item.labelEn}
+              <div className="min-w-0 flex-1">
+                <div className="text-lg sm:text-xl font-bold text-[var(--text-primary)] leading-tight tabular-nums">
+                  {item.count}
+                </div>
+                <div className="text-xs font-medium text-[var(--text-secondary)] mt-0.5 truncate">
+                  {isBn ? item.labelBn : item.labelEn}
+                </div>
               </div>
-            </div>
-          </div>
-        ))}
+            </button>
+          )
+        })}
       </div>
 
       {/* Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-[var(--surface)] p-2.5 rounded-xl border border-[var(--border)]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-[var(--surface)] p-3 rounded-2xl border border-[var(--border)] shadow-xs">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={isBn ? 'বিষয়, শিরোনাম বা শিক্ষকের নামে খুঁজুন...' : 'Search by subject, title or teacher...'}
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-hidden focus:border-[var(--brand)]"
+            placeholder={isBn ? 'বিষয়, শিরোনাম বা শিক্ষকের নামে খুঁজুন...' : 'Search by subject, title or teacher...'}
+            className="w-full h-9 pl-9 pr-3 text-xs rounded-xl border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none focus:border-[var(--brand)] transition-colors"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
           <Filter className="w-3.5 h-3.5 text-[var(--text-muted)] shrink-0 ml-1" />
           {(['all', 'homework', 'assignment'] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTypeFilter(t)}
-              className={`px-2.5 py-1 text-[0.6875rem] font-medium rounded-lg whitespace-nowrap transition-colors cursor-pointer border-none ${
+              className={`h-8 px-3 text-xs font-medium rounded-xl whitespace-nowrap transition-colors cursor-pointer border ${
                 typeFilter === t
-                  ? 'bg-[var(--brand)] text-white shadow-2xs font-semibold'
-                  : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
+                  ? 'bg-[var(--brand)] text-white border-[var(--brand)] font-semibold'
+                  : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border)] hover:text-[var(--text-primary)]'
               }`}
             >
               {t === 'all'
@@ -176,12 +213,12 @@ export const HomeworkTab = React.memo(function HomeworkTab({
       {/* Homework Cards List */}
       <div className="space-y-3">
         {filteredList.length === 0 ? (
-          <div className="text-center py-12 bg-[var(--surface)] rounded-xl border border-[var(--border)]">
-            <BookOpen className="w-8 h-8 mx-auto text-[var(--text-muted)] mb-2" />
-            <p className="text-xs font-semibold text-[var(--text-primary)]">
-              {isBn ? 'কোনো হোমওয়ার্ক বা ডায়েরি পাওয়া যায়নি' : 'No homework or diary tasks found'}
+          <div className="text-center py-12 px-4 bg-[var(--surface)] rounded-2xl border border-[var(--border)] shadow-xs">
+            <BookOpen className="w-8 h-8 mx-auto text-[var(--text-muted)] mb-2.5 opacity-40" />
+            <p className="text-sm font-semibold text-[var(--text-primary)]">
+              {isBn ? 'কোনো হোমওয়ার্ক বা ডায়েরি পাওয়া যায়নি' : 'No homework or diary tasks found'}
             </p>
-            <p className="text-[0.6875rem] text-[var(--text-muted)] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-sm mx-auto">
               {isBn
                 ? 'শিক্ষক বা প্রতিষ্ঠান অ্যাডমিন থেকে অ্যাসাইনমেন্ট প্রকাশ করা হলে এখানে দেখা যাবে।'
                 : 'Assignments and daily diary published by teachers will appear here.'}

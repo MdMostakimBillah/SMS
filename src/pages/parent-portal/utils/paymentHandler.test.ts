@@ -77,8 +77,8 @@ describe('Online Fee Payment Workflow (Pending -> Verify TrxID -> Approve / Reje
     expect(updatedTarget?.due).toBe(1500)
 
     // 2. Persisted to student's LocalStorage as pending
-    const stored = JSON.parse(localStorage.getItem(`edutech_parent_portal_fees_${child.id}`) || '[]')
-    expect(stored.find((f: any) => f.id === targetFee.id)?.status).toBe('pending')
+    const stored: FeeItem[] = JSON.parse(localStorage.getItem(`edutech_parent_portal_fees_${child.id}`) || '[]')
+    expect(stored.find((f) => f.id === targetFee.id)?.status).toBe('pending')
 
     // 3. Central FeeStore records pending request for institution finance inspection
     const requests = useFeeStore.getState().onlinePaymentRequests

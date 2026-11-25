@@ -9,7 +9,133 @@ import { useFeeStore } from '@/store/feeStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useAssignmentStore } from '@/store/assignmentStore'
 import { useAttendanceStore } from '@/store/attendanceStore'
+import { useExamStore } from '@/store/examStore'
+import type { Teacher, Subject } from '@/pages/teachers/types'
+import type { StudentAdmission } from '@/store/admissionStore'
+import type { PortalChild } from './types'
 import { format } from 'date-fns'
+import { parseTimeToMinutes, isPunchLate } from './utils/dataMappers'
+import { resolvePortalChildrenForUser } from './utils/studentMapper'
+
+function makeTeacher(partial: Partial<Teacher> & { id: string; nameEn: string }): Teacher {
+  return {
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    status: 'active',
+    category: 'General',
+    photo: '',
+    nameBn: partial.nameEn,
+    gender: 'Male',
+    dob: '1985-01-01',
+    bloodGroup: 'O+',
+    religion: 'Islam',
+    phone: '',
+    email: '',
+    address: '',
+    nid: '',
+    emergencyPhone: '',
+    departmentId: '',
+    subjectIds: [],
+    designation: 'Teacher',
+    qualification: 'M.Sc',
+    experience: '5 Years',
+    joiningDate: '2020-01-01',
+    salary: 25000,
+    inTime: '08:00',
+    outTime: '14:00',
+    fatherNameEn: '',
+    fatherNameBn: '',
+    fatherPhone: '',
+    fatherNid: '',
+    motherNameEn: '',
+    motherNameBn: '',
+    motherPhone: '',
+    guardianName: '',
+    guardianPhone: '',
+    guardianRelation: '',
+    parentAddress: '',
+    ...partial,
+  }
+}
+
+function makeStudent(partial: Partial<StudentAdmission> & { id: string; nameEn: string }): StudentAdmission {
+  return {
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    status: 'approved',
+    photo: '',
+    nameBn: partial.nameEn,
+    dob: '2012-01-01',
+    gender: 'Male',
+    bloodGroup: '',
+    religion: 'Islam',
+    nationality: 'Bangladeshi',
+    phone: '',
+    email: '',
+    class: 'Class 8',
+    section: 'A',
+    roll: '01',
+    academicYear: '2026',
+    previousSchool: '',
+    admissionDate: '2026-01-01',
+    presentAddress: '',
+    permanentAddress: '',
+    district: '',
+    fatherNameEn: '',
+    fatherNameBn: '',
+    fatherOccupation: '',
+    fatherPhone: '',
+    fatherNid: '',
+    motherNameEn: '',
+    motherNameBn: '',
+    motherOccupation: '',
+    motherPhone: '',
+    motherNid: '',
+    guardianName: '',
+    guardianRelation: '',
+    guardianPhone: '',
+    teacherId: '',
+    ...partial,
+  }
+}
+
+function makeSubject(partial: Partial<Subject> & { id: string; name: string }): Subject {
+  return {
+    nameBn: partial.name,
+    departmentId: '',
+    departmentIds: [],
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+    ...partial,
+  }
+}
+
+function makePortalChild(partial: Partial<PortalChild> & { id: string; nameEn: string }): PortalChild {
+  return {
+    nameBn: partial.nameEn,
+    photo: '',
+    class: 'Class 8',
+    section: 'A',
+    roll: '01',
+    academicYear: '2026',
+    dob: '',
+    gender: '',
+    bloodGroup: '',
+    fatherName: '',
+    fatherPhone: '',
+    motherName: '',
+    motherPhone: '',
+    guardianName: '',
+    guardianPhone: '',
+    guardianRelation: '',
+    emergencyContact: '',
+    presentAddress: '',
+    classTeacherName: '',
+    classTeacherPhone: '',
+    classTeacherEmail: '',
+    ...partial,
+  }
+}
 
 describe('ParentPortalPage', () => {
   beforeEach(() => {
@@ -24,32 +150,30 @@ describe('ParentPortalPage', () => {
 
     useTeacherStore.setState({
       teachers: [
-        {
+        makeTeacher({
           id: 't-1',
           nameEn: 'Rafiqul Islam',
           nameBn: 'রফিকুল ইসলাম',
           designation: 'Mathematics Teacher',
           phone: '+880 1711-889900',
           email: 'rafiqul@school.edu',
-        } as any,
+        }),
       ],
     })
 
     useClassStore.setState({
       institution: {
-        id: 'inst-1',
+        ...useClassStore.getState().institution,
         name: 'Model High School',
         nameBn: 'মডেল হাই স্কুল',
-        code: 'MHS-01',
-        established: '2000',
         currentSession: '2026-27',
-      } as any,
+      },
     })
 
     // Real student records enrolled in institution
     useAdmissionStore.setState({
       students: [
-        {
+        makeStudent({
           id: 'child-1',
           nameEn: 'Tahmid Rahman',
           nameBn: 'তাহমিদ রহমান',
@@ -57,9 +181,6 @@ describe('ParentPortalPage', () => {
           class: 'Class 8',
           section: 'A',
           academicYear: '2026',
-          status: 'approved',
-          createdAt: '2026-01-01',
-          updatedAt: '2026-01-01',
           dob: '2012-05-14',
           gender: 'Male',
           bloodGroup: 'B+',
@@ -71,8 +192,8 @@ describe('ParentPortalPage', () => {
           guardianName: 'Mahfuzur Rahman',
           guardianPhone: '+880 1711-234567',
           presentAddress: 'House 14, Road 5, Dhanmondi, Dhaka',
-        } as any,
-        {
+        }),
+        makeStudent({
           id: 'child-2',
           nameEn: 'Samia Rahman',
           nameBn: 'সামিয়া রহমান',
@@ -80,9 +201,6 @@ describe('ParentPortalPage', () => {
           class: 'Class 5',
           section: 'B',
           academicYear: '2026',
-          status: 'approved',
-          createdAt: '2026-01-01',
-          updatedAt: '2026-01-01',
           dob: '2015-08-22',
           gender: 'Female',
           bloodGroup: 'O+',
@@ -94,7 +212,7 @@ describe('ParentPortalPage', () => {
           guardianName: 'Mahfuzur Rahman',
           guardianPhone: '+880 1711-234567',
           presentAddress: 'House 14, Road 5, Dhanmondi, Dhaka',
-        } as any,
+        }),
       ],
     })
 
@@ -280,7 +398,7 @@ describe('ParentPortalPage', () => {
 
     useAdmissionStore.setState({
       students: [
-        {
+        makeStudent({
           id: 'STU-101',
           nameEn: 'Abrar Fahim',
           nameBn: 'আবরার ফাহিম',
@@ -288,11 +406,8 @@ describe('ParentPortalPage', () => {
           class: 'Class 9',
           section: 'B',
           academicYear: '2026',
-          status: 'approved',
-          createdAt: '2026-01-01',
-          updatedAt: '2026-01-01',
           phone: '+880 1711-998877',
-        } as any,
+        }),
       ],
     })
 
@@ -633,5 +748,193 @@ describe('ParentPortalPage', () => {
 
     // Verify calendar weekend badges are rendered according to routine
     expect(screen.getAllByText(/Weekend|সাপ্তাহিক ছুটি/i).length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('filters exam results by selected exam, computes accurate GPA/grades, and maps subExamMarks', async () => {
+    const user = userEvent.setup()
+    useExamStore.persist.clearStorage()
+
+    useTeacherStore.setState({
+      subjects: [
+        makeSubject({ id: 'sub-math', name: 'Mathematics', nameBn: 'গণিত' }),
+        makeSubject({ id: 'sub-eng', name: 'English', nameBn: 'ইংরেজি' }),
+      ],
+    })
+
+    useExamStore.setState({
+      examConfigs: [
+        {
+          id: 'EX-1',
+          name: 'Midterm Exam',
+          nameBn: 'অর্ধ-বার্ষিক পরীক্ষা',
+          type: 'midterm',
+          session: '2026',
+          startDate: '2026-06-01',
+          endDate: '2026-06-15',
+          isActive: true,
+          isPublished: true,
+          publishedAt: '2026-06-20',
+          publishedClasses: ['Class 8'],
+          createdAt: '2026-05-01',
+        },
+        {
+          id: 'EX-2',
+          name: 'Annual Exam',
+          nameBn: 'বার্ষিক পরীক্ষা',
+          type: 'annual',
+          session: '2026',
+          startDate: '2026-11-01',
+          endDate: '2026-11-15',
+          isActive: false,
+          isPublished: true,
+          publishedAt: '2026-11-20',
+          publishedClasses: ['Class 8'],
+          createdAt: '2026-10-01',
+        },
+      ],
+      subjectMarkConfigs: [
+        {
+          id: 'SMC-1',
+          examId: 'EX-1',
+          classId: 'Class 8',
+          subjectId: 'sub-math',
+          fullMarks: 100,
+          passMarks: 33,
+          subExams: [
+            { id: 'SE-W', name: 'Written', nameBn: 'লিখিত', fullMarks: 70, passMarks: 23 },
+            { id: 'SE-M', name: 'MCQ', nameBn: 'বহুনির্বাচনি', fullMarks: 30, passMarks: 10 },
+          ],
+        },
+        {
+          id: 'SMC-2',
+          examId: 'EX-2',
+          classId: 'Class 8',
+          subjectId: 'sub-eng',
+          fullMarks: 100,
+          passMarks: 33,
+          subExams: [],
+        },
+      ],
+      studentMarks: [
+        {
+          id: 'SM-1',
+          examId: 'EX-1',
+          studentId: 'child-1',
+          subjectId: 'sub-math',
+          classId: 'Class 8',
+          sectionId: 'A',
+          subExamMarks: { 'SE-W': 62, 'SE-M': 24 },
+          totalMarks: 86,
+          grade: 'A+',
+          enteredAt: '2026-06-18',
+          updatedAt: '2026-06-18',
+        },
+        {
+          id: 'SM-2',
+          examId: 'EX-2',
+          studentId: 'child-1',
+          subjectId: 'sub-eng',
+          classId: 'Class 8',
+          sectionId: 'A',
+          subExamMarks: { written: 55 },
+          totalMarks: 55,
+          grade: 'B',
+          enteredAt: '2026-11-18',
+          updatedAt: '2026-11-18',
+        },
+      ],
+    })
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    const academicsTabBtn = screen.getByRole('button', { name: /Academics|ফলাফল/i })
+    await user.click(academicsTabBtn)
+
+    // Both subjects appear under All Evaluations; average GPA of A+ (5.0) and B (3.0) = 4.00
+    await waitFor(() => {
+      expect(screen.getByText(/Mathematics|গণিত/i)).toBeInTheDocument()
+      expect(screen.getByText(/English|ইংরেজি/i)).toBeInTheDocument()
+      expect(screen.getByText('4.00')).toBeInTheDocument()
+    })
+
+    // Filter strictly to Midterm Exam -> only Mathematics (86, GPA 5.00) shows
+    const examSelect = screen.getByRole('combobox')
+    await user.selectOptions(examSelect, 'EX-1')
+
+    await waitFor(() => {
+      expect(screen.getByText(/Mathematics|গণিত/i)).toBeInTheDocument()
+      expect(screen.queryByText(/English|ইংরেজি/i)).not.toBeInTheDocument()
+      expect(screen.getAllByText('5.00').length).toBeGreaterThanOrEqual(1)
+    })
+  })
+
+  it('persists leave requests to localStorage per child and allows admin approval', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <TestWrapper>
+        <ParentPortalPage />
+      </TestWrapper>
+    )
+
+    await user.click(screen.getByRole('button', { name: /Attendance|উপস্থিতি/i }))
+
+    const applyBtn = await screen.findByRole('button', { name: /Apply|নতুন আবেদন/i })
+    await user.click(applyBtn)
+
+    const reasonInput = await screen.findByPlaceholderText(/State the reason|ছুটির বিস্তারিত কারণ/i)
+    await user.type(reasonInput, 'Fever and doctor rest')
+    await user.click(screen.getByRole('button', { name: /Submit Application|আবেদন জমা দিন/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Fever and doctor rest')).toBeInTheDocument()
+      const saved = JSON.parse(localStorage.getItem('edutech_parent_portal_leave_child-1') || '[]')
+      expect(saved).toHaveLength(1)
+      expect(saved[0].status).toBe('pending')
+    })
+
+    // Approve leave as institution admin
+    const approveBtn = screen.getByTitle(/Approve Leave|অনুমোদন করুন/i)
+    await user.click(approveBtn)
+
+    await waitFor(() => {
+      const saved = JSON.parse(localStorage.getItem('edutech_parent_portal_leave_child-1') || '[]')
+      expect(saved[0].status).toBe('approved')
+    })
+  })
+
+  it('parses 12h/24h punch times accurately for late check and isolates parent children by user', () => {
+    expect(parseTimeToMinutes('08:45 AM')).toBe(525)
+    expect(parseTimeToMinutes('10:00 AM')).toBe(600)
+    expect(parseTimeToMinutes('01:30 PM')).toBe(810)
+    expect(isPunchLate('08:45 AM')).toBe(false)
+    expect(isPunchLate('09:15 AM')).toBe(false)
+    expect(isPunchLate('09:16 AM')).toBe(true)
+    expect(isPunchLate('10:00 AM')).toBe(true)
+
+    const allChildren: PortalChild[] = [
+      makePortalChild({ id: 'c1', nameEn: 'Child 1', guardianPhone: '+880 1711-111111' }),
+      makePortalChild({ id: 'c2', nameEn: 'Sibling 2', guardianPhone: '+880 1711-111111' }),
+      makePortalChild({ id: 'c3', nameEn: 'Other Student', guardianPhone: '+880 1999-999999' }),
+    ]
+
+    const parentUser = {
+      id: 'acc-par-c1',
+      email: '01711111111@portal.local',
+      name: 'Parent One',
+      role: 'parent',
+      studentId: 'c1',
+      schoolId: 'inst-1',
+      schoolName: 'Test School',
+      avatar: null,
+      subdomain: 'inst-1',
+    }
+
+    const resolved = resolvePortalChildrenForUser(allChildren, parentUser, true)
+    expect(resolved.map((c) => c.id)).toEqual(['c1', 'c2'])
   })
 })

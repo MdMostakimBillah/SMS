@@ -2,6 +2,7 @@ import type { PortalChild } from '../types'
 import type { StudentAdmission } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useClassStore } from '@/store/classStore'
+import type { User } from '@/contexts/AuthContext'
 
 /**
  * Maps admitted students to portal child models using genuine student attributes.
@@ -82,5 +83,73 @@ export function mapAdmittedStudentsToPortalChildren(
       classTeacherPhone: teacher?.phone || '',
       classTeacherEmail: teacher?.email || '',
     }
+  })
+}
+
+function normalizeDigits(val?: string | null): string {
+  return (val || '').replace(/\D/g, '')
+}
+
+/**
+ * Filters portal children to only those belonging to the authenticated parent/guardian account,
+ * including siblings linked to the same guardian phone or email.
+ * Institution admins and super admins receive the full list.
+ */
+export function resolvePortalChildrenForUser(
+  allChildren: PortalChild[],
+  user: User | null | undefined,
+  isParentAccount: boolean
+): PortalChild[] {
+  if (!isParentAccount || !user) {
+    return allChildren
+  }
+
+  const userEmail = (user.email || '').trim().toLowerCase()
+  const userEmailPrefix = userEmail.split('@')[0] || ''
+  const userDigits = normalizeDigits(user.email || user.id)
+
+  // First pass: direct match via studentId, email, or phone
+  const directMatches = allChildren.filter((child) => {
+    if (user.studentId && child.id === user.studentId) return true
+    if (userEmail && child.studentEmail && child.studentEmail.trim().toLowerCase() === userEmail) return true
+
+    const phones = [child.guardianPhone, child.fatherPhone, child.motherPhone, child.studentPhone]
+      .map(normalizeDigits)
+      .filter((p) => p.length >= 8)
+
+    if (userDigits.length >= 8 && phones.some((p) => p.endsWith(userDigits.slice(-8)) || userDigits.endsWith(p.slice(-8)))) {
+      return true
+    }
+    if (userEmailPrefix && phones.some((p) => p === userEmailPrefix)) {
+      return true
+    }
+    return false
+  })
+
+  if (directMatches.length === 0) {
+    return []
+  }
+
+  // Second pass: include siblings sharing the same guardian/father phone
+  const familyPhones = new Set<string>()
+  for (const m of directMatches) {
+    for (const raw of [m.guardianPhone, m.fatherPhone, m.motherPhone]) {
+      const digits = normalizeDigits(raw)
+      if (digits.length >= 8) {
+        familyPhones.add(digits.slice(-8))
+      }
+    }
+  }
+
+  if (familyPhones.size === 0) {
+    return directMatches
+  }
+
+  return allChildren.filter((child) => {
+    if (directMatches.some((d) => d.id === child.id)) return true
+    return [child.guardianPhone, child.fatherPhone, child.motherPhone].some((raw) => {
+      const digits = normalizeDigits(raw)
+      return digits.length >= 8 && familyPhones.has(digits.slice(-8))
+    })
   })
 }
