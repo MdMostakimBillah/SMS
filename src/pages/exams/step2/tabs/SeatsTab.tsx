@@ -2,6 +2,8 @@ import React, { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { LayoutGrid, Download, X } from 'lucide-react'
 import { useExamStore } from '@/store/examStore'
+import { useClassStore } from '@/store/classStore'
+import { escapeHtml } from '@/lib/sanitize'
 import { sectionCls, sectionTitleCls, selectCls, btnPrimary } from '@/lib/styles'
 import { usePermission } from '@/hooks/usePermission'
 
@@ -36,6 +38,8 @@ export default React.memo(function SeatsTab({
   const [assignRoomId, setAssignRoomId] = useState('')
   const { canCreate, canRead } = usePermission()
   const routines = useExamStore((s) => s.routines)
+  const institution = useClassStore((s) => s.institution)
+  const institutionName = (isBn ? institution.nameBn || institution.name : institution.name) || (isBn ? 'এডুটেক স্কুল' : 'EduTech School')
 
   const sectionStudents = useMemo(() => {
     if (!seatClassId || !seatSectionId) return []
@@ -131,7 +135,7 @@ export default React.memo(function SeatsTab({
         return `<div style="width:180px;border:2px solid ${brandColor};border-radius:12px;overflow:hidden;page-break-inside:avoid;background:#fff">
           <div style="background:${brandColor};color:#fff;text-align:center;padding:8px">
             <div style="font-size:9px;font-weight:700;letter-spacing:1px">${isBn ? 'আসন পরিকল্পনা' : 'SEAT PLAN'}</div>
-            <div style="font-size:8px;opacity:0.8;margin-top:2px">${isBn ? 'সানরাইজ একাডেমি' : 'Sunrise Academy'}</div>
+            <div style="font-size:8px;opacity:0.8;margin-top:2px">${escapeHtml(institutionName)}</div>
           </div>
           <div style="padding:12px;text-align:center">
             <div style="display:flex;justify-content:center;margin-bottom:8px">${photoHTML}</div>
@@ -148,7 +152,7 @@ export default React.memo(function SeatsTab({
           </div>
         </div>`
       }).join('')
-      pagesHTML += `<div class="page"><div class="header"><h1>${examName}</h1><h2>${isBn ? 'আসন পরিকল্পনা' : 'Seat Plan'} — ${seatClassId} ${isBn ? 'শ্রেণি' : 'Class'} ${seatSectionId} ${isBn ? 'সেকশন' : 'Section'}</h2><div class="info">${isBn ? 'মোট শিক্ষার্থী' : 'Total Students'}: ${plans.length} ${isBn ? 'জন' : ''} ${totalPages > 1 ? `| ${isBn ? 'পৃষ্ঠা' : 'Page'} ${page + 1}/${totalPages}` : ''}</div></div><div class="cards-grid">${cards}</div><div class="footer">${isBn ? 'তারিখ' : 'Date'}: ${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US')} | ${isBn ? 'স্কুল' : 'School'}: ${isBn ? 'এডুটেক স্কুল' : 'EduTech School'}</div></div>`
+      pagesHTML += `<div class="page"><div class="header"><h1>${examName}</h1><h2>${isBn ? 'আসন পরিকল্পনা' : 'Seat Plan'} — ${seatClassId} ${isBn ? 'শ্রেণি' : 'Class'} ${seatSectionId} ${isBn ? 'সেকশন' : 'Section'}</h2><div class="info">${isBn ? 'মোট শিক্ষার্থী' : 'Total Students'}: ${plans.length} ${isBn ? 'জন' : ''} ${totalPages > 1 ? `| ${isBn ? 'পৃষ্ঠা' : 'Page'} ${page + 1}/${totalPages}` : ''}</div></div><div class="cards-grid">${cards}</div><div class="footer">${isBn ? 'তারিখ' : 'Date'}: ${new Date().toLocaleDateString(isBn ? 'bn-BD' : 'en-US')} | ${isBn ? 'স্কুল' : 'School'}: ${escapeHtml(institutionName)}</div></div>`
     }
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${examName} - Seat Plan</title>
       <style>*{margin:0;padding:0;box-sizing:border-box}@page{size:A4 portrait;margin:10mm}body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#1e293b;background:#fff;font-size:10px}.page{page-break-after:always;padding:15px}.page:last-child{page-break-after:auto}.header{text-align:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid ${brandColor}}h1{font-size:16px;color:${brandColor};margin-bottom:2px}h2{font-size:11px;color:#64748b;font-weight:400;margin-top:2px}.info{font-size:10px;color:#94a3b8;margin-top:4px}.cards-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center}.footer{margin-top:12px;padding-top:8px;border-top:1px solid #e2e8f0;text-align:center;font-size:8px;color:#94a3b8}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{padding:0;margin:0}@page{size:A4 portrait;margin:8mm}.page{padding:10px}}</style>
@@ -215,7 +219,7 @@ export default React.memo(function SeatsTab({
                 <div className={`relative rounded-xl border-2 overflow-hidden transition-all ${isAssigned ? 'border-[var(--brand)] shadow-md' : 'border-dashed border-[var(--border)] opacity-60'}`}>
                   <div className="bg-[var(--brand)] text-white text-center py-2 px-3">
                     <div className="text-[0.5625rem] font-bold tracking-widest uppercase">{isBn ? 'আসন পরিকল্পনা' : 'SEAT PLAN'}</div>
-                    <div className="text-[0.5rem] opacity-80 mt-0.5">{isBn ? 'সানরাইজ একাডেমি' : 'Sunrise Academy'}</div>
+                    <div className="text-[0.5rem] opacity-80 mt-0.5">{institutionName}</div>
                   </div>
                   <div className="bg-[var(--bg-primary)] p-4 text-center">
                     <div className="flex justify-center mb-2">
