@@ -165,6 +165,13 @@ describe('useDashboardStats', () => {
       { read: false, senderId: 'u1' },
       { read: true, senderId: 'me' },
     ]
+    const expenses = [
+      { amount: 2200, date: todayStr, createdAt: todayStr, isActive: true },
+      { amount: 500, date: todayStr, createdAt: todayStr, isActive: false },
+      ...(todayDay > 1
+        ? [{ amount: 1200, date: yesterdayStr, createdAt: yesterdayStr, isActive: true }]
+        : []),
+    ]
 
     const { result } = renderHook(() =>
       useDashboardStats({
@@ -177,6 +184,7 @@ describe('useDashboardStats', () => {
         attendance,
         messages,
         smsRemaining: 450,
+        expenses,
       })
     )
 
@@ -195,10 +203,14 @@ describe('useDashboardStats', () => {
     const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
     expect(result.current.monthlyIncomeProgress.days).toHaveLength(daysInMonth)
     expect(result.current.monthlyIncomeProgress.todayIncome).toBe(8000)
+    expect(result.current.monthlyIncomeProgress.todayExpense).toBe(2200)
     expect(result.current.monthlyIncomeProgress.peakAmount).toBe(8000)
     if (todayDay > 1) {
       expect(result.current.monthlyIncomeProgress.todayDelta).toBe(3000)
       expect(result.current.monthlyIncomeProgress.monthTotal).toBe(13000)
+      expect(result.current.monthlyIncomeProgress.monthExpenseTotal).toBe(3400)
+    } else {
+      expect(result.current.monthlyIncomeProgress.monthExpenseTotal).toBe(2200)
     }
 
     expect(isBirthdayToday(birthdayDob, now)).toBe(true)

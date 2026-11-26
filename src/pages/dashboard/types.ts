@@ -39,6 +39,7 @@ export interface MonthlyDailyIncomePoint {
   dateStr: string
   label: string
   amount: number
+  expenseAmount: number
   prevAmount: number
   delta: number
   deltaPct: number | null
@@ -56,6 +57,8 @@ export interface MonthlyIncomeProgressSummary {
   todayDelta: number
   todayDeltaPct: number | null
   monthTotal: number
+  todayExpense: number
+  monthExpenseTotal: number
   dailyAverage: number
   peakAmount: number
   peakDayLabel: string

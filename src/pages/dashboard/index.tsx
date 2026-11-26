@@ -71,6 +71,7 @@ export default function DashboardPage() {
     (s) => (instId ? s.institutionBalances[instId] : undefined) ?? DEFAULT_INSTITUTION_BALANCE
   )
   const storeSales = useStoreStore(useShallow((s) => s.sales))
+  const expenses = useExpenseStore(useShallow((s) => s.expenses))
 
   // Local state
   const [isLoading, setIsLoading] = useState(true)
@@ -175,6 +176,7 @@ export default function DashboardPage() {
     messages,
     smsRemaining: smsBalance.remaining,
     storeSales,
+    expenses,
   })
 
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)'

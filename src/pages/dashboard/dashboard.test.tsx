@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import DashboardPage from './index'
+import { DashboardSkeleton } from './components/DashboardSkeleton'
 import { useAdmissionStore } from '@/store/admissionStore'
 import { useTeacherStore } from '@/store/teacherStore'
 import { useFeeStore } from '@/store/feeStore'
@@ -407,11 +408,22 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     expect(
       screen.getByText(/Monthly Income & Daily Collection Progress|মাসিক আয় ও দৈনিক সংগ্রহের অগ্রগতি/i)
     ).toBeInTheDocument()
+    expect(screen.getByText(/^Income$|^আয়$/)).toBeInTheDocument()
+    expect(screen.getByText(/^Expense$|^ব্যয়$/)).toBeInTheDocument()
 
     // Click student birthdays card -> opens birthday modal with Samia Rahman
     fireEvent.click(screen.getByText(/Student Birthdays Today|আজ ছাত্রদের জন্মদিন/i))
     await waitFor(() => {
       expect(screen.getByText(/Today's Student Birthdays|আজ যেসব শিক্ষার্থীর জন্মদিন/i)).toBeInTheDocument()
     })
+  })
+
+  it('renders updated DashboardSkeleton matching the current dashboard sections', () => {
+    render(<DashboardSkeleton />)
+
+    const skeleton = screen.getByTestId('dashboard-skeleton')
+    expect(skeleton).toBeInTheDocument()
+    expect(skeleton).toHaveAttribute('role', 'status')
+    expect(skeleton).toHaveAttribute('aria-label', 'Loading dashboard')
   })
 })

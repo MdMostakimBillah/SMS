@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import type { Teacher } from '@/pages/teachers/types'
 import type { FeePayment, FeeStructure, FeeWaiver } from '@/store/feeStore'
+import type { ExpenseEntry } from '@/store/expenseStore'
 import type { StoreSale } from '@/store/storeStore'
 import type { Message } from '@/store/messageStore'
 import type { DayAttendance } from '@/store/attendanceStore'
@@ -30,6 +31,7 @@ interface UseDashboardStatsOptions {
   messages?: Pick<Message, 'read' | 'senderId'>[]
   smsRemaining?: number
   storeSales?: Pick<StoreSale, 'total' | 'createdAt'>[]
+  expenses?: Pick<ExpenseEntry, 'amount' | 'date' | 'createdAt' | 'isActive'>[]
 }
 
 /** Match month and day against a reference date without timezone drift on YYYY-MM-DD strings. */
@@ -61,6 +63,7 @@ export function useDashboardStats({
   messages = [],
   smsRemaining = 0,
   storeSales = [],
+  expenses = [],
 }: UseDashboardStatsOptions) {
   // Single-pass computation for student stats
   const studentStats = useMemo(() => {
@@ -292,14 +295,25 @@ export function useDashboardStats({
       }
     }
 
+    const expenseByDate = new Map<string, number>()
+    for (const e of expenses) {
+      if (e.isActive === false) continue
+      const ds = (e.date || e.createdAt || '').slice(0, 10)
+      if (ds.startsWith(monthPrefix)) {
+        expenseByDate.set(ds, (expenseByDate.get(ds) || 0) + (e.amount || 0))
+      }
+    }
+
     const days: MonthlyDailyIncomePoint[] = []
     let cumulative = 0
+    let monthExpenseTotal = 0
     let peakAmount = 0
     let peakDayLabel = isBn ? '—' : '—'
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = `${monthPrefix}-${String(day).padStart(2, '0')}`
       const amount = amountByDate.get(dateStr) || 0
+      const expenseAmount = expenseByDate.get(dateStr) || 0
       const prevAmount = day > 1 ? days[day - 2].amount : 0
       const delta = day === 1 ? amount : amount - prevAmount
       const deltaPct =
@@ -309,6 +323,7 @@ export function useDashboardStats({
 
       if (day <= todayDay) {
         cumulative += amount
+        monthExpenseTotal += expenseAmount
       }
       if (amount > peakAmount) {
         peakAmount = amount
@@ -323,6 +338,7 @@ export function useDashboardStats({
         dateStr,
         label: String(day),
         amount,
+        expenseAmount,
         prevAmount,
         delta,
         deltaPct,
@@ -335,6 +351,7 @@ export function useDashboardStats({
 
     const todayPoint = days[todayDay - 1]
     const todayIncome = todayPoint?.amount || 0
+    const todayExpense = todayPoint?.expenseAmount || 0
     const yesterdayIncome = todayDay > 1 ? days[todayDay - 2]?.amount || 0 : 0
     const todayDelta = todayDay > 1 ? todayIncome - yesterdayIncome : todayIncome
     const todayDeltaPct =
@@ -352,12 +369,14 @@ export function useDashboardStats({
       todayDelta,
       todayDeltaPct,
       monthTotal,
+      todayExpense,
+      monthExpenseTotal,
       dailyAverage,
       peakAmount,
       peakDayLabel,
       targetAmount: financeStats.totalExpected,
     }
-  }, [payments, storeSales, financeStats.totalExpected, isBn])
+  }, [payments, storeSales, expenses, financeStats.totalExpected, isBn])
 
   // Recent students (latest 4)
   const recentStudents = useMemo(

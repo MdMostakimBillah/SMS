@@ -37,11 +37,18 @@ const CustomIncomeTooltip: React.FC<CustomTooltipProps> = ({ active, payload, is
 
   return (
     <div style={chartTooltipStyle}>
-      <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginBottom: '0.125rem' }}>
+      <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
         {pt.dateStr}
       </div>
-      <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-        {isBn ? 'সংগ্রহ: ' : 'Income: '}৳{pt.amount.toLocaleString()}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1875rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          <span style={{ width: '0.4375rem', height: '0.4375rem', borderRadius: '50%', background: 'var(--brand)', flexShrink: 0 }} />
+          <span>{isBn ? 'আয়: ' : 'Income: '}৳{pt.amount.toLocaleString()}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          <span style={{ width: '0.4375rem', height: '0.4375rem', borderRadius: '50%', background: 'var(--red)', flexShrink: 0 }} />
+          <span>{isBn ? 'ব্যয়: ' : 'Expense: '}৳{(pt.expenseAmount || 0).toLocaleString()}</span>
+        </div>
       </div>
     </div>
   )
@@ -60,6 +67,7 @@ export const MonthlyIncomeProgressChart: React.FC<Props> = ({
   const chartData = progress.days.map((d) => ({
     ...d,
     plotAmount: d.isFuture ? null : d.amount,
+    plotExpense: d.isFuture ? null : d.expenseAmount,
   }))
 
   return (
@@ -69,6 +77,8 @@ export const MonthlyIncomeProgressChart: React.FC<Props> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
           marginBottom: '0.75rem',
         }}
       >
@@ -76,6 +86,17 @@ export const MonthlyIncomeProgressChart: React.FC<Props> = ({
           {sectionHead('var(--green)')}
           <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
             {isBn ? 'মাসিক আয় ও দৈনিক সংগ্রহের অগ্রগতি' : 'Monthly Income & Daily Collection Progress'}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3125rem' }}>
+            <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: 'var(--brand)' }} />
+            <span>{isBn ? 'আয়' : 'Income'}</span>
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3125rem' }}>
+            <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: 'var(--red)' }} />
+            <span>{isBn ? 'ব্যয়' : 'Expense'}</span>
           </span>
         </div>
       </div>
@@ -101,10 +122,21 @@ export const MonthlyIncomeProgressChart: React.FC<Props> = ({
             <Line
               type="monotone"
               dataKey="plotAmount"
+              name={isBn ? 'আয়' : 'Income'}
               stroke="var(--brand)"
               strokeWidth={2}
               dot={{ r: 3, fill: 'var(--brand)', strokeWidth: 0 }}
               activeDot={{ r: 5, fill: 'var(--brand)', stroke: 'var(--surface)', strokeWidth: 2 }}
+              connectNulls={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="plotExpense"
+              name={isBn ? 'ব্যয়' : 'Expense'}
+              stroke="var(--red)"
+              strokeWidth={2}
+              dot={{ r: 3, fill: 'var(--red)', strokeWidth: 0 }}
+              activeDot={{ r: 5, fill: 'var(--red)', stroke: 'var(--surface)', strokeWidth: 2 }}
               connectNulls={false}
             />
           </LineChart>
