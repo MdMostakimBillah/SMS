@@ -78,8 +78,14 @@ export default function AdmitCardsTab({
 <style>
   @page{size:A4 portrait;margin:8mm}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f1f5f9;padding:10px}
-  @media print{body{background:#fff;padding:0} *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}}
+  body{font-family:'Noto Sans','Noto Sans Bengali',Arial,'Segoe UI',sans-serif;background:#f1f5f9;padding:10px}
+  .admit-card{box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+  .admit-card:last-child{page-break-after:auto}
+  @media print{
+    body{background:#fff;padding:0}
+    * {-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+    .admit-card{box-shadow:none;margin:0 auto}
+  }
 </style></head><body>${cardsHTML}</body></html>`, 600)
   }, [selectedExamId, acSelected, students, examConfigs, routines, subjectMarkConfigs, subjectMap, isBn])
 
