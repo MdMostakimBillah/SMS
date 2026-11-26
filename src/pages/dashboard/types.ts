@@ -15,6 +15,53 @@ export interface TeacherStatSummary {
   totalSalary: number
 }
 
+export interface TeacherAttendanceTodaySummary {
+  totalActive: number
+  present: number
+  absent: number
+  onLeave: number
+}
+
+export interface MessageStatSummary {
+  totalMessages: number
+  unreadMessages: number
+  smsRemaining: number
+}
+
+export interface BirthdayPersonItem {
+  id: string
+  name: string
+  subtitle?: string
+}
+
+export interface MonthlyDailyIncomePoint {
+  day: number
+  dateStr: string
+  label: string
+  amount: number
+  prevAmount: number
+  delta: number
+  deltaPct: number | null
+  trend: 'up' | 'down' | 'flat'
+  cumulative: number
+  isToday: boolean
+  isFuture: boolean
+}
+
+export interface MonthlyIncomeProgressSummary {
+  days: MonthlyDailyIncomePoint[]
+  monthLabel: string
+  todayIncome: number
+  yesterdayIncome: number
+  todayDelta: number
+  todayDeltaPct: number | null
+  monthTotal: number
+  dailyAverage: number
+  peakAmount: number
+  peakDayLabel: string
+  targetAmount: number
+}
+
 export interface FinanceStatSummary {
   todayIncome: number
   totalExpected: number

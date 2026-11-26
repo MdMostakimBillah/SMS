@@ -15,6 +15,10 @@ import { useSyllabusStore } from '@/store/syllabusStore'
 import { useAssignmentStore } from '@/store/assignmentStore'
 import { useOnlineStore } from '@/store/onlineStore'
 import { useTodoStore } from '@/store/todoStore'
+import { useAttendanceStore } from '@/store/attendanceStore'
+import { useMessageStore } from '@/store/messageStore'
+import { useSmsStore, DEFAULT_INSTITUTION_BALANCE } from '@/store/smsStore'
+import { useStoreStore } from '@/store/storeStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { getSlug } from '@/lib/storage'
 import { getActiveStorageMode } from '@/lib/storageMode'
@@ -24,8 +28,10 @@ import { useShallow } from 'zustand/shallow'
 import { DashboardSkeleton } from './components/DashboardSkeleton'
 import { DashboardHeader } from './components/DashboardHeader'
 import { StatsRow } from './components/StatsRow'
+import { OverviewStatsCards } from './components/OverviewStatsCards'
 import { FinanceCards } from './components/FinanceCards'
 import { TodoSection } from './components/TodoSection'
+import { MonthlyIncomeProgressChart } from './components/MonthlyIncomeProgressChart'
 import { ChartsRow } from './components/ChartsRow'
 import { DemographicsRow } from './components/DemographicsRow'
 import { ActivityRow } from './components/ActivityRow'
@@ -57,6 +63,14 @@ export default function DashboardPage() {
       deleteTodo: s.deleteTodo,
     }))
   )
+  const attendance = useAttendanceStore((s) => s.attendance)
+  const messages = useMessageStore(useShallow((s) => s.messages))
+  const institution = useClassStore((s) => s.institution)
+  const instId = (institution as { id?: string } | undefined)?.id || institution?.eiin || 'inst-default'
+  const smsBalance = useSmsStore(
+    (s) => (instId ? s.institutionBalances[instId] : undefined) ?? DEFAULT_INSTITUTION_BALANCE
+  )
+  const storeSales = useStoreStore(useShallow((s) => s.sales))
 
   // Local state
   const [isLoading, setIsLoading] = useState(true)
@@ -99,6 +113,8 @@ export default function DashboardPage() {
         useSyllabusStore.getState().syncFromServer(effectiveSlug),
         useAssignmentStore.getState().syncFromServer(effectiveSlug),
         useOnlineStore.getState().syncFromServer(effectiveSlug),
+        useAttendanceStore.getState().syncFromServer(effectiveSlug),
+        useStoreStore.getState().syncFromServer(effectiveSlug),
       ])
       setLastSyncAt(Date.now())
     } catch (err) {
@@ -133,12 +149,19 @@ export default function DashboardPage() {
     femaleStudents,
     totalTeachers,
     activeTeachers,
+    maleTeachers,
+    femaleTeachers,
     totalTeacherSalary,
     teacherStats,
+    teacherAttendanceToday,
+    messageStats,
+    todayStudentBirthdays,
+    todayTeacherBirthdays,
     classDist,
     statusData,
     weeklyTrend,
     financeStats,
+    monthlyIncomeProgress,
     recentStudents,
     topStudentsList,
   } = useDashboardStats({
@@ -148,6 +171,10 @@ export default function DashboardPage() {
     structures,
     generateWaivers,
     isBn,
+    attendance,
+    messages,
+    smsRemaining: smsBalance.remaining,
+    storeSales,
   })
 
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)'
@@ -261,6 +288,28 @@ export default function DashboardPage() {
         gap={gap}
       />
 
+      {/* Teacher Quantity & Today Attendance KPIs */}
+      <OverviewStatsCards
+        isBn={isBn}
+        isMobile={isMobile}
+        isTablet={isTablet}
+        section="teachers"
+        totalTeachers={totalTeachers}
+        maleTeachers={maleTeachers}
+        femaleTeachers={femaleTeachers}
+        teacherAttendanceToday={teacherAttendanceToday}
+        messageStats={messageStats}
+        todayStudentBirthdays={todayStudentBirthdays}
+        todayTeacherBirthdays={todayTeacherBirthdays}
+        canReadTeachers={canRead('teachers')}
+        canReadAttendance={canRead('attendance')}
+        canReadMessages={canRead('messages')}
+        canReadStudents={canRead('students')}
+        col4={col4}
+        col3={col3}
+        gap={gap}
+      />
+
       {/* Financial Overview Cards */}
       <FinanceCards
         isBn={isBn}
@@ -268,6 +317,28 @@ export default function DashboardPage() {
         stats={financeStats}
         canReadFinance={canRead('finance')}
         col4={col4}
+        gap={gap}
+      />
+
+      {/* Messages & Birthdays KPIs */}
+      <OverviewStatsCards
+        isBn={isBn}
+        isMobile={isMobile}
+        isTablet={isTablet}
+        section="engagement"
+        totalTeachers={totalTeachers}
+        maleTeachers={maleTeachers}
+        femaleTeachers={femaleTeachers}
+        teacherAttendanceToday={teacherAttendanceToday}
+        messageStats={messageStats}
+        todayStudentBirthdays={todayStudentBirthdays}
+        todayTeacherBirthdays={todayTeacherBirthdays}
+        canReadTeachers={canRead('teachers')}
+        canReadAttendance={canRead('attendance')}
+        canReadMessages={canRead('messages')}
+        canReadStudents={canRead('students')}
+        col4={col4}
+        col3={col3}
         gap={gap}
       />
 
@@ -284,6 +355,16 @@ export default function DashboardPage() {
         sectionHead={sectionHead}
         col2={col2}
         gap={gap}
+      />
+
+      {/* Full-Width Today & Monthly Daily Collection Progress Graph */}
+      <MonthlyIncomeProgressChart
+        isBn={isBn}
+        isMobile={isMobile}
+        canReadFinance={canRead('finance')}
+        progress={monthlyIncomeProgress}
+        cardStyle={cardStyle}
+        sectionHead={sectionHead}
       />
 
       {/* Visual Analytics Charts */}

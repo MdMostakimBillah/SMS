@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook } from '@testing-library/react'
-import { useDashboardStats } from './useDashboardStats'
+import { useDashboardStats, isBirthdayToday } from './useDashboardStats'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import type { Teacher } from '@/pages/teachers/types'
 import type { FeePayment, FeeStructure } from '@/store/feeStore'
@@ -129,5 +129,79 @@ describe('useDashboardStats', () => {
     // Top students list (only approved students)
     expect(result.current.topStudentsList).toHaveLength(1)
     expect(result.current.topStudentsList[0].name).toBe('Alice Rahman')
+  })
+
+  it('computes teacher attendance today, M/F teachers, message stats, birthdays, and monthly income progress', () => {
+    const now = new Date()
+    const todayStr = now.toISOString().split('T')[0]
+    const [year, month, todayDay] = todayStr.split('-').map(Number)
+    const monthStr = String(now.getMonth() + 1).padStart(2, '0')
+    const dayStr = String(now.getDate()).padStart(2, '0')
+    const birthdayDob = `2012-${monthStr}-${dayStr}`
+
+    const yesterdayDate = new Date(Date.UTC(year, month - 1, Math.max(1, todayDay - 1)))
+    const yesterdayStr = yesterdayDate.toISOString().split('T')[0]
+
+    const students = [
+      { id: 's1', nameEn: 'Birthday Boy', nameBn: 'বয়', class: '4', section: 'A', gender: 'male', status: 'approved', dob: birthdayDob, createdAt: '2026-01-01' } as any,
+      { id: 's2', nameEn: 'Other Girl', nameBn: 'গার্ল', class: '4', section: 'A', gender: 'female', status: 'approved', dob: '2012-01-01', createdAt: '2026-01-01' } as any,
+    ]
+    const teachers = [
+      { id: 't1', nameEn: 'Male Teacher Present', nameBn: 'শিক্ষক', gender: 'male', status: 'active', salary: 30000, dob: `1990-${monthStr}-${dayStr}`, createdAt: '2026-01-01' } as any,
+      { id: 't2', nameEn: 'Female Teacher Absent', nameBn: 'শিক্ষিকা', gender: 'female', status: 'active', salary: 28000, dob: '1991-02-10', createdAt: '2026-01-01' } as any,
+    ]
+    const attendance = {
+      [todayStr]: {
+        t1: { status: 'present' },
+      },
+    }
+    const payments = [
+      { id: 'p1', studentId: 's1', amount: 8000, paidAt: `${todayStr}T10:00:00.000Z` } as any,
+      ...(todayDay > 1
+        ? [{ id: 'p2', studentId: 's2', amount: 5000, paidAt: `${yesterdayStr}T10:00:00.000Z` } as any]
+        : []),
+    ]
+    const messages = [
+      { read: false, senderId: 'u1' },
+      { read: true, senderId: 'me' },
+    ]
+
+    const { result } = renderHook(() =>
+      useDashboardStats({
+        students,
+        teachers,
+        payments,
+        structures: [{ id: 'f1', amount: 5000, type: 'monthly', isActive: true } as any],
+        generateWaivers: () => [],
+        isBn: false,
+        attendance,
+        messages,
+        smsRemaining: 450,
+      })
+    )
+
+    expect(result.current.maleTeachers).toBe(1)
+    expect(result.current.femaleTeachers).toBe(1)
+    expect(result.current.teacherAttendanceToday.present).toBe(1)
+    expect(result.current.teacherAttendanceToday.absent).toBe(1)
+    expect(result.current.messageStats.totalMessages).toBe(2)
+    expect(result.current.messageStats.unreadMessages).toBe(1)
+    expect(result.current.messageStats.smsRemaining).toBe(450)
+    expect(result.current.todayStudentBirthdays).toHaveLength(1)
+    expect(result.current.todayStudentBirthdays[0].name).toBe('Birthday Boy')
+    expect(result.current.todayTeacherBirthdays).toHaveLength(1)
+    expect(result.current.todayTeacherBirthdays[0].name).toBe('Male Teacher Present')
+
+    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
+    expect(result.current.monthlyIncomeProgress.days).toHaveLength(daysInMonth)
+    expect(result.current.monthlyIncomeProgress.todayIncome).toBe(8000)
+    expect(result.current.monthlyIncomeProgress.peakAmount).toBe(8000)
+    if (todayDay > 1) {
+      expect(result.current.monthlyIncomeProgress.todayDelta).toBe(3000)
+      expect(result.current.monthlyIncomeProgress.monthTotal).toBe(13000)
+    }
+
+    expect(isBirthdayToday(birthdayDob, now)).toBe(true)
+    expect(isBirthdayToday('', now)).toBe(false)
   })
 })

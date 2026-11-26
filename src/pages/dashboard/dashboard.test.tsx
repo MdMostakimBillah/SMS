@@ -13,6 +13,8 @@ import { useHRStore } from '@/store/hrStore'
 import { useSyllabusStore } from '@/store/syllabusStore'
 import { useAssignmentStore } from '@/store/assignmentStore'
 import { useTodoStore } from '@/store/todoStore'
+import { useAttendanceStore } from '@/store/attendanceStore'
+import { useMessageStore } from '@/store/messageStore'
 import * as storageModeModule from '@/lib/storageMode'
 
 const mockNavigate = vi.fn()
@@ -309,6 +311,107 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
 
     await waitFor(() => {
       expect(screen.queryByText(/Create New Task|নতুন কাজ যোগ করুন/i)).not.toBeInTheDocument()
+    })
+  })
+
+  it('displays new teacher, attendance, message, birthday KPI cards and full-month income progress graph', async () => {
+    const now = new Date()
+    const todayStr = now.toISOString().split('T')[0]
+    const mmdd = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+    useAdmissionStore.setState({
+      students: [
+        {
+          id: 'STU-BDAY',
+          nameEn: 'Samia Rahman',
+          nameBn: 'সামিয়া রহমান',
+          class: '8',
+          section: 'A',
+          gender: 'female',
+          status: 'approved',
+          dob: `2012-${mmdd}`,
+          academicYear: useClassStore.getState().institution?.currentSession || '2026',
+          createdAt: '2026-11-01',
+        } as any,
+      ],
+    })
+
+    useTeacherStore.setState({
+      teachers: [
+        {
+          id: 'T-BDAY',
+          nameEn: 'Karim Uddin',
+          nameBn: 'করিম উদ্দিন',
+          gender: 'male',
+          status: 'active',
+          salary: 35000,
+          dob: `1988-${mmdd}`,
+          createdAt: '2026-10-01',
+        } as any,
+        {
+          id: 'T-ABS',
+          nameEn: 'Salma Khatun',
+          nameBn: 'সালমা খাতুন',
+          gender: 'female',
+          status: 'active',
+          salary: 30000,
+          dob: '1992-01-15',
+          createdAt: '2026-10-02',
+        } as any,
+      ],
+    })
+
+    useAttendanceStore.setState({
+      attendance: {
+        [todayStr]: {
+          'T-BDAY': { status: 'present', punches: [] },
+        },
+      },
+    })
+
+    useMessageStore.setState({
+      messages: [
+        {
+          id: 'M-1',
+          senderId: 'me',
+          senderName: 'Admin',
+          senderNameBn: 'Admin',
+          senderRole: 'admin',
+          recipientId: 'all',
+          recipientName: 'All',
+          subject: 'Notice',
+          body: 'Test',
+          read: true,
+          status: 'sent',
+          createdAt: now.toISOString(),
+        },
+      ],
+    })
+
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText(/Total Teachers|মোট শিক্ষক/i)).toBeInTheDocument()
+    })
+
+    expect(screen.getByText(/M\/F Teachers|শিক্ষক \(পুরুষ\/মহিলা\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/Present Teachers Today|আজ উপস্থিত শিক্ষক/i)).toBeInTheDocument()
+    expect(screen.getByText(/Absent Teachers Today|আজ অনুপস্থিত শিক্ষক/i)).toBeInTheDocument()
+    expect(screen.getByText(/Messages Quantity|মোট বার্তা/i)).toBeInTheDocument()
+    expect(screen.getByText(/Student Birthdays Today|আজ ছাত্রদের জন্মদিন/i)).toBeInTheDocument()
+    expect(screen.getByText(/Teacher Birthdays Today|আজ শিক্ষকদের জন্মদিন/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Monthly Income & Daily Collection Progress|মাসিক আয় ও দৈনিক সংগ্রহের অগ্রগতি/i)
+    ).toBeInTheDocument()
+
+    // Click student birthdays card -> opens birthday modal with Samia Rahman
+    fireEvent.click(screen.getByText(/Student Birthdays Today|আজ ছাত্রদের জন্মদিন/i))
+    await waitFor(() => {
+      expect(screen.getByText(/Today's Student Birthdays|আজ যেসব শিক্ষার্থীর জন্মদিন/i)).toBeInTheDocument()
     })
   })
 })
