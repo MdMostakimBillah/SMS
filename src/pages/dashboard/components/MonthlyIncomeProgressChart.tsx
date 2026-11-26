@@ -1,4 +1,5 @@
 import React from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   LineChart,
   Line,
@@ -17,6 +18,8 @@ interface Props {
   progress: MonthlyIncomeProgressSummary
   cardStyle: React.CSSProperties
   sectionHead: (color: string) => React.ReactNode
+  onPrevMonth?: () => void
+  onNextMonth?: () => void
 }
 
 function formatCurrencyCompact(value: number): string {
@@ -61,6 +64,8 @@ export const MonthlyIncomeProgressChart: React.FC<Props> = ({
   progress,
   cardStyle,
   sectionHead,
+  onPrevMonth,
+  onNextMonth,
 }) => {
   if (!canReadFinance) return null
 
@@ -69,6 +74,21 @@ export const MonthlyIncomeProgressChart: React.FC<Props> = ({
     plotAmount: d.isFuture ? null : d.amount,
     plotExpense: d.isFuture ? null : d.expenseAmount,
   }))
+
+  const navBtnStyle = (disabled: boolean): React.CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '1.5rem',
+    height: '1.5rem',
+    borderRadius: '0.375rem',
+    border: 'none',
+    background: 'transparent',
+    color: disabled ? 'var(--text-muted)' : 'var(--text-secondary)',
+    opacity: disabled ? 0.45 : 1,
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    padding: 0,
+  })
 
   return (
     <div className="gsap-fade-up card--premium" style={cardStyle}>
@@ -89,15 +109,61 @@ export const MonthlyIncomeProgressChart: React.FC<Props> = ({
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3125rem' }}>
-            <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: 'var(--brand)' }} />
-            <span>{isBn ? 'আয়' : 'Income'}</span>
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3125rem' }}>
-            <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: 'var(--red)' }} />
-            <span>{isBn ? 'ব্যয়' : 'Expense'}</span>
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3125rem' }}>
+              <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: 'var(--brand)' }} />
+              <span>{isBn ? 'আয়' : 'Income'}</span>
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3125rem' }}>
+              <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: 'var(--red)' }} />
+              <span>{isBn ? 'ব্যয়' : 'Expense'}</span>
+            </span>
+          </div>
+
+          {(onPrevMonth || onNextMonth) && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.125rem',
+                padding: '0.125rem 0.25rem',
+                borderRadius: '0.5rem',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-secondary)',
+              }}
+            >
+              <button
+                type="button"
+                aria-label={isBn ? 'আগের মাস' : 'Previous month'}
+                onClick={onPrevMonth}
+                style={navBtnStyle(false)}
+              >
+                <ChevronLeft size={13} />
+              </button>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  color: 'var(--text-primary)',
+                  minWidth: '6.75rem',
+                  textAlign: 'center',
+                  padding: '0 0.25rem',
+                }}
+              >
+                {progress.monthLabel}
+              </span>
+              <button
+                type="button"
+                aria-label={isBn ? 'পরের মাস' : 'Next month'}
+                disabled={progress.isCurrentMonth}
+                onClick={onNextMonth}
+                style={navBtnStyle(progress.isCurrentMonth)}
+              >
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

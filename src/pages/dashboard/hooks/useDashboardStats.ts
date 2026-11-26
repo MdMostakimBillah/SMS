@@ -32,6 +32,19 @@ interface UseDashboardStatsOptions {
   smsRemaining?: number
   storeSales?: Pick<StoreSale, 'total' | 'createdAt'>[]
   expenses?: Pick<ExpenseEntry, 'amount' | 'date' | 'createdAt' | 'isActive'>[]
+  selectedMonth?: string
+}
+
+/** Shift a YYYY-MM month key by a signed month offset without timezone drift. */
+export function shiftMonthKey(monthKey: string, offset: number): string {
+  const match = monthKey.match(/^(\d{4})-(\d{1,2})$/)
+  const baseDate = new Date()
+  const year = match ? Number(match[1]) : baseDate.getFullYear()
+  const month = match ? Number(match[2]) : baseDate.getMonth() + 1
+  const shifted = new Date(Date.UTC(year, month - 1 + offset, 15))
+  const nextYear = shifted.getUTCFullYear()
+  const nextMonth = String(shifted.getUTCMonth() + 1).padStart(2, '0')
+  return `${nextYear}-${nextMonth}`
 }
 
 /** Match month and day against a reference date without timezone drift on YYYY-MM-DD strings. */
@@ -64,6 +77,7 @@ export function useDashboardStats({
   smsRemaining = 0,
   storeSales = [],
   expenses = [],
+  selectedMonth,
 }: UseDashboardStatsOptions) {
   // Single-pass computation for student stats
   const studentStats = useMemo(() => {
@@ -269,12 +283,23 @@ export function useDashboardStats({
     return { todayIncome, totalExpected, monthIncome, monthDue }
   }, [payments, storeSales, structures, students, generateWaivers])
 
-  // Full-month daily collection progress for chart
+  // Full-month daily collection & expense progress for chart
   const monthlyIncomeProgress: MonthlyIncomeProgressSummary = useMemo(() => {
     const now = new Date()
     const todayStr = now.toISOString().split('T')[0]
-    const [year, month, todayDay] = todayStr.split('-').map(Number)
+    const [todayYear, todayMonth, todayDay] = todayStr.split('-').map(Number)
+
+    const monthMatch = selectedMonth?.match(/^(\d{4})-(\d{1,2})$/)
+    const parsedYear = monthMatch ? Number(monthMatch[1]) : todayYear
+    const parsedMonth = monthMatch ? Number(monthMatch[2]) : todayMonth
+    const validMonth = parsedMonth >= 1 && parsedMonth <= 12
+    const year = validMonth ? parsedYear : todayYear
+    const month = validMonth ? parsedMonth : todayMonth
+
+    const isCurrentMonth = year === todayYear && month === todayMonth
+    const isFutureMonth = year > todayYear || (year === todayYear && month > todayMonth)
     const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
+    const activeDayLimit = isFutureMonth ? 0 : isCurrentMonth ? todayDay : daysInMonth
     const monthPrefix = `${year}-${String(month).padStart(2, '0')}`
     const monthLabel = new Date(Date.UTC(year, month - 1, 15)).toLocaleDateString(
       isBn ? 'bn-BD' : 'en-US',
@@ -321,11 +346,12 @@ export function useDashboardStats({
       const trend: 'up' | 'down' | 'flat' =
         delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat'
 
-      if (day <= todayDay) {
+      const isFuture = isFutureMonth || (isCurrentMonth && day > todayDay)
+      if (!isFuture) {
         cumulative += amount
         monthExpenseTotal += expenseAmount
       }
-      if (amount > peakAmount) {
+      if (!isFuture && amount > peakAmount) {
         peakAmount = amount
         peakDayLabel = new Date(Date.UTC(year, month - 1, day)).toLocaleDateString(
           isBn ? 'bn-BD' : 'en-US',
@@ -344,26 +370,29 @@ export function useDashboardStats({
         deltaPct,
         trend,
         cumulative,
-        isToday: day === todayDay,
-        isFuture: day > todayDay,
+        isToday: isCurrentMonth && day === todayDay,
+        isFuture,
       })
     }
 
-    const todayPoint = days[todayDay - 1]
+    const refDay = activeDayLimit
+    const todayPoint = refDay > 0 ? days[refDay - 1] : undefined
     const todayIncome = todayPoint?.amount || 0
     const todayExpense = todayPoint?.expenseAmount || 0
-    const yesterdayIncome = todayDay > 1 ? days[todayDay - 2]?.amount || 0 : 0
-    const todayDelta = todayDay > 1 ? todayIncome - yesterdayIncome : todayIncome
+    const yesterdayIncome = refDay > 1 ? days[refDay - 2]?.amount || 0 : 0
+    const todayDelta = refDay > 1 ? todayIncome - yesterdayIncome : todayIncome
     const todayDeltaPct =
-      todayDay > 1 && yesterdayIncome > 0
+      refDay > 1 && yesterdayIncome > 0
         ? Math.round((todayDelta / yesterdayIncome) * 100)
         : null
     const monthTotal = cumulative
-    const dailyAverage = todayDay > 0 ? Math.round(monthTotal / todayDay) : 0
+    const dailyAverage = refDay > 0 ? Math.round(monthTotal / refDay) : 0
 
     return {
       days,
+      monthKey: monthPrefix,
       monthLabel,
+      isCurrentMonth,
       todayIncome,
       yesterdayIncome,
       todayDelta,
@@ -376,7 +405,7 @@ export function useDashboardStats({
       peakDayLabel,
       targetAmount: financeStats.totalExpected,
     }
-  }, [payments, storeSales, expenses, financeStats.totalExpected, isBn])
+  }, [payments, storeSales, expenses, financeStats.totalExpected, selectedMonth, isBn])
 
   // Recent students (latest 4)
   const recentStudents = useMemo(

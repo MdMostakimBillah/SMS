@@ -51,7 +51,9 @@ export interface MonthlyDailyIncomePoint {
 
 export interface MonthlyIncomeProgressSummary {
   days: MonthlyDailyIncomePoint[]
+  monthKey: string
   monthLabel: string
+  isCurrentMonth: boolean
   todayIncome: number
   yesterdayIncome: number
   todayDelta: number

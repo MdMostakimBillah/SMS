@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook } from '@testing-library/react'
-import { useDashboardStats, isBirthdayToday } from './useDashboardStats'
+import { useDashboardStats, isBirthdayToday, shiftMonthKey } from './useDashboardStats'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import type { Teacher } from '@/pages/teachers/types'
 import type { FeePayment, FeeStructure } from '@/store/feeStore'
@@ -215,5 +215,39 @@ describe('useDashboardStats', () => {
 
     expect(isBirthdayToday(birthdayDob, now)).toBe(true)
     expect(isBirthdayToday('', now)).toBe(false)
+  })
+
+  it('supports switching selectedMonth across year boundaries and aggregates full past month data', () => {
+    expect(shiftMonthKey('2026-01', -1)).toBe('2025-12')
+    expect(shiftMonthKey('2025-12', 1)).toBe('2026-01')
+
+    const prevMonthPayments = [
+      { id: 'p-oct', studentId: 's1', amount: 4200, paidAt: '2025-10-15T09:00:00.000Z' } as any,
+    ]
+    const prevMonthExpenses = [
+      { amount: 1500, date: '2025-10-15', createdAt: '2025-10-15', isActive: true },
+    ]
+
+    const { result } = renderHook(() =>
+      useDashboardStats({
+        students: [],
+        teachers: [],
+        payments: prevMonthPayments,
+        structures: [],
+        generateWaivers: () => [],
+        isBn: false,
+        expenses: prevMonthExpenses,
+        selectedMonth: '2025-10',
+      })
+    )
+
+    expect(result.current.monthlyIncomeProgress.monthKey).toBe('2025-10')
+    expect(result.current.monthlyIncomeProgress.isCurrentMonth).toBe(false)
+    expect(result.current.monthlyIncomeProgress.days).toHaveLength(31)
+    expect(result.current.monthlyIncomeProgress.days.every((d) => !d.isFuture)).toBe(true)
+    expect(result.current.monthlyIncomeProgress.monthTotal).toBe(4200)
+    expect(result.current.monthlyIncomeProgress.monthExpenseTotal).toBe(1500)
+    expect(result.current.monthlyIncomeProgress.days[14].amount).toBe(4200)
+    expect(result.current.monthlyIncomeProgress.days[14].expenseAmount).toBe(1500)
   })
 })

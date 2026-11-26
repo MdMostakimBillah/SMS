@@ -411,6 +411,21 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     expect(screen.getByText(/^Income$|^আয়$/)).toBeInTheDocument()
     expect(screen.getByText(/^Expense$|^ব্যয়$/)).toBeInTheDocument()
 
+    // Month switcher buttons navigate between current and previous months
+    const prevMonthBtn = screen.getByRole('button', { name: /Previous month|আগের মাস/i })
+    const nextMonthBtn = screen.getByRole('button', { name: /Next month|পরের মাস/i })
+    expect(nextMonthBtn).toBeDisabled()
+
+    fireEvent.click(prevMonthBtn)
+    await waitFor(() => {
+      expect(nextMonthBtn).not.toBeDisabled()
+    })
+
+    fireEvent.click(nextMonthBtn)
+    await waitFor(() => {
+      expect(nextMonthBtn).toBeDisabled()
+    })
+
     // Click student birthdays card -> opens birthday modal with Samia Rahman
     fireEvent.click(screen.getByText(/Student Birthdays Today|আজ ছাত্রদের জন্মদিন/i))
     await waitFor(() => {

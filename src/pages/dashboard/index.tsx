@@ -37,7 +37,7 @@ import { DemographicsRow } from './components/DemographicsRow'
 import { ActivityRow } from './components/ActivityRow'
 import { AcademicRow } from './components/AcademicRow'
 import { CreateTaskModal } from './modals/CreateTaskModal'
-import { useDashboardStats } from './hooks/useDashboardStats'
+import { useDashboardStats, shiftMonthKey } from './hooks/useDashboardStats'
 
 export default function DashboardPage() {
   const isBn = useBn()
@@ -80,6 +80,7 @@ export default function DashboardPage() {
   const [syncError, setSyncError] = useState<string | null>(null)
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('all')
+  const [chartMonth, setChartMonth] = useState<string>(() => new Date().toISOString().slice(0, 7))
 
   const storageMode = getActiveStorageMode()
   const schoolSlug =
@@ -177,6 +178,7 @@ export default function DashboardPage() {
     smsRemaining: smsBalance.remaining,
     storeSales,
     expenses,
+    selectedMonth: chartMonth,
   })
 
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)'
@@ -367,6 +369,8 @@ export default function DashboardPage() {
         progress={monthlyIncomeProgress}
         cardStyle={cardStyle}
         sectionHead={sectionHead}
+        onPrevMonth={() => setChartMonth((m) => shiftMonthKey(m, -1))}
+        onNextMonth={() => setChartMonth((m) => shiftMonthKey(m, 1))}
       />
 
       {/* Visual Analytics Charts */}
