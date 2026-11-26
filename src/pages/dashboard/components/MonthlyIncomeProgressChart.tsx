@@ -1,8 +1,8 @@
 import React from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -169,7 +169,7 @@ export const MonthlyIncomeProgressChart: React.FC<Props> = ({
 
       <div style={{ width: '100%', height: isMobile ? 190 : 230 }}>
         <ResponsiveContainer width="100%" height={isMobile ? 190 : 230} minWidth={0} minHeight={0}>
-          <LineChart data={chartData} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis
               dataKey="label"
@@ -185,27 +185,31 @@ export const MonthlyIncomeProgressChart: React.FC<Props> = ({
               tickLine={false}
             />
             <Tooltip content={<CustomIncomeTooltip isBn={isBn} />} />
-            <Line
+            <Area
               type="monotone"
               dataKey="plotAmount"
               name={isBn ? 'আয়' : 'Income'}
               stroke="var(--brand)"
               strokeWidth={2}
-              dot={{ r: 3, fill: 'var(--brand)', strokeWidth: 0 }}
+              fill="var(--brand)"
+              fillOpacity={0.14}
+              dot={false}
               activeDot={{ r: 5, fill: 'var(--brand)', stroke: 'var(--surface)', strokeWidth: 2 }}
               connectNulls={false}
             />
-            <Line
+            <Area
               type="monotone"
               dataKey="plotExpense"
               name={isBn ? 'ব্যয়' : 'Expense'}
               stroke="var(--red)"
               strokeWidth={2}
-              dot={{ r: 3, fill: 'var(--red)', strokeWidth: 0 }}
+              fill="var(--red)"
+              fillOpacity={0.1}
+              dot={false}
               activeDot={{ r: 5, fill: 'var(--red)', stroke: 'var(--surface)', strokeWidth: 2 }}
               connectNulls={false}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>
