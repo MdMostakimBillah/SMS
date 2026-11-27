@@ -405,7 +405,7 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     expect(screen.getByText(/Messages Quantity|মোট বার্তা/i)).toBeInTheDocument()
     expect(screen.getByText(/Student Birthdays Today|আজ ছাত্রদের জন্মদিন/i)).toBeInTheDocument()
     expect(screen.getByText(/Teacher Birthdays Today|আজ শিক্ষকদের জন্মদিন/i)).toBeInTheDocument()
-    expect(screen.getByText(/Software Last Payment/i)).toBeInTheDocument()
+    expect(screen.getByText(/Next Payment Due|Software Last Payment|পরবর্তী পেমেন্ট বাকি/i)).toBeInTheDocument()
     expect(
       screen.getByText(/Monthly Income & Daily Collection Progress|মাসিক আয় ও দৈনিক সংগ্রহের অগ্রগতি/i)
     ).toBeInTheDocument()
@@ -434,7 +434,7 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     })
 
     // Click software last payment card -> navigates to subscription payment settings
-    fireEvent.click(screen.getByText(/Software Last Payment/i))
+    fireEvent.click(screen.getByText(/Next Payment Due|Software Last Payment|পরবর্তী পেমেন্ট বাকি/i))
     expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/settings?panel=subscription-payment'))
   })
 

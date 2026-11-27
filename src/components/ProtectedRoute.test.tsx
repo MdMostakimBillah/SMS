@@ -1,6 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { getLoginRedirect, getInstitutionHome } from './ProtectedRoute'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { getLoginRedirect, getInstitutionHome, RoleProtectedRoute, ViewingRoute } from './ProtectedRoute'
 import { LOGIN_ROUTE } from '@/lib/constants'
+
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: null,
+    loading: false,
+    restoreFailed: false,
+    retryRestore: vi.fn(),
+  }),
+}))
 
 /**
  * Phase 15 — single-source login route: every login redirect resolves to
@@ -17,9 +28,10 @@ describe('getLoginRedirect', () => {
     localStorage.clear()
   })
 
-  it('resolves to the configured LOGIN_ROUTE when no institution slug is set', () => {
-    expect(getLoginRedirect() === LOGIN_ROUTE).toBe(true)
-    // Guard: it must never send users to the legacy hard-coded /login path.
+  it('resolves to /register when no institution slug is set (protecting super admin login privacy)', () => {
+    expect(getLoginRedirect()).toBe('/register')
+    // Guard: it must never reveal the secret super admin login route or send users to /login.
+    expect(getLoginRedirect()).not.toBe(LOGIN_ROUTE)
     expect(getLoginRedirect()).not.toBe('/login')
   })
 
@@ -57,5 +69,48 @@ describe('getInstitutionHome (Tenant isolation & non-superadmin restriction)', (
 
   it('falls back to /register when no institution slug can be resolved', () => {
     expect(getInstitutionHome({ role: 'school_admin' })).toBe('/register')
+  })
+})
+
+describe('Super admin route protection redirects unauthenticated users to /register', () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+    localStorage.clear()
+  })
+
+  it('redirects unauthenticated user accessing super_admin role protected route to /register (never exposes login path)', () => {
+    render(
+      <MemoryRouter initialEntries={['/super-admin/schools']}>
+        <Routes>
+          <Route element={<RoleProtectedRoute allowedRoles={['super_admin']} />}>
+            <Route path="/super-admin/schools" element={<div>Protected Super Admin Schools</div>} />
+          </Route>
+          <Route path="/register" element={<div>Public Register Page</div>} />
+          <Route path={LOGIN_ROUTE} element={<div>Secret Super Admin Login</div>} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    expect(screen.queryByText('Protected Super Admin Schools')).not.toBeInTheDocument()
+    expect(screen.queryByText('Secret Super Admin Login')).not.toBeInTheDocument()
+    expect(screen.getByText('Public Register Page')).toBeInTheDocument()
+  })
+
+  it('redirects unauthenticated user accessing ViewingRoute to /register (never exposes login path)', () => {
+    render(
+      <MemoryRouter initialEntries={['/super-admin/viewing/admin/dashboard']}>
+        <Routes>
+          <Route element={<ViewingRoute />}>
+            <Route path="/super-admin/viewing/admin/dashboard" element={<div>Viewing Dashboard</div>} />
+          </Route>
+          <Route path="/register" element={<div>Public Register Page</div>} />
+          <Route path={LOGIN_ROUTE} element={<div>Secret Super Admin Login</div>} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    expect(screen.queryByText('Viewing Dashboard')).not.toBeInTheDocument()
+    expect(screen.queryByText('Secret Super Admin Login')).not.toBeInTheDocument()
+    expect(screen.getByText('Public Register Page')).toBeInTheDocument()
   })
 })

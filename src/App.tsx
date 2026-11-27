@@ -161,6 +161,7 @@ function AppContent() {
           <Route path="/super-admin/login" element={<Navigate to="/register" replace />} />
           <Route path="/superadmin/login" element={<Navigate to="/register" replace />} />
           <Route path="/superadmin" element={<Navigate to="/register" replace />} />
+          <Route path="/superadmin/*" element={<Navigate to="/register" replace />} />
           <Route path="/login" element={<Navigate to="/register" replace />} />
           <Route path="/admin/login" element={<Navigate to="/register" replace />} />
           <Route path="/register" element={<F><InstitutionRegister /></F>} />

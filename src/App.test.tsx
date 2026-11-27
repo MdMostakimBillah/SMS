@@ -94,4 +94,28 @@ describe('App login-route registration (VITE_LOGIN_PATH wiring)', () => {
     expect(screen.queryByText(/Page not found/i)).not.toBeInTheDocument()
     expect(screen.queryByPlaceholderText('admin@example.com')).not.toBeInTheDocument()
   })
+
+  it('redirects to /register when searching any super-admin url, preserving login privacy', async () => {
+    const urls = [
+      '/super-admin',
+      '/super-admin/schools',
+      '/super-admin/admin/dashboard',
+      '/super-admin/viewing/admin/dashboard',
+      '/superadmin',
+      '/superadmin/login',
+    ]
+
+    for (const url of urls) {
+      const { unmount } = render(
+        <MemoryRouter initialEntries={[url]}>
+          <App />
+        </MemoryRouter>
+      )
+      // Must NOT display the super admin login form
+      expect(screen.queryByPlaceholderText('admin@example.com')).not.toBeInTheDocument()
+      // Must NOT display 404
+      expect(screen.queryByText(/Page not found/i)).not.toBeInTheDocument()
+      unmount()
+    }
+  })
 })

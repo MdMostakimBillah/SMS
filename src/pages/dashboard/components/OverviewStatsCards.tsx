@@ -10,6 +10,7 @@ import {
   Cake,
   Gift,
   CreditCard,
+  AlertTriangle,
 } from 'lucide-react'
 import { BirthdayListModal } from '../modals/BirthdayListModal'
 import { formatSoftwarePaymentDate } from '../hooks/useDashboardStats'
@@ -17,6 +18,7 @@ import type {
   TeacherAttendanceTodaySummary,
   MessageStatSummary,
   BirthdayPersonItem,
+  SubscriptionStatusSummary,
 } from '../types'
 
 interface Props {
@@ -32,6 +34,7 @@ interface Props {
   todayStudentBirthdays: BirthdayPersonItem[]
   todayTeacherBirthdays: BirthdayPersonItem[]
   softwareLastPaymentDate?: string | null
+  subscriptionStatus?: SubscriptionStatusSummary
   canReadTeachers: boolean
   canReadAttendance: boolean
   canReadMessages: boolean
@@ -65,6 +68,7 @@ export const OverviewStatsCards: React.FC<Props> = ({
   todayStudentBirthdays,
   todayTeacherBirthdays,
   softwareLastPaymentDate,
+  subscriptionStatus,
   canReadTeachers,
   canReadAttendance,
   canReadMessages,
@@ -199,11 +203,17 @@ export const OverviewStatsCards: React.FC<Props> = ({
             ? [
                 {
                   key: 'software-last-payment-date',
-                  labelBn: 'সফটওয়্যার শেষ পেমেন্ট',
-                  labelEn: 'Software Last Payment',
-                  value: formatSoftwarePaymentDate(softwareLastPaymentDate, isBn),
-                  icon: <CreditCard size={14} />,
-                  color: 'var(--brand)',
+                  labelBn: 'পরবর্তী পেমেন্ট বাকি',
+                  labelEn: 'Next Payment Due',
+                  value:
+                    subscriptionStatus?.formattedValue ||
+                    formatSoftwarePaymentDate(softwareLastPaymentDate, isBn),
+                  icon: subscriptionStatus?.isSuspended ? (
+                    <AlertTriangle size={14} />
+                  ) : (
+                    <CreditCard size={14} />
+                  ),
+                  color: subscriptionStatus?.color || 'var(--brand)',
                   onClick: () => navigate(nav('/settings?panel=subscription-payment')),
                 },
               ]

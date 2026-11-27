@@ -39,6 +39,16 @@ export interface SoftwarePaymentSummary {
   formattedDate: string
 }
 
+export interface SubscriptionStatusSummary {
+  daysLeft: number | null
+  expiresAt: string | null
+  status: 'active' | 'trial' | 'suspended' | 'inactive'
+  isExpired: boolean
+  isSuspended: boolean
+  formattedValue: string
+  color: string
+}
+
 export interface MonthlyDailyIncomePoint {
   day: number
   dateStr: string

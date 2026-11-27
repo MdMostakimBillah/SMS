@@ -15,13 +15,14 @@ import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import CommandPalette from '@/components/shared/CommandPalette'
 import QuickAccessFAB from '@/components/shared/QuickAccessFAB'
-import { Crown, X, FolderSync } from 'lucide-react'
+import { Crown, X, FolderSync, CreditCard, LogOut } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { clearSlug, setSlug } from '@/lib/storage'
 import { useBn } from '@/hooks/useBn'
 import { getVaultStatus, subscribeVault, vaultReconnect, type VaultStatus } from '@/lib/vault/vault'
 import { isLocalComputerMode } from '@/lib/storageMode'
 import { prefetchAllRoutes } from '@/lib/prefetchRoutes'
+import { SubscriptionPaymentPanel } from '@/pages/settings/panels/SubscriptionPaymentPanel'
 
 export default function AppLayout() {
   const isBn = useBn()
@@ -35,10 +36,11 @@ export default function AppLayout() {
   const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
   const institutions = useSuperAdminStore((s) => s.institutions) ?? []
   const stopViewing = useSuperAdminStore((s) => s.stopViewing)
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const { isMobile, isTablet } = useWindowSize()
   const isSmall = isMobile || isTablet
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
 
   const viewedInst = useMemo(() => {
     if (!viewingInstitutionId || user?.role !== 'super_admin') return null
@@ -273,25 +275,62 @@ export default function AppLayout() {
     )
   }
 
-  // Check if institution is suspended or inactive
-  const currentInstSlug = sessionStorage.getItem('edutech_inst_slug')
-  const isSuperAdminViewing = user?.role === 'super_admin' && !!viewingInstitutionId
-  const currentInst = !isSuperAdminViewing && currentInstSlug
-    ? institutions.find((i) => i.slug === currentInstSlug) || null
+  // Check if institution is suspended, inactive, or subscription expired
+  const isSuperAdmin = user?.role === 'super_admin'
+  const currentInstSlug =
+    (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : null) ||
+    (typeof localStorage !== 'undefined' ? localStorage.getItem('edutech_inst_slug') : null) ||
+    user?.schoolDomain ||
+    user?.school?.domain ||
+    user?.school?.slug ||
+    user?.subdomain
+
+  const currentInst = !isSuperAdmin
+    ? institutions.find(
+        (i) =>
+          (currentInstSlug && (i.slug === currentInstSlug || i.subdomain === currentInstSlug)) ||
+          (user?.schoolId && i.id === user.schoolId) ||
+          (user?.school?.id && i.id === user.school.id)
+      ) || (user?.school as any) || null
     : null
 
-  if (currentInst && (currentInst.status === 'suspended' || currentInst.status === 'inactive')) {
+  const isDateOver = currentInst?.expiresAt
+    ? new Date(currentInst.expiresAt).getTime() < Date.now()
+    : false
+  const isSuspended = Boolean(currentInst && (currentInst.status === 'suspended' || isDateOver))
+  const isInactive = Boolean(currentInst && currentInst.status === 'inactive')
+
+  if (currentInst && (isSuspended || isInactive)) {
+    const formattedExpiry = currentInst.expiresAt
+      ? new Date(currentInst.expiresAt).toLocaleDateString(isBn ? 'bn-BD' : 'en-US', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : null
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-tertiary)]">
-        <div className="text-center max-w-md mx-auto px-6">
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
-            currentInst.status === 'suspended' ? 'bg-red-500/10' : 'bg-gray-500/10'
-          }`}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-              stroke={currentInst.status === 'suspended' ? '#ef4444' : '#6b7280'}
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-tertiary)] p-4">
+        <div className="w-full max-w-lg bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 sm:p-8 text-center shadow-lg">
+          <div
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
+              isSuspended
+                ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                : 'bg-gray-500/10 text-gray-500'
+            }`}
+          >
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <circle cx="12" cy="12" r="10" />
-              {currentInst.status === 'suspended' ? (
+              {isSuspended ? (
                 <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
               ) : (
                 <>
@@ -301,20 +340,94 @@ export default function AppLayout() {
               )}
             </svg>
           </div>
-          <h1 className="text-xl font-bold text-[var(--text-primary)] mb-2">
-            {currentInst.status === 'suspended'
-              ? (isBn ? 'এই প্রতিষ্ঠান বন্ধ রাখা হয়েছে' : 'Account Suspended')
-              : (isBn ? 'এই প্রতিষ্ঠান নিষ্ক্রিয়' : 'Account Inactive')}
+
+          <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-2">
+            {isDateOver
+              ? (isBn ? 'সাবস্ক্রিপশনের মেয়াদ শেষ — অ্যাকাউন্ট স্থগিত' : 'Subscription Expired — Account Suspended')
+              : isSuspended
+              ? (isBn ? 'প্রতিষ্ঠান অ্যাকাউন্ট সাময়িক স্থগিত' : 'Account Suspended')
+              : (isBn ? 'প্রতিষ্ঠান অ্যাকাউন্ট নিষ্ক্রিয়' : 'Account Inactive')}
           </h1>
-          <p className="text-sm text-[var(--text-muted)] mb-1">
+
+          <p className="text-sm font-semibold text-[var(--brand)] mb-1">
             {isBn ? currentInst.nameBn || currentInst.name : currentInst.name}
+            {currentInst.eiin ? ` (EIIN: ${currentInst.eiin})` : ''}
           </p>
-          <p className="text-sm text-[var(--text-muted)]">
-            {currentInst.status === 'suspended'
-              ? (isBn ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট সাময়িক বন্ধ রাখা হয়েছে।' : 'Your institution account has been temporarily suspended.')
-              : (isBn ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট এখন নিষ্ক্রিয় আছে।' : 'Your institution account is currently inactive.')}
+
+          {formattedExpiry && (
+            <p className="text-xs text-[var(--text-muted)] mb-3">
+              {isDateOver
+                ? (isBn ? `মেয়াদ উত্তীর্ণের তারিখ: ${formattedExpiry}` : `Expired on: ${formattedExpiry}`)
+                : (isBn ? `মেয়াদ শেষ হবে: ${formattedExpiry}` : `Expires on: ${formattedExpiry}`)}
+            </p>
+          )}
+
+          <p className="text-sm text-[var(--text-secondary)] mb-6 leading-relaxed">
+            {isDateOver
+              ? (isBn
+                  ? 'আপনার সফটওয়্যার সাবস্ক্রিপশনের নির্ধারিত মেয়াদ উত্তীর্ণ হয়েছে। অ্যাকাউন্ট অবিলম্বে পুনরায় চালু করতে প্যাকেজ নবায়ন ও পেমেন্ট সম্পন্ন করুন অথবা সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।'
+                  : 'Your software subscription period has ended. To reactivate your account immediately, please renew payment or contact your super administrator.')
+              : isSuspended
+              ? (isBn
+                  ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট সাময়িক স্থগিত রাখা হয়েছে। সক্রিয় করতে পেমেন্ট সম্পন্ন করুন অথবা সুপার অ্যাডমিনের সাথে যোগাযোগ করুন।'
+                  : 'Your institution account has been temporarily suspended. Please make a payment or contact the super administrator to reactivate.')
+              : (isBn
+                  ? 'আপনার প্রতিষ্ঠানের অ্যাকাউন্ট এখন নিষ্ক্রিয় অবস্থায় রয়েছে।'
+                  : 'Your institution account is currently inactive.')}
           </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            {isSuspended && (
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium text-white bg-[var(--brand)] hover:brightness-110 active:scale-[0.98] transition-all shadow-sm cursor-pointer"
+              >
+                <CreditCard size={16} />
+                <span>{isBn ? 'পেমেন্ট ও সক্রিয় করুন' : 'Pay & Reactivate Account'}</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                clearSlug()
+                void logout?.()
+                navigate('/login')
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-[var(--text-secondary)] bg-[var(--surface-hover)] border border-[var(--border)] hover:text-[var(--text-primary)] transition-all cursor-pointer"
+            >
+              <LogOut size={16} />
+              <span>{isBn ? 'লগআউট' : 'Logout'}</span>
+            </button>
+          </div>
         </div>
+
+        {/* Subscription Payment Modal on Suspended Screen */}
+        {showPaymentModal && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl w-full max-w-4xl max-h-[92vh] overflow-y-auto p-4 sm:p-6 shadow-2xl relative">
+              <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-4">
+                <div className="flex items-center gap-2">
+                  <CreditCard size={20} className="text-[var(--brand)]" />
+                  <h2 className="text-base sm:text-lg font-bold text-[var(--text-primary)] m-0">
+                    {isBn ? 'সাবস্ক্রিপশন নবায়ন ও অ্যাক্টিভেশন' : 'Subscription Renewal & Activation'}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(false)}
+                  className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-colors cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <SubscriptionPaymentPanel isBn={isBn} onBack={() => setShowPaymentModal(false)} />
+            </div>
+          </div>
+        )}
       </div>
     )
   }

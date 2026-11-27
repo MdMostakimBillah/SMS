@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
 import { usePermission } from '@/hooks/usePermission'
 import { useServerDataSync } from '@/hooks/useServerDataSync'
-import { getLoginRoute } from '@/lib/loginPath'
 import { INSTITUTION_ROLES, type InstitutionRole } from '@/lib/navUtils'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
 import { ConnectionErrorScreen } from '@/components/ui/ConnectionErrorScreen'
@@ -37,7 +36,7 @@ const ROUTE_TO_PERMISSION: Record<string, string> = {
 export function getLoginRedirect(slug?: string): string {
   const s = slug || sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')
   if (s) return `/i/${s}`
-  return getLoginRoute()
+  return '/register'
 }
 
 export function getInstitutionHome(user: { role: string; subdomain?: string | null; schoolDomain?: string | null } | null, fallbackSlug?: string): string {
@@ -122,9 +121,9 @@ export function ViewingRoute() {
   if (loading) return <BrandLoadingScreen />
   if (!user) {
     if (restoreFailed) {
-      return <ConnectionErrorScreen onRetry={retryRestore} onSignIn={() => navigate(getLoginRedirect(), { replace: true })} />
+      return <ConnectionErrorScreen onRetry={retryRestore} onSignIn={() => navigate('/register', { replace: true })} />
     }
-    return <Navigate to={getLoginRedirect()} replace />
+    return <Navigate to="/register" replace />
   }
   if (user.role !== 'super_admin') return <Navigate to={getInstitutionHome(user)} replace />
   if (!viewingInstitutionId && !sessionStorage.getItem('edutech_viewing_id')) return <Navigate to="/super-admin/schools" replace />
@@ -139,9 +138,9 @@ export function RoleProtectedRoute({ allowedRoles }: { allowedRoles: string[] })
   if (loading) return <BrandLoadingScreen />
   if (!user) {
     if (restoreFailed) {
-      return <ConnectionErrorScreen onRetry={retryRestore} onSignIn={() => navigate(getLoginRedirect(), { replace: true })} />
+      return <ConnectionErrorScreen onRetry={retryRestore} onSignIn={() => navigate('/register', { replace: true })} />
     }
-    return <Navigate to={getLoginRoute()} replace />
+    return <Navigate to="/register" replace />
   }
   if (!allowedRoles.includes(user.role)) {
     if (user.role === 'super_admin') return <Navigate to="/super-admin/admin/dashboard" replace />

@@ -329,7 +329,14 @@ export const useSuperAdminStore = create<SuperAdminState>()(
                 i.id === 'edutech' ||
                 i.name.toLowerCase().includes('edutech platform')
               if (isProtected) return i
-              return { ...i, status: i.status === 'active' ? 'suspended' : 'active' }
+              const nextStatus = i.status === 'active' ? 'suspended' : 'active'
+              let nextExpiresAt = i.expiresAt
+              if (nextStatus === 'active' && i.expiresAt && new Date(i.expiresAt).getTime() < Date.now()) {
+                const renewed = new Date()
+                renewed.setDate(renewed.getDate() + 30)
+                nextExpiresAt = renewed.toISOString()
+              }
+              return { ...i, status: nextStatus, expiresAt: nextExpiresAt }
             }
             return i
           }),

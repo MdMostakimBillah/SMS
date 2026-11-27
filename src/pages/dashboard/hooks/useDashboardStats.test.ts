@@ -6,6 +6,7 @@ import {
   shiftMonthKey,
   getSoftwareLastPaymentDate,
   formatSoftwarePaymentDate,
+  getSubscriptionStatusInfo,
 } from './useDashboardStats'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import type { Teacher } from '@/pages/teachers/types'
@@ -303,5 +304,88 @@ describe('useDashboardStats', () => {
       })
     )
     expect(result.current.softwareLastPaymentDate).toBe('2026-11-02T15:30:00.000Z')
+  })
+
+  it('calculates subscription status, days left, warning color, and suspended state', () => {
+    const fixedNow = new Date('2026-11-20T12:00:00.000Z').getTime()
+
+    // 25 days remaining (> 7 days) -> brand color
+    const future25d = new Date('2026-12-15T12:00:00.000Z').toISOString()
+    const stat25d = getSubscriptionStatusInfo({ expiresAt: future25d, status: 'active' }, false, fixedNow)
+    expect(stat25d.daysLeft).toBe(25)
+    expect(stat25d.isExpired).toBe(false)
+    expect(stat25d.isSuspended).toBe(false)
+    expect(stat25d.formattedValue).toBe('25 Days Left')
+    expect(stat25d.color).toBe('var(--brand)')
+
+    // Bengali formatting for 25 days
+    const stat25dBn = getSubscriptionStatusInfo({ expiresAt: future25d, status: 'active' }, true, fixedNow)
+    expect(stat25dBn.formattedValue).toBe('২৫ দিন বাকি')
+
+    // 7 days remaining -> amber warning color
+    const future7d = new Date('2026-11-27T12:00:00.000Z').toISOString()
+    const stat7d = getSubscriptionStatusInfo({ expiresAt: future7d, status: 'active' }, false, fixedNow)
+    expect(stat7d.daysLeft).toBe(7)
+    expect(stat7d.formattedValue).toBe('7 Days Left')
+    expect(stat7d.color).toBe('var(--amber)')
+
+    // 1 day remaining -> amber warning
+    const future1d = new Date('2026-11-21T12:00:00.000Z').toISOString()
+    const stat1d = getSubscriptionStatusInfo({ expiresAt: future1d, status: 'active' }, false, fixedNow)
+    expect(stat1d.daysLeft).toBe(1)
+    expect(stat1d.formattedValue).toBe('1 Day Left')
+    expect(stat1d.color).toBe('var(--amber)')
+
+    const stat1dBn = getSubscriptionStatusInfo({ expiresAt: future1d, status: 'active' }, true, fixedNow)
+    expect(stat1dBn.formattedValue).toBe('১ দিন বাকি')
+
+    // Due today (0 days left) -> red
+    const dueToday = new Date('2026-11-20T12:00:00.000Z').toISOString()
+    const statDue = getSubscriptionStatusInfo({ expiresAt: dueToday, status: 'active' }, false, fixedNow)
+    expect(statDue.daysLeft).toBe(0)
+    expect(statDue.formattedValue).toBe('Due Today')
+    expect(statDue.color).toBe('var(--red)')
+
+    const statDueBn = getSubscriptionStatusInfo({ expiresAt: dueToday, status: 'active' }, true, fixedNow)
+    expect(statDueBn.formattedValue).toBe('আজ শেষ দিন')
+
+    // Expired date in the past -> Suspended in red
+    const pastDate = new Date('2026-11-10T12:00:00.000Z').toISOString()
+    const statExpired = getSubscriptionStatusInfo({ expiresAt: pastDate, status: 'active' }, false, fixedNow)
+    expect(statExpired.isExpired).toBe(true)
+    expect(statExpired.isSuspended).toBe(true)
+    expect(statExpired.formattedValue).toBe('Suspended')
+    expect(statExpired.color).toBe('var(--red)')
+
+    const statExpiredBn = getSubscriptionStatusInfo({ expiresAt: pastDate, status: 'active' }, true, fixedNow)
+    expect(statExpiredBn.formattedValue).toBe('স্থগিত')
+
+    // Status is suspended even if expiresAt is in future
+    const statSuspended = getSubscriptionStatusInfo({ expiresAt: future25d, status: 'suspended' }, false, fixedNow)
+    expect(statSuspended.isSuspended).toBe(true)
+    expect(statSuspended.formattedValue).toBe('Suspended')
+    expect(statSuspended.color).toBe('var(--red)')
+
+    // Lifetime active without expiresAt
+    const statLifetime = getSubscriptionStatusInfo({ expiresAt: null, status: 'active' }, false, fixedNow)
+    expect(statLifetime.daysLeft).toBeNull()
+    expect(statLifetime.formattedValue).toBe('Lifetime Active')
+    expect(statLifetime.color).toBe('var(--brand)')
+
+    // Integration check via useDashboardStats hook
+    const dynamicFuture20d = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString()
+    const { result } = renderHook(() =>
+      useDashboardStats({
+        students: [],
+        teachers: [],
+        payments: [],
+        structures: [],
+        generateWaivers: () => [],
+        isBn: false,
+        institutionInfo: { expiresAt: dynamicFuture20d, status: 'active' },
+      })
+    )
+    expect(result.current.subscriptionStatus.daysLeft).toBe(20)
+    expect(result.current.subscriptionStatus.formattedValue).toBe('20 Days Left')
   })
 })

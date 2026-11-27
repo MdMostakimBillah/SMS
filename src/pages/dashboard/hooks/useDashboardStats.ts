@@ -8,6 +8,7 @@ import type { InstitutionPayment } from '@/lib/api'
 import type { Message } from '@/store/messageStore'
 import type { DayAttendance } from '@/store/attendanceStore'
 import { isMale, isFemale } from '@/lib/gender'
+import { toBnNum } from '@/lib/i18n'
 import {
   DASHBOARD_COLORS,
   STATUS_COLORS,
@@ -19,6 +20,7 @@ import {
   type BirthdayPersonItem,
   type MonthlyIncomeProgressSummary,
   type MonthlyDailyIncomePoint,
+  type SubscriptionStatusSummary,
 } from '../types'
 
 interface UseDashboardStatsOptions {
@@ -41,6 +43,10 @@ interface UseDashboardStatsOptions {
   currentSchoolId?: string | null
   currentSchoolSlug?: string | null
   currentSchoolEiin?: string | null
+  institutionInfo?: {
+    expiresAt?: string | null
+    status?: 'active' | 'trial' | 'suspended' | 'inactive' | string
+  } | null
 }
 
 /** Shift a YYYY-MM month key by a signed month offset without timezone drift. */
@@ -104,6 +110,76 @@ export function formatSoftwarePaymentDate(dateStr: string | null | undefined, is
   })
 }
 
+/** Calculate software subscription status, days left, and warning/suspended state. */
+export function getSubscriptionStatusInfo(
+  institution?: {
+    expiresAt?: string | null
+    status?: 'active' | 'trial' | 'suspended' | 'inactive' | string
+  } | null,
+  isBn: boolean = false,
+  now: number = Date.now()
+): SubscriptionStatusSummary {
+  const status = (institution?.status as 'active' | 'trial' | 'suspended' | 'inactive') || 'active'
+  const expiresAt = institution?.expiresAt || null
+  const expiresAtDate = expiresAt ? new Date(expiresAt) : null
+  const isValidDate = Boolean(expiresAtDate && !isNaN(expiresAtDate.getTime()))
+
+  const isExpired = isValidDate && expiresAtDate ? expiresAtDate.getTime() < now : false
+  const isSuspended = status === 'suspended' || isExpired
+
+  let daysLeft: number | null = null
+  if (isValidDate && expiresAtDate) {
+    if (isExpired) {
+      daysLeft = -Math.max(1, Math.floor((now - expiresAtDate.getTime()) / (1000 * 60 * 60 * 24)))
+    } else {
+      daysLeft = Math.max(0, Math.ceil((expiresAtDate.getTime() - now) / (1000 * 60 * 60 * 24)))
+    }
+  }
+
+  let formattedValue = ''
+  let color = 'var(--brand)'
+
+  if (isSuspended) {
+    formattedValue = isBn ? 'স্থগিত' : 'Suspended'
+    color = 'var(--red)'
+  } else if (status === 'inactive') {
+    formattedValue = isBn ? 'নিষ্ক্রিয়' : 'Inactive'
+    color = 'var(--text-muted)'
+  } else if (daysLeft !== null) {
+    if (daysLeft === 0) {
+      formattedValue = isBn ? 'আজ শেষ দিন' : 'Due Today'
+      color = 'var(--red)'
+    } else if (daysLeft === 1) {
+      formattedValue = isBn ? '১ দিন বাকি' : '1 Day Left'
+      color = 'var(--amber)'
+    } else if (daysLeft <= 7) {
+      formattedValue = isBn ? `${toBnNum(daysLeft)} দিন বাকি` : `${daysLeft} Days Left`
+      color = 'var(--amber)'
+    } else {
+      formattedValue = isBn ? `${toBnNum(daysLeft)} দিন বাকি` : `${daysLeft} Days Left`
+      color = 'var(--brand)'
+    }
+  } else {
+    if (status === 'trial') {
+      formattedValue = isBn ? 'ট্রায়াল' : 'Trial'
+      color = 'var(--amber)'
+    } else {
+      formattedValue = isBn ? 'আজীবন সক্রিয়' : 'Lifetime Active'
+      color = 'var(--brand)'
+    }
+  }
+
+  return {
+    daysLeft,
+    expiresAt,
+    status,
+    isExpired,
+    isSuspended,
+    formattedValue,
+    color,
+  }
+}
+
 /** Match month and day against a reference date without timezone drift on YYYY-MM-DD strings. */
 export function isBirthdayToday(dob?: string, refDate: Date = new Date()): boolean {
   if (!dob) return false
@@ -139,6 +215,7 @@ export function useDashboardStats({
   currentSchoolId,
   currentSchoolSlug,
   currentSchoolEiin,
+  institutionInfo,
 }: UseDashboardStatsOptions) {
   // Single-pass computation for student stats
   const studentStats = useMemo(() => {
@@ -483,6 +560,12 @@ export function useDashboardStats({
     })
   }, [institutionPayments, currentSchoolId, currentSchoolSlug, currentSchoolEiin])
 
+  // Subscription status (days left, trial/lifetime, or suspended/expired)
+  const subscriptionStatus = useMemo(
+    () => getSubscriptionStatusInfo(institutionInfo, isBn),
+    [institutionInfo, isBn]
+  )
+
   // Top students (approved, preview)
   const topStudentsList: TopStudentItem[] = useMemo(
     () =>
@@ -521,6 +604,7 @@ export function useDashboardStats({
     todayStudentBirthdays,
     todayTeacherBirthdays,
     softwareLastPaymentDate,
+    subscriptionStatus,
     classDist,
     statusData,
     weeklyTrend,

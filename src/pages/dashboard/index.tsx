@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react'
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { GraduationCap } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useAuth } from '@/contexts/AuthContext'
@@ -20,6 +20,7 @@ import { useMessageStore } from '@/store/messageStore'
 import { useSmsStore, DEFAULT_INSTITUTION_BALANCE } from '@/store/smsStore'
 import { useStoreStore } from '@/store/storeStore'
 import { useInstitutionPaymentStore } from '@/store/institutionPaymentStore'
+import { useSuperAdminStore } from '@/store/superAdminStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { getSlug } from '@/lib/storage'
 import { getActiveStorageMode } from '@/lib/storageMode'
@@ -74,6 +75,7 @@ export default function DashboardPage() {
   const storeSales = useStoreStore(useShallow((s) => s.sales))
   const expenses = useExpenseStore(useShallow((s) => s.expenses))
   const institutionPayments = useInstitutionPaymentStore(useShallow((s) => s.payments))
+  const institutions = useSuperAdminStore((s) => s.institutions) ?? []
 
   // Local state
   const [isLoading, setIsLoading] = useState(true)
@@ -92,6 +94,18 @@ export default function DashboardPage() {
       : null) ||
     'edutech'
   const schoolName = user?.schoolName || 'EduTech School'
+
+  const currentSchool = useMemo(() => {
+    return (
+      institutions.find(
+        (i) =>
+          (user?.schoolId && i.id === user.schoolId) ||
+          (user?.school?.id && i.id === user.school.id) ||
+          (schoolSlug && (i.slug === schoolSlug || i.subdomain === schoolSlug)) ||
+          (institution?.eiin && i.eiin === institution.eiin)
+      ) || user?.school || null
+    )
+  }, [institutions, user, schoolSlug, institution])
 
   // Unified synchronization with Backend & Database / Local PC stores
   const syncDashboardData = useCallback(async () => {
@@ -170,6 +184,7 @@ export default function DashboardPage() {
     recentStudents,
     topStudentsList,
     softwareLastPaymentDate,
+    subscriptionStatus,
   } = useDashboardStats({
     students,
     teachers,
@@ -187,6 +202,7 @@ export default function DashboardPage() {
     currentSchoolId: user?.schoolId,
     currentSchoolSlug: schoolSlug,
     currentSchoolEiin: institution?.eiin,
+    institutionInfo: currentSchool,
   })
 
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)'
@@ -346,6 +362,7 @@ export default function DashboardPage() {
         todayStudentBirthdays={todayStudentBirthdays}
         todayTeacherBirthdays={todayTeacherBirthdays}
         softwareLastPaymentDate={softwareLastPaymentDate}
+        subscriptionStatus={subscriptionStatus}
         canReadTeachers={canRead('teachers')}
         canReadAttendance={canRead('attendance')}
         canReadMessages={canRead('messages')}
