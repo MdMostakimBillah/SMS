@@ -36,12 +36,49 @@ export const SelectedDateCard = React.memo(function SelectedDateCard({
     'bg-slate-100 dark:bg-white/[0.06] text-[var(--text-primary)]'
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">
-          {formattedDate}
-        </h3>
-        <span className={`text-[0.6875rem] font-semibold px-2.5 py-0.5 rounded-full shrink-0 ${badgeCls}`}>
+    <div
+      className="card--premium"
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '0.75rem',
+        padding: '1rem',
+        boxShadow: 'var(--shadow-xs)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '0.875rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+          <div
+            style={{
+              width: '0.1875rem',
+              height: '0.875rem',
+              background: 'var(--brand)',
+              borderRadius: '0.125rem',
+              flexShrink: 0,
+            }}
+          />
+          <h3
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              margin: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {formattedDate}
+          </h3>
+        </div>
+        <span className={`text-[0.6875rem] font-semibold px-2.5 py-0.5 rounded-md shrink-0 ${badgeCls}`}>
           {statusInfo.label}
         </span>
       </div>

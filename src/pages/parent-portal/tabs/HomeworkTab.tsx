@@ -106,7 +106,7 @@ export const HomeworkTab = React.memo(function HomeworkTab({
   return (
     <div className="space-y-4">
       {/* Quick Counts */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-3.5">
         {(
           [
             {
@@ -115,7 +115,7 @@ export const HomeworkTab = React.memo(function HomeworkTab({
               labelEn: 'Total Tasks & Diary',
               count: stats.total,
               icon: BookOpen,
-              iconCls: 'text-[var(--text-secondary)]',
+              color: 'var(--brand)',
             },
             {
               id: 'pending',
@@ -123,7 +123,7 @@ export const HomeworkTab = React.memo(function HomeworkTab({
               labelEn: 'Pending / Due',
               count: stats.pending,
               icon: Clock,
-              iconCls: 'text-[var(--text-secondary)]',
+              color: 'var(--amber)',
             },
             {
               id: 'submitted',
@@ -131,7 +131,7 @@ export const HomeworkTab = React.memo(function HomeworkTab({
               labelEn: 'Submitted',
               count: stats.submitted,
               icon: CheckCircle,
-              iconCls: 'text-[var(--text-secondary)]',
+              color: 'var(--teal)',
             },
             {
               id: 'evaluated',
@@ -139,7 +139,7 @@ export const HomeworkTab = React.memo(function HomeworkTab({
               labelEn: 'Evaluated',
               count: stats.evaluated,
               icon: CheckCircle2,
-              iconCls: 'text-[var(--text-secondary)]',
+              color: 'var(--green)',
             },
           ] as const
         ).map((item) => {
@@ -150,20 +150,68 @@ export const HomeworkTab = React.memo(function HomeworkTab({
               key={item.id}
               type="button"
               onClick={() => setFilter(item.id)}
-              className={`p-4 sm:p-5 rounded-2xl bg-[var(--surface)] border text-left cursor-pointer transition-colors ${
-                isActive
-                  ? 'border-[var(--brand)] ring-1 ring-[var(--brand)]/30'
-                  : 'border-[var(--border)] hover:border-[var(--border-2)]'
-              }`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.875rem 1rem',
+                background: 'var(--surface)',
+                border: `1px solid ${isActive ? 'var(--brand)' : 'var(--border)'}`,
+                borderRadius: '0.625rem',
+                boxShadow: isActive ? 'var(--shadow-sm)' : 'var(--shadow-xs)',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)'
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'none'
+                e.currentTarget.style.boxShadow = isActive ? 'var(--shadow-sm)' : 'var(--shadow-xs)'
+              }}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
-                  {isBn ? item.labelBn : item.labelEn}
-                </span>
-                <Icon size={15} className={`${item.iconCls} shrink-0`} />
+              <div
+                style={{
+                  width: '2.25rem',
+                  height: '2.25rem',
+                  borderRadius: '0.5rem',
+                  background: 'var(--bg-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: item.color,
+                  flexShrink: 0,
+                }}
+              >
+                <Icon size={16} />
               </div>
-              <div className="text-2xl font-semibold text-[var(--text-primary)] leading-none tabular-nums mt-2.5">
-                {item.count}
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    color: 'var(--text-primary)',
+                    lineHeight: 1.2,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {item.count}
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.6875rem',
+                    color: isActive ? 'var(--brand)' : 'var(--text-secondary)',
+                    fontWeight: isActive ? 600 : 400,
+                    marginTop: '0.1875rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {isBn ? item.labelBn : item.labelEn}
+                </div>
               </div>
             </button>
           )
@@ -171,7 +219,23 @@ export const HomeworkTab = React.memo(function HomeworkTab({
       </div>
 
       {/* Main Content Container */}
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-4">
+      <div className="card--premium rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5 shadow-xs space-y-4">
+        {/* Header with Section Head */}
+        <div className="flex items-center gap-2">
+          <div
+            style={{
+              width: '0.1875rem',
+              height: '0.875rem',
+              background: 'var(--teal)',
+              borderRadius: '0.125rem',
+              flexShrink: 0,
+            }}
+          />
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+            {isBn ? 'হোমওয়ার্ক ও দৈনিক ডায়েরি' : 'Homework & Daily Diary'}
+          </h3>
+        </div>
+
         {/* Filter Toolbar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
           <div className="relative flex-1 max-w-sm">

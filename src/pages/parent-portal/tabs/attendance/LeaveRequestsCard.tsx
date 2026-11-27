@@ -43,17 +43,51 @@ export const LeaveRequestsCard = React.memo(function LeaveRequestsCard({
   isBn,
 }: LeaveRequestsCardProps) {
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-          {isBn ? 'ছুটির আবেদন' : 'Leave Requests'}
-        </h3>
+    <div
+      className="card--premium"
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '0.75rem',
+        padding: '1rem',
+        boxShadow: 'var(--shadow-xs)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '0.875rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
+            style={{
+              width: '0.1875rem',
+              height: '0.875rem',
+              background: 'var(--purple)',
+              borderRadius: '0.125rem',
+              flexShrink: 0,
+            }}
+          />
+          <h3
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              margin: 0,
+            }}
+          >
+            {isBn ? 'ছুটির আবেদন' : 'Leave Requests'}
+          </h3>
+        </div>
         <button
           type="button"
           onClick={onOpenLeaveModal}
-          className="h-8 flex items-center gap-1 px-3 rounded-lg text-xs font-semibold bg-[var(--brand)] hover:opacity-90 text-white cursor-pointer border-none transition-opacity shadow-xs"
+          className="h-7 flex items-center gap-1 px-2.5 rounded-md text-xs font-semibold bg-[var(--brand)] hover:opacity-90 text-white cursor-pointer border-none transition-opacity shadow-xs"
         >
-          <Plus size={13} />
+          <Plus size={12} />
           <span>{isBn ? 'নতুন আবেদন' : 'Apply'}</span>
         </button>
       </div>
@@ -64,7 +98,7 @@ export const LeaveRequestsCard = React.memo(function LeaveRequestsCard({
             const typeLabel = LEAVE_TYPE_LABELS[req.type] || LEAVE_TYPE_LABELS.other
             const statusInfo = STATUS_BADGE[req.status] || STATUS_BADGE.pending
             return (
-              <div key={req.id} className="py-3 first:pt-1 last:pb-1 space-y-1">
+              <div key={req.id} className="py-2.5 first:pt-0.5 last:pb-0.5 space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-semibold text-[var(--text-primary)]">
                     {isBn ? typeLabel.bn : typeLabel.en}
@@ -121,8 +155,8 @@ export const LeaveRequestsCard = React.memo(function LeaveRequestsCard({
           })}
         </div>
       ) : (
-        <div className="py-8 text-center text-xs text-[var(--text-muted)]">
-          <FileText size={24} className="mx-auto text-[var(--text-muted)] opacity-35 mb-2" />
+        <div className="py-7 text-center text-xs text-[var(--text-muted)]">
+          <FileText size={22} className="mx-auto text-[var(--text-muted)] opacity-35 mb-1.5" />
           <p>{isBn ? 'কোনো ছুটির আবেদন জমা দেওয়া হয়নি' : 'No leave requests submitted'}</p>
         </div>
       )}

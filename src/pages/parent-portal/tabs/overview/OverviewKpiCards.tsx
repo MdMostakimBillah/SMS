@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import {
-  CheckCircle2,
-  CreditCard,
+  CalendarCheck,
+  Wallet,
   Award,
   BookOpen,
   ArrowRight,
@@ -55,133 +55,184 @@ export const OverviewKpiCards = React.memo(function OverviewKpiCards({
     return (results.reduce((acc, r) => acc + (r.point || 0), 0) / results.length).toFixed(2)
   }, [results, hasFailed])
 
-  return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-      {/* 1. Monthly Attendance */}
-      <div
-        onClick={() => onNavigateTab('attendance')}
-        className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--brand)]/30 hover:shadow-xs transition-all cursor-pointer min-w-0"
-      >
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
-            {isBn ? 'উপস্থিতি হার' : 'Monthly Attendance'}
+  const cards = [
+    {
+      key: 'attendance',
+      labelBn: 'মাসিক উপস্থিতি',
+      labelEn: 'Monthly Attendance',
+      value: attendanceStats.attendanceRate,
+      icon: <CalendarCheck size={16} />,
+      color: 'var(--brand)',
+      sub: (
+        <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
+          {isBn ? 'চলতি মাস' : 'This Month'}
+        </span>
+      ),
+      onClick: () => onNavigateTab('attendance'),
+    },
+    {
+      key: 'fees',
+      labelBn: 'ফি ও বকেয়া',
+      labelEn: 'Fees & Dues',
+      value: totalDue > 0 ? `৳${totalDue.toLocaleString()}` : isBn ? '৳০' : '৳0',
+      icon: <Wallet size={16} />,
+      color: totalDue > 0 ? 'var(--amber)' : 'var(--green)',
+      sub: hasPendingFee ? (
+        <span style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--amber)' }}>
+          {isBn ? 'যাচাইাধীন' : 'Pending verification'}
+        </span>
+      ) : totalDue > 0 ? (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--amber)' }}>
+            {isBn ? 'বকেয়া' : 'Due'}
           </span>
-          <div className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] shrink-0">
-            <CheckCircle2 size={14} />
-          </div>
-        </div>
-        <div className="text-2xl font-bold tracking-tight text-[var(--text-primary)] tabular-nums mt-3 leading-none">
-          {attendanceStats.attendanceRate}
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] mt-2.5">
-          <span className="truncate">{isBn ? 'চলতি মাস' : 'This Month'}</span>
-        </div>
-      </div>
-
-      {/* 2. Fee Dues / Pay Online */}
-      <div
-        onClick={() => {
-          if (totalDue > 0 && !hasPendingFee) onOpenPayModal()
-          else onNavigateTab('fees')
-        }}
-        className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--brand)]/30 hover:shadow-xs transition-all cursor-pointer min-w-0"
-      >
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
-            {isBn ? 'ফি ও বকেয়া' : 'Fees & Dues'}
-          </span>
-          <div className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] shrink-0">
-            <CreditCard size={14} />
-          </div>
-        </div>
-        <div className="text-2xl font-bold tracking-tight text-[var(--text-primary)] tabular-nums mt-3 leading-none">
-          {totalDue > 0 ? `৳${totalDue.toLocaleString()}` : isBn ? '৳০' : '৳0'}
-        </div>
-        <div className="flex items-center justify-between gap-2 mt-2.5 text-xs">
-          {hasPendingFee ? (
-            <span className="text-amber-600 dark:text-amber-400 font-medium">
-              {isBn ? 'যাচাইাধীন' : 'Pending verification'}
-            </span>
-          ) : totalDue > 0 ? (
-            <>
-              <span className="text-amber-600 dark:text-amber-400 font-medium">
-                {isBn ? 'বকেয়া রয়েছে' : 'Due balance'}
-              </span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onOpenPayModal()
-                }}
-                className="inline-flex items-center gap-0.5 text-xs font-semibold text-[var(--brand)] hover:underline bg-transparent border-none p-0 cursor-pointer shrink-0"
-              >
-                <span>{isBn ? 'পরিশোধ' : 'Pay'}</span>
-                <ArrowRight size={12} />
-              </button>
-            </>
-          ) : (
-            <span className="text-[var(--text-muted)]">
-              {isBn ? 'পরিশোধিত' : 'Paid'}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* 3. Academic Result */}
-      <div
-        onClick={() => onNavigateTab('academics')}
-        className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--brand)]/30 hover:shadow-xs transition-all cursor-pointer min-w-0"
-      >
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
-            {isBn ? 'একাডেমিক ফলাফল' : 'Academic Evaluation'}
-          </span>
-          <div className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] shrink-0">
-            <Award size={14} />
-          </div>
-        </div>
-        <div className="text-2xl font-bold tracking-tight text-[var(--text-primary)] tabular-nums mt-3 leading-none">
-          {avgGpa ? `GPA ${avgGpa}` : '—'}
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] mt-2.5">
-          <span
-            className={
-              hasFailed ? 'text-rose-600 dark:text-rose-400 font-medium' : undefined
-            }
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenPayModal()
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              color: 'var(--brand)',
+              fontSize: '0.6875rem',
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+            }}
           >
-            {!avgGpa
-              ? isBn ? 'ফলাফল নেই' : 'No result'
-              : hasFailed
-              ? isBn ? 'অকৃতকার্য' : 'Failed'
-              : isBn ? 'মূল্যায়িত' : 'Evaluated'}
-          </span>
+            <span>{isBn ? 'পরিশোধ' : 'Pay'}</span>
+            <ArrowRight size={10} style={{ marginLeft: '0.125rem' }} />
+          </button>
         </div>
-      </div>
+      ) : (
+        <span style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--green)' }}>
+          {isBn ? 'পরিশোধ সম্পন্ন' : 'Paid in full'}
+        </span>
+      ),
+      onClick: () => {
+        if (totalDue > 0 && !hasPendingFee) onOpenPayModal()
+        else onNavigateTab('fees')
+      },
+    },
+    {
+      key: 'academics',
+      labelBn: 'একাডেমিক মূল্যায়ন',
+      labelEn: 'Academic Evaluation',
+      value: avgGpa ? (avgGpa === '0.00' ? '0.00' : avgGpa) : '—',
+      icon: <Award size={16} />,
+      color: 'var(--purple)',
+      sub: hasFailed ? (
+        <span style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--red)' }}>
+          {isBn ? 'উন্নতি প্রয়োজন' : 'Needs work'}
+        </span>
+      ) : avgGpa ? (
+        <span style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--green)' }}>
+          {isBn ? 'ফলাফল প্রকাশিত' : 'Result published'}
+        </span>
+      ) : (
+        <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
+          {isBn ? 'চলমান' : 'In progress'}
+        </span>
+      ),
+      onClick: () => onNavigateTab('academics'),
+    },
+    {
+      key: 'homework',
+      labelBn: 'বাকি বাড়ির কাজ',
+      labelEn: 'Pending Homework',
+      value: pendingHw,
+      icon: <BookOpen size={16} />,
+      color: pendingHw > 0 ? 'var(--teal)' : 'var(--green)',
+      sub: pendingHw === 0 ? (
+        <span style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--green)' }}>
+          {isBn ? 'সব সম্পন্ন' : 'All done'}
+        </span>
+      ) : (
+        <span style={{ fontSize: '0.6875rem', fontWeight: 500, color: 'var(--amber)' }}>
+          {isBn ? `${pendingHw}টি কাজ বাকি` : `${pendingHw} pending`}
+        </span>
+      ),
+      onClick: () => onNavigateTab('homework'),
+    },
+  ]
 
-      {/* 4. Homework & Tasks */}
-      <div
-        onClick={() => onNavigateTab('homework')}
-        className="p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] hover:border-[var(--brand)]/30 hover:shadow-xs transition-all cursor-pointer min-w-0"
-      >
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
-            {isBn ? 'বাকি হোমওয়ার্ক' : 'Pending Homework'}
-          </span>
-          <div className="w-7 h-7 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)] shrink-0">
-            <BookOpen size={14} />
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
+      {cards.map((c) => (
+        <div
+          key={c.key}
+          onClick={c.onClick}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.875rem 1rem',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '0.625rem',
+            boxShadow: 'var(--shadow-xs)',
+            cursor: 'pointer',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)'
+            e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
+          }}
+        >
+          <div
+            style={{
+              width: '2.25rem',
+              height: '2.25rem',
+              borderRadius: '0.5rem',
+              background: 'var(--bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: c.color,
+              flexShrink: 0,
+            }}
+          >
+            {c.icon}
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                lineHeight: 1.2,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {c.value}
+            </div>
+            <div
+              style={{
+                fontSize: '0.6875rem',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.375rem',
+                marginTop: '0.1875rem',
+              }}
+            >
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {isBn ? c.labelBn : c.labelEn}
+              </span>
+              <div style={{ flexShrink: 0 }}>{c.sub}</div>
+            </div>
           </div>
         </div>
-        <div className="text-2xl font-bold tracking-tight text-[var(--text-primary)] tabular-nums mt-3 leading-none">
-          {pendingHw} {isBn ? 'টি' : 'Tasks'}
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] mt-2.5">
-          <span className="truncate">
-            {pendingHw > 0
-              ? isBn ? 'সম্পন্ন বাকি' : 'Pending review'
-              : isBn ? 'সব সম্পন্ন' : 'All Done'}
-          </span>
-        </div>
-      </div>
+      ))}
     </div>
   )
 })

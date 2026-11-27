@@ -32,37 +32,37 @@ export const AttendanceKpiCards = React.memo(function AttendanceKpiCards({
       icon: Calendar,
       label: isBn ? 'মোট কর্মদিবস' : 'Working Days',
       value: String(workingDays),
-      iconCls: 'text-[var(--text-secondary)]',
+      color: 'var(--brand)',
     },
     {
       icon: CheckCircle2,
       label: isBn ? 'উপস্থিত দিন' : 'Present Days',
       value: String(presentDays),
-      iconCls: 'text-[var(--text-secondary)]',
+      color: 'var(--green)',
     },
     {
       icon: XCircle,
       label: isBn ? 'অনুপস্থিত' : 'Absent Days',
       value: String(absentDays),
-      iconCls: 'text-[var(--text-secondary)]',
+      color: 'var(--red)',
     },
     {
       icon: Clock,
       label: isBn ? 'দেরিতে প্রবেশ' : 'Late Days',
       value: String(lateDays),
-      iconCls: 'text-[var(--text-secondary)]',
+      color: 'var(--amber)',
     },
     {
       icon: FileText,
       label: isBn ? 'ছুটি ভোগ' : 'Leave Days',
       value: String(leaveDays),
-      iconCls: 'text-[var(--text-secondary)]',
+      color: 'var(--purple)',
     },
     {
       icon: TrendingUp,
       label: isBn ? 'উপস্থিতির হার' : 'Attendance Rate',
       value: attendanceRate,
-      iconCls: 'text-[var(--text-secondary)]',
+      color: 'var(--teal)',
     },
   ]
 
@@ -71,16 +71,65 @@ export const AttendanceKpiCards = React.memo(function AttendanceKpiCards({
       {cards.map((card) => (
         <div
           key={card.label}
-          className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] min-w-0"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.625rem',
+            padding: '0.75rem 0.875rem',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '0.625rem',
+            boxShadow: 'var(--shadow-xs)',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)'
+            e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
+          }}
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
-              {card.label}
-            </span>
-            <card.icon size={14} className={`${card.iconCls} shrink-0`} />
+          <div
+            style={{
+              width: '2rem',
+              height: '2rem',
+              borderRadius: '0.375rem',
+              background: 'var(--bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: card.color,
+              flexShrink: 0,
+            }}
+          >
+            <card.icon size={15} />
           </div>
-          <div className="text-xl font-semibold text-[var(--text-primary)] leading-none tabular-nums mt-2.5">
-            {card.value}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+              style={{
+                fontSize: '1.0625rem',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                lineHeight: 1.2,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {card.value}
+            </div>
+            <div
+              style={{
+                fontSize: '0.6875rem',
+                color: 'var(--text-secondary)',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                marginTop: '0.125rem',
+              }}
+            >
+              {card.label}
+            </div>
           </div>
         </div>
       ))}

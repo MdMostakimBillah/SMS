@@ -83,19 +83,19 @@ export const AcademicsTab = React.memo(function AcademicsTab({
       icon: Award,
       value: avgGpa,
       label: isBn ? 'সর্বমোট গড় জিপিএ' : 'Cumulative GPA',
-      iconCls: 'text-[var(--text-secondary)]',
+      color: 'var(--purple)',
     },
     {
       icon: CheckCircle2,
       value: totalFull > 0 ? `${totalObtained} / ${totalFull}` : '—',
       label: isBn ? `প্রাপ্ত মোট নম্বর (${avgPct}%)` : `Total Obtained (${avgPct}%)`,
-      iconCls: 'text-[var(--text-secondary)]',
+      color: 'var(--brand)',
     },
     {
       icon: GraduationCap,
       value: child.roll ? `#${child.roll}` : '—',
       label: isBn ? 'শ্রেণি রোল নম্বর' : 'Class Roll',
-      iconCls: 'text-[var(--text-secondary)]',
+      color: 'var(--teal)',
     },
     {
       icon: TrendingUp,
@@ -110,34 +110,47 @@ export const AcademicsTab = React.memo(function AcademicsTab({
           ? 'অনুত্তীর্ণ'
           : 'FAILED',
       label: isBn ? 'ফলাফল স্থিতি' : 'Result Status',
-      valueCls:
+      valueColor:
         filteredResults.length === 0
-          ? 'text-[var(--text-primary)]'
+          ? 'var(--text-primary)'
           : isAllPassed
-          ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-          : 'text-rose-600 dark:text-rose-400 font-semibold',
-      iconCls: 'text-[var(--text-secondary)]',
+          ? 'var(--green)'
+          : 'var(--red)',
+      color: isAllPassed ? 'var(--green)' : 'var(--amber)',
     },
   ]
 
   return (
     <div className="space-y-4">
       {/* Top Selector & Print Header */}
-      <div className="flex items-center justify-between gap-3 p-4 sm:p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] flex-wrap">
-        <div>
-          <h3 className="text-sm sm:text-base font-semibold text-[var(--text-primary)]">
-            {isBn ? 'একাডেমিক ফলাফল ও মূল্যায়ন' : 'Academic Results & Marksheet'}
-          </h3>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            {isBn ? 'শিক্ষার্থীর বিষয়ভিত্তিক গ্রেড ও পরীক্ষার ফলাফল' : 'Child subject performance, GPA, and grades'}
-          </p>
+      <div
+        className="card--premium flex items-center justify-between gap-3 p-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs flex-wrap"
+      >
+        <div className="flex items-center gap-2">
+          <div
+            style={{
+              width: '0.1875rem',
+              height: '0.875rem',
+              background: 'var(--purple)',
+              borderRadius: '0.125rem',
+              flexShrink: 0,
+            }}
+          />
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+              {isBn ? 'একাডেমিক ফলাফল ও মূল্যায়ন' : 'Academic Results & Marksheet'}
+            </h3>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              {isBn ? 'শিক্ষার্থীর বিষয়ভিত্তিক গ্রেড ও পরীক্ষার ফলাফল' : 'Child subject performance, GPA, and grades'}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             value={selectedExam}
             onChange={(e) => setSelectedExam(e.target.value)}
-            className={`${selectCls} h-9 flex-1 sm:flex-initial rounded-lg`}
+            className={`${selectCls} h-8 flex-1 sm:flex-initial rounded-lg text-xs`}
           >
             <option value="">{isBn ? 'সকল মূল্যায়ন' : 'All Evaluations'}</option>
             {examConfigs.map((cfg) => (
@@ -151,45 +164,105 @@ export const AcademicsTab = React.memo(function AcademicsTab({
             type="button"
             onClick={handlePrintMarksheet}
             disabled={filteredResults.length === 0}
-            className={`h-9 flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 rounded-lg text-xs font-semibold border-none transition-opacity ${
+            className={`h-8 flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-semibold border-none transition-opacity ${
               filteredResults.length > 0
                 ? 'bg-[var(--brand)] hover:opacity-90 text-white cursor-pointer shadow-xs'
                 : 'bg-slate-200 dark:bg-white/[0.06] text-[var(--text-muted)] cursor-not-allowed'
             }`}
           >
-            <Printer size={14} />
+            <Printer size={13} />
             <span className="truncate">{isBn ? 'মার্কশিট ডাউনলোড' : 'Download Marksheet'}</span>
           </button>
         </div>
       </div>
 
       {/* Summary Scorecard Banner */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
         {kpiCards.map((card) => (
           <div
             key={card.label}
-            className="p-4 sm:p-5 bg-[var(--surface)] border border-[var(--border)] rounded-2xl min-w-0"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.875rem 1rem',
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '0.625rem',
+              boxShadow: 'var(--shadow-xs)',
+              transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'none'
+              e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
+            }}
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
-                {card.label}
-              </span>
-              <card.icon size={15} className={`${card.iconCls} shrink-0`} />
+            <div
+              style={{
+                width: '2.25rem',
+                height: '2.25rem',
+                borderRadius: '0.5rem',
+                background: 'var(--bg-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: card.color,
+                flexShrink: 0,
+              }}
+            >
+              <card.icon size={16} />
             </div>
-            <div className={`text-2xl font-semibold leading-none tabular-nums mt-2.5 ${card.valueCls || 'text-[var(--text-primary)]'}`}>
-              {card.value}
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div
+                style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  color: card.valueColor || 'var(--text-primary)',
+                  lineHeight: 1.2,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {card.value}
+              </div>
+              <div
+                style={{
+                  fontSize: '0.6875rem',
+                  color: 'var(--text-secondary)',
+                  marginTop: '0.1875rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {card.label}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Subject-Wise Marksheet Table */}
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-[var(--border)] flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-[var(--text-primary)]">
-            {isBn ? 'বিষয়ভিত্তিক নম্বর বিভাজন' : 'Subject-wise Detailed Marks'}
-          </h4>
-          <span className="text-xs text-[var(--text-muted)] tabular-nums">
+      <div className="card--premium rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs overflow-hidden">
+        <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div
+              style={{
+                width: '0.1875rem',
+                height: '0.875rem',
+                background: 'var(--brand)',
+                borderRadius: '0.125rem',
+                flexShrink: 0,
+              }}
+            />
+            <h4 className="text-xs sm:text-sm font-semibold text-[var(--text-primary)]">
+              {isBn ? 'বিষয়ভিত্তিক নম্বর বিভাজন' : 'Subject-wise Detailed Marks'}
+            </h4>
+          </div>
+          <span className="text-[0.6875rem] text-[var(--text-muted)] tabular-nums">
             {filteredResults.length} {isBn ? 'টি বিষয়' : 'Subjects'}
           </span>
         </div>
@@ -271,7 +344,7 @@ export const AcademicsTab = React.memo(function AcademicsTab({
 
       {/* Grading Scale Reference */}
       {filteredResults.length > 0 && (
-        <div className="px-4 py-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] flex items-center justify-between gap-3 flex-wrap text-[0.6875rem] text-[var(--text-secondary)]">
+        <div className="card--premium px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xs flex items-center justify-between gap-3 flex-wrap text-[0.6875rem] text-[var(--text-secondary)]">
           <span className="font-semibold text-[var(--text-primary)]">
             {isBn ? 'গ্রেডিং স্কেল:' : 'Grading Scale:'}
           </span>
@@ -286,10 +359,21 @@ export const AcademicsTab = React.memo(function AcademicsTab({
       )}
 
       {/* Upcoming Exam Schedule */}
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-        <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3.5">
-          {isBn ? 'আসন্ন পরীক্ষার রুটিন ও সময়সূচি' : 'Upcoming Exam Routine & Schedule'}
-        </h4>
+      <div className="card--premium rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5 shadow-xs">
+        <div className="flex items-center gap-2 mb-3.5">
+          <div
+            style={{
+              width: '0.1875rem',
+              height: '0.875rem',
+              background: 'var(--teal)',
+              borderRadius: '0.125rem',
+              flexShrink: 0,
+            }}
+          />
+          <h4 className="text-xs sm:text-sm font-semibold text-[var(--text-primary)]">
+            {isBn ? 'আসন্ন পরীক্ষার রুটিন ও সময়সূচি' : 'Upcoming Exam Routine & Schedule'}
+          </h4>
+        </div>
 
         {childRoutines.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

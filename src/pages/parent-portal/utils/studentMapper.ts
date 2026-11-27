@@ -22,21 +22,29 @@ export function mapAdmittedStudentsToPortalChildren(
     // Resolve class teacher from student teacherId or class section
     let teacher = s.teacherId ? teachers.find((t) => t.id === s.teacherId) : undefined
     if (!teacher && s.class) {
-      const sClass = s.class.toLowerCase().trim()
-      const cls = classes.find(
-        (c) =>
-          c.name.toLowerCase().trim() === sClass ||
-          c.name.toLowerCase().trim() === `class ${sClass}` ||
-          sClass === `class ${c.name.toLowerCase().trim()}` ||
-          c.id === s.class
-      )
-      if (cls) {
-        const sec = cls.sections.find(
-          (sc) => sc.name.toLowerCase().trim() === (s.section || '').toLowerCase().trim()
+      const sClass = (s.class || '').toLowerCase().trim()
+      const cls = classes.find((c) => {
+        const cName = (c?.name || '').toLowerCase().trim()
+        return (
+          cName === sClass ||
+          cName === `class ${sClass}` ||
+          sClass === `class ${cName}` ||
+          c?.id === s.class
         )
-        if (sec?.classTeacherId) {
-          teacher = teachers.find((t) => t.id === sec.classTeacherId)
+      })
+      if (cls && Array.isArray(cls.sections)) {
+        const targetSec = (s.section || '').toLowerCase().trim()
+        const sec = cls.sections.find((sc: any) => {
+          const secName = (typeof sc === 'string' ? sc : sc?.name || '').toLowerCase().trim()
+          return secName === targetSec
+        })
+        const teacherId = typeof sec === 'object' && sec ? (sec as any).classTeacherId : (cls as any).classTeacherId
+        if (teacherId) {
+          teacher = teachers.find((t) => t.id === teacherId)
         }
+      }
+      if (!teacher && teachers.length > 0) {
+        teacher = teachers[0]
       }
     }
 
@@ -79,9 +87,9 @@ export function mapAdmittedStudentsToPortalChildren(
       studentPhone: s.phone || '',
       studentEmail: s.email || '',
       status: s.status || 'approved',
-      classTeacherName: teacher ? teacher.nameEn || teacher.nameBn || '' : '',
-      classTeacherPhone: teacher?.phone || '',
-      classTeacherEmail: teacher?.email || '',
+      classTeacherName: (s as any).classTeacherName || (teacher ? teacher.nameEn || teacher.nameBn || '' : ''),
+      classTeacherPhone: (s as any).classTeacherPhone || teacher?.phone || '',
+      classTeacherEmail: (s as any).classTeacherEmail || teacher?.email || '',
     }
   })
 }

@@ -15,12 +15,23 @@ export const ProfileAcademicCard = React.memo(function ProfileAcademicCard({
   isBn,
 }: ProfileAcademicCardProps) {
   return (
-    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] p-5 flex flex-col justify-between">
+    <div className="card--premium bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between gap-2 mb-3">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">
-            {isBn ? 'একাডেমিক ও প্রাতিষ্ঠানিক তথ্য' : 'Academic & Enrollment Profile'}
-          </h3>
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              style={{
+                width: '0.1875rem',
+                height: '0.875rem',
+                background: 'var(--purple)',
+                borderRadius: '0.125rem',
+                flexShrink: 0,
+              }}
+            />
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">
+              {isBn ? 'একাডেমিক ও প্রাতিষ্ঠানিক তথ্য' : 'Academic & Enrollment Profile'}
+            </h3>
+          </div>
           <span className="text-xs font-semibold text-[var(--brand)] shrink-0">
             {child.class}
           </span>

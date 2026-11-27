@@ -60,25 +60,59 @@ export const AttendanceCalendarView = React.memo(function AttendanceCalendarView
     : format(currentMonth, 'MMMM yyyy')
 
   return (
-    <div className="lg:col-span-2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
+    <div
+      className="lg:col-span-2 card--premium"
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: '0.75rem',
+        padding: '1rem',
+        boxShadow: 'var(--shadow-xs)',
+      }}
+    >
       {/* Calendar Month Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-          {monthLabel}
-        </h3>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '0.875rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
+            style={{
+              width: '0.1875rem',
+              height: '0.875rem',
+              background: 'var(--green)',
+              borderRadius: '0.125rem',
+              flexShrink: 0,
+            }}
+          />
+          <h3
+            style={{
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              color: 'var(--text-primary)',
+              margin: 0,
+            }}
+          >
+            {monthLabel}
+          </h3>
+        </div>
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
             aria-label={isBn ? 'আগের মাস' : 'Previous month'}
-            className="w-8 h-8 rounded-lg border-none bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-100 dark:hover:bg-white/[0.06] flex items-center justify-center cursor-pointer transition-colors"
+            className="w-7 h-7 rounded-md border-none bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-100 dark:hover:bg-white/[0.06] flex items-center justify-center cursor-pointer transition-colors"
           >
-            <ChevronLeft size={15} />
+            <ChevronLeft size={14} />
           </button>
           <button
             type="button"
             onClick={() => setCurrentMonth(new Date())}
-            className="h-8 px-3 rounded-lg text-xs font-medium border border-[var(--border)] bg-transparent text-[var(--text-primary)] hover:bg-slate-100/70 dark:hover:bg-white/[0.05] cursor-pointer transition-colors"
+            className="h-7 px-2.5 rounded-md text-xs font-medium border border-[var(--border)] bg-transparent text-[var(--text-primary)] hover:bg-slate-100/70 dark:hover:bg-white/[0.05] cursor-pointer transition-colors"
           >
             {isBn ? 'আজ' : 'Today'}
           </button>
@@ -86,9 +120,9 @@ export const AttendanceCalendarView = React.memo(function AttendanceCalendarView
             type="button"
             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
             aria-label={isBn ? 'পরের মাস' : 'Next month'}
-            className="w-8 h-8 rounded-lg border-none bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-100 dark:hover:bg-white/[0.06] flex items-center justify-center cursor-pointer transition-colors"
+            className="w-7 h-7 rounded-md border-none bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-100 dark:hover:bg-white/[0.06] flex items-center justify-center cursor-pointer transition-colors"
           >
-            <ChevronRight size={15} />
+            <ChevronRight size={14} />
           </button>
         </div>
       </div>
@@ -98,7 +132,7 @@ export const AttendanceCalendarView = React.memo(function AttendanceCalendarView
         {(isBn ? WEEKDAYS_BN : WEEKDAYS_EN).map((day) => (
           <div
             key={day}
-            className="text-center text-[0.6875rem] font-medium text-[var(--text-muted)] py-1"
+            className="text-center text-[0.6875rem] font-medium text-[var(--text-muted)] py-0.5"
           >
             {day}
           </div>
@@ -123,7 +157,7 @@ export const AttendanceCalendarView = React.memo(function AttendanceCalendarView
               key={idx}
               type="button"
               onClick={() => setSelectedDay(day)}
-              className={`min-h-[3.25rem] p-2 rounded-xl border flex flex-col justify-between text-left cursor-pointer transition-all ${
+              className={`min-h-[3rem] p-1.5 rounded-lg border flex flex-col justify-between text-left cursor-pointer transition-all ${
                 !isCurrentMonth ? 'opacity-30' : ''
               } ${cellCls} ${
                 isSelected
@@ -137,32 +171,32 @@ export const AttendanceCalendarView = React.memo(function AttendanceCalendarView
                 </span>
                 {dotCls && <span className={`w-1.5 h-1.5 rounded-full ${dotCls} shrink-0`} />}
               </div>
-              <div className="text-[0.6875rem] truncate font-medium w-full">{info.label}</div>
+              <div className="text-[0.625rem] truncate font-medium w-full">{info.label}</div>
             </button>
           )
         })}
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-3.5 border-t border-[var(--border)] text-xs text-[var(--text-secondary)] flex-wrap">
+      <div className="flex items-center gap-3.5 mt-3.5 pt-3 border-t border-[var(--border)] text-[0.6875rem] text-[var(--text-secondary)] flex-wrap">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           {isBn ? 'উপস্থিত' : 'Present'}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-rose-500" />
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
           {isBn ? 'অনুপস্থিত' : 'Absent'}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-amber-500" />
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
           {isBn ? 'দেরি' : 'Late'}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[var(--brand)]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />
           {isBn ? 'অনুমোদিত ছুটি' : 'Leave'}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-slate-400" />
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
           {isBn ? 'সাপ্তাহিক ছুটি' : 'Weekend'}
         </span>
       </div>

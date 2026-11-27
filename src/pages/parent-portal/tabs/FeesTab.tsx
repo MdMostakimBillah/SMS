@@ -74,77 +74,240 @@ export const FeesTab = React.memo(function FeesTab({
   return (
     <div className="space-y-4">
       {/* Financial Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[var(--text-secondary)]">
-              {isBn ? 'মোট নির্ধারিত ফি' : 'Total Invoiced'}
-            </span>
-            <Receipt size={15} className="text-[var(--text-secondary)] shrink-0" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
+        {/* Total Invoiced */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.875rem 1rem',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '0.625rem',
+            boxShadow: 'var(--shadow-xs)',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)'
+            e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
+          }}
+        >
+          <div
+            style={{
+              width: '2.25rem',
+              height: '2.25rem',
+              borderRadius: '0.5rem',
+              background: 'var(--bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--brand)',
+              flexShrink: 0,
+            }}
+          >
+            <Receipt size={16} />
           </div>
-          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-nums mt-2 leading-none">
-            ৳{totalAmount.toLocaleString()}
-          </div>
-          {totalWaived > 0 && (
-            <div className="text-xs text-[var(--text-muted)] mt-2">
-              {isBn ? 'মোট ছাড়:' : 'Total Waived:'} ৳{totalWaived.toLocaleString()}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                lineHeight: 1.2,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              ৳{totalAmount.toLocaleString()}
             </div>
-          )}
+            <div
+              style={{
+                fontSize: '0.6875rem',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.375rem',
+                marginTop: '0.1875rem',
+              }}
+            >
+              <span>{isBn ? 'মোট নির্ধারিত ফি' : 'Total Invoiced'}</span>
+              {totalWaived > 0 && (
+                <span style={{ color: 'var(--text-muted)' }}>
+                  {isBn ? 'ছাড়:' : 'Waived:'} ৳{totalWaived.toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[var(--text-secondary)]">
+        {/* Paid Amount */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.875rem 1rem',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '0.625rem',
+            boxShadow: 'var(--shadow-xs)',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)'
+            e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
+          }}
+        >
+          <div
+            style={{
+              width: '2.25rem',
+              height: '2.25rem',
+              borderRadius: '0.5rem',
+              background: 'var(--bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--green)',
+              flexShrink: 0,
+            }}
+          >
+            <CheckCircle2 size={16} />
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: 'var(--text-primary)',
+                lineHeight: 1.2,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              ৳{totalPaid.toLocaleString()}
+            </div>
+            <div
+              style={{
+                fontSize: '0.6875rem',
+                color: 'var(--text-secondary)',
+                marginTop: '0.1875rem',
+              }}
+            >
               {isBn ? 'পরিশোধিত ফি' : 'Paid Amount'}
-            </span>
-            <CheckCircle2 size={15} className="text-[var(--text-secondary)] shrink-0" />
-          </div>
-          <div className="text-2xl font-semibold text-[var(--text-primary)] tabular-nums mt-2 leading-none">
-            ৳{totalPaid.toLocaleString()}
+            </div>
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-[var(--text-secondary)]">
-              {isBn ? 'মোট বকেয়া ফি' : 'Outstanding Dues'}
-            </span>
-            <CreditCard size={15} className="text-[var(--text-secondary)] shrink-0" />
+        {/* Outstanding Dues */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.875rem 1rem',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '0.625rem',
+            boxShadow: 'var(--shadow-xs)',
+            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)'
+            e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
+          }}
+        >
+          <div
+            style={{
+              width: '2.25rem',
+              height: '2.25rem',
+              borderRadius: '0.5rem',
+              background: 'var(--bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: totalDue > 0 ? 'var(--amber)' : 'var(--green)',
+              flexShrink: 0,
+            }}
+          >
+            <CreditCard size={16} />
           </div>
-          <div className="flex items-center justify-between gap-2 mt-2">
-            <div className={`text-2xl font-semibold ${totalDue > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-[var(--text-primary)]'} tabular-nums leading-none`}>
-              ৳{totalDue.toLocaleString()}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div
+              style={{
+                fontSize: '1.25rem',
+                fontWeight: 700,
+                color: totalDue > 0 ? 'var(--amber)' : 'var(--text-primary)',
+                lineHeight: 1.2,
+                fontVariantNumeric: 'tabular-nums',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>৳{totalDue.toLocaleString()}</span>
+              {totalDue > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onOpenPayModal()}
+                  className="h-6 px-2.5 rounded-md text-xs font-semibold bg-[var(--brand)] hover:opacity-90 text-white cursor-pointer border-none transition-opacity shrink-0"
+                >
+                  {isBn ? 'পরিশোধ' : 'Pay'}
+                </button>
+              )}
             </div>
-            {totalDue > 0 && (
-              <button
-                type="button"
-                onClick={() => onOpenPayModal()}
-                className="h-7 px-3 rounded-lg text-xs font-semibold bg-[var(--brand)] hover:opacity-90 text-white cursor-pointer border-none transition-opacity shrink-0"
-              >
-                {isBn ? 'পরিশোধ' : 'Pay'}
-              </button>
-            )}
+            <div
+              style={{
+                fontSize: '0.6875rem',
+                color: 'var(--text-secondary)',
+                marginTop: '0.1875rem',
+              }}
+            >
+              {isBn ? 'মোট বকেয়া ফি' : 'Outstanding Dues'}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Invoices Card */}
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-4">
+      <div className="card--premium rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-              {isBn ? 'বকেয়া ও পরিশোধযোগ্য ফি' : 'Current Due Invoices'}
-            </h3>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              {isBn ? `মোট ${filteredFees.length}টি ইনভয়েস` : `${filteredFees.length} invoices listed`}
-            </p>
+          <div className="flex items-center gap-2">
+            <div
+              style={{
+                width: '0.1875rem',
+                height: '0.875rem',
+                background: 'var(--brand)',
+                borderRadius: '0.125rem',
+                flexShrink: 0,
+              }}
+            />
+            <div>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+                {isBn ? 'বকেয়া ও পরিশোধযোগ্য ফি' : 'Current Due Invoices'}
+              </h3>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                {isBn ? `মোট ${filteredFees.length}টি ইনভয়েস` : `${filteredFees.length} invoices listed`}
+              </p>
+            </div>
           </div>
 
           {totalDue > 0 && (
             <button
               type="button"
               onClick={() => onOpenPayModal()}
-              className="h-8 px-3.5 rounded-lg text-xs font-semibold bg-[var(--brand)] hover:opacity-90 text-white transition-opacity cursor-pointer border-none shadow-xs self-start sm:self-auto"
+              className="h-7 px-3 rounded-md text-xs font-semibold bg-[var(--brand)] hover:opacity-90 text-white transition-opacity cursor-pointer border-none shadow-xs self-start sm:self-auto"
             >
               {isBn ? 'সব পরিশোধ করুন' : 'Pay All Dues'}
             </button>

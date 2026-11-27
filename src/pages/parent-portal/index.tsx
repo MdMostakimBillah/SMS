@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { eachDayOfInterval, format, parseISO } from 'date-fns'
-import { GraduationCap, Users } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBn } from '@/hooks/useBn'
 import { useAdmissionStore } from '@/store/admissionStore'
@@ -78,7 +77,6 @@ export default function ParentPortalPage() {
   const subjectMarkConfigs = useExamStore((s) => s.subjectMarkConfigs)
   const examConfigs = useExamStore((s) => s.examConfigs)
 
-  const institution = useClassStore((s) => s.institution)
   const isLocalPC = isLocalComputerMode()
   const isLocalServer = isLocalServerMode()
 
@@ -341,52 +339,10 @@ export default function ParentPortalPage() {
     return <PortalNoStudentsNotice isInstitutionAdmin={isInstitutionAdmin} />
   }
 
-  const institutionName = (isBn ? institution.nameBn || institution.name : institution.name) || 'EduTech School'
-
   return (
-    <div className="w-full space-y-4 pb-10">
-      {/* Portal Top Context Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-primary)] flex items-center justify-center shrink-0 shadow-2xs border border-[var(--border)]">
-            <GraduationCap size={18} />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-base sm:text-lg font-bold text-[var(--text-primary)] tracking-tight">
-                {isBn ? 'অভিভাবক পোর্টাল' : 'Parent Portal'}
-              </h1>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.6875rem] font-medium bg-[var(--bg-secondary)] text-[var(--text-secondary)] border border-[var(--border)]">
-                <Users size={11} className="text-[var(--text-muted)]" />
-                <span>
-                  {isParentAccount
-                    ? isBn ? 'অভিভাবক ড্যাশবোর্ড' : 'Guardian Access'
-                    : isBn ? 'অ্যাডমিন প্রিভিউ মোড' : 'Admin Preview Mode'}
-                </span>
-              </span>
-            </div>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">
-              {isBn
-                ? 'শিক্ষার্থীর উপস্থিতি, রেজাল্ট, বকেয়া ফি ও হোমওয়ার্ক ড্যাশবোর্ড'
-                : 'Student daily attendance, exam marksheets, fee invoices & homework diary'}
-            </p>
-          </div>
-        </div>
-
-        {/* Quick status info / Institution session */}
-        <div className="text-xs text-[var(--text-secondary)] flex items-center gap-2 self-start sm:self-auto">
-          <span className="hidden md:inline font-medium text-[var(--text-primary)]">
-            {institutionName}
-          </span>
-          <span className="hidden md:inline text-[var(--text-muted)]">·</span>
-          <span className="text-[0.6875rem] text-[var(--text-muted)]">
-            {isBn ? 'সেশন:' : 'Session:'} <strong className="text-[var(--text-primary)] font-medium">{activeChild.academicYear || institution.currentSession || '2026'}</strong>
-          </span>
-        </div>
-      </div>
-
-      {/* Unified Header & Tab Navigation */}
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
+    <div className="w-full space-y-6 pb-12">
+      {/* Student Identity Header */}
+      <div className="pt-1">
         <ChildSelector
           childrenList={childrenList}
           activeChild={activeChild}
@@ -403,7 +359,10 @@ export default function ParentPortalPage() {
           isLocalPC={isLocalPC}
           isLocalServer={isLocalServer}
         />
+      </div>
 
+      {/* Tab Navigation */}
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xs overflow-hidden">
         <PortalTabNav
           activeTab={activeTab}
           onSelectTab={(tab) => {

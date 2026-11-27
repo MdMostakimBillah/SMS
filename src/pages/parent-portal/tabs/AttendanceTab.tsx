@@ -62,17 +62,6 @@ export const AttendanceTab = React.memo(function AttendanceTab({
 
   const getDayStatus = useCallback(
     (day: Date): AttendanceDayInfo => {
-      const isWeekend = isDateRoutineWeekend(day, routine)
-      if (isWeekend) {
-        return {
-          status: 'weekend',
-          label: isBn ? 'সাপ্তাহিক ছুটি' : 'Weekend',
-          timeIn: '—',
-          timeOut: '—',
-          verification: formatPunchMethod('weekend', isBn),
-        }
-      }
-
       const dateKey = format(day, 'yyyy-MM-dd')
       const rec = attendance[dateKey]?.[child.id]
       if (rec) {
@@ -108,6 +97,17 @@ export const AttendanceTab = React.memo(function AttendanceTab({
             verification: formatPunchMethod('leave', isBn),
             note: rec.note,
           }
+        }
+      }
+
+      const isWeekend = isDateRoutineWeekend(day, routine)
+      if (isWeekend) {
+        return {
+          status: 'weekend',
+          label: isBn ? 'সাপ্তাহিক ছুটি' : 'Weekend',
+          timeIn: '—',
+          timeOut: '—',
+          verification: formatPunchMethod('weekend', isBn),
         }
       }
 

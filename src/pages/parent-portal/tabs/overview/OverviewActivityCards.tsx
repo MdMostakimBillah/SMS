@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import {
-  ChevronRight,
+  Clock,
+  LogOut,
+  Home,
   Phone,
   Mail,
 } from 'lucide-react'
@@ -43,6 +45,10 @@ export const OverviewActivityCards = React.memo(function OverviewActivityCards({
       .slice(0, 3)
   }, [notices])
 
+  const allNoticesCount = useMemo(() => {
+    return notices.filter((n) => n && n.isActive !== false && n.target !== 'teachers').length
+  }, [notices])
+
   const previewHomework = useMemo(() => {
     return [...homeworkList]
       .sort((a, b) => {
@@ -53,174 +59,522 @@ export const OverviewActivityCards = React.memo(function OverviewActivityCards({
       .slice(0, 3)
   }, [homeworkList])
 
+  const sectionHead = (color: string) => (
+    <div
+      style={{
+        width: '0.1875rem',
+        height: '0.875rem',
+        background: color,
+        borderRadius: '0.125rem',
+        flexShrink: 0,
+      }}
+    />
+  )
+
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: '0.75rem',
+    padding: '1rem',
+    boxShadow: 'var(--shadow-xs)',
+    display: 'flex',
+    flexDirection: 'column',
+  }
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      {/* Left Column (2 spans): Today's Schedule & Homework */}
-      <div className="lg:col-span-2 space-y-4">
-        {/* Today's Activity & Punch Log */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-              {isBn ? 'আজকের কার্যক্রম ও সময়সূচি' : "Today's Schedule & Activity"}
-            </h3>
-            <span className="inline-flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  punch.isPresent ? 'bg-emerald-500' : 'bg-[var(--brand)]'
-                }`}
-              />
-              <span>
-                {punch.isPresent
-                  ? isBn ? 'উপস্থিত' : 'Present Today'
-                  : isBn ? 'স্কুল দিবস' : 'Active Day'}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+      {/* Middle Row: Today & Class Teacher */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+        {/* Left: Today's Activity */}
+        <div className="card--premium" style={cardStyle}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.875rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {sectionHead('var(--green)')}
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {isBn ? 'আজকের কার্যক্রম' : "Today's Activity"}
               </span>
+            </div>
+            <span
+              style={{
+                fontSize: '0.625rem',
+                fontWeight: 500,
+                color: punch.isPresent ? 'var(--green)' : 'var(--text-secondary)',
+                background: punch.isPresent ? 'var(--green-light)' : 'var(--bg-secondary)',
+                padding: '0.1875rem 0.5rem',
+                borderRadius: '0.375rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+              }}
+            >
+              <span
+                style={{
+                  width: '0.375rem',
+                  height: '0.375rem',
+                  borderRadius: '50%',
+                  background: punch.isPresent ? 'var(--green)' : 'var(--text-muted)',
+                }}
+              />
+              {punch.isPresent
+                ? isBn ? 'আজ উপস্থিত' : 'Present today'
+                : isBn ? 'সক্রিয় স্কুল দিবস' : 'Active school day'}
             </span>
           </div>
 
-          <div className="rounded-xl bg-slate-50 dark:bg-white/[0.03] grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border)]">
-            {/* 1. In-Time */}
-            <div className="p-4 flex items-center justify-between sm:block">
-              <div>
-                <div className="text-xs font-medium text-[var(--text-secondary)]">
-                  {isBn ? 'প্রবেশের সময়' : 'In-Time'}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {/* In-Time */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.625rem 0.25rem',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <div
+                  style={{
+                    width: '1.875rem',
+                    height: '1.875rem',
+                    borderRadius: '0.375rem',
+                    background: 'var(--bg-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--brand)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Clock size={14} />
                 </div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] hidden sm:block mt-0.5">
-                  {punch.isPresent ? (isBn ? 'উপস্থিত লিপিবদ্ধ' : 'Marked Present') : (isBn ? 'লিপিবদ্ধ নয়' : 'Not logged')}
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {isBn ? 'প্রবেশের সময়' : 'In-time'}
+                  </div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
+                    {punch.isPresent
+                      ? isBn ? 'উপস্থিত লিপিবদ্ধ' : 'Marked present'
+                      : isBn ? 'লিপিবদ্ধ নয়' : 'Not logged yet'}
+                  </div>
                 </div>
               </div>
-              <div className="text-right sm:text-left sm:mt-2">
-                <div className="text-base font-semibold text-[var(--text-primary)] tabular-nums">
-                  {punch.inTime}
-                </div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] sm:hidden mt-0.5">
-                  {punch.isPresent ? (isBn ? 'উপস্থিত' : 'Present') : (isBn ? 'লিপিবদ্ধ নয়' : 'Not logged')}
-                </div>
+              <div
+                style={{
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {punch.inTime}
               </div>
             </div>
 
-            {/* 2. Exit Time */}
-            <div className="p-4 flex items-center justify-between sm:block">
-              <div>
-                <div className="text-xs font-medium text-[var(--text-secondary)]">
-                  {isBn ? 'ছুটির সময়' : 'Exit Time'}
+            {/* Exit Time */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.625rem 0.25rem',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <div
+                  style={{
+                    width: '1.875rem',
+                    height: '1.875rem',
+                    borderRadius: '0.375rem',
+                    background: 'var(--bg-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--purple)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <LogOut size={14} />
                 </div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] hidden sm:block mt-0.5">
-                  {punch.outTime !== '—' ? (isBn ? 'প্রস্থান সম্পন্ন' : 'Exit Logged') : (isBn ? 'নিয়মিত কার্যক্রম' : 'Scheduled')}
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {isBn ? 'ছুটির সময়' : 'Exit time'}
+                  </div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
+                    {punch.outTime !== '—'
+                      ? isBn ? 'প্রস্থান সম্পন্ন' : 'Exit logged'
+                      : isBn ? 'নিয়মিত কার্যক্রম' : 'Scheduled'}
+                  </div>
                 </div>
               </div>
-              <div className="text-right sm:text-left sm:mt-2">
-                <div className="text-base font-semibold text-[var(--text-primary)] tabular-nums">
-                  {punch.outTime}
-                </div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] sm:hidden mt-0.5">
-                  {punch.outTime !== '—' ? (isBn ? 'প্রস্থান সম্পন্ন' : 'Exit Logged') : (isBn ? 'নিয়মিত' : 'Scheduled')}
-                </div>
+              <div
+                style={{
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {punch.outTime}
               </div>
             </div>
 
-            {/* 3. Class & Section */}
-            <div className="p-4 flex items-center justify-between sm:block min-w-0">
-              <div>
-                <div className="text-xs font-medium text-[var(--text-secondary)]">
-                  {isBn ? 'শ্রেণি ও শাখা' : 'Class & Section'}
+            {/* Class & Section */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.625rem 0.25rem',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                <div
+                  style={{
+                    width: '1.875rem',
+                    height: '1.875rem',
+                    borderRadius: '0.375rem',
+                    background: 'var(--bg-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--teal)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Home size={14} />
                 </div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] hidden sm:block mt-0.5">
-                  {isBn ? 'রোল' : 'Roll'} {child.roll || '—'}
+                <div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {isBn ? 'শ্রেণি ও শাখা' : 'Class & section'}
+                  </div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
+                    {isBn ? 'রোল' : 'Roll'} {child.roll || '—'}
+                  </div>
                 </div>
               </div>
-              <div className="text-right sm:text-left sm:mt-2 min-w-0">
-                <div className="text-base font-semibold text-[var(--text-primary)] truncate">
-                  {child.class} ({child.section || '—'})
-                </div>
-                <div className="text-[0.6875rem] text-[var(--text-muted)] sm:hidden mt-0.5">
-                  {isBn ? 'রোল' : 'Roll'} {child.roll || '—'}
-                </div>
+              <div
+                style={{
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {child.class} ({child.section || (isBn ? 'সাধারণ' : 'General')})
               </div>
             </div>
           </div>
         </div>
 
-        {/* Homework Preview */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-              {isBn ? 'হোমওয়ার্ক ও অ্যাসাইনমেন্ট' : 'Homework & Tasks'}
-            </h3>
+        {/* Right: Class Teacher */}
+        <div className="card--premium" style={cardStyle}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.875rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {sectionHead('var(--brand)')}
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('communication')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                fontSize: '0.6875rem',
+                color: 'var(--brand)',
+                cursor: 'pointer',
+                fontWeight: 500,
+                padding: 0,
+              }}
+            >
+              {isBn ? 'শিক্ষক তালিকা →' : 'Directory →'}
+            </button>
+          </div>
+
+          {child.classTeacherName ? (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.375rem 0.25rem' }}>
+                <div
+                  style={{
+                    width: '2.5rem',
+                    height: '2.5rem',
+                    borderRadius: '50%',
+                    background: 'var(--brand-light)',
+                    color: 'var(--brand)',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {child.classTeacherName.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {child.classTeacherName}
+                  </div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginTop: '0.125rem' }}>
+                    {child.class} ({isBn ? 'শাখা' : 'Sec'} {child.section || (isBn ? 'সাধারণ' : 'General')})
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {child.classTeacherPhone ? (
+                  <a
+                    href={`tel:${child.classTeacherPhone}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.625rem',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '0.5rem',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      textDecoration: 'none',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.75rem',
+                      fontWeight: 500,
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-hover, var(--border))')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                  >
+                    <Phone size={13} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                    <span style={{ fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {child.classTeacherPhone}
+                    </span>
+                  </a>
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.625rem',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '0.5rem',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    <Phone size={13} style={{ flexShrink: 0 }} />
+                    <span>{isBn ? 'ফোন নম্বর নেই' : 'No phone number'}</span>
+                  </div>
+                )}
+
+                {child.classTeacherEmail ? (
+                  <a
+                    href={`mailto:${child.classTeacherEmail}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.625rem',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '0.5rem',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      textDecoration: 'none',
+                      color: 'var(--text-primary)',
+                      fontSize: '0.75rem',
+                      fontWeight: 500,
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-hover, var(--border))')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                  >
+                    <Mail size={13} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {child.classTeacherEmail}
+                    </span>
+                  </a>
+                ) : (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.625rem',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '0.5rem',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    <Mail size={13} style={{ flexShrink: 0 }} />
+                    <span>{isBn ? 'ইমেইল ঠিকানা নেই' : 'No email address'}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)', fontSize: '0.75rem', margin: 'auto 0' }}>
+              {isBn ? 'শ্রেণি শিক্ষক নির্ধারিত হয়নি' : 'No class teacher assigned yet'}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Row: Homework & Notices */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+        {/* Left: Homework */}
+        <div className="card--premium" style={cardStyle}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.875rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {sectionHead('var(--teal)')}
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {isBn ? 'হোমওয়ার্ক ও অ্যাসাইনমেন্ট' : 'Homework & Tasks'}
+              </span>
+            </div>
             <button
               type="button"
               onClick={() => onNavigateTab('homework')}
-              className="text-xs font-medium text-[var(--brand)] hover:underline inline-flex items-center gap-0.5 cursor-pointer bg-transparent border-none p-0"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                fontSize: '0.6875rem',
+                color: 'var(--brand)',
+                cursor: 'pointer',
+                fontWeight: 500,
+                padding: 0,
+              }}
             >
-              <span>{isBn ? 'সব দেখুন' : 'View All'}</span>
-              <ChevronRight size={13} />
+              {isBn ? 'সব →' : 'All →'}
             </button>
           </div>
 
           {previewHomework.length === 0 ? (
-            <div className="py-6 text-center text-xs text-[var(--text-muted)]">
-              {isBn ? 'কোনো সক্রিয় হোমওয়ার্ক নেই।' : 'No pending homework assignments.'}
+            <div style={{ textAlign: 'center', padding: '1.75rem 0', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                {isBn ? 'কোনো বকেয়া কাজ নেই' : 'Nothing due'}
+              </div>
+              <div>{isBn ? 'শিক্ষকদের নতুন অ্যাসাইনমেন্ট এখানে প্রদর্শিত হবে।' : 'New assignments from teachers will appear here.'}</div>
             </div>
           ) : (
-            <div className="divide-y divide-[var(--border)]">
-              {previewHomework.map((hw) => {
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+              {previewHomework.map((hw, i) => {
                 const desc = isBn ? hw.descriptionBn || hw.description : hw.description
                 return (
                   <div
                     key={hw.id}
                     onClick={() => onNavigateTab('homework')}
-                    className="flex items-start justify-between gap-4 py-3 first:pt-1 last:pb-1 -mx-2 px-2 rounded-xl hover:bg-slate-50/80 dark:hover:bg-white/[0.025] transition-colors cursor-pointer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.625rem',
+                      padding: '0.5rem 0.375rem',
+                      borderBottom: i < previewHomework.length - 1 ? '1px solid var(--border)' : 'none',
+                      cursor: 'pointer',
+                      borderRadius: '0.375rem',
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[0.6875rem] font-semibold text-[var(--brand)]">
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--brand)' }}>
                           {isBn ? hw.subjectBn : hw.subject}
                         </span>
-                        <span className="text-[var(--text-muted)] text-xs">·</span>
-                        <h4 className="text-[0.8125rem] font-medium text-[var(--text-primary)] truncate">
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.6875rem' }}>·</span>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            fontWeight: 500,
+                            color: 'var(--text-primary)',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {isBn ? hw.titleBn : hw.title}
-                        </h4>
+                        </span>
                       </div>
                       {desc && (
-                        <p className="text-xs text-[var(--text-secondary)] line-clamp-1 mt-0.5">
+                        <div
+                          style={{
+                            fontSize: '0.6875rem',
+                            color: 'var(--text-secondary)',
+                            marginTop: '0.125rem',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {desc}
-                        </p>
+                        </div>
                       )}
-                      {(hw.teacherName || hw.dueDate) && (
-                        <div className="text-[0.6875rem] text-[var(--text-muted)] flex items-center gap-1.5 mt-1 flex-wrap">
-                          {hw.teacherName && <span>{hw.teacherName}</span>}
-                          {hw.teacherName && hw.dueDate && <span>·</span>}
-                          {hw.dueDate && <span>{isBn ? 'শেষ তারিখ:' : 'Due'} {hw.dueDate}</span>}
+                      {hw.dueDate && (
+                        <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: '0.125rem' }}>
+                          {isBn ? 'শেষ তারিখ:' : 'Due:'} {hw.dueDate}
                         </div>
                       )}
                     </div>
-
                     <span
-                      className={`inline-flex items-center gap-1.5 text-[0.6875rem] font-medium shrink-0 mt-0.5 ${
-                        hw.status === 'evaluated'
-                          ? 'text-emerald-600 dark:text-emerald-400'
-                          : hw.status === 'submitted'
-                          ? 'text-[var(--brand)]'
-                          : 'text-amber-600 dark:text-amber-400'
-                      }`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${
+                      style={{
+                        fontSize: '0.625rem',
+                        fontWeight: 500,
+                        flexShrink: 0,
+                        padding: '0.125rem 0.375rem',
+                        borderRadius: '0.25rem',
+                        color:
                           hw.status === 'evaluated'
-                            ? 'bg-emerald-500'
+                            ? 'var(--green)'
                             : hw.status === 'submitted'
-                            ? 'bg-[var(--brand)]'
-                            : 'bg-amber-500'
-                        }`}
-                      />
-                      <span>
-                        {hw.status === 'evaluated'
-                          ? isBn
-                            ? `মূল্যায়িত (${hw.marks ?? 0}/${hw.maxMarks || 100})`
-                            : `Graded (${hw.marks ?? 0}/${hw.maxMarks || 100})`
-                          : hw.status === 'submitted'
-                          ? isBn ? 'জমা দেওয়া' : 'Submitted'
-                          : isBn ? 'অপেক্ষমাণ' : 'Pending'}
-                      </span>
+                            ? 'var(--brand)'
+                            : 'var(--amber)',
+                        background:
+                          hw.status === 'evaluated'
+                            ? 'var(--green-light)'
+                            : hw.status === 'submitted'
+                            ? 'var(--brand-light)'
+                            : 'var(--amber-light)',
+                      }}
+                    >
+                      {hw.status === 'evaluated'
+                        ? isBn
+                          ? `মূল্যায়িত (${hw.marks ?? 0}/${hw.maxMarks || 100})`
+                          : `Graded (${hw.marks ?? 0}/${hw.maxMarks || 100})`
+                        : hw.status === 'submitted'
+                        ? isBn ? 'জমা দেওয়া' : 'Submitted'
+                        : isBn ? 'বাকি' : 'Pending'}
                     </span>
                   </div>
                 )
@@ -228,115 +582,110 @@ export const OverviewActivityCards = React.memo(function OverviewActivityCards({
             </div>
           )}
         </div>
-      </div>
 
-      {/* Right Column (1 span): Teacher Contact & School Notices */}
-      <div className="space-y-4">
-        {/* Class Teacher Contact Card */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-              {isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}
-            </h3>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('communication')}
-              className="text-xs font-medium text-[var(--brand)] hover:underline inline-flex items-center gap-0.5 cursor-pointer bg-transparent border-none p-0"
-            >
-              <span>{isBn ? 'সব' : 'Directory'}</span>
-              <ChevronRight size={13} />
-            </button>
-          </div>
-
-          {child.classTeacherName ? (
-            <>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[var(--brand-light)] text-[var(--brand)] flex items-center justify-center font-bold text-sm shrink-0 border border-[var(--brand)]/20">
-                  {child.classTeacherName.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-[var(--text-primary)] truncate">
-                    {child.classTeacherName}
-                  </div>
-                  <div className="text-xs text-[var(--text-secondary)] truncate">
-                    {child.class} ({isBn ? 'শাখা' : 'Sec'} {child.section || '—'})
-                  </div>
-                </div>
-              </div>
-
-              {(child.classTeacherPhone || child.classTeacherEmail) && (
-                <div className="mt-3 pt-3 border-t border-[var(--border)] space-y-1 text-xs">
-                  {child.classTeacherPhone && (
-                    <a
-                      href={`tel:${child.classTeacherPhone}`}
-                      className="flex items-center gap-2.5 px-2.5 py-2 -mx-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors no-underline"
-                    >
-                      <Phone size={13} className="text-[var(--brand)] shrink-0" />
-                      <span className="truncate font-medium tabular-nums">{child.classTeacherPhone}</span>
-                    </a>
-                  )}
-                  {child.classTeacherEmail && (
-                    <a
-                      href={`mailto:${child.classTeacherEmail}`}
-                      className="flex items-center gap-2.5 px-2.5 py-2 -mx-2.5 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors no-underline"
-                    >
-                      <Mail size={13} className="text-[var(--brand)] shrink-0" />
-                      <span className="truncate font-medium">{child.classTeacherEmail}</span>
-                    </a>
-                  )}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="py-5 text-center text-xs text-[var(--text-muted)]">
-              {isBn ? 'শ্রেণি শিক্ষক নির্ধারিত হয়নি' : 'No class teacher assigned yet'}
+        {/* Right: Notices */}
+        <div className="card--premium" style={cardStyle}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.875rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {sectionHead('var(--purple)')}
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {isBn ? 'স্কুল নোটিশ' : 'School Notices'}
+              </span>
             </div>
-          )}
-        </div>
-
-        {/* School Notices for Parents */}
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-              {isBn ? 'বিজ্ঞপ্তি' : 'Notices'}
-            </h3>
             <button
               type="button"
               onClick={() => onNavigateTab('communication')}
-              className="text-xs font-medium text-[var(--brand)] hover:underline inline-flex items-center gap-0.5 cursor-pointer bg-transparent border-none p-0"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                fontSize: '0.6875rem',
+                color: 'var(--brand)',
+                cursor: 'pointer',
+                fontWeight: 500,
+                padding: 0,
+              }}
             >
-              <span>{isBn ? 'সব' : 'All'}</span>
-              <ChevronRight size={13} />
+              {isBn
+                ? allNoticesCount > 0
+                  ? `সব (${allNoticesCount}) →`
+                  : 'সব →'
+                : allNoticesCount > 0
+                ? `All (${allNoticesCount}) →`
+                : 'All →'}
             </button>
           </div>
 
           {parentNotices.length > 0 ? (
-            <div className="divide-y divide-[var(--border)]">
-              {parentNotices.map((n) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+              {parentNotices.map((n, i) => (
                 <div
                   key={n.id}
                   onClick={() => setSelectedNotice(n)}
-                  className="py-2.5 first:pt-1 last:pb-1 -mx-2 px-2 rounded-xl hover:bg-slate-50/80 dark:hover:bg-white/[0.025] transition-colors cursor-pointer"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.625rem',
+                    padding: '0.5rem 0.375rem',
+                    borderBottom: i < parentNotices.length - 1 ? '1px solid var(--border)' : 'none',
+                    cursor: 'pointer',
+                    borderRadius: '0.375rem',
+                    transition: 'background 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-secondary)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <div className="flex items-center justify-between gap-2 text-[0.6875rem] text-[var(--text-muted)] mb-0.5">
-                    <span className="font-semibold text-[var(--brand)]">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
+                    <span
+                      style={{
+                        fontSize: '0.625rem',
+                        fontWeight: 600,
+                        color: 'var(--brand)',
+                        background: 'var(--brand-light)',
+                        padding: '0.125rem 0.375rem',
+                        borderRadius: '0.25rem',
+                        flexShrink: 0,
+                      }}
+                    >
                       {n.category || (isBn ? 'সাধারণ' : 'General')}
                     </span>
-                    {n.publishedAt && (
-                      <span className="tabular-nums">{n.publishedAt.split('T')[0]}</span>
-                    )}
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {isBn ? n.titleBn || n.title : n.title}
+                    </span>
                   </div>
-                  <h4 className="text-xs font-medium text-[var(--text-primary)] truncate">
-                    {isBn ? n.titleBn || n.title : n.title}
-                  </h4>
-                  <p className="text-[0.6875rem] text-[var(--text-secondary)] line-clamp-1 mt-0.5">
-                    {(isBn ? n.contentBn || n.content : n.content || '').replace(/<[^>]*>/g, '').trim()}
-                  </p>
+                  {n.publishedAt && (
+                    <span
+                      style={{
+                        fontSize: '0.6875rem',
+                        color: 'var(--text-secondary)',
+                        fontVariantNumeric: 'tabular-nums',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {n.publishedAt.split('T')[0]}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="py-5 text-center text-xs text-[var(--text-muted)]">
+            <div style={{ textAlign: 'center', padding: '1.75rem 0', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
               {isBn ? 'কোনো নতুন বিজ্ঞপ্তি নেই' : 'No new notices'}
             </div>
           )}

@@ -66,7 +66,7 @@ export const PortalTabNav = React.memo(function PortalTabNav({
   }
 
   return (
-    <div className="relative border-t border-[var(--border)] px-3 sm:px-5 w-full overflow-hidden">
+    <div className="relative px-3 sm:px-5 w-full overflow-hidden">
       <div
         ref={stripRef}
         onScroll={handleStripScroll}

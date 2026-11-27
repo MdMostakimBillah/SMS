@@ -58,16 +58,27 @@ export const NoticesSection = React.memo(function NoticesSection({
   }, [parentNotices, selectedCategory, search, isBn])
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-4">
+    <div className="card--premium rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5 shadow-xs space-y-4">
       {/* Header & Search */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-            {isBn ? 'প্রাতিষ্ঠানিক নোটিশ ও বিজ্ঞপ্তি বোর্ড' : 'Institution Notices & Announcements'}
-          </h3>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">
-            {isBn ? `মোট ${filteredNotices.length}টি বিজ্ঞপ্তি পাওয়া গেছে` : `${filteredNotices.length} notices found`}
-          </p>
+        <div className="flex items-center gap-2">
+          <div
+            style={{
+              width: '0.1875rem',
+              height: '0.875rem',
+              background: 'var(--purple)',
+              borderRadius: '0.125rem',
+              flexShrink: 0,
+            }}
+          />
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+              {isBn ? 'প্রাতিষ্ঠানিক নোটিশ ও বিজ্ঞপ্তি বোর্ড' : 'Institution Notices & Announcements'}
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              {isBn ? `মোট ${filteredNotices.length}টি বিজ্ঞপ্তি পাওয়া গেছে` : `${filteredNotices.length} notices found`}
+            </p>
+          </div>
         </div>
 
         <div className="relative w-full sm:w-64">

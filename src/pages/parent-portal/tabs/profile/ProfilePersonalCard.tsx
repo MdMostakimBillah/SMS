@@ -12,12 +12,23 @@ export const ProfilePersonalCard = React.memo(function ProfilePersonalCard({
   isBn,
 }: ProfilePersonalCardProps) {
   return (
-    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] p-5 flex flex-col justify-between">
+    <div className="card--premium bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 sm:p-5 shadow-xs flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between gap-2 mb-3">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">
-            {isBn ? 'ব্যক্তিগত ও বাসস্থান বিবরণ' : 'Personal & Residence Records'}
-          </h3>
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              style={{
+                width: '0.1875rem',
+                height: '0.875rem',
+                background: 'var(--teal)',
+                borderRadius: '0.125rem',
+                flexShrink: 0,
+              }}
+            />
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate">
+              {isBn ? 'ব্যক্তিগত ও বাসস্থান বিবরণ' : 'Personal & Residence Records'}
+            </h3>
+          </div>
           <span className="text-xs text-[var(--text-muted)] shrink-0">
             {isBn ? 'ব্যক্তিগত' : 'Personal'}
           </span>

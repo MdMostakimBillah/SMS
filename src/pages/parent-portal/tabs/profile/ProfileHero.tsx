@@ -32,7 +32,7 @@ export const ProfileHero = React.memo(function ProfileHero({
   }
 
   return (
-    <div className="bg-[var(--surface)] rounded-2xl border border-[var(--border)] p-5">
+    <div className="card--premium bg-[var(--surface)] rounded-xl border border-[var(--border)] p-4 sm:p-5 shadow-xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Avatar + Primary Student Details */}
         <div className="flex items-center gap-4 min-w-0">

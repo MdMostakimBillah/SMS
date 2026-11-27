@@ -64,19 +64,30 @@ export const TeachersSection = React.memo(function TeachersSection({
   }, [teachers, search, isBn])
 
   return (
-    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 space-y-4">
+    <div className="card--premium rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5 shadow-xs space-y-4">
       {/* Section Header & Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">
-            {isBn ? 'শ্রেণি ও বিষয়ভিত্তিক শিক্ষকবৃন্দ' : 'Class & Subject Teachers'}
-          </h3>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">
-            {child.class} ({isBn ? 'শাখা' : 'Sec'} {child.section || '—'}) ·{' '}
-            {isBn
-              ? `মোট ${filteredTeachers.length} জন শিক্ষক`
-              : `${filteredTeachers.length} teachers`}
-          </p>
+        <div className="flex items-center gap-2">
+          <div
+            style={{
+              width: '0.1875rem',
+              height: '0.875rem',
+              background: 'var(--brand)',
+              borderRadius: '0.125rem',
+              flexShrink: 0,
+            }}
+          />
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+              {isBn ? 'শ্রেণি ও বিষয়ভিত্তিক শিক্ষকবৃন্দ' : 'Class & Subject Teachers'}
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              {child.class} ({isBn ? 'শাখা' : 'Sec'} {child.section || '—'}) ·{' '}
+              {isBn
+                ? `মোট ${filteredTeachers.length} জন শিক্ষক`
+                : `${filteredTeachers.length} teachers`}
+            </p>
+          </div>
         </div>
 
         <div className="relative w-full sm:w-64">
