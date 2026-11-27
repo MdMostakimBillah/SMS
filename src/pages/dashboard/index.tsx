@@ -19,6 +19,7 @@ import { useAttendanceStore } from '@/store/attendanceStore'
 import { useMessageStore } from '@/store/messageStore'
 import { useSmsStore, DEFAULT_INSTITUTION_BALANCE } from '@/store/smsStore'
 import { useStoreStore } from '@/store/storeStore'
+import { useInstitutionPaymentStore } from '@/store/institutionPaymentStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { getSlug } from '@/lib/storage'
 import { getActiveStorageMode } from '@/lib/storageMode'
@@ -72,6 +73,7 @@ export default function DashboardPage() {
   )
   const storeSales = useStoreStore(useShallow((s) => s.sales))
   const expenses = useExpenseStore(useShallow((s) => s.expenses))
+  const institutionPayments = useInstitutionPaymentStore(useShallow((s) => s.payments))
 
   // Local state
   const [isLoading, setIsLoading] = useState(true)
@@ -117,6 +119,7 @@ export default function DashboardPage() {
         useOnlineStore.getState().syncFromServer(effectiveSlug),
         useAttendanceStore.getState().syncFromServer(effectiveSlug),
         useStoreStore.getState().syncFromServer(effectiveSlug),
+        useInstitutionPaymentStore.getState().syncFromServer(effectiveSlug),
       ])
       setLastSyncAt(Date.now())
     } catch (err) {
@@ -166,6 +169,7 @@ export default function DashboardPage() {
     monthlyIncomeProgress,
     recentStudents,
     topStudentsList,
+    softwareLastPaymentDate,
   } = useDashboardStats({
     students,
     teachers,
@@ -179,6 +183,10 @@ export default function DashboardPage() {
     storeSales,
     expenses,
     selectedMonth: chartMonth,
+    institutionPayments,
+    currentSchoolId: user?.schoolId,
+    currentSchoolSlug: schoolSlug,
+    currentSchoolEiin: institution?.eiin,
   })
 
   const col4 = isMobile ? '1fr 1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(4,1fr)'
@@ -324,7 +332,7 @@ export default function DashboardPage() {
         gap={gap}
       />
 
-      {/* Messages & Birthdays KPIs */}
+      {/* Messages, Birthdays & Software Payment KPIs */}
       <OverviewStatsCards
         isBn={isBn}
         isMobile={isMobile}
@@ -337,10 +345,12 @@ export default function DashboardPage() {
         messageStats={messageStats}
         todayStudentBirthdays={todayStudentBirthdays}
         todayTeacherBirthdays={todayTeacherBirthdays}
+        softwareLastPaymentDate={softwareLastPaymentDate}
         canReadTeachers={canRead('teachers')}
         canReadAttendance={canRead('attendance')}
         canReadMessages={canRead('messages')}
         canReadStudents={canRead('students')}
+        canReadSettings={canRead('settings') || canRead('finance')}
         col4={col4}
         col3={col3}
         gap={gap}

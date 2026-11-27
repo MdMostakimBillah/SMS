@@ -132,8 +132,8 @@ export const DashboardSkeleton: React.FC = () => {
       {/* Row 3: Finance KPIs */}
       <KpiRowSkeleton count={4} columns={col4} gap={gap} isMobile={isMobile} />
 
-      {/* Row 4: Messages & Today Birthdays KPIs */}
-      <KpiRowSkeleton count={3} columns={col3} gap={gap} isMobile={isMobile} />
+      {/* Row 4: Messages, Birthdays & Software Payment KPIs */}
+      <KpiRowSkeleton count={4} columns={col4} gap={gap} isMobile={isMobile} />
 
       {/* Tasks & Task Summary (2 columns) */}
       <div style={{ display: 'grid', gridTemplateColumns: col2, gap }}>

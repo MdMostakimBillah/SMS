@@ -9,8 +9,10 @@ import {
   MessageSquare,
   Cake,
   Gift,
+  CreditCard,
 } from 'lucide-react'
 import { BirthdayListModal } from '../modals/BirthdayListModal'
+import { formatSoftwarePaymentDate } from '../hooks/useDashboardStats'
 import type {
   TeacherAttendanceTodaySummary,
   MessageStatSummary,
@@ -29,12 +31,14 @@ interface Props {
   messageStats: MessageStatSummary
   todayStudentBirthdays: BirthdayPersonItem[]
   todayTeacherBirthdays: BirthdayPersonItem[]
+  softwareLastPaymentDate?: string | null
   canReadTeachers: boolean
   canReadAttendance: boolean
   canReadMessages: boolean
   canReadStudents: boolean
+  canReadSettings?: boolean
   col4: string
-  col3: string
+  col3?: string
   gap: string
 }
 
@@ -60,10 +64,12 @@ export const OverviewStatsCards: React.FC<Props> = ({
   messageStats,
   todayStudentBirthdays,
   todayTeacherBirthdays,
+  softwareLastPaymentDate,
   canReadTeachers,
   canReadAttendance,
   canReadMessages,
   canReadStudents,
+  canReadSettings,
   col4,
   col3,
   gap,
@@ -189,6 +195,19 @@ export const OverviewStatsCards: React.FC<Props> = ({
                 },
               ]
             : []),
+          ...(canReadSettings !== false
+            ? [
+                {
+                  key: 'software-last-payment-date',
+                  labelBn: 'সফটওয়্যার শেষ পেমেন্ট',
+                  labelEn: 'Software Last Payment',
+                  value: formatSoftwarePaymentDate(softwareLastPaymentDate, isBn),
+                  icon: <CreditCard size={14} />,
+                  color: 'var(--brand)',
+                  onClick: () => navigate(nav('/settings?panel=subscription-payment')),
+                },
+              ]
+            : []),
         ]
 
   const renderCard = (s: StatCardConfig) => (
@@ -262,9 +281,9 @@ export const OverviewStatsCards: React.FC<Props> = ({
       ? `repeat(${teacherCards.length}, 1fr)`
       : col4
   const engagementCols =
-    engagementCards.length < 3 && !isMobile && !isTablet
-      ? `repeat(${engagementCards.length}, 1fr)`
-      : col3
+    engagementCards.length < 4 && !isMobile && !isTablet
+      ? (col3 || `repeat(${engagementCards.length}, 1fr)`)
+      : col4
 
   return (
     <>

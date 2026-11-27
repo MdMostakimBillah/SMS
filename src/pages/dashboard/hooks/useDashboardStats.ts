@@ -4,6 +4,7 @@ import type { Teacher } from '@/pages/teachers/types'
 import type { FeePayment, FeeStructure, FeeWaiver } from '@/store/feeStore'
 import type { ExpenseEntry } from '@/store/expenseStore'
 import type { StoreSale } from '@/store/storeStore'
+import type { InstitutionPayment } from '@/lib/api'
 import type { Message } from '@/store/messageStore'
 import type { DayAttendance } from '@/store/attendanceStore'
 import { isMale, isFemale } from '@/lib/gender'
@@ -33,6 +34,13 @@ interface UseDashboardStatsOptions {
   storeSales?: Pick<StoreSale, 'total' | 'createdAt'>[]
   expenses?: Pick<ExpenseEntry, 'amount' | 'date' | 'createdAt' | 'isActive'>[]
   selectedMonth?: string
+  institutionPayments?: Pick<
+    InstitutionPayment,
+    'id' | 'status' | 'submittedAt' | 'reviewedAt' | 'schoolId' | 'schoolSlug' | 'eiin'
+  >[]
+  currentSchoolId?: string | null
+  currentSchoolSlug?: string | null
+  currentSchoolEiin?: string | null
 }
 
 /** Shift a YYYY-MM month key by a signed month offset without timezone drift. */
@@ -45,6 +53,55 @@ export function shiftMonthKey(monthKey: string, offset: number): string {
   const nextYear = shifted.getUTCFullYear()
   const nextMonth = String(shifted.getUTCMonth() + 1).padStart(2, '0')
   return `${nextYear}-${nextMonth}`
+}
+
+/** Determine the latest approved (or submitted) software subscription payment date for an institution. */
+export function getSoftwareLastPaymentDate(
+  payments: Pick<
+    InstitutionPayment,
+    'status' | 'submittedAt' | 'reviewedAt' | 'schoolId' | 'schoolSlug' | 'eiin'
+  >[] = [],
+  filter?: { schoolId?: string | null; schoolSlug?: string | null; eiin?: string | null }
+): string | null {
+  if (!payments || payments.length === 0) return null
+
+  let matching = payments
+  if (filter?.schoolId || filter?.schoolSlug || filter?.eiin) {
+    const filtered = payments.filter(
+      (p) =>
+        (filter.schoolId && p.schoolId === filter.schoolId) ||
+        (filter.schoolSlug && p.schoolSlug === filter.schoolSlug) ||
+        (filter.eiin && p.eiin === filter.eiin)
+    )
+    if (filtered.length > 0) {
+      matching = filtered
+    }
+  }
+
+  const approved = matching.filter((p) => p.status === 'approved')
+  const pool = approved.length > 0 ? approved : matching
+
+  const sorted = [...pool].sort((a, b) => {
+    const timeA = new Date(a.reviewedAt || a.submittedAt || 0).getTime()
+    const timeB = new Date(b.reviewedAt || b.submittedAt || 0).getTime()
+    return timeB - timeA
+  })
+
+  const latest = sorted[0]
+  if (!latest) return null
+  return latest.reviewedAt || latest.submittedAt || null
+}
+
+/** Format software payment date for KPI card display with fallback. */
+export function formatSoftwarePaymentDate(dateStr: string | null | undefined, isBn: boolean): string {
+  if (!dateStr) return isBn ? 'পেমেন্ট নেই' : 'No payment'
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return isBn ? 'পেমেন্ট নেই' : 'No payment'
+  return d.toLocaleDateString(isBn ? 'bn-BD' : 'en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 }
 
 /** Match month and day against a reference date without timezone drift on YYYY-MM-DD strings. */
@@ -78,6 +135,10 @@ export function useDashboardStats({
   storeSales = [],
   expenses = [],
   selectedMonth,
+  institutionPayments = [],
+  currentSchoolId,
+  currentSchoolSlug,
+  currentSchoolEiin,
 }: UseDashboardStatsOptions) {
   // Single-pass computation for student stats
   const studentStats = useMemo(() => {
@@ -413,6 +474,15 @@ export function useDashboardStats({
     [students]
   )
 
+  // Software last payment date from institution payments
+  const softwareLastPaymentDate = useMemo(() => {
+    return getSoftwareLastPaymentDate(institutionPayments, {
+      schoolId: currentSchoolId,
+      schoolSlug: currentSchoolSlug,
+      eiin: currentSchoolEiin,
+    })
+  }, [institutionPayments, currentSchoolId, currentSchoolSlug, currentSchoolEiin])
+
   // Top students (approved, preview)
   const topStudentsList: TopStudentItem[] = useMemo(
     () =>
@@ -450,6 +520,7 @@ export function useDashboardStats({
     messageStats,
     todayStudentBirthdays,
     todayTeacherBirthdays,
+    softwareLastPaymentDate,
     classDist,
     statusData,
     weeklyTrend,

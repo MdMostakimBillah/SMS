@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook } from '@testing-library/react'
-import { useDashboardStats, isBirthdayToday, shiftMonthKey } from './useDashboardStats'
+import {
+  useDashboardStats,
+  isBirthdayToday,
+  shiftMonthKey,
+  getSoftwareLastPaymentDate,
+  formatSoftwarePaymentDate,
+} from './useDashboardStats'
 import type { StudentAdmission } from '@/pages/students/admission/types'
 import type { Teacher } from '@/pages/teachers/types'
 import type { FeePayment, FeeStructure } from '@/store/feeStore'
@@ -249,5 +255,53 @@ describe('useDashboardStats', () => {
     expect(result.current.monthlyIncomeProgress.monthExpenseTotal).toBe(1500)
     expect(result.current.monthlyIncomeProgress.days[14].amount).toBe(4200)
     expect(result.current.monthlyIncomeProgress.days[14].expenseAmount).toBe(1500)
+  })
+
+  it('determines and formats software last payment date from institution payments', () => {
+    const payments = [
+      {
+        id: 'PAY-1',
+        schoolId: 'sch-1',
+        schoolSlug: 'model-school',
+        status: 'approved',
+        submittedAt: '2026-10-10T10:00:00.000Z',
+        reviewedAt: '2026-10-11T12:00:00.000Z',
+      } as any,
+      {
+        id: 'PAY-2',
+        schoolId: 'sch-1',
+        schoolSlug: 'model-school',
+        status: 'approved',
+        submittedAt: '2026-11-01T10:00:00.000Z',
+        reviewedAt: '2026-11-02T15:30:00.000Z',
+      } as any,
+      {
+        id: 'PAY-3',
+        schoolId: 'sch-other',
+        status: 'approved',
+        submittedAt: '2026-11-20T10:00:00.000Z',
+      } as any,
+    ]
+
+    const lastDate = getSoftwareLastPaymentDate(payments, { schoolId: 'sch-1' })
+    expect(lastDate).toBe('2026-11-02T15:30:00.000Z')
+
+    expect(formatSoftwarePaymentDate(lastDate, false)).toMatch(/Nov 2, 2026|2 Nov 2026/)
+    expect(formatSoftwarePaymentDate(null, false)).toBe('No payment')
+    expect(formatSoftwarePaymentDate(null, true)).toBe('পেমেন্ট নেই')
+
+    const { result } = renderHook(() =>
+      useDashboardStats({
+        students: [],
+        teachers: [],
+        payments: [],
+        structures: [],
+        generateWaivers: () => [],
+        isBn: false,
+        institutionPayments: payments,
+        currentSchoolId: 'sch-1',
+      })
+    )
+    expect(result.current.softwareLastPaymentDate).toBe('2026-11-02T15:30:00.000Z')
   })
 })

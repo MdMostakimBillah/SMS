@@ -34,6 +34,11 @@ export interface BirthdayPersonItem {
   subtitle?: string
 }
 
+export interface SoftwarePaymentSummary {
+  lastPaymentDate: string | null
+  formattedDate: string
+}
+
 export interface MonthlyDailyIncomePoint {
   day: number
   dateStr: string
