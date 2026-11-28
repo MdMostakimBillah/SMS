@@ -105,11 +105,12 @@ export const MarksheetTab = React.memo(function MarksheetTab({
   const smsTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(() => {
+    void useSmsStore.getState().fetchInstitutionBalance(instId !== 'inst-default' ? instId : undefined)
     return () => {
       smsTimersRef.current.forEach(clearTimeout)
       smsTimersRef.current = []
     }
-  }, [])
+  }, [instId])
   const [smsSelectedIds, setSmsSelectedIds] = useState<string[]>(enrichedData.map((s) => s.student.id))
   const [smsSearch, setSmsSearch] = useState('')
   const [smsTemplate, setSmsTemplate] = useState<'result' | 'pass' | 'fail' | 'custom'>('result')

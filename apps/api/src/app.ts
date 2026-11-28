@@ -34,6 +34,7 @@ import { attendanceRouter } from './routes/attendance.js'
 import { libraryRouter } from './routes/library.js'
 import { notificationsRouter } from './routes/notifications.js'
 import { institutionPaymentsRouter } from './routes/institutionPayments.js'
+import { smsRouter } from './routes/sms.js'
 import { csrfProtection } from './middleware/csrf.js'
 import { LAN_OR_LOCAL_ORIGIN_RE } from './middleware/origin.js'
 import type { MediaStorage } from './storage.js'
@@ -171,6 +172,7 @@ export function createApp({ prisma, jwtSecret, corsOrigin, storage = null, licen
   app.use('/api/library', libraryRouter(prisma, jwtSecret))
   app.use('/api/notifications', notificationsRouter(prisma, jwtSecret))
   app.use('/api/institution-payments', institutionPaymentsRouter(prisma, jwtSecret))
+  app.use('/api/sms', smsRouter(prisma, jwtSecret))
 
   const sRouter = schoolRouter(prisma, jwtSecret, storage)
   app.use('/api/schools', sRouter)

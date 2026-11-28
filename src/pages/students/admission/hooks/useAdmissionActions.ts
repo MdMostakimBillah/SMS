@@ -28,6 +28,7 @@ export function useAdmissionActions() {
           body: `Dear guardian/student, your admission has been approved! Student ID: ${student.id}, Class: ${student.class}. Welcome to ${instName}.`,
           institutionId: instId,
           institutionName: instName,
+          triggerType: 'admission',
         })
       }
     },
@@ -48,6 +49,7 @@ export function useAdmissionActions() {
           body: `Dear guardian/student, your admission application (ID: ${student.id}) could not be accepted at this time. Thank you. - ${instName}`,
           institutionId: instId,
           institutionName: instName,
+          triggerType: 'admission',
         })
       }
     },

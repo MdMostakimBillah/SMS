@@ -66,6 +66,9 @@ model School {
   maxTeachers Int      @default(50) @map("max_teachers")
   paymentStatus String @default("paid") @map("payment_status")
   billingCycle  String @default("monthly") @map("billing_cycle")
+  smsAllocated  Int    @default(0) @map("sms_allocated")
+  smsUsed       Int    @default(0) @map("sms_used")
+  smsBalance    Int    @default(0) @map("sms_balance")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -78,6 +81,8 @@ model School {
   notices      Notice[]
   noticeCategories NoticeCategory[]
   mediaObjects MediaObject[]
+  smsAllocations  SmsAllocation[]
+  smsDispatchLogs SmsDispatchLog[]
 
   @@map("schools")
 }
@@ -348,4 +353,59 @@ model MediaObject {
   @@index([schoolId, category])
   @@index([deletedAt])
   @@map("media_objects")
+}
+
+model SmsPurchase {
+  id          String   @id @default(uuid())
+  provider    String
+  quantity    Int
+  unitPrice   Float    @map("unit_price")
+  totalCost   Float    @map("total_cost")
+  refId       String   @map("ref_id")
+  notes       String?
+  purchasedBy String?  @map("purchased_by")
+  purchasedAt DateTime @default(now()) @map("purchased_at")
+
+  @@index([purchasedAt])
+  @@map("sms_purchases")
+}
+
+model SmsAllocation {
+  id          String   @id @default(uuid())
+  schoolId    String   @map("school_id")
+  schoolName  String   @map("school_name")
+  amount      Int
+  type        String   @default("credit")
+  note        String?
+  allocatedBy String?  @map("allocated_by")
+  allocatedAt DateTime @default(now()) @map("allocated_at")
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId])
+  @@index([allocatedAt])
+  @@map("sms_allocations")
+}
+
+model SmsDispatchLog {
+  id                String   @id @default(uuid())
+  schoolId          String?  @map("school_id")
+  schoolName        String   @map("school_name")
+  phone             String
+  message           String
+  triggerType       String   @default("manual") @map("trigger_type")
+  provider          String
+  providerMessageId String?  @map("provider_message_id")
+  segments          Int      @default(1)
+  status            String   @default("sent")
+  providerResponse  String?  @map("provider_response")
+  error             String?
+  sentBy            String?  @map("sent_by")
+  sentAt            DateTime @default(now()) @map("sent_at")
+
+  school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId])
+  @@index([sentAt])
+  @@map("sms_dispatch_logs")
 }

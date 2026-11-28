@@ -22,6 +22,7 @@ import { useSessionStudents } from '@/store/admissionStore'
 import { usePermission } from '@/hooks/usePermission'
 import { useSmsStore, DEFAULT_INSTITUTION_BALANCE } from '@/store/smsStore'
 import { useClassStore } from '@/store/classStore'
+import { calculateSmsSegments, normalizePhoneNumber } from '@/lib/smsGateway'
 import { TemplatesTab } from './tabs/TemplatesTab'
 
 const inputCls = 'px-3 py-[0.625rem] rounded-lg text-[0.75rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[var(--text-primary)] outline-none focus:border-[var(--brand)] transition-colors'
@@ -37,8 +38,20 @@ export default function MessagesPage() {
   const deleteMessage = useMessageStore((s) => s.deleteMessage)
   const resendMessage = useMessageStore((s) => s.resendMessage)
   const institution = useClassStore((s) => s.institution)
-  const instId = (institution as any)?.id || institution?.eiin || 'inst-default'
-  const smsBalance = useSmsStore((s) => (instId ? s.institutionBalances[instId] : undefined) ?? DEFAULT_INSTITUTION_BALANCE)
+  const students = useSessionStudents()
+  const instSlug =
+    (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : null) ||
+    user?.schoolDomain ||
+    user?.school?.slug ||
+    user?.school?.domain ||
+    undefined
+  const instId = (institution as any)?.id || instSlug || institution?.eiin || 'inst-default'
+  const smsBalance = useSmsStore(
+    (s) =>
+      s.institutionBalances[instId] ||
+      (instSlug ? s.institutionBalances[instSlug] : undefined) ||
+      DEFAULT_INSTITUTION_BALANCE
+  )
 
   const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'outgoing' | 'templates'>('inbox')
   const [search, setSearch] = useState('')
@@ -54,9 +67,10 @@ export default function MessagesPage() {
   useTabSlider({ activeTab, tabRefs, sliderRef })
 
   useEffect(() => {
+    void useSmsStore.getState().fetchInstitutionBalance(instId !== 'inst-default' ? instId : instSlug)
     const t = setTimeout(() => setIsLoading(false), 400)
     return () => clearTimeout(t)
-  }, [])
+  }, [instId, instSlug])
 
   const inboxMessages = useMemo(() => {
     let list = messages.filter((m) => m && m.senderId !== 'me')
@@ -109,9 +123,43 @@ export default function MessagesPage() {
   const accessibleTabs = allTabs.filter((t) => canRead('messages', t.key))
   const tabs = accessibleTabs.length > 0 ? accessibleTabs : (canRead('messages') ? allTabs : [])
 
-  const handleSend = (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => {
+  const handleSend = async (data: {
+    recipientId: MessageRecipient
+    recipientName: string
+    subject: string
+    body: string
+    plainText?: string
+    sendViaSms?: boolean
+  }) => {
+    const newId = messageId()
+    let status: MessageStatus = 'sent'
+
+    let targetPhones: string[] = []
+    if (data.sendViaSms) {
+      const phoneSet = new Set<string>()
+      const addPhone = (raw?: string) => {
+        const n = raw ? normalizePhoneNumber(raw) : ''
+        if (n && n.length >= 10) phoneSet.add(n)
+      }
+      if (data.recipientId === 'all' || data.recipientId === 'students' || data.recipientId === 'parents') {
+        for (const st of students) {
+          if (st && st.active !== false) {
+            addPhone(st.phone)
+            if (data.recipientId === 'parents') addPhone(st.guardianPhone)
+          }
+        }
+      } else {
+        const st = students.find((s) => s.id === data.recipientId)
+        if (st) {
+          addPhone(st.phone)
+          addPhone(st.guardianPhone)
+        }
+      }
+      targetPhones = Array.from(phoneSet)
+    }
+
     const msg: Message = {
-      id: messageId(),
+      id: newId,
       senderId: 'me',
       senderName: user?.name || 'Admin',
       senderNameBn: user?.name || 'Admin',
@@ -121,11 +169,28 @@ export default function MessagesPage() {
       subject: data.subject,
       body: data.body,
       read: false,
-      status: 'sent',
+      status,
+      isSMS: Boolean(data.sendViaSms && targetPhones.length > 0),
       createdAt: new Date().toISOString(),
     }
     useMessageStore.getState().addMessage(msg)
     setShowCompose(false)
+
+    if (data.sendViaSms && targetPhones.length > 0) {
+      const smsContent = `${data.subject}\n${data.plainText || ''}`.trim()
+      const res = await useSmsStore.getState().sendBulkSMS({
+        institutionId: instId,
+        institutionName: institution?.name || 'Institution',
+        phones: targetPhones,
+        message: smsContent,
+        type: 'manual',
+      })
+      useMessageStore.setState((state) => ({
+        messages: state.messages.map((m) =>
+          m.id === newId ? { ...m, status: res.success ? 'delivered' : 'failed' } : m
+        ),
+      }))
+    }
   }
 
   if (viewMessage) {
@@ -468,7 +533,22 @@ function RecipientField({ recipientId, recipientName, recipientSearch, showDrop,
   )
 }
 
-function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: MessageRecipient; recipientName: string; subject: string; body: string }) => void; onClose: () => void; bn: boolean }) {
+function ComposeModal({
+  onSave,
+  onClose,
+  bn,
+}: {
+  onSave: (data: {
+    recipientId: MessageRecipient
+    recipientName: string
+    subject: string
+    body: string
+    plainText?: string
+    sendViaSms?: boolean
+  }) => void
+  onClose: () => void
+  bn: boolean
+}) {
   const students = useSessionStudents()
   const templates = useMessageTemplateStore((s) => s.templates)
   const [recipientId, setRecipientId] = useState<MessageRecipient>('all')
@@ -477,6 +557,7 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
   const [showRecipientDrop, setShowRecipientDrop] = useState(false)
   const [showCcBcc, setShowCcBcc] = useState(false)
   const [subject, setSubject] = useState('')
+  const [sendViaSms, setSendViaSms] = useState(false)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('')
   const [showEmoji, setShowEmoji] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -571,6 +652,8 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
       recipientName,
       subject: subject.trim(),
       body: bodyHtml,
+      plainText: bodyText,
+      sendViaSms,
     })
   }
 
@@ -679,13 +762,34 @@ function ComposeModal({ onSave, onClose, bn }: { onSave: (data: { recipientId: M
     </div>
   )
 
+  const smsSegPreview = useMemo(() => {
+    if (!sendViaSms) return null
+    const bodyText = editor?.getText()?.trim() || ''
+    return calculateSmsSegments(`${subject.trim()}\n${bodyText}`.trim())
+  }, [sendViaSms, subject, editor])
+
   const actionBarBlock = (compact: boolean) => (
-    <div className={`flex items-center justify-between px-${compact ? '3' : '4'} py-${compact ? '2' : '2.5'} border-t border-[var(--border)] rounded-b-2xl`} style={{ background: COMPOSE_BG }}>
-      <div className="flex items-center gap-1">
+    <div className={`flex items-center justify-between gap-2 flex-wrap px-${compact ? '3' : '4'} py-${compact ? '2' : '2.5'} border-t border-[var(--border)] rounded-b-2xl`} style={{ background: COMPOSE_BG }}>
+      <div className="flex items-center gap-3 flex-wrap">
         <button type="submit" className={`flex items-center gap-1.5 px-${compact ? '4' : '5'} py-${compact ? '1.5' : '2'} rounded-full text-[0.875rem] font-medium text-white bg-[var(--brand)] hover:opacity-90 transition-opacity`}>
           <Send size={compact ? 13 : 14} />
           {bn ? 'পাঠান' : 'Send'}
         </button>
+        <label className="flex items-center gap-1.5 text-[0.75rem] text-[var(--text-secondary)] cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={sendViaSms}
+            onChange={(e) => setSendViaSms(e.target.checked)}
+            className="rounded accent-cyan-500"
+          />
+          <Smartphone size={13} className="text-cyan-500" />
+          <span>{bn ? 'SMS গেটওয়েতেও পাঠান' : 'Send via SMS'}</span>
+          {smsSegPreview && (
+            <span className="font-mono text-[0.6875rem] text-cyan-500">
+              ({smsSegPreview.segments} seg{smsSegPreview.isUnicode ? ' BD' : ''})
+            </span>
+          )}
+        </label>
       </div>
       <div className="flex items-center gap-0.5 relative">
         <button type="button" onClick={() => fileInputRef.current?.click()} className={`p-${compact ? '1.5' : '2'} rounded-lg hover:bg-[var(--bg-secondary)] text-[var(--text-muted)]`} title={bn ? 'সংযুক্তি (সর্বোচ্চ ৫ এমবি)' : 'Attach file (max 5MB)'}>

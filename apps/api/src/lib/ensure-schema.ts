@@ -52,6 +52,9 @@ export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> 
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "max_teachers" INTEGER DEFAULT 50;
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "payment_status" TEXT DEFAULT 'paid';
         ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "billing_cycle" TEXT DEFAULT 'monthly';
+        ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "sms_allocated" INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "sms_used" INTEGER NOT NULL DEFAULT 0;
+        ALTER TABLE "schools" ADD COLUMN IF NOT EXISTS "sms_balance" INTEGER NOT NULL DEFAULT 0;
       END $$;
     `)
     console.log('[schema] Schools table columns verified.')
@@ -71,6 +74,52 @@ export async function ensureDatabaseSchema(prisma: PrismaClient): Promise<void> 
     console.log('[schema] System config table verified.')
   } catch (err) {
     console.warn('[schema] Warning: Could not verify system_config table:', err instanceof Error ? err.message : err)
+  }
+
+  // 2.5. Multi-tenant SMS purchases, quota allocations, and dispatch logs
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "sms_purchases" (
+        "id" TEXT PRIMARY KEY,
+        "provider" TEXT NOT NULL,
+        "quantity" INTEGER NOT NULL,
+        "unit_price" DOUBLE PRECISION NOT NULL,
+        "total_cost" DOUBLE PRECISION NOT NULL,
+        "ref_id" TEXT NOT NULL,
+        "notes" TEXT,
+        "purchased_by" TEXT,
+        "purchased_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS "sms_allocations" (
+        "id" TEXT PRIMARY KEY,
+        "school_id" TEXT NOT NULL REFERENCES "schools"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+        "school_name" TEXT NOT NULL,
+        "amount" INTEGER NOT NULL,
+        "type" TEXT NOT NULL DEFAULT 'credit',
+        "note" TEXT,
+        "allocated_by" TEXT,
+        "allocated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS "sms_dispatch_logs" (
+        "id" TEXT PRIMARY KEY,
+        "school_id" TEXT REFERENCES "schools"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+        "school_name" TEXT NOT NULL,
+        "phone" TEXT NOT NULL,
+        "message" TEXT NOT NULL,
+        "trigger_type" TEXT NOT NULL DEFAULT 'manual',
+        "provider" TEXT NOT NULL,
+        "provider_message_id" TEXT,
+        "segments" INTEGER NOT NULL DEFAULT 1,
+        "status" TEXT NOT NULL DEFAULT 'sent',
+        "provider_response" TEXT,
+        "error" TEXT,
+        "sent_by" TEXT,
+        "sent_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `)
+    console.log('[schema] SMS distribution tables verified.')
+  } catch (err) {
+    console.warn('[schema] Warning: Could not verify SMS distribution tables:', err instanceof Error ? err.message : err)
   }
 
   // 3. Better Auth schema & tables for Google OAuth & social authentication

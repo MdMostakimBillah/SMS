@@ -40,11 +40,11 @@ export function sendTemplateSMS(data: {
   templateId?: string
   institutionId?: string
   institutionName?: string
+  triggerType?: 'fee' | 'exam' | 'attendance' | 'admission' | 'manual'
 }): Message {
   const instId = data.institutionId || sessionStorage.getItem('edutech_inst_slug') || 'inst-default'
   const instName = data.institutionName || 'Institution'
 
-  // Check and consume SMS balance from smsStore
   const smsStore = useSmsStore.getState()
   const bal = smsStore.getInstitutionBalance(instId)
   const hasBalance = bal.remaining > 0
@@ -69,190 +69,30 @@ export function sendTemplateSMS(data: {
   }
   useMessageStore.getState().addMessage(msg)
 
-  // Dispatch real SMS asynchronously if balance is available
   if (hasBalance) {
-    void smsStore.sendSMS({
-      institutionId: instId,
-      institutionName: instName,
-      phone: data.phoneNumber,
-      message: `${data.subject}\n${data.body.replace(/<[^>]*>/g, '')}`,
-      type: 'fee',
-    })
+    void smsStore
+      .sendSMS({
+        institutionId: instId,
+        institutionName: instName,
+        phone: data.phoneNumber,
+        message: `${data.subject}\n${data.body.replace(/<[^>]*>/g, '')}`,
+        type: data.triggerType || 'fee',
+      })
+      .then((res) => {
+        if (!res.success) {
+          useMessageStore.setState((s) => ({
+            messages: s.messages.map((m) => (m.id === msg.id ? { ...m, status: 'failed' } : m)),
+          }))
+        } else {
+          useMessageStore.setState((s) => ({
+            messages: s.messages.map((m) => (m.id === msg.id ? { ...m, status: 'delivered' } : m)),
+          }))
+        }
+      })
   }
 
   return msg
 }
-
-const SEED_MESSAGES: Message[] = [
-  {
-    id: 'MSG-SEED-001',
-    senderId: 'TEA-001',
-    senderName: 'Rahim Uddin',
-    senderNameBn: 'রহিম উদ্দিন',
-    senderRole: 'teacher',
-    recipientId: 'all',
-    recipientName: 'All Users',
-    subject: 'Parent-Teacher Meeting Next Friday',
-    body: 'Dear parents and guardians,\n\nWe are scheduling a parent-teacher meeting this Friday at 3:00 PM. Please attend to discuss your child\'s academic progress.\n\nBest regards,\nRahim Uddin',
-    read: false,
-    status: 'delivered',
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-002',
-    senderId: 'ADM-001',
-    senderName: 'Admin Office',
-    senderNameBn: 'অ্যাডমিন অফিস',
-    senderRole: 'admin',
-    recipientId: 'teachers',
-    recipientName: 'Teachers',
-    subject: 'Monthly Staff Meeting — August',
-    body: 'All teachers are requested to attend the monthly staff meeting on Monday at 10:00 AM in the conference room.\n\nAgenda:\n1. Exam schedule review\n2. New curriculum updates\n3. Student attendance concerns',
-    read: false,
-    status: 'delivered',
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-003',
-    senderId: 'LIB-001',
-    senderName: 'Library Department',
-    senderNameBn: 'গ্রন্থাগার বিভাগ',
-    senderRole: 'staff',
-    recipientId: 'students',
-    recipientName: 'Students',
-    subject: 'Overdue Library Books Reminder',
-    body: 'Dear students,\n\nThis is a reminder that you have overdue library books. Please return them at the earliest to avoid late fees.\n\nThank you,\nLibrary Department',
-    read: true,
-    status: 'delivered',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-004',
-    senderId: 'FIN-001',
-    senderName: 'Finance Department',
-    senderNameBn: 'অর্থ বিভাগ',
-    senderRole: 'staff',
-    recipientId: 'parents',
-    recipientName: 'Parents',
-    subject: 'Fee Payment Reminder — September',
-    body: 'Dear parents,\n\nThis is a friendly reminder that the tuition fee for September is due by the 15th. Please make the payment at your earliest convenience.\n\nYou can pay online or visit the accounts office.\n\nThank you,\nFinance Department',
-    read: false,
-    status: 'delivered',
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-005',
-    senderId: 'PRINC-001',
-    senderName: 'Principal',
-    senderNameBn: 'অধ্যক্ষ',
-    senderRole: 'admin',
-    recipientId: 'all',
-    recipientName: 'All Users',
-    subject: 'Annual Sports Day Announcement',
-    body: 'Dear all,\n\nI am pleased to announce that our Annual Sports Day will be held on October 20th. All students are encouraged to participate.\n\nMore details will follow soon.\n\nWarm regards,\nThe Principal',
-    read: true,
-    status: 'delivered',
-    createdAt: new Date(Date.now() - 604800000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-006',
-    senderId: 'me',
-    senderName: 'Admin',
-    senderNameBn: 'Admin',
-    senderRole: 'admin',
-    recipientId: 'teachers',
-    recipientName: 'Teachers',
-    subject: 'Updated Exam Grading Policy',
-    body: 'Dear teachers,\n\nPlease note that the grading policy has been updated for this semester. Refer to the attached document for the new grade boundaries.\n\nRegards,\nAdmin',
-    read: true,
-    status: 'delivered',
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-007',
-    senderId: 'me',
-    senderName: 'Admin',
-    senderNameBn: 'Admin',
-    senderRole: 'admin',
-    recipientId: 'students',
-    recipientName: 'Students',
-    subject: 'Welcome Back — New Semester',
-    body: 'Dear students,\n\nWelcome back to a new semester! We hope you had a great break. Let\'s make this semester a productive and enjoyable one.\n\nBest wishes,\nAdmin',
-    read: true,
-    status: 'delivered',
-    createdAt: new Date(Date.now() - 432000000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-010',
-    senderId: 'me',
-    senderName: 'Admin',
-    senderNameBn: 'Admin',
-    senderRole: 'admin',
-    recipientId: 'all',
-    recipientName: 'All Users',
-    subject: 'Holiday Notice — Eid Celebration',
-    body: 'Dear all,\n\nThe institution will remain closed from April 10-15 for Eid celebrations. Classes will resume on April 16.\n\nHappy Eid!',
-    read: true,
-    status: 'sent',
-    createdAt: new Date(Date.now() - 1296000000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-011',
-    senderId: 'me',
-    senderName: 'Admin',
-    senderNameBn: 'Admin',
-    senderRole: 'admin',
-    recipientId: 'teachers',
-    recipientName: 'Teachers',
-    subject: 'Result Submission Deadline',
-    body: 'Dear teachers,\n\nPlease submit all exam results by Friday 5:00 PM. Late submissions will not be accepted.\n\nThank you.',
-    read: true,
-    status: 'queued',
-    createdAt: new Date(Date.now() - 1800000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-012',
-    senderId: 'me',
-    senderName: 'Admin',
-    senderNameBn: 'Admin',
-    senderRole: 'admin',
-    recipientId: 'parents',
-    recipientName: 'Parents',
-    subject: 'Field Trip Permission Slip',
-    body: 'Dear parents,\n\nA field trip to the Science Museum is scheduled for next Wednesday. Please sign and return the permission slip by Monday.\n\nRegards,\nAdmin',
-    read: true,
-    status: 'failed',
-    createdAt: new Date(Date.now() - 900000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-013',
-    senderId: 'me',
-    senderName: 'Admin',
-    senderNameBn: 'Admin',
-    senderRole: 'admin',
-    recipientId: 'students',
-    recipientName: 'Students',
-    subject: 'Club Registration Open',
-    body: 'Dear students,\n\nClub registration for the new term is now open. Visit the student affairs office to sign up for your preferred clubs.\n\nDeadline: End of this week.',
-    read: true,
-    status: 'queued',
-    createdAt: new Date(Date.now() - 600000).toISOString(),
-  },
-  {
-    id: 'MSG-SEED-014',
-    senderId: 'me',
-    senderName: 'Admin',
-    senderNameBn: 'Admin',
-    senderRole: 'admin',
-    recipientId: 'all',
-    recipientName: 'All Users',
-    subject: 'System Maintenance Notice',
-    body: 'Dear all,\n\nThe school management system will undergo maintenance this Saturday from 10 PM to 2 AM. Please plan accordingly.\n\nIT Department',
-    read: true,
-    status: 'failed',
-    createdAt: new Date(Date.now() - 300000).toISOString(),
-  },
-]
 
 interface MessageState {
   messages: Message[]
@@ -266,7 +106,8 @@ interface MessageState {
 export const useMessageStore = create<MessageState>()(
   persist(
     (set) => ({
-      messages: SEED_MESSAGES,
+      // Zero hardcoded demo messages — Super Admin and clean institutions start empty
+      messages: [],
 
       addMessage: (m) => set((state) => ({ messages: [m, ...state.messages] })),
       markRead: (id) =>

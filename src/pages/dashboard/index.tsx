@@ -70,10 +70,6 @@ export default function DashboardPage() {
   const attendance = useAttendanceStore((s) => s.attendance)
   const messages = useMessageStore(useShallow((s) => s.messages))
   const institution = useClassStore((s) => s.institution)
-  const instId = (institution as { id?: string } | undefined)?.id || institution?.eiin || 'inst-default'
-  const smsBalance = useSmsStore(
-    (s) => (instId ? s.institutionBalances[instId] : undefined) ?? DEFAULT_INSTITUTION_BALANCE
-  )
   const storeSales = useStoreStore(useShallow((s) => s.sales))
   const expenses = useExpenseStore(useShallow((s) => s.expenses))
   const institutionPayments = useInstitutionPaymentStore(useShallow((s) => s.payments))
@@ -142,6 +138,20 @@ export default function DashboardPage() {
       }),
     [institutions, user, viewingInstitutionId, schoolSlug, institution, fetchedSchool]
   )
+  const smsLookupKey =
+    currentSchool?.id ||
+    (institution as { id?: string } | undefined)?.id ||
+    explicitSchoolTarget ||
+    schoolSlug ||
+    institution?.eiin ||
+    'inst-default'
+  const smsBalance = useSmsStore(
+    (s) =>
+      s.institutionBalances[smsLookupKey] ||
+      s.institutionBalances[schoolSlug] ||
+      s.institutionBalances[institution?.eiin || ''] ||
+      DEFAULT_INSTITUTION_BALANCE
+  )
 
   // Unified synchronization with Backend & Database / Local PC stores
   const syncDashboardData = useCallback(async () => {
@@ -203,6 +213,7 @@ export default function DashboardPage() {
         useAttendanceStore.getState().syncFromServer(effectiveSlug),
         useStoreStore.getState().syncFromServer(effectiveSlug),
         useInstitutionPaymentStore.getState().syncFromServer(effectiveSlug),
+        useSmsStore.getState().fetchInstitutionBalance(effectiveSlug || explicitSchoolTarget || undefined),
         refreshSchoolSubscription(),
       ])
       setLastSyncAt(Date.now())

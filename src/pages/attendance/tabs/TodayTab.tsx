@@ -144,6 +144,7 @@ export const TodayTab = React.memo(function TodayTab({
         body: `Dear guardian, your child ${st.nameEn} (Class: ${st.class}, Roll: ${st.roll || '-'}) is marked ABSENT today (${date}). If this is unexpected, please contact the school. - ${instName}`,
         institutionId: instId,
         institutionName: instName,
+        triggerType: 'attendance',
       })
     }
 

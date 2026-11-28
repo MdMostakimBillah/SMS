@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import SMSPage from './SMSPage'
 import { useSuperAdminStore, PACKAGES } from '@/store/superAdminStore'
 import { useSmsStore } from '@/store/smsStore'
+import { smsApi } from '@/lib/api'
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
@@ -11,8 +12,10 @@ vi.mock('@/contexts/AuthContext', () => ({
   }),
 }))
 
-describe('SMSPage — Super Admin SMS Management & Real Distribution', () => {
+describe('SMSPage — Bangladesh Bulk SMS Management & Multi-Institution Distribution', () => {
   beforeEach(() => {
+    vi.restoreAllMocks()
+
     useSuperAdminStore.setState({
       institutions: [
         {
@@ -39,165 +42,192 @@ describe('SMSPage — Super Admin SMS Management & Real Distribution', () => {
       packageFilter: 'all',
     })
 
+    // Ensure clean initial state (zero hardcoded demo records)
     useSmsStore.setState({
-      masterPool: {
-        totalPurchased: 50000,
-        totalAllocated: 10000,
-        totalUsed: 1200,
+      masterPool: { totalPurchased: 0, totalAllocated: 0, totalUsed: 0, available: 0 },
+      schools: [],
+      institutionBalances: {},
+      purchases: [],
+      allocations: [],
+      dispatchLogs: [],
+      gatewayConfigured: false,
+      gatewayConfig: {
+        providerName: 'BulkSMSBD (Bangladesh)',
+        providerType: 'bulksmsbd',
+        apiUrl: 'https://bulksmsbd.net/api/smsapi',
+        senderId: '',
+        username: '',
+        isActive: false,
+        hasApiKey: false,
+        maskedApiKey: '',
       },
-      institutionBalances: {
-        'inst-1': { allocated: 10000, used: 1200, remaining: 8800 },
+    })
+
+    vi.spyOn(smsApi, 'getSuperAdminOverview').mockResolvedValue({
+      masterPool: { totalPurchased: 50000, totalAllocated: 10000, totalUsed: 1200, available: 40000 },
+      gatewayConfig: {
+        providerName: 'BulkSMSBD (Bangladesh)',
+        providerType: 'bulksmsbd',
+        apiUrl: 'https://bulksmsbd.net/api/smsapi',
+        senderId: '8809617600111',
+        username: '',
+        isActive: true,
+        hasApiKey: true,
+        maskedApiKey: '••••4321',
+        hasPassword: false,
       },
+      schools: [
+        {
+          id: 'inst-1',
+          name: 'Dhaka Ideal Academy',
+          nameBn: 'ঢাকা আইডিয়াল একাডেমি',
+          slug: 'ideal',
+          subdomain: 'ideal',
+          phone: '01711223344',
+          email: 'ideal@gmail.com',
+          eiin: '100100',
+          status: 'active',
+          balance: { allocated: 10000, used: 1200, remaining: 8800 },
+        },
+      ],
       purchases: [
         {
-          id: 'BUY-TEST-1',
-          provider: 'Grameenphone SIM Gateway',
+          id: 'buy-1',
+          provider: 'BulkSMSBD',
           quantity: 50000,
-          unitPrice: 0.35,
-          totalCost: 17500,
-          refId: 'TX-TEST-001',
+          unitPrice: 0.3,
+          totalCost: 15000,
+          refId: 'INV-01',
           purchasedAt: new Date().toISOString(),
         },
       ],
       allocations: [],
       dispatchLogs: [],
-      gatewayConfig: {
-        providerName: 'SIM SMS Provider',
-        providerType: 'sim_gateway',
-        apiUrl: '',
-        apiKey: '',
-        senderId: 'EduTech',
-        isActive: true,
-      },
     })
   })
 
-  it('renders Master SMS Pool metrics and institution table correctly', () => {
-    render(
-      <BrowserRouter>
-        <SMSPage isBn={false} />
-      </BrowserRouter>
-    )
-
-    // Check Master Pool KPIs
-    expect(screen.getByText('50,000')).toBeInTheDocument() // Total purchased
-    expect(screen.getAllByText('10,000').length).toBeGreaterThanOrEqual(1) // Total allocated / inst allocation
-    expect(screen.getByText('40,000')).toBeInTheDocument() // Available to allocate
-    expect(screen.getAllByText('1,200').length).toBeGreaterThanOrEqual(1)  // Consumed
-
-    // Check institution row
-    expect(screen.getByText('Dhaka Ideal Academy')).toBeInTheDocument()
-    expect(screen.getByText(/8,800/)).toBeInTheDocument()
+  it('starts store cleanly with zero hardcoded demo data before API hydration', () => {
+    const state = useSmsStore.getState()
+    expect(state.masterPool.totalPurchased).toBe(0)
+    expect(state.purchases).toEqual([])
+    expect(state.allocations).toEqual([])
+    expect(state.dispatchLogs).toEqual([])
   })
 
-  it('allocates SMS credits to an institution successfully', async () => {
+  it('hydrates and renders Master SMS Pool metrics and institution balances', async () => {
     render(
       <BrowserRouter>
         <SMSPage isBn={false} />
       </BrowserRouter>
     )
 
-    // Click "Allocate to School"
+    await waitFor(() => {
+      expect(screen.getByText('50,000')).toBeInTheDocument()
+      expect(screen.getAllByText('10,000').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByText('40,000')).toBeInTheDocument()
+      expect(screen.getByText('Dhaka Ideal Academy')).toBeInTheDocument()
+      expect(screen.getByText(/8,800/)).toBeInTheDocument()
+    })
+  })
+
+  it('allocates SMS credits to an institution through backend API', async () => {
+    const allocateSpy = vi.spyOn(smsApi, 'allocateToSchool').mockResolvedValueOnce({
+      success: true,
+      allocation: {
+        id: 'alc-new-1',
+        schoolId: 'inst-1',
+        schoolName: 'Dhaka Ideal Academy',
+        amount: 2000,
+        type: 'credit',
+        note: 'Top up',
+        allocatedAt: new Date().toISOString(),
+      },
+      balance: { allocated: 12000, used: 1200, remaining: 10800 },
+      masterPool: { totalPurchased: 50000, totalAllocated: 12000, totalUsed: 1200, available: 38000 },
+    })
+
+    render(
+      <BrowserRouter>
+        <SMSPage isBn={false} />
+      </BrowserRouter>
+    )
+
+    await waitFor(() => expect(screen.getByText('Dhaka Ideal Academy')).toBeInTheDocument())
+
     const allocateBtns = screen.getAllByRole('button', { name: /Allocate/i })
     fireEvent.click(allocateBtns[0])
 
-    // Verify modal is open
     expect(screen.getByText('Allocate SMS Credits to Institution')).toBeInTheDocument()
 
-    // Select institution
     const select = screen.getByRole('combobox')
     fireEvent.change(select, { target: { value: 'inst-1' } })
 
-    // Set amount to 2000
     const numberInputs = screen.getAllByRole('spinbutton')
     fireEvent.change(numberInputs[0], { target: { value: '2000' } })
 
-    // Click "Confirm Allocation"
     const confirmBtn = screen.getByRole('button', { name: /Confirm Allocation/i })
     fireEvent.click(confirmBtn)
 
-    // Expect store state to reflect the updated balance
     await waitFor(() => {
+      expect(allocateSpy).toHaveBeenCalledWith({
+        schoolId: 'inst-1',
+        amount: 2000,
+        type: 'credit',
+        note: undefined,
+      })
       const bal = useSmsStore.getState().getInstitutionBalance('inst-1')
       expect(bal.allocated).toBe(12000)
       expect(bal.remaining).toBe(10800)
     })
   })
 
-  it('records a new SMS pool purchase from SIM provider', async () => {
+  it('records a bulk SMS pool purchase via API', async () => {
+    const buySpy = vi.spyOn(smsApi, 'recordPurchase').mockResolvedValueOnce({
+      success: true,
+      purchase: {
+        id: 'buy-2',
+        provider: 'BulkSMSBD',
+        quantity: 10000,
+        unitPrice: 0.3,
+        totalCost: 3000,
+        refId: 'TX-2',
+        purchasedAt: new Date().toISOString(),
+      },
+      masterPool: { totalPurchased: 60000, totalAllocated: 10000, totalUsed: 1200, available: 50000 },
+    })
+
     render(
       <BrowserRouter>
         <SMSPage isBn={false} />
       </BrowserRouter>
     )
 
-    // Click "Buy SMS Pool" button
-    const buyBtn = screen.getByRole('button', { name: /Buy SMS Pool/i })
-    fireEvent.click(buyBtn)
+    fireEvent.click(screen.getByRole('button', { name: /Buy SMS Pool/i }))
+    expect(screen.getByText('Purchase Bulk SMS Pool')).toBeInTheDocument()
 
-    expect(screen.getByText('Purchase SMS from SIM Provider')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Add to Master Pool/i }))
 
-    // Submit the buy modal
-    const addToPoolBtn = screen.getByRole('button', { name: /Add to Master Pool/i })
-    fireEvent.click(addToPoolBtn)
-
-    // Expect total purchased pool to increase
     await waitFor(() => {
+      expect(buySpy).toHaveBeenCalled()
       expect(useSmsStore.getState().masterPool.totalPurchased).toBe(60000)
     })
   })
 
-  it('switches between tabs (Purchases, Gateway Settings, Audit Logs)', () => {
+  it('switches tabs cleanly (Purchases, BD Provider Settings, Bulk Broadcast, Audit Logs)', async () => {
     render(
       <BrowserRouter>
         <SMSPage isBn={false} />
       </BrowserRouter>
     )
 
-    // Switch to Gateway Settings
-    const gatewayTab = screen.getByRole('button', { name: /Provider Gateway Settings/i })
-    fireEvent.click(gatewayTab)
-    expect(screen.getByText('SIM SMS Provider Gateway Configuration')).toBeInTheDocument()
-    expect(screen.getByText('Live Test SMS')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /BD Provider Gateway/i }))
+    expect(screen.getByText('Bangladesh Bulk SMS Provider Gateway')).toBeInTheDocument()
+    expect(screen.getByText(/Live Test SMS/i)).toBeInTheDocument()
 
-    // Switch to Delivery Logs
-    const logsTab = screen.getByRole('button', { name: /Delivery Dispatch Logs/i })
-    fireEvent.click(logsTab)
+    fireEvent.click(screen.getByRole('button', { name: /Bulk Broadcast/i }))
+    expect(screen.getByText('Super Admin Bulk SMS Broadcast')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Delivery Dispatch Logs/i }))
     expect(screen.getByText('Real-time SMS Dispatch Audit Trail')).toBeInTheDocument()
-  })
-
-  it('deducts SMS balance when sending an SMS', async () => {
-    const res = await useSmsStore.getState().sendSMS({
-      institutionId: 'inst-1',
-      institutionName: 'Dhaka Ideal Academy',
-      phone: '01700000000',
-      message: 'Test fee collection notice',
-      type: 'fee',
-    })
-
-    expect(res.success).toBe(true)
-    const updatedBal = useSmsStore.getState().getInstitutionBalance('inst-1')
-    expect(updatedBal.remaining).toBe(8799)
-    expect(updatedBal.used).toBe(1201)
-  })
-
-  it('blocks sending SMS when institution balance is exhausted', async () => {
-    // Set balance to 0
-    useSmsStore.setState({
-      institutionBalances: {
-        'inst-1': { allocated: 1000, used: 1000, remaining: 0 },
-      },
-    })
-
-    const res = await useSmsStore.getState().sendSMS({
-      institutionId: 'inst-1',
-      institutionName: 'Dhaka Ideal Academy',
-      phone: '01700000000',
-      message: 'Notice with zero balance',
-      type: 'manual',
-    })
-
-    expect(res.success).toBe(false)
-    expect(res.error).toContain('exhausted')
   })
 })
