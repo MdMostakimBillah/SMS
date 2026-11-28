@@ -238,9 +238,9 @@ export const TodoSection: React.FC<Props> = ({
                         </span>
                         <span
                           style={{
-                            fontSize: '0.5625rem',
-                            fontWeight: 500,
-                            padding: '0.0625rem 0.3125rem',
+                            fontSize: '0.5rem',
+                            fontWeight: 600,
+                            padding: '1px 4px',
                             borderRadius: '0.25rem',
                             color:
                               task.priority === 'high'
@@ -259,14 +259,14 @@ export const TodoSection: React.FC<Props> = ({
                           {task.priority === 'high'
                             ? isBn
                               ? 'বেশি'
-                              : 'High'
+                              : 'HIGH'
                             : task.priority === 'medium'
                               ? isBn
                                 ? 'মাঝারি'
-                                : 'Med'
+                                : 'MED'
                               : isBn
                                 ? 'কম'
-                                : 'Low'}
+                                : 'LOW'}
                         </span>
                       </div>
                       <div

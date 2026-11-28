@@ -482,7 +482,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
             <div ref={dropdownRef} className="relative mt-2 z-50">
               <div
                 onClick={() => setShowSessionDropdown(!showSessionDropdown)}
-                className="flex items-center justify-between rounded-lg px-2.5 py-1.5 cursor-pointer transition-colors duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--brand)]"
+                className="flex items-center justify-between rounded-lg px-2.5 py-1.5 cursor-pointer transition-all duration-150 bg-[var(--bg-secondary)] border border-[var(--border)] hover:bg-[var(--surface-2)] hover:border-[var(--brand)]"
               >
                 <div className="text-[0.6875rem] font-semibold text-[var(--brand)]">
                   {institution.currentSession || 'No Session'}
@@ -495,9 +495,9 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
               </div>
 
               {showSessionDropdown && (
-                <div className="absolute top-full left-0 right-0 mt-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg shadow-lg z-[60] overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--surface)] border border-[var(--border)] rounded-[0.625rem] shadow-lg z-[60] overflow-hidden mx-2">
                   <div className="px-2.5 py-2 border-b border-[var(--border)]">
-                    <div className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1.5">
+                    <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1.5">
                       {isBn ? 'সেশন পরিবর্তন' : 'Switch Session'}
                     </div>
                     <div className="flex flex-col gap-0.5">
@@ -505,10 +505,10 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                         <div
                           key={s}
                           onClick={() => handleSwitchSession(s)}
-                          className={`flex items-center justify-between px-2 py-1.5 rounded-md cursor-pointer text-[0.6875rem] transition-colors ${
+                          className={`flex items-center justify-between px-2 py-1.5 rounded-[0.375rem] cursor-pointer text-[0.6875rem] ${
                             s === institution.currentSession
-                              ? 'bg-[var(--brand-light)] text-[var(--brand)] font-medium'
-                              : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]'
+                              ? 'bg-[var(--brand-light)] text-[var(--brand)] font-semibold'
+                              : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]'
                           }`}
                         >
                           {s}
@@ -518,7 +518,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                     </div>
                   </div>
                   <div className="px-2.5 py-2">
-                    <div className="text-[0.625rem] font-medium text-[var(--text-muted)] mb-1.5">
+                    <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] mb-1.5">
                       {isBn ? 'নতুন সেশন' : 'New Session'}
                     </div>
                     <div className="flex gap-1 items-stretch">
@@ -527,12 +527,12 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                         onChange={(e) => setNewSession(e.target.value)}
                         placeholder="e.g. 2026-27"
                         onKeyDown={(e) => e.key === 'Enter' && handleAddSession()}
-                        className="flex-1 min-w-0 px-2 py-1 rounded-l-md border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
+                        className="flex-1 min-w-0 px-2 py-1 rounded-l-[0.375rem] border border-[var(--border)] bg-[var(--bg-secondary)] text-[0.6875rem] text-[var(--text-primary)] outline-none"
                       />
                       <button
                         onClick={handleAddSession}
                         disabled={!newSession.trim() || institution.sessions.includes(newSession.trim())}
-                        className="shrink-0 px-2.5 py-1 rounded-r-md border-none bg-[var(--brand)] text-white text-[0.625rem] font-medium cursor-pointer disabled:opacity-50 hover:brightness-105 transition-all"
+                        className="shrink-0 px-2.5 py-1 rounded-r-[0.375rem] border-none bg-[var(--brand)] text-white text-[0.625rem] font-semibold cursor-pointer disabled:opacity-50"
                       >
                         {isBn ? 'যোগ' : 'Add'}
                       </button>
@@ -547,9 +547,9 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
         {/* Nav */}
         <nav className={`flex-1 overflow-y-auto overflow-x-auto ${collapsed ? 'px-1 py-2.5' : 'px-2 py-2.5'}`}>
           {orderedNavGroups.map((group) => (
-            <div key={group.key} className={collapsed ? 'mb-2' : 'mb-3.5'}>
+            <div key={group.key} className={collapsed ? 'mb-2' : 'mb-4'}>
               {!collapsed && (
-                <div className="text-[0.625rem] font-medium text-[var(--text-muted)] px-2.5 mb-1.5 select-none tracking-wide">
+                <div className="text-[0.5625rem] font-semibold text-[var(--text-muted)] uppercase tracking-wider px-2 mb-1">
                   {t(group.key as TranslationKey, language)}
                 </div>
               )}
@@ -575,12 +575,12 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                     onDrop={(e) => handleDrop(e, item.page)}
                     onDragEnd={handleDragEnd}
                     onClick={() => { if (isMobile) toggleSidebar() }}
-                    className={`flex items-center gap-2.5 rounded-lg mb-0.5 text-xs no-underline transition-colors duration-150 relative group ${
+                    className={`flex items-center gap-2 rounded-lg mb-0.5 text-xs no-underline transition-all duration-150 relative group ${
                       collapsed ? 'px-0 py-2 justify-center' : 'px-2.5 py-2'
                     } ${
                       isActive
-                        ? 'bg-[var(--brand-light)] text-[var(--brand)] font-medium before:content-[""] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-[3px] before:rounded-r before:bg-[var(--brand)]'
-                        : 'text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]'
+                        ? 'bg-[var(--brand-light)] text-[var(--brand)] font-medium'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]'
                     } ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'border-t-2 border-[var(--brand)]' : ''}`}
                     onMouseEnter={(e) => {
                       if (collapsed) {
@@ -596,12 +596,10 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                       setHoveredItem(null)
                     }}
                   >
-                    <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]'}`}>
-                      <IconComp size={navIconSize} />
-                    </div>
+                    <IconComp size={navIconSize} className={`shrink-0 ${isActive ? 'text-[var(--brand)]' : 'text-[var(--text-muted)]'}`} />
                     {!collapsed && (
                       <>
-                        <span className="flex-1 truncate">
+                        <span className="flex-1">
                           {t(item.key as TranslationKey, language)}
                         </span>
                         <button
@@ -611,7 +609,7 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                             toggleBookmark(item.page)
                           }}
                           aria-label={isBookmarked ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark') : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')}
-                          className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-[var(--surface-hover)] shrink-0 ${
+                          className={`opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-[var(--bg-primary)] shrink-0 ${
                             isBookmarked ? '!opacity-100' : ''
                           } ${atMaxBookmarks ? 'cursor-not-allowed' : ''}`}
                           title={isBookmarked ? (isBn ? 'বুকমার্ক সরান' : 'Remove bookmark') : atMaxBookmarks ? (isBn ? 'সর্বোচ্চ ৫টি বুকমার্ক যোগ করা যাবে' : 'Max 5 bookmarks allowed') : (isBn ? 'বুকমার্ক যোগ করুন' : 'Add bookmark')}
@@ -663,8 +661,8 @@ export default React.memo(function Sidebar({ collapsed }: { collapsed: boolean }
                       setDragIndex(null)
                       setDragOverIndex(null)
                     }}
-                    className={`w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--surface-hover)] transition-colors relative group cursor-pointer ${
-                      dragIndex === idx ? 'opacity-50' : ''
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all relative group cursor-pointer ${
+                      dragIndex === idx ? 'opacity-50 scale-95' : ''
                     } ${dragOverIndex === idx && dragIndex !== null && dragIndex < idx ? 'border-r-2 border-[var(--brand)] pr-0.5' : ''} ${dragOverIndex === idx && dragIndex !== null && dragIndex > idx ? 'border-l-2 border-[var(--brand)] pl-0.5' : ''}`}
                     onMouseEnter={(e) => {
                       if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
