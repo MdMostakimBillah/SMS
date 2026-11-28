@@ -270,38 +270,42 @@ export default React.memo(function Topbar() {
   const unreadMsgs = demoMessages.reduce((sum, m) => sum + m.unread, 0)
   const panelStyle: React.CSSProperties = {
     position: 'absolute',
-    top: '2.5rem',
+    top: '2.375rem',
     right: 0,
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
+    background: 'var(--bg-primary)',
+    backdropFilter: 'blur(24px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+    border: '1px solid var(--glass-border)',
     borderRadius: '0.75rem',
     zIndex: 300,
     width: isMobile ? 'min(21.25rem, calc(100vw - 16px))' : '21.25rem',
-    maxHeight: '24rem',
+    maxHeight: '23.75rem',
     overflow: 'hidden',
     boxShadow: 'var(--shadow-lg)',
   }
   const panelHeader: React.CSSProperties = {
-    padding: '0.75rem 0.875rem',
+    padding: '12px 14px',
     borderBottom: '1px solid var(--border)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
   }
   const panelItem: React.CSSProperties = {
-    padding: '0.625rem 0.875rem',
+    padding: '10px 14px',
     display: 'flex',
     gap: '0.625rem',
     borderBottom: '1px solid var(--border)',
     cursor: 'pointer',
-    transition: 'background-color 0.15s ease',
+    transition: 'all 0.15s',
   }
   const profileDd: React.CSSProperties = {
     position: 'absolute',
     top: '2.625rem',
     right: 0,
-    background: 'var(--surface)',
-    border: '1px solid var(--border)',
+    background: 'var(--bg-primary)',
+    backdropFilter: 'blur(24px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+    border: '1px solid var(--glass-border)',
     borderRadius: '0.75rem',
     zIndex: 300,
     width: isMobile ? 'min(15rem, calc(100vw - 16px))' : '15rem',
@@ -312,11 +316,11 @@ export default React.memo(function Topbar() {
     display: 'flex',
     alignItems: 'center',
     gap: '0.625rem',
-    padding: '0.5rem 0.875rem',
+    padding: '8px 14px',
     cursor: 'pointer',
     fontSize: '0.75rem',
     color: 'var(--text-secondary)',
-    transition: 'all 0.15s ease',
+    transition: 'all 0.15s',
     borderRadius: '0.375rem',
   }
 
@@ -324,16 +328,16 @@ export default React.memo(function Topbar() {
     <header
       className="glass"
       style={{
-        height: isMobile ? '3.125rem' : '3.375rem',
+        height: isMobile ? '50px' : '3.375rem',
         display: 'flex',
         alignItems: 'center',
-        padding: isMobile ? '0 0.625rem' : '0 1.25rem',
-        gap: isMobile ? '0.375rem' : '0.5rem',
+        padding: isMobile ? '0 10px' : '0 20px',
+        gap: isMobile ? '6px' : '0.5rem',
         flexShrink: 0,
         zIndex: 100,
         borderRadius: 0,
         border: 'none',
-        borderBottom: '1px solid var(--border)',
+        borderBottom: '1px solid var(--glass-border)',
       }}
     >
       {/* Sidebar Toggle — desktop only */}
@@ -342,16 +346,16 @@ export default React.memo(function Topbar() {
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
           aria-label={sidebarCollapsed ? (isBn ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar') : (isBn ? 'সাইডবার সংকুচিত করুন' : 'Collapse sidebar')}
           title={sidebarCollapsed ? (isBn ? 'সাইডবার প্রসারিত করুন' : 'Expand sidebar') : (isBn ? 'সাইডবার সংকুচিত করুন' : 'Collapse sidebar')}
-          className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+          className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-all duration-150 hover:bg-[var(--bg-secondary)]"
         >
-          {sidebarCollapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+          {sidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
         </button>
       ) : (
         <button
           onClick={toggleSidebar}
           aria-label={isBn ? 'মেনু' : 'Menu'}
           title={isBn ? 'মেনু' : 'Menu'}
-          className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-colors duration-150 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+          className="w-8 h-8 rounded-lg bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center cursor-pointer text-[var(--text-secondary)] relative shrink-0 transition-all duration-150 hover:bg-[var(--bg-secondary)]"
         >
           <Menu size={16} />
         </button>
@@ -360,7 +364,7 @@ export default React.memo(function Topbar() {
       {/* Search */}
       {isMobile ? (
         <button style={{ ...ICON_BTN, flexShrink: 0 }} aria-label={isBn ? 'অনুসন্ধান' : 'Search'} onClick={() => setCommandPaletteOpen(true)}>
-          <Search size={15} />
+          <Search size={16} />
         </button>
       ) : (
         <div
@@ -375,25 +379,22 @@ export default React.memo(function Topbar() {
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border)',
             borderRadius: '0.5rem',
-            padding: '0.375rem 0.75rem',
+            padding: '6px 12px',
             cursor: 'pointer',
             minWidth: 0,
-            transition: 'border-color 0.15s ease',
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--brand)' }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
         >
           <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', flex: 1 }}>{t('search_placeholder', language)}</span>
           <kbd
             style={{
-              fontSize: '0.625rem',
+              fontSize: '0.5625rem',
               background: 'var(--surface)',
               border: '1px solid var(--border)',
-              padding: '0.125rem 0.375rem',
+              padding: '2px 6px',
               borderRadius: '0.25rem',
               color: 'var(--text-muted)',
-              fontFamily: 'JetBrains Mono, monospace',
+              fontFamily: 'monospace',
             }}
           >
             ⌘K
@@ -406,7 +407,7 @@ export default React.memo(function Topbar() {
           marginLeft: 'auto',
           display: 'flex',
           alignItems: 'center',
-          gap: isMobile ? '0.25rem' : '0.375rem',
+          gap: isMobile ? '4px' : '0.375rem',
           flexShrink: 0,
         }}
       >
@@ -418,24 +419,25 @@ export default React.memo(function Topbar() {
               display: 'flex',
               alignItems: 'center',
               gap: '0.375rem',
-              padding: isMobile ? '0.125rem 0.375rem' : '0.1875rem 0.5rem',
+              padding: isMobile ? '2px 6px' : '3px 8px',
               borderRadius: '9999px',
               fontSize: '0.6875rem',
               fontWeight: 500,
               background: 'rgba(234, 179, 8, 0.12)',
-              border: '1px solid rgba(234, 179, 8, 0.28)',
-              color: '#d97706',
+              border: '1px solid rgba(234, 179, 8, 0.35)',
+              color: '#eab308',
               cursor: 'default',
               userSelect: 'none',
-              marginRight: isMobile ? '0.125rem' : '0.25rem',
+              marginRight: isMobile ? '2px' : '0.25rem',
             }}
           >
             <span
               style={{
-                width: '0.375rem',
-                height: '0.375rem',
+                width: '6px',
+                height: '6px',
                 borderRadius: '50%',
                 background: '#eab308',
+                boxShadow: '0 0 6px #eab308',
               }}
             />
             {!isMobile && (
@@ -462,20 +464,20 @@ export default React.memo(function Topbar() {
               <div
                 style={{
                   position: 'absolute',
-                  top: '-0.125rem',
-                  right: '-0.125rem',
+                  top: '0.25rem',
+                  right: '0.25rem',
                   minWidth: '0.875rem',
                   height: '0.875rem',
                   background: 'var(--red)',
-                  borderRadius: '9999px',
-                  border: '1.5px solid var(--surface)',
+                  borderRadius: '0.4375rem',
+                  border: '2px solid var(--bg-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '0.5rem',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: '#fff',
-                  padding: '0 0.1875rem',
+                  padding: '0 3px',
                 }}
               >
                 {unreadNotifs}
@@ -678,20 +680,20 @@ export default React.memo(function Topbar() {
               <div
                 style={{
                   position: 'absolute',
-                  top: '-0.125rem',
-                  right: '-0.125rem',
+                  top: '0.25rem',
+                  right: '0.25rem',
                   minWidth: '0.875rem',
                   height: '0.875rem',
                   background: 'var(--brand)',
-                  borderRadius: '9999px',
-                  border: '1.5px solid var(--surface)',
+                  borderRadius: '0.4375rem',
+                  border: '2px solid var(--bg-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '0.5rem',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   color: '#fff',
-                  padding: '0 0.1875rem',
+                  padding: '0 3px',
                 }}
               >
                 {unreadMsgs}
@@ -829,11 +831,26 @@ export default React.memo(function Topbar() {
             onClick={toggleFullscreen}
             aria-label={isFullscreen ? (isBn ? 'ফুলস্ক্রিন বন্ধ' : 'Exit Fullscreen') : (isBn ? 'ফুলস্ক্রিন' : 'Fullscreen')}
             title={isFullscreen ? (isBn ? 'ফুলস্ক্রিন বন্ধ' : 'Exit Fullscreen') : (isBn ? 'ফুলস্ক্রিন' : 'Fullscreen')}
-            style={ICON_BTN}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '1.75rem',
+              height: '1.75rem',
+              borderRadius: '0.5rem',
+              border: '1px solid var(--border)',
+              background: 'transparent',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              transform: 'scale(1)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-secondary)'; e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = 'none' }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.9)' }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1.1)' }}
           >
-            {isFullscreen ? <Minimize size={14} /> : <Maximize size={14} />}
+            {isFullscreen ? <Minimize size={15} style={{ transition: 'transform 0.3s ease' }} /> : <Maximize size={15} style={{ transition: 'transform 0.3s ease' }} />}
           </button>
         )}
 
