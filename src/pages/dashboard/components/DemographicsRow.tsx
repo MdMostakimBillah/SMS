@@ -275,7 +275,7 @@ export const DemographicsRow: React.FC<Props> = ({
                   width: '1.625rem',
                   height: '1.625rem',
                   borderRadius: '0.375rem',
-                  background: `${item.color}15`,
+                  background: `color-mix(in srgb, ${item.color} 14%, transparent)`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

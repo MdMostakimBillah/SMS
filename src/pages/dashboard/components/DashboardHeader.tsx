@@ -147,17 +147,17 @@ export const DashboardHeader: React.FC<Props> = ({
                 fontWeight: 500,
                 background:
                   storageMode === 'local_server'
-                    ? 'rgba(99, 102, 241, 0.12)'
-                    : 'rgba(34, 197, 94, 0.12)',
+                    ? 'color-mix(in srgb, var(--brand) 12%, transparent)'
+                    : 'color-mix(in srgb, var(--green) 12%, transparent)',
                 border: `1px solid ${
                   storageMode === 'local_server'
-                    ? 'rgba(99, 102, 241, 0.35)'
-                    : 'rgba(34, 197, 94, 0.35)'
+                    ? 'color-mix(in srgb, var(--brand) 28%, transparent)'
+                    : 'color-mix(in srgb, var(--green) 28%, transparent)'
                 }`,
                 color:
                   storageMode === 'local_server'
-                    ? '#6366f1'
-                    : '#16a34a',
+                    ? 'var(--brand)'
+                    : 'var(--green)',
               }}
               title={
                 storageMode === 'local_server'

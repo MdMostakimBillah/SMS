@@ -70,26 +70,29 @@ export const FinanceCards: React.FC<Props> = ({
             padding: isMobile ? '0.75rem 0.875rem' : '0.875rem 1rem',
             background: 'var(--surface)',
             border: '1px solid var(--border)',
-            borderRadius: '0.625rem',
+            borderRadius: '0.75rem',
             boxShadow: 'var(--shadow-xs)',
             cursor: 'pointer',
-            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+            transition: 'border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)'
+            e.currentTarget.style.borderColor = 'var(--brand)'
+            e.currentTarget.style.background = 'var(--surface-hover)'
             e.currentTarget.style.boxShadow = 'var(--shadow-sm)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'none'
+            e.currentTarget.style.borderColor = 'var(--border)'
+            e.currentTarget.style.background = 'var(--surface)'
             e.currentTarget.style.boxShadow = 'var(--shadow-xs)'
           }}
         >
           <div
             style={{
-              width: '2rem',
-              height: '2rem',
-              borderRadius: '0.375rem',
-              background: 'transparent',
+              width: '2.25rem',
+              height: '2.25rem',
+              borderRadius: '0.5rem',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -102,10 +105,12 @@ export const FinanceCards: React.FC<Props> = ({
           <div style={{ minWidth: 0 }}>
             <div
               style={{
-                fontSize: isMobile ? '1rem' : '1.125rem',
-                fontWeight: 700,
+                fontSize: isMobile ? '1.0625rem' : '1.1875rem',
+                fontWeight: 600,
                 color: 'var(--text-primary)',
-                lineHeight: 1.2,
+                lineHeight: 1.25,
+                fontVariantNumeric: 'tabular-nums',
+                letterSpacing: '-0.01em',
               }}
             >
               ৳{s.value.toLocaleString()}
@@ -113,7 +118,9 @@ export const FinanceCards: React.FC<Props> = ({
             <div
               style={{
                 fontSize: '0.6875rem',
+                fontWeight: 500,
                 color: 'var(--text-secondary)',
+                marginTop: '0.125rem',
                 whiteSpace: 'nowrap',
               }}
             >

@@ -93,13 +93,12 @@ export const ActivityRow: React.FC<Props> = ({
                   width: '1.75rem',
                   height: '1.75rem',
                   borderRadius: '0.4375rem',
-                  background: `${
+                  background:
                     s.status === 'approved'
-                      ? 'var(--green)'
+                      ? 'var(--green-light)'
                       : s.status === 'pending'
-                        ? 'var(--amber)'
-                        : 'var(--red)'
-                  }15`,
+                        ? 'var(--amber-light)'
+                        : 'var(--red-light)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -240,7 +239,7 @@ export const ActivityRow: React.FC<Props> = ({
                   width: '1.75rem',
                   height: '1.75rem',
                   borderRadius: '0.4375rem',
-                  background: `${ev.color}15`,
+                  background: `color-mix(in srgb, ${ev.color} 14%, transparent)`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -269,7 +268,7 @@ export const ActivityRow: React.FC<Props> = ({
                   fontSize: '0.625rem',
                   fontWeight: 600,
                   color: ev.color,
-                  background: `${ev.color}15`,
+                  background: `color-mix(in srgb, ${ev.color} 14%, transparent)`,
                   padding: '0.1875rem 0.5rem',
                   borderRadius: '0.375rem',
                   flexShrink: 0,

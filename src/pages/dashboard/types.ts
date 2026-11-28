@@ -119,6 +119,7 @@ export const chartTooltipStyle: React.CSSProperties = {
   background: 'var(--surface)',
   border: '1px solid var(--border)',
   borderRadius: '0.5rem',
+  boxShadow: 'var(--shadow-md)',
   fontSize: '0.75rem',
   padding: '0.5rem 0.75rem',
   color: 'var(--text-primary)',

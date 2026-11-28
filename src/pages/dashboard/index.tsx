@@ -291,10 +291,10 @@ export default function DashboardPage() {
   const sectionHead = (color: string) => (
     <div
       style={{
-        width: '0.1875rem',
+        width: '0.2rem',
         height: '0.875rem',
         background: color,
-        borderRadius: '0.125rem',
+        borderRadius: '9999px',
         flexShrink: 0,
       }}
     />
