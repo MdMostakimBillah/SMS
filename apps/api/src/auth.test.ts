@@ -4,9 +4,12 @@
  * Runs only against the isolated `edutech_test` database
  * (see src/test-setup.ts — DATABASE_URL is rewritten before anything loads).
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import type { Express } from 'express'
 import request from 'supertest'
+import fsPromises from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
 import { PrismaClient } from '@prisma/client'
 import { hash } from '@node-rs/argon2'
 import { createApp } from './app.js'
@@ -532,6 +535,83 @@ describe('register-institution hardening', () => {
       await prisma.session.deleteMany({ where: { user: { email } } })
       await prisma.user.deleteMany({ where: { email } })
       await prisma.school.deleteMany({ where: { domain: slug } })
+    }
+  })
+})
+
+describe('super-admin login path DB encryption, .env sync & audit redaction', () => {
+  let tmpDir: string | null = null
+
+  afterAll(async () => {
+    delete process.env.ENV_SYNC_PATH
+    await prisma.systemConfig.deleteMany({ where: { key: 'super_admin_login_path' } }).catch(() => {})
+    if (tmpDir) {
+      await fsPromises.rm(tmpDir, { recursive: true, force: true })
+    }
+  })
+
+  it('encrypts stored login path in PostgreSQL, updates only VITE_LOGIN_PATH in temp .env, and omits plaintext from logs', async () => {
+    tmpDir = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'edutech-auth-env-'))
+    const tempEnv = path.join(tmpDir, '.env')
+    const initialEnv = [
+      'DATABASE_URL="postgres://secret:pass@db/edutech"',
+      'JWT_SECRET=keep-this-untouched-0123456789abcdef',
+      'VITE_LOGIN_PATH=/initial-path-value',
+      '',
+    ].join('\n')
+    await fsPromises.writeFile(tempEnv, initialEnv, 'utf8')
+    process.env.ENV_SYNC_PATH = tempEnv
+
+    const app = makeApp()
+    const sa = await login(app, SUPER_EMAIL, SUPER_PASSWORD)
+    expect(sa.res.status).toBe(200)
+
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    try {
+      const nextSecret = 'RotatedSecretVault2026'
+      const putRes = await request(app)
+        .put('/api/auth/super-admin-login-path')
+        .set('Origin', 'http://localhost:5173')
+        .set('Cookie', cookieHeader(sa.jar))
+        .set('x-csrf-token', sa.jar.edutech_csrf)
+        .send({ loginPath: nextSecret })
+
+      expect(putRes.status).toBe(200)
+      expect(putRes.body).toEqual({
+        success: true,
+        loginPath: nextSecret,
+        envSynced: true,
+        envSyncStatus: 'synced',
+      })
+
+      // 1. PostgreSQL must NEVER store plaintext
+      const row = await prisma.systemConfig.findUnique({ where: { key: 'super_admin_login_path' } })
+      expect(row).not.toBeNull()
+      expect(row!.value.startsWith('enc:v1:')).toBe(true)
+      expect(row!.value).not.toContain(nextSecret)
+
+      // 2. GET decrypts back cleanly for authenticated super_admin
+      const getRes = await request(app)
+        .get('/api/auth/super-admin-login-path')
+        .set('Cookie', cookieHeader(sa.jar))
+      expect(getRes.status).toBe(200)
+      expect(getRes.body.loginPath).toBe(nextSecret)
+
+      // 3. Temp .env updated cleanly without altering unrelated keys
+      const updatedEnv = await fsPromises.readFile(tempEnv, 'utf8')
+      expect(updatedEnv).toBe(initialEnv.replace('/initial-path-value', `/${nextSecret}`))
+
+      // 4. Audit stdout must NEVER leak plaintext secret path
+      const logged = logSpy.mock.calls.map((c) => c.join(' ')).join('\n')
+      expect(logged).not.toContain(nextSecret)
+
+      // 5. Verify new path succeeds while old path fails closed
+      const validCheck = await request(app).post('/api/auth/verify-login-path').send({ path: nextSecret })
+      expect(validCheck.body.valid).toBe(true)
+      const oldCheck = await request(app).post('/api/auth/verify-login-path').send({ path: 'initial-path-value' })
+      expect(oldCheck.body.valid).toBe(false)
+    } finally {
+      logSpy.mockRestore()
     }
   })
 })

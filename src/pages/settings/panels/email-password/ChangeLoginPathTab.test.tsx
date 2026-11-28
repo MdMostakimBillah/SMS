@@ -7,7 +7,12 @@ import { authApi } from '@/lib/api'
 vi.mock('@/lib/api', () => ({
   authApi: {
     getSuperAdminLoginPath: vi.fn().mockResolvedValue({ loginPath: null }),
-    updateSuperAdminLoginPath: vi.fn().mockImplementation(async (path: string) => ({ loginPath: path })),
+    updateSuperAdminLoginPath: vi.fn().mockImplementation(async (path: string) => ({
+      success: true,
+      loginPath: path,
+      envSynced: true,
+      envSyncStatus: 'synced',
+    })),
     resetSuperAdminLoginPath: vi.fn().mockResolvedValue({ loginPath: 'k7m2x9pGKcj57PFE8oBj' }),
   },
 }))
@@ -37,7 +42,7 @@ describe('ChangeLoginPathTab component', () => {
     fireEvent.submit(form)
 
     await waitFor(() => {
-      expect(screen.getByText(/Super admin login path updated and saved to database successfully/i)).toBeInTheDocument()
+      expect(screen.getByText(/Super admin login path saved securely to encrypted database and updated in \.env\./i)).toBeInTheDocument()
       expect(getLoginSecret()).toBe('my-new-secret-path-2026')
       expect(authApi.updateSuperAdminLoginPath).toHaveBeenCalledWith('my-new-secret-path-2026')
     })
@@ -55,15 +60,24 @@ describe('ChangeLoginPathTab component', () => {
     expect(screen.getByText(/"dashboard" is a reserved system path/i)).toBeInTheDocument()
   })
 
-  it('generates a random secret path when clicking Generate Random', async () => {
+  it('generates a random secret path into the input and saves it when clicking Save', async () => {
     render(<ChangeLoginPathTab isBn={false} />)
 
     const rotateBtn = screen.getByRole('button', { name: /Generate Random/i })
     fireEvent.click(rotateBtn)
 
+    const input = screen.getByRole('textbox') as HTMLInputElement
+    const generated = input.value
+    expect(generated).toMatch(/^[A-Za-z0-9]{20}$/)
+    // Must wait for explicit Save rather than auto-overwriting immediately
+    expect(authApi.updateSuperAdminLoginPath).not.toHaveBeenCalled()
+
+    const saveBtn = screen.getByRole('button', { name: /^Save$/i })
+    fireEvent.click(saveBtn)
+
     await waitFor(() => {
-      expect(screen.getByText(/A new random secret login path has been generated and saved to database/i)).toBeInTheDocument()
-      expect(authApi.updateSuperAdminLoginPath).toHaveBeenCalled()
+      expect(screen.getByText(/Super admin login path saved securely to encrypted database and updated in \.env\./i)).toBeInTheDocument()
+      expect(authApi.updateSuperAdminLoginPath).toHaveBeenCalledWith(generated)
     })
   })
 

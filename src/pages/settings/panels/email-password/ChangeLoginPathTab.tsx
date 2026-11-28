@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { KeyRound, Copy, Check, RefreshCw, RotateCcw, AlertTriangle, ShieldCheck, CheckCircle2, Loader2 } from 'lucide-react'
-import { getLoginSecret, setLoginSecret, clearLoginSecret } from '@/lib/loginPath'
+import { getLoginSecret, setLoginSecret, clearLoginSecret, generateSecureLoginSecret } from '@/lib/loginPath'
 import { authApi } from '@/lib/api'
 
 interface Props {
@@ -86,10 +86,20 @@ export const ChangeLoginPathTab = React.memo(function ChangeLoginPathTab({ isBn 
       setLoginSecret(newPath)
       setActiveSecret(newPath)
       setCustomPath('')
+      const envSynced = res?.envSyncStatus === 'synced' || res?.envSynced === true
+      const readOnlyHost = res?.envSyncStatus === 'readonly' || res?.envSyncStatus === 'missing'
       setSavedMessage(
-        isBn
-          ? 'সুপার অ্যাডমিন লগইন পাথ সফলভাবে পরিবর্তন এবং ডাটাবেজে সংরক্ষণ করা হয়েছে।'
-          : 'Super admin login path updated and saved to database successfully.'
+        envSynced
+          ? isBn
+            ? 'সুপার অ্যাডমিন লগইন পাথ এনক্রিপ্ট করে ডাটাবেজে ও .env ফাইলে সফলভাবে সংরক্ষণ করা হয়েছে।'
+            : 'Super admin login path saved securely to encrypted database and updated in .env.'
+          : readOnlyHost
+            ? isBn
+              ? 'লগইন পাথ এনক্রিপ্ট করে ডাটাবেজে সংরক্ষণ করা হয়েছে (হোস্ট ফাইলসিস্টেম রিড-অনলি হওয়ায় .env পরিবর্তন করা যায়নি)।'
+              : 'Login path saved securely to encrypted database (host filesystem is read-only; rebuild env if needed).'
+            : isBn
+              ? 'সুপার অ্যাডমিন লগইন পাথ এনক্রিপ্ট করে ডাটাবেজে সফলভাবে সংরক্ষণ করা হয়েছে।'
+              : 'Super admin login path updated and saved securely to database.'
       )
     } catch (err: any) {
       setError(err?.message || (isBn ? 'লগইন পাথ সংরক্ষণ করতে ব্যর্থ হয়েছে।' : 'Failed to update login path.'))
@@ -98,30 +108,11 @@ export const ChangeLoginPathTab = React.memo(function ChangeLoginPathTab({ isBn 
     }
   }
 
-  const handleRotate = async () => {
+  const handleGenerateRandom = () => {
     setError('')
     setSavedMessage('')
-    const randomSecret =
-      Math.random().toString(36).slice(2) +
-      Date.now().toString(36).slice(-6)
-
-    setSaving(true)
-    try {
-      const res = await authApi.updateSuperAdminLoginPath(randomSecret)
-      const newPath = res?.loginPath || randomSecret
-      setLoginSecret(newPath)
-      setActiveSecret(newPath)
-      setCustomPath('')
-      setSavedMessage(
-        isBn
-          ? 'একটি নতুন এলোমেলো লগইন পাথ ডাটাবেজে সফলভাবে তৈরি ও সংরক্ষণ করা হয়েছে।'
-          : 'A new random secret login path has been generated and saved to database.'
-      )
-    } catch (err: any) {
-      setError(err?.message || (isBn ? 'নতুন পাথ তৈরি করতে ব্যর্থ হয়েছে।' : 'Failed to generate random login path.'))
-    } finally {
-      setSaving(false)
-    }
+    const randomSecret = generateSecureLoginSecret(20)
+    setCustomPath(randomSecret)
   }
 
   const handleReset = async () => {
@@ -230,11 +221,11 @@ export const ChangeLoginPathTab = React.memo(function ChangeLoginPathTab({ isBn 
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <button
             type="button"
-            onClick={handleRotate}
+            onClick={handleGenerateRandom}
             disabled={saving}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-[0.6875rem] font-medium transition-colors cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw size={12} className={saving ? 'animate-spin' : ''} />
+            <RefreshCw size={12} />
             <span>{isBn ? 'র‍্যান্ডম তৈরি করুন' : 'Generate Random'}</span>
           </button>
 
@@ -256,11 +247,11 @@ export const ChangeLoginPathTab = React.memo(function ChangeLoginPathTab({ isBn 
         <div>
           {isBn ? (
             <>
-              পাথ পরিবর্তন করলে তা সরাসরি ডাটাবেজে সংরক্ষিত হয় এবং তাৎক্ষণিকভাবে কার্যকর হয়। তবে আপনার <strong>.env</strong> ফাইলে উল্লেখিত পাথটি সর্বদা ব্যাকআপ হিসেবে কার্যকর থাকবে যাতে কখনও লকআউট না হতে হয়।
+              নতুন পাথ সংরক্ষণ করলে তা ডাটাবেজে AES-256-GCM দ্বারা এনক্রিপ্ট হয়ে জমা হয় (প্লেইনটেক্সট হিসেবে নয়) এবং <strong>.env</strong> ফাইলের শুধুমাত্র লগইন পাথ নিরাপদে প্রতিস্থাপিত হয়।
             </>
           ) : (
             <>
-              Changing this path saves to the database and takes effect immediately across all devices. The path configured in your <strong>.env</strong> file remains valid as a permanent fail-safe recovery route.
+              Saving updates the active URL in encrypted storage (AES-256-GCM at rest in PostgreSQL) and atomically replaces only the login path key inside <strong>.env</strong> without altering other secrets.
             </>
           )}
         </div>

@@ -8,6 +8,7 @@ import {
   getSecretPath,
   isValidLoginSecret,
   verifyLoginSecretRemote,
+  generateSecureLoginSecret,
   DEFAULT_LOGIN_SECRET,
 } from './loginPath'
 import { authApi } from './api'
@@ -23,6 +24,13 @@ describe('loginPath helpers', () => {
     expect(getLoginSecret()).toBe('my-secret-path')
     expect(getLoginRoute()).toBe('/my-secret-path/login')
     expect(getSecretPath()).toBe('/my-secret-path')
+  })
+
+  it('generates CSPRNG login secret using Web Crypto without predictable timestamps', () => {
+    const token = generateSecureLoginSecret(24)
+    expect(token).toMatch(/^[A-Za-z0-9]{24}$/)
+    const token2 = generateSecureLoginSecret(24)
+    expect(token2).not.toBe(token)
   })
 
   it('rotates login secret to a new random value', () => {

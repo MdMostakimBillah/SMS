@@ -5,7 +5,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAppStore } from '@/store/appStore'
 import { getDashboardPath } from '@/lib/navUtils'
-import { isValidLoginSecret, setLoginSecret, verifyLoginSecretRemote } from '@/lib/loginPath'
+import { isValidLoginSecret, setLoginSecret, clearLoginSecret, verifyLoginSecretRemote } from '@/lib/loginPath'
 import { authApi } from '@/lib/api'
 import { sendVerificationCode } from '@/lib/emailService'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
@@ -43,12 +43,26 @@ export default function LoginPage() {
   useEffect(() => {
     let active = true
 
-    // Fast synchronous check
+    // Fast synchronous check + silent server verification so rotated URLs invalidate stale build-time paths
     if (isValidLoginSecret(pathCandidate)) {
       setIsAllowed(true)
       setIsChecking(false)
       setLoginSecret(pathCandidate)
-      return
+      authApi.verifyLoginPath(pathCandidate)
+        .then((res) => {
+          if (!active) return
+          if (res && res.valid === false) {
+            clearLoginSecret()
+            setIsAllowed(false)
+            navigate('/register', { replace: true })
+          }
+        })
+        .catch(() => {
+          // Offline / test fallback: keep local access only when backend is unreachable
+        })
+      return () => {
+        active = false
+      }
     }
 
     if (!pathCandidate) {

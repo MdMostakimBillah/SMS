@@ -84,15 +84,41 @@ export function setLoginSecret(path: string): string {
   return clean
 }
 
+const SECRET_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
+
 /**
- * Generate a new random login secret, persist it, and return it.
+ * Generate a cryptographically unpredictable URL-safe login path segment using
+ * Web Crypto CSPRNG (`crypto.getRandomValues`) with rejection sampling to avoid modulo bias.
+ */
+export function generateSecureLoginSecret(length = 20): string {
+  const safeLength = Math.max(8, Math.min(64, Math.floor(length)))
+  const webCrypto = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined
+  if (!webCrypto || typeof webCrypto.getRandomValues !== 'function') {
+    throw new Error('Secure cryptographic random generator is unavailable in this environment')
+  }
+
+  const alphabetLen = SECRET_ALPHABET.length
+  const maxValidByte = Math.floor(256 / alphabetLen) * alphabetLen
+  let out = ''
+  const buf = new Uint8Array(safeLength * 2)
+
+  while (out.length < safeLength) {
+    webCrypto.getRandomValues(buf)
+    for (let i = 0; i < buf.length && out.length < safeLength; i++) {
+      if (buf[i] < maxValidByte) {
+        out += SECRET_ALPHABET[buf[i] % alphabetLen]
+      }
+    }
+  }
+  return out
+}
+
+/**
+ * Generate a new cryptographically random login secret, persist it, and return it.
  * Calling this instantly invalidates the previous login URL.
  */
 export function rotateLoginSecret(): string {
-  const secret =
-    Math.random().toString(36).slice(2) +
-    Date.now().toString(36).slice(-6)
-  return setLoginSecret(secret)
+  return setLoginSecret(generateSecureLoginSecret(20))
 }
 
 /**

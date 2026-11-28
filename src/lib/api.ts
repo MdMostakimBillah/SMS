@@ -314,7 +314,12 @@ export const authApi = {
     apiRequest<{ loginPath: string; defaultPath: string }>('/api/auth/super-admin-login-path'),
 
   updateSuperAdminLoginPath: (loginPath: string) =>
-    apiRequest<{ success: boolean; loginPath: string }>('/api/auth/super-admin-login-path', {
+    apiRequest<{
+      success: boolean
+      loginPath: string
+      envSynced?: boolean
+      envSyncStatus?: 'synced' | 'readonly' | 'missing' | 'disabled'
+    }>('/api/auth/super-admin-login-path', {
       method: 'PUT',
       body: { loginPath },
     }),
@@ -1591,6 +1596,235 @@ export const libraryApi = {
     })
   },
 }
+
+export interface SmsBalancePayload {
+  allocated: number
+  used: number
+  remaining: number
+}
+
+export interface SmsSchoolSummary {
+  id: string
+  name: string
+  nameBn: string
+  slug: string
+  subdomain: string
+  phone: string
+  email: string
+  eiin: string
+  status: string
+  balance: SmsBalancePayload
+}
+
+export interface SmsOverviewResponse {
+  masterPool: {
+    totalPurchased: number
+    totalAllocated: number
+    totalUsed: number
+    available: number
+  }
+  gatewayConfig: {
+    providerName: string
+    providerType: 'bulksmsbd' | 'smsnetbd' | 'greenweb' | 'mimsms' | 'sslwireless' | 'sim_gateway' | 'http_api' | 'custom'
+    apiUrl: string
+    senderId: string
+    username: string
+    isActive: boolean
+    hasApiKey: boolean
+    maskedApiKey: string
+    hasPassword: boolean
+  }
+  schools: SmsSchoolSummary[]
+  purchases: Array<{
+    id: string
+    provider: string
+    quantity: number
+    unitPrice: number
+    totalCost: number
+    refId: string
+    purchasedAt: string
+    notes?: string | null
+  }>
+  allocations: Array<{
+    id: string
+    schoolId: string
+    schoolName: string
+    amount: number
+    type: 'credit' | 'debit'
+    note?: string | null
+    allocatedAt: string
+    allocatedBy?: string | null
+  }>
+  dispatchLogs: Array<{
+    id: string
+    schoolId?: string | null
+    schoolName: string
+    phone: string
+    message: string
+    triggerType: 'fee' | 'exam' | 'attendance' | 'admission' | 'manual' | 'broadcast' | 'test'
+    provider: string
+    providerMessageId?: string | null
+    segments: number
+    status: 'sent' | 'delivered' | 'failed'
+    providerResponse?: string | null
+    error?: string | null
+    sentAt: string
+  }>
+}
+
+export const smsApi = {
+  getSuperAdminOverview: () => apiRequest<SmsOverviewResponse>('/api/sms/super-admin/overview'),
+
+  checkProviderBalance: () =>
+    apiRequest<{
+      success: boolean
+      provider: string
+      balanceText?: string
+      balanceNumeric?: number | null
+      currency?: string
+      error?: string
+    }>('/api/sms/super-admin/provider-balance'),
+
+  updateGateway: (data: {
+    providerName: string
+    providerType: string
+    apiUrl?: string
+    senderId?: string
+    username?: string
+    isActive: boolean
+    apiKey?: string
+    password?: string
+    clearApiKey?: boolean
+  }) =>
+    apiRequest<{ success: boolean; gatewayConfig: SmsOverviewResponse['gatewayConfig'] }>('/api/sms/super-admin/gateway', {
+      method: 'PUT',
+      body: data,
+    }),
+
+  recordPurchase: (data: {
+    provider: string
+    quantity: number
+    totalCost: number
+    refId?: string
+    notes?: string
+  }) =>
+    apiRequest<{
+      success: boolean
+      purchase: SmsOverviewResponse['purchases'][number]
+      masterPool: SmsOverviewResponse['masterPool']
+    }>('/api/sms/super-admin/purchases', {
+      method: 'POST',
+      body: data,
+    }),
+
+  allocateToSchool: (data: { schoolId: string; amount: number; type?: 'credit' | 'debit'; note?: string }) =>
+    apiRequest<{
+      success: boolean
+      allocation: SmsOverviewResponse['allocations'][number]
+      balance: SmsBalancePayload
+      masterPool: SmsOverviewResponse['masterPool']
+    }>('/api/sms/super-admin/allocations', {
+      method: 'POST',
+      body: data,
+    }),
+
+  distributeAll: (data: {
+    mode: 'per_school' | 'split_total'
+    amount: number
+    schoolIds?: string[]
+    onlyActive?: boolean
+    note?: string
+  }) =>
+    apiRequest<{
+      success: boolean
+      distributedCount: number
+      totalDistributed: number
+      allocations: SmsOverviewResponse['allocations']
+      masterPool: SmsOverviewResponse['masterPool']
+    }>('/api/sms/super-admin/distribute-all', {
+      method: 'POST',
+      body: data,
+    }),
+
+  superAdminBroadcast: (data: {
+    recipients?: string[]
+    schoolIds?: string[]
+    allSchools?: boolean
+    message: string
+    triggerType?: 'broadcast' | 'test'
+  }) =>
+    apiRequest<{
+      success: boolean
+      partialSuccess?: boolean
+      sentCount: number
+      failedCount: number
+      skippedCount: number
+      segmentsPerSms: number
+      isUnicode: boolean
+      error?: string
+      logs: SmsOverviewResponse['dispatchLogs']
+      masterPool: SmsOverviewResponse['masterPool']
+    }>('/api/sms/super-admin/broadcast', {
+      method: 'POST',
+      body: data,
+    }),
+
+  getBalance: (schoolIdOrSlug?: string) => {
+    const slug = schoolIdOrSlug || (typeof window !== 'undefined' ? (sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug')) : undefined)
+    const q = slug ? `?slug=${encodeURIComponent(slug)}` : ''
+    return apiRequest<{
+      schoolId: string
+      schoolName: string
+      balance: SmsBalancePayload
+      gatewayConfigured: boolean
+      providerName: string
+      allocations: SmsOverviewResponse['allocations']
+      recentLogs: SmsOverviewResponse['dispatchLogs']
+    }>(`/api/sms/balance${q}`)
+  },
+
+  sendSingle: (data: {
+    phone: string
+    message: string
+    triggerType?: 'fee' | 'exam' | 'attendance' | 'admission' | 'manual'
+    schoolId?: string
+    slug?: string
+  }) =>
+    apiRequest<{
+      success: boolean
+      status: 'sent' | 'delivered' | 'failed'
+      messageId: string
+      segmentsUsed: number
+      providerResponse?: string
+      error?: string
+      balance: SmsBalancePayload
+    }>('/api/sms/send', {
+      method: 'POST',
+      body: data,
+    }),
+
+  sendBulk: (data: {
+    phones: string[]
+    message: string
+    triggerType?: 'fee' | 'exam' | 'attendance' | 'admission' | 'manual'
+    schoolId?: string
+    slug?: string
+  }) =>
+    apiRequest<{
+      success: boolean
+      status: 'sent' | 'delivered' | 'failed'
+      messageId: string
+      sentCount: number
+      failedCount: number
+      segmentsUsed: number
+      error?: string
+      balance: SmsBalancePayload
+    }>('/api/sms/send-bulk', {
+      method: 'POST',
+      body: data,
+    }),
+}
+
 
 
 

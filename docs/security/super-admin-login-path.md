@@ -1,14 +1,19 @@
 # Super Admin Login Path — Security Model & Rotation Procedure
 
-Status: living documentation. Last reviewed: Phase 15 security hardening.
+Status: living documentation. Last reviewed: Super Admin `.env` sync & DB encryption update.
 
 ## 1. What the custom login path is (and is not)
 
-- `VITE_LOGIN_PATH` is a **frontend build-time configuration value** (root
-  `.env` for development, `.env.production` for the Vercel build). It is
-  consumed through a single constant, `LOGIN_PATH` in
-  `src/lib/constants.ts`, which also derives `LOGIN_ROUTE` — the one route
-  every login redirect resolves to.
+- `VITE_LOGIN_PATH` configures the frontend super-admin entry route in root
+  `.env` (and `.env.production` synced on build via `scripts/sync-env.js`).
+  At runtime, the active path is persisted encrypted in PostgreSQL
+  (`system_config` key `super_admin_login_path`, sealed with **AES-256-GCM**
+  using a domain-separated HKDF key from `LOGIN_PATH_ENCRYPTION_KEY` or
+  `JWT_SECRET`) and verified via `POST /api/auth/verify-login-path`.
+- When rotated from Super Admin Settings (`PUT /api/auth/super-admin-login-path`),
+  the server encrypts the DB value (`enc:v1:...`), redacts audit stdout logs,
+  and atomically updates `VITE_LOGIN_PATH` inside writable `.env` files via
+  `apps/api/src/lib/envLoginPathSync.ts` without modifying unrelated keys.
 - **Its value is visible to browser users.** `VITE_*` variables are baked
   into the JavaScript bundle by design (confirmed by bundle scan). The
   configured path must never be considered a secret, and never behaves as

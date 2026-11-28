@@ -6,6 +6,16 @@ import { createStorageFromEnv } from './storage.js'
 import { ensureDatabaseSchema } from './lib/ensure-schema.js'
 import { DbKeepAlive } from './lib/db-keepalive.js'
 import { authPool } from './lib/better-auth.js'
+import { readEnvLoginPath } from './lib/envLoginPathSync.js'
+
+// Hydrate only VITE_LOGIN_PATH from project root .env when api cwd/.env omits it,
+// without importing or shadowing other environment variables.
+if (!process.env.VITE_LOGIN_PATH && !process.env.SUPER_ADMIN_LOGIN_PATH) {
+  const rootEnvPath = await readEnvLoginPath()
+  if (rootEnvPath) {
+    process.env.VITE_LOGIN_PATH = `/${rootEnvPath}`
+  }
+}
 
 const PORT = process.env.PORT || 3001
 
