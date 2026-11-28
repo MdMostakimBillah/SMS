@@ -3,7 +3,7 @@ import {
   GraduationCap, Building2, Globe, Phone, Mail, MapPin,
   Upload, Palette, CreditCard, Shield, Eye, EyeOff,
   ChevronRight, ChevronLeft, Check, X,
-  Zap, BarChart3, Users, Lock,
+  Lock,
   Cloud, Cpu,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -17,6 +17,7 @@ import { setLocalStorageMode } from '@/lib/storageMode'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { authApi, ApiError } from '@/lib/api'
 import { OtpInput } from '@/components/shared/OtpInput'
+import { RegistrationFeatureLoop } from './components/RegistrationFeatureLoop'
 
 const BASE_URL = 'smsappbd.vercel.app'
 
@@ -471,23 +472,7 @@ export default function InstitutionRegister() {
             </div>
 
             {/* Features */}
-            <div className="space-y-3 mb-8">
-              {[
-                { icon: Users, title: isBn ? 'ছাত্র ও শিক্ষক ম্যানেজমেন্ট' : 'Student & Teacher Management', desc: isBn ? 'সকল তথ্য এক জায়গায়' : 'All data in one place' },
-                { icon: BarChart3, title: isBn ? 'পরীক্ষা ও ফলাফল' : 'Exams & Results', desc: isBn ? 'স্বয়ংক্রিয় গ্রেডিং ও রিপোর্ট' : 'Automatic grading & reports' },
-                { icon: Zap, title: isBn ? 'ফি ও হিসাব' : 'Fees & Accounting', desc: isBn ? 'অনলাইন পেমেন্ট ও হিসাব' : 'Online payment & accounting' },
-              ].map((f, i) => (
-                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl transition-all ${isDark ? 'bg-white/[0.03] hover:bg-white/[0.05]' : 'bg-white hover:shadow-sm'}`}>
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: `${isDark ? 'rgba(255,255,255,0.06)' : 'var(--brand-light, rgba(99,102,241,0.1))'}` }}>
-                    <f.icon size={16} className="text-[var(--brand)]" />
-                  </div>
-                  <div>
-                    <h3 className={`text-[0.8125rem] font-semibold ${isDark ? 'text-white/80' : 'text-[var(--text-primary)]'}`}>{f.title}</h3>
-                    <p className={`text-[0.6875rem] ${isDark ? 'text-white/35' : 'text-[var(--text-muted)]'}`}>{f.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <RegistrationFeatureLoop isBn={isBn} isDark={isDark} />
 
             <button onClick={() => setStarted(true)}
               className="w-full h-12 rounded-xl text-[0.875rem] font-semibold border-none cursor-pointer flex items-center justify-center gap-2 transition-all hover:opacity-90"
