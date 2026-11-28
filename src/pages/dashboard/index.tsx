@@ -24,6 +24,8 @@ import { useSuperAdminStore } from '@/store/superAdminStore'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { getSlug } from '@/lib/storage'
 import { getActiveStorageMode } from '@/lib/storageMode'
+import { authApi, type PublicSchool } from '@/lib/api'
+import { resolveInstitutionRecord } from '@/lib/institutionResolver'
 import gsap from 'gsap'
 import { useShallow } from 'zustand/shallow'
 
@@ -76,6 +78,7 @@ export default function DashboardPage() {
   const expenses = useExpenseStore(useShallow((s) => s.expenses))
   const institutionPayments = useInstitutionPaymentStore(useShallow((s) => s.payments))
   const institutions = useSuperAdminStore((s) => s.institutions) ?? []
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
 
   // Local state
   const [isLoading, setIsLoading] = useState(true)
@@ -85,27 +88,60 @@ export default function DashboardPage() {
   const [showCreateTask, setShowCreateTask] = useState(false)
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('all')
   const [chartMonth, setChartMonth] = useState<string>(() => new Date().toISOString().slice(0, 7))
+  const [fetchedSchool, setFetchedSchool] = useState<PublicSchool | null>(null)
 
   const storageMode = getActiveStorageMode()
+  const isSuperAdminViewing = user?.role === 'super_admin' && Boolean(viewingInstitutionId)
+  const viewedInst = isSuperAdminViewing
+    ? institutions.find(
+        (i) =>
+          i.id === viewingInstitutionId ||
+          i.slug === viewingInstitutionId ||
+          i.subdomain === viewingInstitutionId
+      )
+    : null
   const schoolSlug =
+    (isSuperAdminViewing ? viewedInst?.slug || viewedInst?.subdomain : null) ||
     getSlug() ||
     (typeof sessionStorage !== 'undefined'
       ? sessionStorage.getItem('edutech_inst_slug')
       : null) ||
+    (isSuperAdminViewing ? viewingInstitutionId : null) ||
+    user?.schoolDomain ||
+    user?.school?.domain ||
+    user?.school?.slug ||
     'edutech'
   const schoolName = user?.schoolName || 'EduTech School'
 
-  const currentSchool = useMemo(() => {
+  const explicitSchoolTarget = useMemo(() => {
+    if (user?.role === 'super_admin') {
+      return viewingInstitutionId || null
+    }
     return (
-      institutions.find(
-        (i) =>
-          (user?.schoolId && i.id === user.schoolId) ||
-          (user?.school?.id && i.id === user.school.id) ||
-          (schoolSlug && (i.slug === schoolSlug || i.subdomain === schoolSlug)) ||
-          (institution?.eiin && i.eiin === institution.eiin)
-      ) || user?.school || null
+      getSlug() ||
+      (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('edutech_inst_slug') : null) ||
+      (typeof localStorage !== 'undefined' ? localStorage.getItem('edutech_inst_slug') : null) ||
+      user?.schoolDomain ||
+      user?.school?.domain ||
+      user?.school?.slug ||
+      user?.schoolId ||
+      null
     )
-  }, [institutions, user, schoolSlug, institution])
+  }, [user, viewingInstitutionId])
+
+  const currentSchool = useMemo(
+    () =>
+      resolveInstitutionRecord({
+        institutions,
+        user,
+        viewingInstitutionId,
+        schoolSlug,
+        eiin: institution?.eiin,
+        fetchedSchool,
+        fallbackClassInstitution: institution,
+      }),
+    [institutions, user, viewingInstitutionId, schoolSlug, institution, fetchedSchool]
+  )
 
   // Unified synchronization with Backend & Database / Local PC stores
   const syncDashboardData = useCallback(async () => {
@@ -117,6 +153,39 @@ export default function DashboardPage() {
         ? sessionStorage.getItem('edutech_inst_slug')
         : undefined) ||
       undefined
+
+    const refreshSchoolSubscription = async () => {
+      if (!explicitSchoolTarget) return
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return
+      try {
+        const res = await authApi.getPublicSchool(explicitSchoolTarget)
+        if (res?.school) {
+          setFetchedSchool(res.school)
+          const classUpdates: Record<string, any> = {}
+          if (res.school.expiresAt !== undefined) classUpdates.expiresAt = res.school.expiresAt || null
+          if (res.school.status) classUpdates.status = res.school.status
+          if (Object.keys(classUpdates).length > 0) {
+            useClassStore.getState().updateInstitution(classUpdates)
+          }
+          const existing = useSuperAdminStore
+            .getState()
+            .institutions.find(
+              (i) =>
+                i.id === res.school!.id ||
+                i.slug === (res.school!.slug || res.school!.domain) ||
+                i.subdomain === res.school!.domain
+            )
+          if (existing) {
+            useSuperAdminStore.getState().updateInstitution(existing.id, {
+              expiresAt: res.school.expiresAt ?? null,
+              ...(res.school.status ? { status: res.school.status as any } : {}),
+            })
+          }
+        }
+      } catch {
+        // Offline or unreachable — preserve cached subscription state
+      }
+    }
 
     try {
       await Promise.allSettled([
@@ -134,6 +203,7 @@ export default function DashboardPage() {
         useAttendanceStore.getState().syncFromServer(effectiveSlug),
         useStoreStore.getState().syncFromServer(effectiveSlug),
         useInstitutionPaymentStore.getState().syncFromServer(effectiveSlug),
+        refreshSchoolSubscription(),
       ])
       setLastSyncAt(Date.now())
     } catch (err) {
@@ -142,7 +212,7 @@ export default function DashboardPage() {
       setIsRefreshing(false)
       setIsLoading(false)
     }
-  }, [])
+  }, [explicitSchoolTarget])
 
   useEffect(() => {
     void syncDashboardData()
@@ -199,9 +269,9 @@ export default function DashboardPage() {
     expenses,
     selectedMonth: chartMonth,
     institutionPayments,
-    currentSchoolId: user?.schoolId,
-    currentSchoolSlug: schoolSlug,
-    currentSchoolEiin: institution?.eiin,
+    currentSchoolId: currentSchool?.id || user?.schoolId,
+    currentSchoolSlug: currentSchool?.slug || schoolSlug,
+    currentSchoolEiin: currentSchool?.eiin || institution?.eiin,
     institutionInfo: currentSchool,
   })
 

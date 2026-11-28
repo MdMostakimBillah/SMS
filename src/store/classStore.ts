@@ -242,6 +242,8 @@ export function mapSchoolToInstitutionSettings(school: any, current?: Institutio
     folderName: school.folderName || current?.folderName || '',
     storageBytes: (school as any)?.storageBytes ?? (current as any)?.storageBytes ?? 0,
     mediaCount: (school as any)?.mediaCount ?? (current as any)?.mediaCount ?? 0,
+    expiresAt: school.expiresAt !== undefined ? (school.expiresAt || null) : (current?.expiresAt ?? null),
+    status: school.status || current?.status,
     lightColors: generateLightColors(brand),
     darkColors: generateDarkColors(brand),
   }
@@ -280,6 +282,8 @@ export interface InstitutionSettings {
   }
   storageBytes?: number
   mediaCount?: number
+  expiresAt?: string | null
+  status?: string
   lightColors: ThemeColors
   darkColors: ThemeColors
 }

@@ -238,7 +238,7 @@ function InstitutionCard({ inst, isBn, isSelected, onToggle, onOpen, onManageLic
             <InfoRow
               icon={<Clock size={13} />}
               label={isBn ? 'মেয়াদ' : 'Expires'}
-              value={inst.expiresAt ? `${inst.expiresAt} (${daysRemaining !== null ? (isExpired ? (isBn ? 'মেয়াদ উত্তীর্ণ' : 'Expired') : `${daysRemaining} ${isBn ? 'দিন' : 'days'}`) : ''})` : (isBn ? 'লাইফটাইম' : 'Lifetime')}
+              value={inst.expiresAt ? `${inst.expiresAt.split('T')[0]} (${daysRemaining !== null ? (isExpired ? (isBn ? 'মেয়াদ উত্তীর্ণ' : 'Expired') : `${daysRemaining} ${isBn ? 'দিন' : 'days'}`) : ''})` : (isBn ? 'লাইফটাইম' : 'Lifetime')}
             />
             <InfoRow
               icon={<HardDrive size={13} />}
@@ -472,7 +472,7 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
               slug: sSlug,
               status: ((item as any).status as InstitutionStatus) || existing?.status || 'active',
               package: pkg,
-              expiresAt: item.expiresAt ? (item.expiresAt as string).split('T')[0] : existing?.expiresAt || null,
+              expiresAt: item.expiresAt || existing?.expiresAt || null,
               storageMode: item.storageMode || existing?.storageMode || 'cloud',
               serverUrl: item.serverUrl || existing?.serverUrl || '',
               folderName: item.folderName || existing?.folderName || '',
@@ -545,6 +545,8 @@ export default function SchoolsPage({ isBn }: { isBn: boolean }) {
       startTime: inst.startTime || '07:30',
       endTime: inst.endTime || '14:30',
       sessions: inst.sessions?.length ? inst.sessions : ['2025-26'],
+      expiresAt: inst.expiresAt ?? null,
+      status: inst.status,
       lightColors: generateLightColors(brand),
       darkColors: generateDarkColors(brand),
     })

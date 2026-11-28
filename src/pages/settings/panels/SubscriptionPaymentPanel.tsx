@@ -16,6 +16,8 @@ import {
 import { SettingsPanel } from '../components/SettingsPanel'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSuperAdminStore } from '@/store/superAdminStore'
+import { useClassStore } from '@/store/classStore'
+import { resolveInstitutionRecord } from '@/lib/institutionResolver'
 import {
   useInstitutionPaymentStore,
   type PaymentMethodType,
@@ -111,22 +113,26 @@ export const SubscriptionPaymentPanel: React.FC<Props> = ({ isBn, onBack }) => {
   const { user } = useAuth()
   const institutions = useSuperAdminStore((s) => s.institutions)
   const packages = useSuperAdminStore((s) => s.packages)
+  const viewingInstitutionId = useSuperAdminStore((s) => s.viewingInstitutionId)
+  const classInstitution = useClassStore((s) => s.institution)
 
   const activeSlug =
     typeof window !== 'undefined'
       ? sessionStorage.getItem('edutech_inst_slug') || localStorage.getItem('edutech_inst_slug') || user?.subdomain
       : user?.subdomain
 
-  const currentSchool = useMemo(() => {
-    return (
-      institutions.find(
-        (i) =>
-          i.id === user?.schoolId ||
-          i.id === (user as any)?.institutionId ||
-          (activeSlug && (i.slug === activeSlug || i.subdomain === activeSlug))
-      ) || null
-    )
-  }, [institutions, user, activeSlug])
+  const currentSchool = useMemo(
+    () =>
+      resolveInstitutionRecord({
+        institutions,
+        user,
+        viewingInstitutionId,
+        schoolSlug: activeSlug,
+        eiin: classInstitution?.eiin,
+        fallbackClassInstitution: classInstitution,
+      }),
+    [institutions, user, viewingInstitutionId, activeSlug, classInstitution]
+  )
 
   const rawGatewaysConfig = useInstitutionPaymentStore((s) => s.gatewaysConfig)
   const gatewaysConfig = rawGatewaysConfig || DEFAULT_GATEWAYS_CONFIG

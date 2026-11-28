@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { useBn } from '@/hooks/useBn'
 import { useWindowSize } from '@/hooks/useWindowSize'
-import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage } from '@/store/superAdminStore'
+import { useSuperAdminStore, PACKAGES, type Institution, type InstitutionPackage, type InstitutionStatus } from '@/store/superAdminStore'
 import { defaultThemeColors } from '@/store/classStore'
 import { sendVerificationCode } from '@/lib/emailService'
 import { compressImageWithinLimit } from '@/lib/imageUpload'
@@ -222,6 +222,8 @@ export default function CreateSchool() {
     let serverSchoolId: string | null = null
     let serverLogo: string | null = null
     let serverBanner: string | null = null
+    let serverStatus: InstitutionStatus | null = null
+    let serverExpiresAt: string | null | undefined = undefined
     try {
       const res = await authApi.registerInstitution({
         name: form.name.trim(),
@@ -254,6 +256,8 @@ export default function CreateSchool() {
         serverSchoolId = res.id || res.school?.id || null
         serverLogo = res.school?.logo || null
         serverBanner = res.school?.banner || null
+        serverStatus = (res.school?.status as InstitutionStatus) || null
+        serverExpiresAt = res.school?.expiresAt
       }
     } catch (err: unknown) {
       const msg =
@@ -279,8 +283,12 @@ export default function CreateSchool() {
       website: subdomain ? `${BASE_URL}/i/${subdomain}` : BASE_URL,
       subdomain: slug,
       slug: slug,
-      status: 'active',
+      status: serverStatus || 'active',
       package: form.package,
+      expiresAt:
+        serverExpiresAt !== undefined
+          ? serverExpiresAt
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       storageMode: effectiveStorageMode,
       createdAt: new Date().toISOString().split('T')[0],
       lastLogin: '-',

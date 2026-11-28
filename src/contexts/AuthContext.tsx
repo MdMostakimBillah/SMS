@@ -150,6 +150,34 @@ function resolveUserSlug(u: User): string {
 export function syncUserSchool(school: any, u: SessionUser | User): void {
   if (!school) return
 
+  const targetSlug =
+    u.schoolDomain ||
+    school.domain ||
+    school.slug ||
+    (u.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : '')
+
+  const syncSubscriptionToStores = () => {
+    const classUpdates: Record<string, any> = {}
+    if (school.expiresAt !== undefined) classUpdates.expiresAt = school.expiresAt || null
+    if (school.status) classUpdates.status = school.status
+    if (Object.keys(classUpdates).length > 0) {
+      useClassStore.getState().updateInstitution(classUpdates)
+    }
+
+    if (targetSlug) {
+      const instId = school.id || `INST-${targetSlug}`
+      const existing = useSuperAdminStore
+        .getState()
+        .institutions.find((i) => i.id === instId || i.slug === targetSlug || i.subdomain === targetSlug)
+      if (existing) {
+        useSuperAdminStore.getState().updateInstitution(existing.id, {
+          ...(school.expiresAt !== undefined ? { expiresAt: school.expiresAt || null } : {}),
+          ...(school.status ? { status: school.status } : {}),
+        })
+      }
+    }
+  }
+
   if (isLocalComputerMode()) {
     const brandColor = school.brandColor || '#6366f1'
     const currentTheme = useAppStore.getState().theme
@@ -157,13 +185,9 @@ export function syncUserSchool(school: any, u: SessionUser | User): void {
       currentTheme === 'dark' ||
       (currentTheme === 'system' && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches)
     applyThemeColors(isDark ? generateDarkColors(brandColor) : generateLightColors(brandColor))
+    syncSubscriptionToStores()
     return
   }
-  const targetSlug =
-    u.schoolDomain ||
-    school.domain ||
-    school.slug ||
-    (u.schoolName ? u.schoolName.toLowerCase().replace(/\s+/g, '-') : '')
 
   if (targetSlug) {
     setSlug(targetSlug)
@@ -189,7 +213,9 @@ export function syncUserSchool(school: any, u: SessionUser | User): void {
 
   if (targetSlug) {
     const instId = school.id || `INST-${targetSlug}`
-    const existing = useSuperAdminStore.getState().institutions.find((i) => i.id === instId || i.slug === targetSlug)
+    const existing = useSuperAdminStore
+      .getState()
+      .institutions.find((i) => i.id === instId || i.slug === targetSlug || i.subdomain === targetSlug)
     if (existing) {
       useSuperAdminStore.getState().updateInstitution(existing.id, {
         name: school.name,
@@ -200,6 +226,8 @@ export function syncUserSchool(school: any, u: SessionUser | User): void {
         banner: school.banner || '',
         slug: targetSlug,
         subdomain: targetSlug,
+        ...(school.expiresAt !== undefined ? { expiresAt: school.expiresAt || null } : {}),
+        ...(school.status ? { status: school.status } : {}),
       })
     }
   }
@@ -375,6 +403,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             slug: resolveUserSlug(userObj),
             role: userObj.role,
           })
+          if (res.user.role !== 'super_admin' && res.user.school) {
+            syncUserSchool(res.user.school, res.user)
+          }
         })
         .catch((err) => {
           if (err instanceof ApiError && err.status === 401) {
@@ -402,6 +433,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             slug: resolveUserSlug(userObj),
             role: userObj.role,
           })
+          if (res.user.role !== 'super_admin' && res.user.school) {
+            syncUserSchool(res.user.school, res.user)
+          }
         })
         .catch((err) => {
           if (err instanceof ApiError && err.status === 401) {

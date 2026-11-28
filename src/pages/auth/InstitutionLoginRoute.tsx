@@ -1,7 +1,8 @@
 import { Suspense, useContext, useMemo, useEffect, useState } from 'react'
 import { useParams, Navigate } from 'react-router-dom'
 import { AuthContext } from '@/contexts/AuthContext'
-import { useSuperAdminStore, PACKAGES, type Institution } from '@/store/superAdminStore'
+import { useSuperAdminStore } from '@/store/superAdminStore'
+import { mapPublicSchoolToInstitution } from '@/lib/institutionResolver'
 import { clearSlug } from '@/lib/storage'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
 import { authApi } from '@/lib/api'
@@ -40,38 +41,10 @@ export default function InstitutionLoginRoute() {
         if (!mounted) return
         if (res?.school) {
           const s = res.school
-          const domainSlug = s.slug || s.domain || slug
-          const pkg = PACKAGES.find((p) => p.name.toLowerCase() === (s.package || 'basic').toLowerCase()) || PACKAGES[0]
-          const inst: Institution = {
-            id: s.id || `INST-${domainSlug}`,
-            name: s.name,
-            nameBn: s.nameBn || s.name,
-            email: s.email || '',
-            phone: s.phone || '',
-            address: s.address || '',
-            addressBn: s.addressBn || s.address || '',
-            eiin: s.eiin || '',
-            website: s.website || `smsappbd.vercel.app/i/${domainSlug}`,
-            subdomain: domainSlug,
-            slug: domainSlug,
-            status: (s.status as any) || 'active',
-            package: pkg,
-            createdAt: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-            lastLogin: '-',
-            logo: s.logo || '',
-            banner: s.banner || '',
-            brandColor: s.brandColor || '#6366f1',
-            brandName: s.brandName || s.name,
-            motto: s.motto || '',
-            mottoBn: s.mottoBn || '',
-            startTime: s.startTime || '07:30',
-            endTime: s.endTime || '14:30',
-            optionalSubjects: [],
-            sessions: s.sessions ? (typeof s.sessions === 'string' ? JSON.parse(s.sessions) : s.sessions) : ['2025-26'],
-            accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
-            language: 'en',
-            theme: 'light',
-          }
+          const existing = useSuperAdminStore
+            .getState()
+            .institutions.find((i) => i.id === s.id || i.slug === slug || i.subdomain === slug)
+          const inst = mapPublicSchoolToInstitution(s, slug, existing)
           useSuperAdminStore.getState().addInstitution(inst)
           setNotFound(false)
         } else {

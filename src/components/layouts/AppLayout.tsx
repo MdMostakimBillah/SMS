@@ -21,6 +21,7 @@ import { clearSlug, setSlug } from '@/lib/storage'
 import { useBn } from '@/hooks/useBn'
 import { getVaultStatus, subscribeVault, vaultReconnect, type VaultStatus } from '@/lib/vault/vault'
 import { isLocalComputerMode } from '@/lib/storageMode'
+import { mapPublicSchoolToInstitution, resolveInstitutionRecord } from '@/lib/institutionResolver'
 import { prefetchAllRoutes } from '@/lib/prefetchRoutes'
 import { SubscriptionPaymentPanel } from '@/pages/settings/panels/SubscriptionPaymentPanel'
 
@@ -96,6 +97,12 @@ export default function AppLayout() {
             setSlug(targetSlug)
             const mapped = mapSchoolToInstitutionSettings(res.school, useClassStore.getState().institution)
             useClassStore.getState().updateInstitution(mapped)
+            const existing = useSuperAdminStore
+              .getState()
+              .institutions.find((i) => i.id === res.school!.id || i.slug === targetSlug || i.subdomain === targetSlug)
+            useSuperAdminStore
+              .getState()
+              .addInstitution(mapPublicSchoolToInstitution(res.school, targetSlug, existing))
             if (typeof sessionStorage !== 'undefined') {
               sessionStorage.setItem('edutech_storage_mode', mapped.storageMode || 'cloud')
               sessionStorage.setItem('edutech_server_url', mapped.serverUrl || '')
@@ -130,6 +137,12 @@ export default function AppLayout() {
         const brand = user.school.brandColor || '#6366f1'
         const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
         applyThemeColors(isDark ? generateDarkColors(brand) : generateLightColors(brand))
+        const classUpdates: Record<string, any> = {}
+        if (user.school.expiresAt !== undefined) classUpdates.expiresAt = user.school.expiresAt || null
+        if (user.school.status) classUpdates.status = user.school.status
+        if (Object.keys(classUpdates).length > 0) {
+          useClassStore.getState().updateInstitution(classUpdates)
+        }
         return
       }
 
@@ -286,12 +299,13 @@ export default function AppLayout() {
     user?.subdomain
 
   const currentInst = !isSuperAdmin
-    ? institutions.find(
-        (i) =>
-          (currentInstSlug && (i.slug === currentInstSlug || i.subdomain === currentInstSlug)) ||
-          (user?.schoolId && i.id === user.schoolId) ||
-          (user?.school?.id && i.id === user.school.id)
-      ) || (user?.school as any) || null
+    ? resolveInstitutionRecord({
+        institutions,
+        user,
+        schoolSlug: currentInstSlug,
+        eiin: institution?.eiin,
+        fallbackClassInstitution: institution,
+      })
     : null
 
   const isDateOver = currentInst?.expiresAt

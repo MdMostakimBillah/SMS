@@ -16,6 +16,8 @@ import { useAssignmentStore } from '@/store/assignmentStore'
 import { useTodoStore } from '@/store/todoStore'
 import { useAttendanceStore } from '@/store/attendanceStore'
 import { useMessageStore } from '@/store/messageStore'
+import { useSuperAdminStore, PACKAGES } from '@/store/superAdminStore'
+import { authApi } from '@/lib/api'
 import * as storageModeModule from '@/lib/storageMode'
 
 const mockNavigate = vi.fn()
@@ -27,14 +29,18 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
+const defaultAuthUser = {
+  id: 'admin-1',
+  name: 'Super Admin',
+  role: 'school_admin',
+  schoolName: 'Model High School',
+}
+
+let mockAuthUser: any = { ...defaultAuthUser }
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: {
-      id: 'admin-1',
-      name: 'Super Admin',
-      role: 'school_admin',
-      schoolName: 'Model High School',
-    },
+    user: mockAuthUser,
   }),
 }))
 
@@ -52,6 +58,11 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     localStorage.clear()
     sessionStorage.clear()
     vi.clearAllMocks()
+    mockAuthUser = { ...defaultAuthUser }
+    useSuperAdminStore.setState({
+      institutions: [],
+      viewingInstitutionId: null,
+    })
 
     // Populate mock data in stores
     useAdmissionStore.setState({
@@ -445,5 +456,208 @@ describe('DashboardPage - Backend, Database & Local PC Functionality', () => {
     expect(skeleton).toBeInTheDocument()
     expect(skeleton).toHaveAttribute('role', 'status')
     expect(skeleton).toHaveAttribute('aria-label', 'Loading dashboard')
+  })
+
+  it('displays days left in Next Payment Due card for institution accounts even when store entry lacks expiresAt', async () => {
+    const expiry30d = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+
+    mockAuthUser = {
+      id: 'inst-admin-1',
+      name: 'Magnet Admin',
+      role: 'school_admin',
+      schoolId: 'inst-magnet',
+      schoolName: 'Magnet Smart Coaching',
+      schoolDomain: 'magnet',
+      school: {
+        id: 'inst-magnet',
+        name: 'Magnet Smart Coaching',
+        domain: 'magnet',
+        status: 'active',
+        expiresAt: expiry30d,
+      },
+    }
+
+    // Simulate stale superAdminStore entry missing expiresAt (like prior login cache)
+    useSuperAdminStore.setState({
+      institutions: [
+        {
+          id: 'inst-magnet',
+          name: 'Magnet Smart Coaching',
+          nameBn: 'ম্যাগনেট',
+          email: 'magnetmsc@gmail.com',
+          phone: '01700000000',
+          address: 'Dhaka',
+          addressBn: 'ঢাকা',
+          eiin: '',
+          website: '',
+          subdomain: 'magnet',
+          slug: 'magnet',
+          status: 'active',
+          package: PACKAGES[0],
+          storageMode: 'local_computer',
+          createdAt: '2026-11-28',
+          lastLogin: '-',
+          logo: '',
+          banner: '',
+          brandColor: '#6366f1',
+          brandName: 'Magnet',
+          motto: '',
+          mottoBn: '',
+          startTime: '07:30',
+          endTime: '14:30',
+          optionalSubjects: [],
+          sessions: ['2025-26'],
+          accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
+          language: 'en',
+          theme: 'light',
+        },
+      ],
+    })
+
+    vi.spyOn(authApi, 'getPublicSchool').mockResolvedValueOnce({
+      school: {
+        id: 'inst-magnet',
+        name: 'Magnet Smart Coaching',
+        nameBn: null,
+        domain: 'magnet',
+        slug: 'magnet',
+        status: 'active',
+        expiresAt: expiry30d,
+        email: 'magnetmsc@gmail.com',
+        phone: null,
+        address: null,
+        logo: null,
+        startTime: '07:30',
+        endTime: '14:30',
+      },
+    })
+
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Next Payment Due')).toBeInTheDocument()
+      expect(screen.getByText('30 Days Left')).toBeInTheDocument()
+    })
+  })
+
+  it('displays viewed institution days left in Next Payment Due card when super_admin opens an institution', async () => {
+    const expiry30d = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+
+    mockAuthUser = {
+      id: 'sa-1',
+      name: 'Super Admin',
+      role: 'super_admin',
+      schoolId: 'edutech-platform-id',
+      schoolName: 'EduTech',
+      school: {
+        id: 'edutech-platform-id',
+        name: 'EduTech',
+        domain: 'edutech',
+        status: 'active',
+        expiresAt: null,
+      },
+    }
+
+    useSuperAdminStore.setState({
+      viewingInstitutionId: 'inst-alhidayah',
+      institutions: [
+        {
+          id: 'edutech-platform-id',
+          name: 'EduTech',
+          nameBn: 'এডুটেক',
+          email: 'sa@edutech.bd',
+          phone: '',
+          address: '',
+          addressBn: '',
+          eiin: '',
+          website: '',
+          subdomain: 'edutech',
+          slug: 'edutech',
+          status: 'active',
+          expiresAt: null,
+          package: PACKAGES[3],
+          createdAt: '2026-01-01',
+          lastLogin: '-',
+          logo: '',
+          banner: '',
+          brandColor: '#6366f1',
+          brandName: 'EduTech',
+          motto: '',
+          mottoBn: '',
+          startTime: '07:30',
+          endTime: '14:30',
+          optionalSubjects: [],
+          sessions: ['2025-26'],
+          accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
+          language: 'en',
+          theme: 'light',
+        },
+        {
+          id: 'inst-alhidayah',
+          name: 'Al Hidayah',
+          nameBn: 'আল হিদায়াহ',
+          email: 'alhidayah@gmail.com',
+          phone: '',
+          address: '',
+          addressBn: '',
+          eiin: '',
+          website: '',
+          subdomain: 'alhidayah',
+          slug: 'alhidayah',
+          status: 'active',
+          expiresAt: expiry30d,
+          package: PACKAGES[0],
+          createdAt: '2026-11-28',
+          lastLogin: '-',
+          logo: '',
+          banner: '',
+          brandColor: '#6366f1',
+          brandName: 'Al Hidayah',
+          motto: '',
+          mottoBn: '',
+          startTime: '07:30',
+          endTime: '14:30',
+          optionalSubjects: [],
+          sessions: ['2025-26'],
+          accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
+          language: 'en',
+          theme: 'light',
+        },
+      ],
+    })
+
+    vi.spyOn(authApi, 'getPublicSchool').mockResolvedValueOnce({
+      school: {
+        id: 'inst-alhidayah',
+        name: 'Al Hidayah',
+        nameBn: null,
+        domain: 'alhidayah',
+        slug: 'alhidayah',
+        status: 'active',
+        expiresAt: expiry30d,
+        email: 'alhidayah@gmail.com',
+        phone: null,
+        address: null,
+        logo: null,
+        startTime: '07:30',
+        endTime: '14:30',
+      },
+    })
+
+    render(
+      <MemoryRouter>
+        <DashboardPage />
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Next Payment Due')).toBeInTheDocument()
+      expect(screen.getByText('30 Days Left')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('Lifetime Active')).not.toBeInTheDocument()
   })
 })

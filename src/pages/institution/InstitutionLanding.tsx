@@ -6,7 +6,8 @@ import {
 } from 'lucide-react'
 import { BrandLogo } from '@/components/ui/BrandLogo'
 import { useBn } from '@/hooks/useBn'
-import { useSuperAdminStore, PACKAGES, type Institution } from '@/store/superAdminStore'
+import { useSuperAdminStore } from '@/store/superAdminStore'
+import { mapPublicSchoolToInstitution } from '@/lib/institutionResolver'
 import { BackgroundPaths } from '@/components/ui/BackgroundPaths'
 import { authApi, resolveMediaUrl } from '@/lib/api'
 import { BrandLoadingScreen } from '@/components/ui/BrandLoadingScreen'
@@ -58,38 +59,10 @@ export default function InstitutionLanding() {
         if (!mounted) return
         if (res?.school) {
           const s = res.school
-          const domainSlug = s.slug || s.domain || slug
-          const pkg = PACKAGES.find((p) => p.name.toLowerCase() === (s.package || 'basic').toLowerCase()) || PACKAGES[0]
-          const inst: Institution = {
-            id: s.id || `INST-${domainSlug}`,
-            name: s.name,
-            nameBn: s.nameBn || s.name,
-            email: s.email || '',
-            phone: s.phone || '',
-            address: s.address || '',
-            addressBn: s.address || '',
-            eiin: '',
-            website: `smsappbd.vercel.app/i/${domainSlug}`,
-            subdomain: domainSlug,
-            slug: domainSlug,
-            status: (s.status as any) || 'active',
-            package: pkg,
-            createdAt: s.createdAt ? s.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-            lastLogin: '-',
-            logo: s.logo || '',
-            banner: '',
-            brandColor: s.brandColor || '#6366f1',
-            brandName: s.brandName || s.name,
-            motto: '',
-            mottoBn: '',
-            startTime: s.startTime || '07:30',
-            endTime: s.endTime || '14:30',
-            optionalSubjects: [],
-            sessions: ['2025-26'],
-            accessModes: { pathBased: true, subdomainBased: true, customDomain: '' },
-            language: 'en',
-            theme: 'light',
-          }
+          const existing = useSuperAdminStore
+            .getState()
+            .institutions.find((i) => i.id === s.id || i.slug === slug || i.subdomain === slug)
+          const inst = mapPublicSchoolToInstitution(s, slug, existing)
           useSuperAdminStore.getState().addInstitution(inst)
           setNotFound(false)
         } else {

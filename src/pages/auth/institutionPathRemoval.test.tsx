@@ -152,4 +152,41 @@ describe('Institution path removal when deleted', () => {
     expect(sessionStorage.getItem('edutech_inst_slug')).toBeNull()
     expect(localStorage.getItem('edutech_inst_slug')).toBeNull()
   })
+
+  it('preserves expiresAt and storageMode in superAdminStore when loading /i/:slug/login', async () => {
+    const expiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    vi.mocked(authApi.getPublicSchool).mockResolvedValueOnce({
+      school: {
+        id: 'inst-magnet',
+        name: 'Magnet Smart Coaching',
+        nameBn: null,
+        domain: 'magnet',
+        slug: 'magnet',
+        status: 'active',
+        expiresAt: expiry,
+        storageMode: 'local_computer',
+        email: 'magnetmsc@gmail.com',
+        phone: null,
+        address: null,
+        logo: null,
+        startTime: '07:30',
+        endTime: '14:30',
+      },
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/i/magnet/login']}>
+        <Routes>
+          <Route path="/i/:slug/login" element={<InstitutionLoginRoute />} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    await waitFor(() => {
+      const saved = useSuperAdminStore.getState().institutions.find((i) => i.id === 'inst-magnet')
+      expect(saved).toBeDefined()
+      expect(saved?.expiresAt).toBe(expiry)
+      expect(saved?.storageMode).toBe('local_computer')
+    })
+  })
 })
